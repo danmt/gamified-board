@@ -1,19 +1,10 @@
-import {
-  Component,
-  ElementRef,
-  HostBinding,
-  HostListener,
-  Output,
-  ViewChild,
-} from '@angular/core';
+import { Component, ElementRef, HostBinding, ViewChild } from '@angular/core';
 
-import { Directive } from '@angular/core';
 import {
   animationFrameScheduler,
   defer,
   interval,
   map,
-  Subject,
   Subscription,
   takeWhile,
 } from 'rxjs';
@@ -35,33 +26,6 @@ export const duration = (t: number) =>
 
 export const distance = (x: number, t: number) =>
   duration(t).pipe(map((t: number) => ease(t) * x));
-
-interface Position {
-  x: number;
-  y: number;
-}
-
-@Directive({ selector: '[pgMouseMove]' })
-export class MouseMoveDirective {
-  private readonly _mouseMove = new Subject<Position>();
-
-  @Output() readonly mouseMove = this._mouseMove.asObservable();
-
-  @HostListener('mousemove', ['$event']) onMouseMove(value: MouseEvent) {
-    this._mouseMove.next({ x: value.x, y: value.y });
-  }
-}
-
-@Directive({ selector: '[pgHover]' })
-export class HoverDirective {
-  private readonly _hover = new Subject<void>();
-
-  @Output() readonly hover = this._hover.asObservable();
-
-  @HostListener('mouseover', []) onMouseMove() {
-    this._hover.next();
-  }
-}
 
 @Component({
   selector: 'pg-row',

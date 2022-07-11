@@ -1,20 +1,10 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 
-import {
-  AppComponent,
-  HoverDirective,
-  MouseMoveDirective,
-  RowComponent,
-} from './app.component';
+import { AppComponent, RowComponent } from './app.component';
 
 @NgModule({
-  declarations: [
-    AppComponent,
-    RowComponent,
-    MouseMoveDirective,
-    HoverDirective,
-  ],
+  declarations: [AppComponent, RowComponent],
   imports: [BrowserModule],
   providers: [],
   bootstrap: [AppComponent],
