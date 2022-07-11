@@ -1,0 +1,15 @@
+
+{
+	"conventionalCommits.scopes": [
+		"core",
+	],
+	"editor.defaultFormatter": "esbenp.prettier-vscode",
+	"editor.formatOnSave": true,
+	"editor.codeActionsOnSave": {
+		"source.organizeImports": true
+	},
+	"[rust]": {
+		"editor.defaultFormatter": "rust-lang.rust"
+	},
+	"editor.tabSize": 2
+}
