@@ -104,10 +104,17 @@ export class NavigationWrapperComponent {
 
     this.moveRightSubscription = distance(MAX_DISTANCE, 1000)
       .pipe(map((x) => CURRENT_SCROLL_LEFT + x))
-      .subscribe((left) => {
-        window.scroll({
-          left,
-        });
+      .subscribe({
+        next: (left) => {
+          window.scroll({
+            left,
+          });
+        },
+        complete: () => {
+          window.scroll({
+            left: MAX_LEFT_SIZE,
+          });
+        },
       });
   }
 
@@ -120,10 +127,17 @@ export class NavigationWrapperComponent {
 
     this.moveLeftSubscription = distance(CURRENT_SCROLL_LEFT, 1000)
       .pipe(map((x) => CURRENT_SCROLL_LEFT - x))
-      .subscribe((left) => {
-        window.scroll({
-          left,
-        });
+      .subscribe({
+        next: (left) => {
+          window.scroll({
+            left,
+          });
+        },
+        complete: () => {
+          window.scroll({
+            left: 0,
+          });
+        },
       });
   }
 
@@ -136,10 +150,17 @@ export class NavigationWrapperComponent {
 
     this.moveTopSubscription = distance(CURRENT_SCROLL_TOP, 1000)
       .pipe(map((x) => CURRENT_SCROLL_TOP - x))
-      .subscribe((top) => {
-        window.scroll({
-          top,
-        });
+      .subscribe({
+        next: (top) => {
+          window.scroll({
+            top,
+          });
+        },
+        complete: () => {
+          window.scroll({
+            top: 0,
+          });
+        },
       });
   }
 
@@ -159,10 +180,17 @@ export class NavigationWrapperComponent {
 
     this.moveBottomSubscription = distance(MAX_DISTANCE, 1000)
       .pipe(map((x) => CURRENT_SCROLL_TOP + x))
-      .subscribe((top) => {
-        window.scroll({
-          top,
-        });
+      .subscribe({
+        next: (top) => {
+          window.scroll({
+            top,
+          });
+        },
+        complete: () => {
+          window.scroll({
+            top: MAX_TOP_SIZE,
+          });
+        },
       });
   }
 
