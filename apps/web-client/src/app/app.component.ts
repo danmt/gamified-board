@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostBinding, ViewChild } from '@angular/core';
+import { Component, HostBinding } from '@angular/core';
 
 import {
   animationFrameScheduler,
@@ -9,11 +9,13 @@ import {
   takeWhile,
 } from 'rxjs';
 
-export const ease = (x: number) => {
+const BOARD_SIZE = 8000;
+
+const ease = (x: number) => {
   return x < 0.5 ? 2 * x * x : -1 + (4 - 2 * x) * x;
 };
 
-export const duration = (t: number) =>
+const duration = (t: number) =>
   defer(() => {
     const t0 = Date.now();
     return interval(0, animationFrameScheduler).pipe(
@@ -24,94 +26,67 @@ export const duration = (t: number) =>
     );
   });
 
-export const distance = (x: number, t: number) =>
+const distance = (x: number, t: number) =>
   duration(t).pipe(map((t: number) => ease(t) * x));
 
 @Component({
   selector: 'pg-row',
   template: ` <ng-content></ng-content> `,
+  standalone: true,
 })
 export class RowComponent {
   @HostBinding('class') class =
     'block w-full h-64 bg-blue-300 border border-blue-500 bg-bp-bricks ';
 }
 
-const BOARD_SIZE = 8000;
-
 @Component({
-  selector: 'pg-root',
+  selector: 'pg-navigation-wrapper',
   template: `
-    <div id="viewport">
-      <div
-        class="fixed w-12 h-12 bg-red-500 bg-opacity-5 z-10"
-        (mouseenter)="onMoveLeft(); onMoveTop()"
-        (mouseleave)="onStopMoveLeft(); onStopMoveTop()"
-      ></div>
-      <div
-        class="fixed w-12 h-12 bg-red-500 bg-opacity-5 z-10 right-0"
-        (mouseenter)="onMoveRight(); onMoveTop()"
-        (mouseleave)="onStopMoveRight(); onStopMoveTop()"
-      ></div>
-      <div
-        class="fixed w-12 h-12 bg-red-500 bg-opacity-5 z-10 bottom-0"
-        (mouseenter)="onMoveLeft(); onMoveBottom()"
-        (mouseleave)="onStopMoveLeft(); onStopMoveBottom()"
-      ></div>
-      <div
-        class="fixed w-12 h-12 bg-red-500 bg-opacity-5 z-10 right-0 bottom-0"
-        (mouseenter)="onMoveRight(); onMoveBottom()"
-        (mouseleave)="onStopMoveRight(); onStopMoveBottom()"
-      ></div>
+    <div
+      class="fixed w-12 h-12 bg-red-500 bg-opacity-5 z-10"
+      (mouseenter)="onMoveLeft(); onMoveTop()"
+      (mouseleave)="onStopMoveLeft(); onStopMoveTop()"
+    ></div>
+    <div
+      class="fixed w-12 h-12 bg-red-500 bg-opacity-5 z-10 right-0"
+      (mouseenter)="onMoveRight(); onMoveTop()"
+      (mouseleave)="onStopMoveRight(); onStopMoveTop()"
+    ></div>
+    <div
+      class="fixed w-12 h-12 bg-red-500 bg-opacity-5 z-10 bottom-0"
+      (mouseenter)="onMoveLeft(); onMoveBottom()"
+      (mouseleave)="onStopMoveLeft(); onStopMoveBottom()"
+    ></div>
+    <div
+      class="fixed w-12 h-12 bg-red-500 bg-opacity-5 z-10 right-0 bottom-0"
+      (mouseenter)="onMoveRight(); onMoveBottom()"
+      (mouseleave)="onStopMoveRight(); onStopMoveBottom()"
+    ></div>
 
-      <div
-        class="fixed w-12 h-screen bg-white bg-opacity-5"
-        (mouseenter)="onMoveLeft()"
-        (mouseleave)="onStopMoveLeft()"
-      ></div>
-      <div
-        class="fixed w-12 h-screen bg-white bg-opacity-5 right-0"
-        (mouseenter)="onMoveRight()"
-        (mouseleave)="onStopMoveRight()"
-      ></div>
-      <div
-        class="fixed w-screen h-12 bg-white bg-opacity-5"
-        (mouseenter)="onMoveTop()"
-        (mouseleave)="onStopMoveTop()"
-      ></div>
-      <div
-        class="fixed w-screen h-12 bg-white bg-opacity-5 bottom-0"
-        (mouseenter)="onMoveBottom()"
-        (mouseleave)="onStopMoveBottom()"
-      ></div>
-    </div>
-
-    <div id="board" #board>
-      <pg-row class="text-2xl text-white uppercase">row 1</pg-row>
-      <pg-row class="text-2xl text-white uppercase">row 2</pg-row>
-      <pg-row class="text-2xl text-white uppercase">row 3</pg-row>
-      <pg-row class="text-2xl text-white uppercase">row 4</pg-row>
-      <pg-row class="text-2xl text-white uppercase">row 5</pg-row>
-      <pg-row class="text-2xl text-white uppercase">row 6</pg-row>
-      <pg-row class="text-2xl text-white uppercase">row 7</pg-row>
-      <pg-row class="text-2xl text-white uppercase">row 8</pg-row>
-      <pg-row class="text-2xl text-white uppercase">row 9</pg-row>
-      <pg-row class="text-2xl text-white uppercase">row 10</pg-row>
-      <pg-row class="text-2xl text-white uppercase">row 11</pg-row>
-      <pg-row class="text-2xl text-white uppercase">row 12</pg-row>
-    </div>
+    <div
+      class="fixed w-12 h-screen bg-white bg-opacity-5"
+      (mouseenter)="onMoveLeft()"
+      (mouseleave)="onStopMoveLeft()"
+    ></div>
+    <div
+      class="fixed w-12 h-screen bg-white bg-opacity-5 right-0"
+      (mouseenter)="onMoveRight()"
+      (mouseleave)="onStopMoveRight()"
+    ></div>
+    <div
+      class="fixed w-screen h-12 bg-white bg-opacity-5"
+      (mouseenter)="onMoveTop()"
+      (mouseleave)="onStopMoveTop()"
+    ></div>
+    <div
+      class="fixed w-screen h-12 bg-white bg-opacity-5 bottom-0"
+      (mouseenter)="onMoveBottom()"
+      (mouseleave)="onStopMoveBottom()"
+    ></div>
   `,
-  styles: [
-    `
-      #board {
-        width: 8000px;
-      }
-    `,
-  ],
+  standalone: true,
 })
-export class AppComponent {
-  @HostBinding('class') class = 'block';
-  @ViewChild('board') boardRef: ElementRef | null = null;
-
+export class NavigationWrapperComponent {
   moveRightSubscription: Subscription | null = null;
   moveLeftSubscription: Subscription | null = null;
   moveTopSubscription: Subscription | null = null;
@@ -194,4 +169,42 @@ export class AppComponent {
   onStopMoveBottom() {
     this.moveBottomSubscription?.unsubscribe();
   }
+}
+
+@Component({
+  selector: 'pg-board',
+  template: `
+    <pg-row class="text-2xl text-white uppercase">row 1</pg-row>
+    <pg-row class="text-2xl text-white uppercase">row 2</pg-row>
+    <pg-row class="text-2xl text-white uppercase">row 3</pg-row>
+    <pg-row class="text-2xl text-white uppercase">row 4</pg-row>
+    <pg-row class="text-2xl text-white uppercase">row 5</pg-row>
+    <pg-row class="text-2xl text-white uppercase">row 6</pg-row>
+    <pg-row class="text-2xl text-white uppercase">row 7</pg-row>
+    <pg-row class="text-2xl text-white uppercase">row 8</pg-row>
+    <pg-row class="text-2xl text-white uppercase">row 9</pg-row>
+    <pg-row class="text-2xl text-white uppercase">row 10</pg-row>
+    <pg-row class="text-2xl text-white uppercase">row 11</pg-row>
+    <pg-row class="text-2xl text-white uppercase">row 12</pg-row>
+  `,
+  standalone: true,
+  imports: [RowComponent],
+})
+export class BoardComponent {
+  @HostBinding('class') class = 'block';
+  @HostBinding('style') style = `width: ${BOARD_SIZE}px`;
+}
+
+@Component({
+  selector: 'pg-root',
+  template: `
+    <pg-navigation-wrapper></pg-navigation-wrapper>
+
+    <pg-board></pg-board>
+  `,
+  standalone: true,
+  imports: [RowComponent, BoardComponent, NavigationWrapperComponent],
+})
+export class AppComponent {
+  @HostBinding('class') class = 'block';
 }
