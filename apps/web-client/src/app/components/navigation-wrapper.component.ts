@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Component, Input } from '@angular/core';
 import { map, Subscription } from 'rxjs';
 import { distance } from '../utils';
 import { BOARD_SIZE } from './board.component';
@@ -7,50 +8,60 @@ import { BOARD_SIZE } from './board.component';
   selector: 'pg-navigation-wrapper',
   template: `
     <div
-      class="fixed w-12 h-12 bg-red-500 bg-opacity-5 z-10"
+      class="fixed w-4 h-4"
+      [ngClass]="zPosition"
       (mouseenter)="onMoveLeft(); onMoveTop()"
       (mouseleave)="onStopMoveLeft(); onStopMoveTop()"
     ></div>
     <div
-      class="fixed w-12 h-12 bg-red-500 bg-opacity-5 z-10 right-0"
+      class="fixed w-4 h-4 right-0"
+      [ngClass]="zPosition"
       (mouseenter)="onMoveRight(); onMoveTop()"
       (mouseleave)="onStopMoveRight(); onStopMoveTop()"
     ></div>
     <div
-      class="fixed w-12 h-12 bg-red-500 bg-opacity-5 z-10 bottom-0"
+      class="fixed w-4 h-4 bottom-0"
+      [ngClass]="zPosition"
       (mouseenter)="onMoveLeft(); onMoveBottom()"
       (mouseleave)="onStopMoveLeft(); onStopMoveBottom()"
     ></div>
     <div
-      class="fixed w-12 h-12 bg-red-500 bg-opacity-5 z-10 right-0 bottom-0"
+      class="fixed w-4 h-4 right-0 bottom-0"
+      [ngClass]="zPosition"
       (mouseenter)="onMoveRight(); onMoveBottom()"
       (mouseleave)="onStopMoveRight(); onStopMoveBottom()"
     ></div>
 
     <div
-      class="fixed w-12 h-screen bg-white bg-opacity-5"
+      class="fixed w-4 h-screen"
+      [ngClass]="zPosition"
       (mouseenter)="onMoveLeft()"
       (mouseleave)="onStopMoveLeft()"
     ></div>
     <div
-      class="fixed w-12 h-screen bg-white bg-opacity-5 right-0"
+      class="fixed w-4 h-screen right-0"
+      [ngClass]="zPosition"
       (mouseenter)="onMoveRight()"
       (mouseleave)="onStopMoveRight()"
     ></div>
     <div
-      class="fixed w-screen h-12 bg-white bg-opacity-5"
+      class="fixed w-screen h-4"
+      [ngClass]="zPosition"
       (mouseenter)="onMoveTop()"
       (mouseleave)="onStopMoveTop()"
     ></div>
     <div
-      class="fixed w-screen h-12 bg-white bg-opacity-5 bottom-0"
+      class="fixed w-screen h-4 bottom-0"
+      [ngClass]="zPosition"
       (mouseenter)="onMoveBottom()"
       (mouseleave)="onStopMoveBottom()"
     ></div>
   `,
   standalone: true,
+  imports: [CommonModule],
 })
 export class NavigationWrapperComponent {
+  @Input() zPosition = 'z-10';
   moveRightSubscription: Subscription | null = null;
   moveLeftSubscription: Subscription | null = null;
   moveTopSubscription: Subscription | null = null;
