@@ -395,9 +395,7 @@ export class DockComponent {
 
   @HostListener('document:keydown', ['$event'])
   onKeydown(event: KeyboardEvent) {
-    const hotkey = this.hotkeys.find((hotkey) => hotkey.key === event.key);
-
-    if (hotkey !== undefined) {
+    if (event.key === 'Escape' && this.active !== null) {
       const button = [
         this.button1,
         this.button2,
@@ -413,9 +411,33 @@ export class DockComponent {
         this.button12,
         this.button13,
         this.button14,
-      ].find((button) => button?.buttonId === hotkey.button);
+      ].find((button) => button?.buttonId === this.active);
 
-      button?.activate();
+      button?.deactivate();
+      this.active = null;
+    } else {
+      const hotkey = this.hotkeys.find((hotkey) => hotkey.key === event.key);
+
+      if (hotkey !== undefined) {
+        const button = [
+          this.button1,
+          this.button2,
+          this.button3,
+          this.button4,
+          this.button5,
+          this.button6,
+          this.button7,
+          this.button8,
+          this.button9,
+          this.button10,
+          this.button11,
+          this.button12,
+          this.button13,
+          this.button14,
+        ].find((button) => button?.buttonId === hotkey.button);
+
+        button?.activate();
+      }
     }
   }
 
