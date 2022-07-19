@@ -30,7 +30,29 @@ import {
   standalone: true,
   imports: [CommonModule],
 })
-export class DockButtonImageComponent {
+export class DockSquareButtonImageComponent {
+  @Input() thumbnailUrl: string | null = null;
+  @Input() isActive = false;
+  @Input() isHovered = false;
+}
+
+@Component({
+  selector: 'pg-dock-round-button-image',
+  template: `
+    <img
+      [src]="thumbnailUrl"
+      class="w-8 h-8"
+      [ngClass]="{
+        'opacity-90': !isActive && !isHovered,
+        'opacity-100': !isActive && isHovered,
+        'opacity-100 scale-105': isActive
+      }"
+    />
+  `,
+  standalone: true,
+  imports: [CommonModule],
+})
+export class DockRoundButtonImageComponent {
   @Input() thumbnailUrl: string | null = null;
   @Input() isActive = false;
   @Input() isHovered = false;
@@ -61,7 +83,7 @@ export class DockButtonImageComponent {
     </button>
   `,
   standalone: true,
-  imports: [CommonModule, DockButtonImageComponent],
+  imports: [CommonModule, DockSquareButtonImageComponent],
 })
 export class DockSquareButtonComponent {
   @Input() buttonId: string | null = null;
@@ -105,12 +127,16 @@ export class DockSquareButtonComponent {
         (mouseover)="onMouseOver()"
         (mouseout)="onMouseOut()"
       >
-        <img [src]="thumbnailUrl" />
+        <pg-dock-round-button-image
+          [thumbnailUrl]="thumbnailUrl"
+          [isActive]="isActive"
+          [isHovered]="isHovered"
+        ></pg-dock-round-button-image>
       </button>
     </div>
   `,
   standalone: true,
-  imports: [CommonModule, DockButtonImageComponent],
+  imports: [CommonModule, DockRoundButtonImageComponent],
 })
 export class DockRoundButtonComponent {
   @Input() buttonId: string | null = null;
