@@ -5,6 +5,8 @@ import {
   HostListener,
   Input,
   Output,
+  Pipe,
+  PipeTransform,
   ViewChild,
 } from '@angular/core';
 
@@ -136,6 +138,21 @@ export class DockRoundButtonComponent {
   }
 }
 
+@Pipe({
+  name: 'pgButtonHotkey',
+  standalone: true,
+})
+export class ButtonHotkeyPipe implements PipeTransform {
+  transform(
+    buttonId: string,
+    hotkeys: { button: string; key: string }[]
+  ): string | null {
+    const hotkey = hotkeys.find((hotkey) => hotkey.button === buttonId);
+
+    return hotkey?.key ?? null;
+  }
+}
+
 @Component({
   selector: 'pg-dock',
   template: `
@@ -150,7 +167,7 @@ export class DockRoundButtonComponent {
             <pg-dock-square-button
               #button1
               buttonId="1"
-              buttonKey="q"
+              [buttonKey]="'1' | pgButtonHotkey: hotkeys"
               [isActive]="active === '1'"
               [thumbnailUrl]="instructions[0]"
               (activated)="onActivated('1')"
@@ -158,7 +175,7 @@ export class DockRoundButtonComponent {
             <pg-dock-square-button
               #button2
               buttonId="2"
-              buttonKey="w"
+              [buttonKey]="'2' | pgButtonHotkey: hotkeys"
               [isActive]="active === '2'"
               [thumbnailUrl]="instructions[1]"
               (activated)="onActivated('2')"
@@ -166,7 +183,7 @@ export class DockRoundButtonComponent {
             <pg-dock-square-button
               #button3
               buttonId="3"
-              buttonKey="e"
+              [buttonKey]="'3' | pgButtonHotkey: hotkeys"
               [isActive]="active === '3'"
               [thumbnailUrl]="instructions[2]"
               (activated)="onActivated('3')"
@@ -174,7 +191,7 @@ export class DockRoundButtonComponent {
             <pg-dock-square-button
               #button4
               buttonId="4"
-              buttonKey="r"
+              [buttonKey]="'4' | pgButtonHotkey: hotkeys"
               [isActive]="active === '4'"
               [thumbnailUrl]="instructions[3]"
               (activated)="onActivated('4')"
@@ -182,7 +199,7 @@ export class DockRoundButtonComponent {
             <pg-dock-square-button
               #button5
               buttonId="5"
-              buttonKey="t"
+              [buttonKey]="'5' | pgButtonHotkey: hotkeys"
               [isActive]="active === '5'"
               [thumbnailUrl]="instructions[4]"
               (activated)="onActivated('5')"
@@ -190,7 +207,7 @@ export class DockRoundButtonComponent {
             <pg-dock-square-button
               #button6
               buttonId="6"
-              buttonKey="y"
+              [buttonKey]="'6' | pgButtonHotkey: hotkeys"
               [isActive]="active === '6'"
               [thumbnailUrl]="instructions[5]"
               (activated)="onActivated('6')"
@@ -205,7 +222,7 @@ export class DockRoundButtonComponent {
             <pg-dock-square-button
               #button7
               buttonId="7"
-              buttonKey="1"
+              [buttonKey]="'7' | pgButtonHotkey: hotkeys"
               [isActive]="active === '7'"
               [thumbnailUrl]="collections[0]"
               (activated)="onActivated('7')"
@@ -213,7 +230,7 @@ export class DockRoundButtonComponent {
             <pg-dock-square-button
               #button8
               buttonId="8"
-              buttonKey="2"
+              [buttonKey]="'8' | pgButtonHotkey: hotkeys"
               [isActive]="active === '8'"
               [thumbnailUrl]="collections[1]"
               (activated)="onActivated('8')"
@@ -221,7 +238,7 @@ export class DockRoundButtonComponent {
             <pg-dock-square-button
               #button9
               buttonId="9"
-              buttonKey="3"
+              [buttonKey]="'9' | pgButtonHotkey: hotkeys"
               [isActive]="active === '9'"
               [thumbnailUrl]="collections[2]"
               (activated)="onActivated('9')"
@@ -232,7 +249,7 @@ export class DockRoundButtonComponent {
             <pg-dock-square-button
               #button10
               buttonId="10"
-              buttonKey="4"
+              [buttonKey]="'10' | pgButtonHotkey: hotkeys"
               [isActive]="active === '10'"
               [thumbnailUrl]="collections[3]"
               (activated)="onActivated('10')"
@@ -240,7 +257,7 @@ export class DockRoundButtonComponent {
             <pg-dock-square-button
               #button11
               buttonId="11"
-              buttonKey="5"
+              [buttonKey]="'11' | pgButtonHotkey: hotkeys"
               [isActive]="active === '11'"
               [thumbnailUrl]="collections[4]"
               (activated)="onActivated('11')"
@@ -248,7 +265,7 @@ export class DockRoundButtonComponent {
             <pg-dock-square-button
               #button12
               buttonId="12"
-              buttonKey="6"
+              [buttonKey]="'12' | pgButtonHotkey: hotkeys"
               [isActive]="active === '12'"
               [thumbnailUrl]="collections[5]"
               (activated)="onActivated('12')"
@@ -260,7 +277,7 @@ export class DockRoundButtonComponent {
           <pg-dock-round-button
             #button13
             buttonId="13"
-            buttonKey="v"
+            [buttonKey]="'13' | pgButtonHotkey: hotkeys"
             [isActive]="active === '13'"
             thumbnailUrl="assets/power-13.png"
             (activated)="onActivated('13')"
@@ -269,7 +286,7 @@ export class DockRoundButtonComponent {
           <pg-dock-round-button
             #button14
             buttonId="14"
-            buttonKey="b"
+            [buttonKey]="'14' | pgButtonHotkey: hotkeys"
             [isActive]="active === '14'"
             thumbnailUrl="assets/power-14.png"
             (activated)="onActivated('14')"
@@ -279,7 +296,11 @@ export class DockRoundButtonComponent {
     </div>
   `,
   standalone: true,
-  imports: [DockSquareButtonComponent, DockRoundButtonComponent],
+  imports: [
+    DockSquareButtonComponent,
+    DockRoundButtonComponent,
+    ButtonHotkeyPipe,
+  ],
 })
 export class DockComponent {
   @ViewChild('button1') button1: DockSquareButtonComponent | null = null;
