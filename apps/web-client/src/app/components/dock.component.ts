@@ -1,168 +1,12 @@
-import { CommonModule } from '@angular/common';
 import {
   Component,
-  EventEmitter,
   HostListener,
-  Input,
-  Output,
   Pipe,
   PipeTransform,
   ViewChild,
 } from '@angular/core';
-
-@Component({
-  selector: 'pg-dock-square-button-image',
-  template: `
-    <img
-      [src]="thumbnailUrl"
-      class="w-10 h-10"
-      style="border-width: 0.2rem"
-      [ngClass]="{
-        'opacity-80 border-l-gray-500 border-t-gray-400 border-r-gray-600 border-b-gray-700':
-          !isActive && !isHovered,
-        'opacity-90 border-l-gray-400 border-t-gray-300 border-r-gray-500 border-b-gray-600':
-          !isActive && isHovered,
-        'opacity-100 border-l-gray-300 border-t-gray-200 border-r-gray-400 border-b-gray-500':
-          isActive
-      }"
-    />
-  `,
-  standalone: true,
-  imports: [CommonModule],
-})
-export class DockSquareButtonImageComponent {
-  @Input() thumbnailUrl: string | null = null;
-  @Input() isActive = false;
-  @Input() isHovered = false;
-}
-
-@Component({
-  selector: 'pg-dock-round-button-image',
-  template: `
-    <img
-      [src]="thumbnailUrl"
-      class="w-8 h-8"
-      [ngClass]="{
-        'opacity-90': !isActive && !isHovered,
-        'opacity-100': !isActive && isHovered,
-        'opacity-100 scale-105': isActive
-      }"
-    />
-  `,
-  standalone: true,
-  imports: [CommonModule],
-})
-export class DockRoundButtonImageComponent {
-  @Input() thumbnailUrl: string | null = null;
-  @Input() isActive = false;
-  @Input() isHovered = false;
-}
-
-@Component({
-  selector: 'pg-dock-square-button',
-  template: `
-    <button
-      class="bg-gray-800 relative"
-      style="padding: 0.12rem"
-      (click)="activate()"
-      (mouseover)="onMouseOver()"
-      (mouseout)="onMouseOut()"
-    >
-      <span
-        class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
-        style="font-size: 0.5rem; line-height: 0.5rem"
-      >
-        {{ buttonKey }}
-      </span>
-
-      <pg-dock-square-button-image
-        [thumbnailUrl]="thumbnailUrl"
-        [isActive]="isActive"
-        [isHovered]="isHovered"
-      ></pg-dock-square-button-image>
-    </button>
-  `,
-  standalone: true,
-  imports: [CommonModule, DockSquareButtonImageComponent],
-})
-export class DockSquareButtonComponent {
-  @Input() buttonId: string | null = null;
-  @Input() buttonKey: string | null = null;
-  @Input() thumbnailUrl: string | null = null;
-  @Input() isActive = false;
-  @Output() activated = new EventEmitter();
-  @Output() deactivated = new EventEmitter();
-  isHovered = false;
-
-  activate() {
-    this.activated.emit();
-  }
-
-  deactivate() {
-    this.deactivated.emit();
-  }
-
-  protected onMouseOver() {
-    this.isHovered = true;
-  }
-
-  protected onMouseOut() {
-    this.isHovered = false;
-  }
-}
-
-@Component({
-  selector: 'pg-dock-round-button',
-  template: `
-    <div class="relative p-1">
-      <span
-        class="absolute top-0 left-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
-        style="font-size: 0.5rem; line-height: 0.5rem"
-      >
-        {{ buttonKey }}
-      </span>
-      <button
-        class="rounded-full overflow-hidden"
-        (click)="activate()"
-        (mouseover)="onMouseOver()"
-        (mouseout)="onMouseOut()"
-      >
-        <pg-dock-round-button-image
-          [thumbnailUrl]="thumbnailUrl"
-          [isActive]="isActive"
-          [isHovered]="isHovered"
-        ></pg-dock-round-button-image>
-      </button>
-    </div>
-  `,
-  standalone: true,
-  imports: [CommonModule, DockRoundButtonImageComponent],
-})
-export class DockRoundButtonComponent {
-  @Input() buttonId: string | null = null;
-  @Input() buttonKey: string | null = null;
-  @Input() thumbnailUrl: string | null = null;
-  @Input() isActive = false;
-  @Output() activated = new EventEmitter();
-  @Output() deactivated = new EventEmitter();
-  isHovered = false;
-
-  activate() {
-    this.activated.emit();
-  }
-
-  deactivate() {
-    this.deactivated.emit();
-  }
-
-  protected onMouseOver() {
-    this.isHovered = true;
-  }
-
-  protected onMouseOut() {
-    this.isHovered = false;
-  }
-}
+import { RoundButtonComponent } from './round-button.component';
+import { SquareButtonComponent } from './square-button.component';
 
 @Pipe({
   name: 'pgButtonHotkey',
@@ -189,160 +33,156 @@ export class ButtonHotkeyPipe implements PipeTransform {
         <div>
           <h2>Instructions</h2>
 
-          <div class="ml-2 flex gap-2">
-            <pg-dock-square-button
+          <div class="flex gap-2">
+            <pg-square-button
               #button1
               buttonId="1"
               [buttonKey]="'1' | pgButtonHotkey: hotkeys"
               [isActive]="active === '1'"
               [thumbnailUrl]="instructions[0]"
               (activated)="onActivated('1')"
-            ></pg-dock-square-button>
-            <pg-dock-square-button
+            ></pg-square-button>
+            <pg-square-button
               #button2
               buttonId="2"
               [buttonKey]="'2' | pgButtonHotkey: hotkeys"
               [isActive]="active === '2'"
               [thumbnailUrl]="instructions[1]"
               (activated)="onActivated('2')"
-            ></pg-dock-square-button>
-            <pg-dock-square-button
+            ></pg-square-button>
+            <pg-square-button
               #button3
               buttonId="3"
               [buttonKey]="'3' | pgButtonHotkey: hotkeys"
               [isActive]="active === '3'"
               [thumbnailUrl]="instructions[2]"
               (activated)="onActivated('3')"
-            ></pg-dock-square-button>
-            <pg-dock-square-button
+            ></pg-square-button>
+            <pg-square-button
               #button4
               buttonId="4"
               [buttonKey]="'4' | pgButtonHotkey: hotkeys"
               [isActive]="active === '4'"
               [thumbnailUrl]="instructions[3]"
               (activated)="onActivated('4')"
-            ></pg-dock-square-button>
-            <pg-dock-square-button
+            ></pg-square-button>
+            <pg-square-button
               #button5
               buttonId="5"
               [buttonKey]="'5' | pgButtonHotkey: hotkeys"
               [isActive]="active === '5'"
               [thumbnailUrl]="instructions[4]"
               (activated)="onActivated('5')"
-            ></pg-dock-square-button>
-            <pg-dock-square-button
+            ></pg-square-button>
+            <pg-square-button
               #button6
               buttonId="6"
               [buttonKey]="'6' | pgButtonHotkey: hotkeys"
               [isActive]="active === '6'"
               [thumbnailUrl]="instructions[5]"
               (activated)="onActivated('6')"
-            ></pg-dock-square-button>
+            ></pg-square-button>
           </div>
         </div>
 
         <div>
           <h2>Collections</h2>
 
-          <div class="ml-2 flex gap-2">
-            <pg-dock-square-button
+          <div class="flex gap-2 mb-2">
+            <pg-square-button
               #button7
               buttonId="7"
               [buttonKey]="'7' | pgButtonHotkey: hotkeys"
               [isActive]="active === '7'"
               [thumbnailUrl]="collections[0]"
               (activated)="onActivated('7')"
-            ></pg-dock-square-button>
-            <pg-dock-square-button
+            ></pg-square-button>
+            <pg-square-button
               #button8
               buttonId="8"
               [buttonKey]="'8' | pgButtonHotkey: hotkeys"
               [isActive]="active === '8'"
               [thumbnailUrl]="collections[1]"
               (activated)="onActivated('8')"
-            ></pg-dock-square-button>
-            <pg-dock-square-button
+            ></pg-square-button>
+            <pg-square-button
               #button9
               buttonId="9"
               [buttonKey]="'9' | pgButtonHotkey: hotkeys"
               [isActive]="active === '9'"
               [thumbnailUrl]="collections[2]"
               (activated)="onActivated('9')"
-            ></pg-dock-square-button>
+            ></pg-square-button>
           </div>
 
-          <div class="ml-2 flex gap-2">
-            <pg-dock-square-button
+          <div class="flex gap-2">
+            <pg-square-button
               #button10
               buttonId="10"
               [buttonKey]="'10' | pgButtonHotkey: hotkeys"
               [isActive]="active === '10'"
               [thumbnailUrl]="collections[3]"
               (activated)="onActivated('10')"
-            ></pg-dock-square-button>
-            <pg-dock-square-button
+            ></pg-square-button>
+            <pg-square-button
               #button11
               buttonId="11"
               [buttonKey]="'11' | pgButtonHotkey: hotkeys"
               [isActive]="active === '11'"
               [thumbnailUrl]="collections[4]"
               (activated)="onActivated('11')"
-            ></pg-dock-square-button>
-            <pg-dock-square-button
+            ></pg-square-button>
+            <pg-square-button
               #button12
               buttonId="12"
               [buttonKey]="'12' | pgButtonHotkey: hotkeys"
               [isActive]="active === '12'"
               [thumbnailUrl]="collections[5]"
               (activated)="onActivated('12')"
-            ></pg-dock-square-button>
+            ></pg-square-button>
           </div>
         </div>
 
         <div>
-          <pg-dock-round-button
+          <pg-round-button
             #button13
             buttonId="13"
             [buttonKey]="'13' | pgButtonHotkey: hotkeys"
             [isActive]="active === '13'"
-            thumbnailUrl="assets/power-13.png"
+            thumbnailUrl="assets/power-17.png"
             (activated)="onActivated('13')"
-          ></pg-dock-round-button>
+          ></pg-round-button>
 
-          <pg-dock-round-button
+          <pg-round-button
             #button14
             buttonId="14"
             [buttonKey]="'14' | pgButtonHotkey: hotkeys"
             [isActive]="active === '14'"
-            thumbnailUrl="assets/power-14.png"
+            thumbnailUrl="assets/power-18.png"
             (activated)="onActivated('14')"
-          ></pg-dock-round-button>
+          ></pg-round-button>
         </div>
       </div>
     </div>
   `,
   standalone: true,
-  imports: [
-    DockSquareButtonComponent,
-    DockRoundButtonComponent,
-    ButtonHotkeyPipe,
-  ],
+  imports: [SquareButtonComponent, RoundButtonComponent, ButtonHotkeyPipe],
 })
 export class DockComponent {
-  @ViewChild('button1') button1: DockSquareButtonComponent | null = null;
-  @ViewChild('button2') button2: DockSquareButtonComponent | null = null;
-  @ViewChild('button3') button3: DockSquareButtonComponent | null = null;
-  @ViewChild('button4') button4: DockSquareButtonComponent | null = null;
-  @ViewChild('button5') button5: DockSquareButtonComponent | null = null;
-  @ViewChild('button6') button6: DockSquareButtonComponent | null = null;
-  @ViewChild('button7') button7: DockSquareButtonComponent | null = null;
-  @ViewChild('button8') button8: DockSquareButtonComponent | null = null;
-  @ViewChild('button9') button9: DockSquareButtonComponent | null = null;
-  @ViewChild('button10') button10: DockSquareButtonComponent | null = null;
-  @ViewChild('button11') button11: DockSquareButtonComponent | null = null;
-  @ViewChild('button12') button12: DockRoundButtonComponent | null = null;
-  @ViewChild('button13') button13: DockRoundButtonComponent | null = null;
-  @ViewChild('button14') button14: DockRoundButtonComponent | null = null;
+  @ViewChild('button1') button1: SquareButtonComponent | null = null;
+  @ViewChild('button2') button2: SquareButtonComponent | null = null;
+  @ViewChild('button3') button3: SquareButtonComponent | null = null;
+  @ViewChild('button4') button4: SquareButtonComponent | null = null;
+  @ViewChild('button5') button5: SquareButtonComponent | null = null;
+  @ViewChild('button6') button6: SquareButtonComponent | null = null;
+  @ViewChild('button7') button7: SquareButtonComponent | null = null;
+  @ViewChild('button8') button8: SquareButtonComponent | null = null;
+  @ViewChild('button9') button9: SquareButtonComponent | null = null;
+  @ViewChild('button10') button10: SquareButtonComponent | null = null;
+  @ViewChild('button11') button11: SquareButtonComponent | null = null;
+  @ViewChild('button12') button12: RoundButtonComponent | null = null;
+  @ViewChild('button13') button13: RoundButtonComponent | null = null;
+  @ViewChild('button14') button14: RoundButtonComponent | null = null;
   active: string | null = null;
   instructions: string[] = [
     'assets/power-1.png',

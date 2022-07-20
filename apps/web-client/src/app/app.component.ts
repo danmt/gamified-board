@@ -28,6 +28,27 @@ import {
   ],
 })
 export class AppComponent {
+  instructions: string[] = [
+    'assets/power-1.png',
+    'assets/power-2.png',
+    'assets/power-3.png',
+    'assets/power-4.png',
+    'assets/power-5.png',
+    'assets/power-6.png',
+    'assets/power-7.png',
+    'assets/power-8.png',
+  ];
+  collections: string[] = [
+    'assets/power-9.png',
+    'assets/power-10.png',
+    'assets/power-11.png',
+    'assets/power-12.png',
+    'assets/power-13.png',
+    'assets/power-14.png',
+    'assets/power-15.png',
+    'assets/power-16.png',
+  ];
+
   collectionsDialogRef: DialogRef<
     CollectionsComponent,
     CollectionsComponent
@@ -43,6 +64,7 @@ export class AppComponent {
       case ',': {
         if (this.collectionsDialogRef === null) {
           this.collectionsDialogRef = this._dialog.open(CollectionsComponent, {
+            data: this.collections,
             width: '300px',
             height: '500px',
             hasBackdrop: false,
@@ -66,6 +88,7 @@ export class AppComponent {
           this.instructionsDialogRef = this._dialog.open(
             InstructionsComponent,
             {
+              data: this.instructions,
               width: '300px',
               height: '500px',
               hasBackdrop: false,
