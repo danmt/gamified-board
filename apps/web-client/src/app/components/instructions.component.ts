@@ -31,10 +31,15 @@ import { SquareButtonComponent } from './square-button.component';
           *ngFor="let instruction of instructions; trackBy: trackBy"
           class="relative"
         >
-          <div
-            *ngIf="(isDragging$ | ngrxPush) === instruction"
-            class="w-full h-full absolute z-20 bg-black bg-opacity-50"
-          ></div>
+          <ng-container *ngIf="(isDragging$ | ngrxPush) === instruction">
+            <div
+              class="w-full h-full absolute z-20 bg-black bg-opacity-50"
+            ></div>
+            <div class="bg-yellow-500 p-0.5 w-11 h-11">
+              <img class="w-full h-full" [src]="instruction" />
+            </div>
+          </ng-container>
+
           <div
             cdkDrag
             [cdkDragData]="instruction"
