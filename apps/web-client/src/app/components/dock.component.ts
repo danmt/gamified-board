@@ -1,23 +1,28 @@
+import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
+import { CommonModule } from '@angular/common';
 import {
   Component,
+  EventEmitter,
   HostListener,
+  Input,
+  Output,
   Pipe,
   PipeTransform,
-  ViewChild,
 } from '@angular/core';
-import { RoundButtonComponent } from './round-button.component';
 import { SquareButtonComponent } from './square-button.component';
 
+export interface HotKey {
+  slot: number;
+  key: string;
+}
+
 @Pipe({
-  name: 'pgButtonHotkey',
+  name: 'pgSlotHotkey',
   standalone: true,
 })
-export class ButtonHotkeyPipe implements PipeTransform {
-  transform(
-    buttonId: string,
-    hotkeys: { button: string; key: string }[]
-  ): string | null {
-    const hotkey = hotkeys.find((hotkey) => hotkey.button === buttonId);
+export class SlotHotkeyPipe implements PipeTransform {
+  transform(slotId: number, hotkeys: HotKey[]): string | null {
+    const hotkey = hotkeys.find((hotkey) => hotkey.slot === slotId);
 
     return hotkey?.key ?? null;
   }
@@ -33,321 +38,481 @@ export class ButtonHotkeyPipe implements PipeTransform {
         <div>
           <h2>Instructions</h2>
 
-          <div class="flex gap-2">
-            <pg-square-button
-              #button1
-              buttonId="1"
-              [buttonKey]="'1' | pgButtonHotkey: hotkeys"
-              [isActive]="active === '1'"
-              [thumbnailUrl]="instructions[0]"
-              (activated)="onActivated('1')"
-            ></pg-square-button>
-            <pg-square-button
-              #button2
-              buttonId="2"
-              [buttonKey]="'2' | pgButtonHotkey: hotkeys"
-              [isActive]="active === '2'"
-              [thumbnailUrl]="instructions[1]"
-              (activated)="onActivated('2')"
-            ></pg-square-button>
-            <pg-square-button
-              #button3
-              buttonId="3"
-              [buttonKey]="'3' | pgButtonHotkey: hotkeys"
-              [isActive]="active === '3'"
-              [thumbnailUrl]="instructions[2]"
-              (activated)="onActivated('3')"
-            ></pg-square-button>
-            <pg-square-button
-              #button4
-              buttonId="4"
-              [buttonKey]="'4' | pgButtonHotkey: hotkeys"
-              [isActive]="active === '4'"
-              [thumbnailUrl]="instructions[3]"
-              (activated)="onActivated('4')"
-            ></pg-square-button>
-            <pg-square-button
-              #button5
-              buttonId="5"
-              [buttonKey]="'5' | pgButtonHotkey: hotkeys"
-              [isActive]="active === '5'"
-              [thumbnailUrl]="instructions[4]"
-              (activated)="onActivated('5')"
-            ></pg-square-button>
-            <pg-square-button
-              #button6
-              buttonId="6"
-              [buttonKey]="'6' | pgButtonHotkey: hotkeys"
-              [isActive]="active === '6'"
-              [thumbnailUrl]="instructions[5]"
-              (activated)="onActivated('6')"
-            ></pg-square-button>
+          <div cdkDropListGroup class="flex gap-2 mb-2">
+            <div
+              id="slot-1"
+              cdkDropList
+              [cdkDropListData]="slots[0] ? [slots[0]] : []"
+              (cdkDropListDropped)="onDropped($event)"
+              class="bg-gray-800 relative w-11 h-11"
+              style="padding: 0.12rem"
+            >
+              <span
+                *ngIf="1 | pgSlotHotkey: hotkeys as hotkey"
+                class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
+                style="font-size: 0.5rem; line-height: 0.5rem"
+              >
+                {{ hotkey }}
+              </span>
+
+              <div cdkDrag [cdkDragData]="slots[0]">
+                <pg-square-button
+                  *ngIf="slots[0] !== null"
+                  [isActive]="active === 0"
+                  [thumbnailUrl]="slots[0]"
+                  (activated)="onActivated(0)"
+                ></pg-square-button>
+
+                <div
+                  *cdkDragPreview
+                  class="bg-gray-500 p-1 w-12 h-12 rounded-md"
+                >
+                  <img class="w-full h-full" [src]="slots[0]" />
+                </div>
+
+                <div *cdkDragPlaceholder></div>
+              </div>
+            </div>
+
+            <div
+              id="slot-2"
+              cdkDropList
+              [cdkDropListData]="slots[1] ? [slots[1]] : []"
+              (cdkDropListDropped)="onDropped($event)"
+              class="bg-gray-800 relative w-11 h-11"
+              style="padding: 0.12rem"
+            >
+              <span
+                *ngIf="2 | pgSlotHotkey: hotkeys as hotkey"
+                class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
+                style="font-size: 0.5rem; line-height: 0.5rem"
+              >
+                {{ hotkey }}
+              </span>
+
+              <div cdkDrag [cdkDragData]="slots[1]">
+                <pg-square-button
+                  *ngIf="slots[1] !== null"
+                  [isActive]="active === 1"
+                  [thumbnailUrl]="slots[1]"
+                  (activated)="onActivated(1)"
+                ></pg-square-button>
+
+                <div
+                  *cdkDragPreview
+                  class="bg-gray-500 p-1 w-12 h-12 rounded-md"
+                >
+                  <img class="w-full h-full" [src]="slots[1]" />
+                </div>
+
+                <div *cdkDragPlaceholder></div>
+              </div>
+            </div>
+
+            <div
+              id="slot-3"
+              cdkDropList
+              [cdkDropListData]="slots[2] ? [slots[2]] : []"
+              (cdkDropListDropped)="onDropped($event)"
+              class="bg-gray-800 relative w-11 h-11"
+              style="padding: 0.12rem"
+            >
+              <span
+                *ngIf="3 | pgSlotHotkey: hotkeys as hotkey"
+                class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
+                style="font-size: 0.5rem; line-height: 0.5rem"
+              >
+                {{ hotkey }}
+              </span>
+
+              <div cdkDrag [cdkDragData]="slots[2]">
+                <pg-square-button
+                  *ngIf="slots[2] !== null"
+                  [isActive]="active === 2"
+                  [thumbnailUrl]="slots[2]"
+                  (activated)="onActivated(2)"
+                ></pg-square-button>
+
+                <div
+                  *cdkDragPreview
+                  class="bg-gray-500 p-1 w-12 h-12 rounded-md"
+                >
+                  <img class="w-full h-full" [src]="slots[2]" />
+                </div>
+
+                <div *cdkDragPlaceholder></div>
+              </div>
+            </div>
+
+            <div
+              id="slot-4"
+              cdkDropList
+              [cdkDropListData]="slots[3] ? [slots[3]] : []"
+              (cdkDropListDropped)="onDropped($event)"
+              class="bg-gray-800 relative w-11 h-11"
+              style="padding: 0.12rem"
+            >
+              <span
+                *ngIf="4 | pgSlotHotkey: hotkeys as hotkey"
+                class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
+                style="font-size: 0.5rem; line-height: 0.5rem"
+              >
+                {{ hotkey }}
+              </span>
+
+              <div cdkDrag [cdkDragData]="slots[3]">
+                <pg-square-button
+                  *ngIf="slots[3] !== null"
+                  [isActive]="active === 3"
+                  [thumbnailUrl]="slots[3]"
+                  (activated)="onActivated(3)"
+                ></pg-square-button>
+
+                <div
+                  *cdkDragPreview
+                  class="bg-gray-500 p-1 w-12 h-12 rounded-md"
+                >
+                  <img class="w-full h-full" [src]="slots[3]" />
+                </div>
+
+                <div *cdkDragPlaceholder></div>
+              </div>
+            </div>
+
+            <div
+              id="slot-5"
+              cdkDropList
+              [cdkDropListData]="slots[4] ? [slots[4]] : []"
+              (cdkDropListDropped)="onDropped($event)"
+              class="bg-gray-800 relative w-11 h-11"
+              style="padding: 0.12rem"
+            >
+              <span
+                *ngIf="5 | pgSlotHotkey: hotkeys as hotkey"
+                class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
+                style="font-size: 0.5rem; line-height: 0.5rem"
+              >
+                {{ hotkey }}
+              </span>
+
+              <div cdkDrag [cdkDragData]="slots[4]">
+                <pg-square-button
+                  *ngIf="slots[4] !== null"
+                  [isActive]="active === 4"
+                  [thumbnailUrl]="slots[4]"
+                  (activated)="onActivated(4)"
+                ></pg-square-button>
+
+                <div
+                  *cdkDragPreview
+                  class="bg-gray-500 p-1 w-12 h-12 rounded-md"
+                >
+                  <img class="w-full h-full" [src]="slots[4]" />
+                </div>
+
+                <div *cdkDragPlaceholder></div>
+              </div>
+            </div>
+
+            <div
+              id="slot-6"
+              cdkDropList
+              [cdkDropListData]="slots[5] ? [slots[5]] : []"
+              (cdkDropListDropped)="onDropped($event)"
+              class="bg-gray-800 relative w-11 h-11"
+              style="padding: 0.12rem"
+            >
+              <span
+                *ngIf="6 | pgSlotHotkey: hotkeys as hotkey"
+                class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
+                style="font-size: 0.5rem; line-height: 0.5rem"
+              >
+                {{ hotkey }}
+              </span>
+
+              <div cdkDrag [cdkDragData]="slots[5]">
+                <pg-square-button
+                  *ngIf="slots[5] !== null"
+                  [isActive]="active === 5"
+                  [thumbnailUrl]="slots[5]"
+                  (activated)="onActivated(5)"
+                ></pg-square-button>
+
+                <div
+                  *cdkDragPreview
+                  class="bg-gray-500 p-1 w-12 h-12 rounded-md"
+                >
+                  <img class="w-full h-full" [src]="slots[5]" />
+                </div>
+
+                <div *cdkDragPlaceholder></div>
+              </div>
+            </div>
           </div>
         </div>
 
         <div>
           <h2>Collections</h2>
 
-          <div class="flex gap-2 mb-2">
-            <pg-square-button
-              #button7
-              buttonId="7"
-              [buttonKey]="'7' | pgButtonHotkey: hotkeys"
-              [isActive]="active === '7'"
-              [thumbnailUrl]="collections[0]"
-              (activated)="onActivated('7')"
-            ></pg-square-button>
-            <pg-square-button
-              #button8
-              buttonId="8"
-              [buttonKey]="'8' | pgButtonHotkey: hotkeys"
-              [isActive]="active === '8'"
-              [thumbnailUrl]="collections[1]"
-              (activated)="onActivated('8')"
-            ></pg-square-button>
-            <pg-square-button
-              #button9
-              buttonId="9"
-              [buttonKey]="'9' | pgButtonHotkey: hotkeys"
-              [isActive]="active === '9'"
-              [thumbnailUrl]="collections[2]"
-              (activated)="onActivated('9')"
-            ></pg-square-button>
+          <div cdkDropListGroup>
+            <div class="flex gap-2 mb-2">
+              <div
+                id="slot-7"
+                cdkDropList
+                [cdkDropListData]="slots[6] ? [slots[6]] : []"
+                (cdkDropListDropped)="onDropped($event)"
+                class="bg-gray-800 relative w-11 h-11"
+                style="padding: 0.12rem"
+              >
+                <span
+                  *ngIf="7 | pgSlotHotkey: hotkeys as hotkey"
+                  class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
+                  style="font-size: 0.5rem; line-height: 0.5rem"
+                >
+                  {{ hotkey }}
+                </span>
+
+                <div cdkDrag [cdkDragData]="slots[6]">
+                  <pg-square-button
+                    *ngIf="slots[6] !== null"
+                    [isActive]="active === 6"
+                    [thumbnailUrl]="slots[6]"
+                    (activated)="onActivated(6)"
+                  ></pg-square-button>
+
+                  <div
+                    *cdkDragPreview
+                    class="bg-gray-500 p-1 w-12 h-12 rounded-md"
+                  >
+                    <img class="w-full h-full" [src]="slots[6]" />
+                  </div>
+
+                  <div *cdkDragPlaceholder></div>
+                </div>
+              </div>
+
+              <div
+                id="slot-8"
+                cdkDropList
+                [cdkDropListData]="slots[7] ? [slots[7]] : []"
+                (cdkDropListDropped)="onDropped($event)"
+                class="bg-gray-800 relative w-11 h-11"
+                style="padding: 0.12rem"
+              >
+                <span
+                  *ngIf="8 | pgSlotHotkey: hotkeys as hotkey"
+                  class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
+                  style="font-size: 0.5rem; line-height: 0.5rem"
+                >
+                  {{ hotkey }}
+                </span>
+
+                <div cdkDrag [cdkDragData]="slots[7]">
+                  <pg-square-button
+                    *ngIf="slots[7] !== null"
+                    [isActive]="active === 7"
+                    [thumbnailUrl]="slots[7]"
+                    (activated)="onActivated(7)"
+                  ></pg-square-button>
+
+                  <div
+                    *cdkDragPreview
+                    class="bg-gray-500 p-1 w-12 h-12 rounded-md"
+                  >
+                    <img class="w-full h-full" [src]="slots[7]" />
+                  </div>
+
+                  <div *cdkDragPlaceholder></div>
+                </div>
+              </div>
+
+              <div
+                id="slot-9"
+                cdkDropList
+                [cdkDropListData]="slots[8] ? [slots[8]] : []"
+                (cdkDropListDropped)="onDropped($event)"
+                class="bg-gray-800 relative w-11 h-11"
+                style="padding: 0.12rem"
+              >
+                <span
+                  *ngIf="9 | pgSlotHotkey: hotkeys as hotkey"
+                  class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
+                  style="font-size: 0.5rem; line-height: 0.5rem"
+                >
+                  {{ hotkey }}
+                </span>
+
+                <div cdkDrag [cdkDragData]="slots[8]">
+                  <pg-square-button
+                    *ngIf="slots[8] !== null"
+                    [isActive]="active === 8"
+                    [thumbnailUrl]="slots[8]"
+                    (activated)="onActivated(8)"
+                  ></pg-square-button>
+
+                  <div
+                    *cdkDragPreview
+                    class="bg-gray-500 p-1 w-12 h-12 rounded-md"
+                  >
+                    <img class="w-full h-full" [src]="slots[8]" />
+                  </div>
+
+                  <div *cdkDragPlaceholder></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex gap-2 mb-2">
+              <div
+                id="slot-10"
+                cdkDropList
+                [cdkDropListData]="slots[9] ? [slots[9]] : []"
+                (cdkDropListDropped)="onDropped($event)"
+                class="bg-gray-800 relative w-11 h-11"
+                style="padding: 0.12rem"
+              >
+                <span
+                  *ngIf="10 | pgSlotHotkey: hotkeys as hotkey"
+                  class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
+                  style="font-size: 0.5rem; line-height: 0.5rem"
+                >
+                  {{ hotkey }}
+                </span>
+
+                <div cdkDrag [cdkDragData]="slots[9]">
+                  <pg-square-button
+                    *ngIf="slots[9] !== null"
+                    [isActive]="active === 9"
+                    [thumbnailUrl]="slots[9]"
+                    (activated)="onActivated(9)"
+                  ></pg-square-button>
+
+                  <div
+                    *cdkDragPreview
+                    class="bg-gray-500 p-1 w-12 h-12 rounded-md"
+                  >
+                    <img class="w-full h-full" [src]="slots[9]" />
+                  </div>
+
+                  <div *cdkDragPlaceholder></div>
+                </div>
+              </div>
+
+              <div
+                id="slot-11"
+                cdkDropList
+                [cdkDropListData]="slots[10] ? [slots[10]] : []"
+                (cdkDropListDropped)="onDropped($event)"
+                class="bg-gray-800 relative w-11 h-11"
+                style="padding: 0.12rem"
+              >
+                <span
+                  *ngIf="11 | pgSlotHotkey: hotkeys as hotkey"
+                  class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
+                  style="font-size: 0.5rem; line-height: 0.5rem"
+                >
+                  {{ hotkey }}
+                </span>
+
+                <div cdkDrag [cdkDragData]="slots[10]">
+                  <pg-square-button
+                    *ngIf="slots[10] !== null"
+                    [isActive]="active === 10"
+                    [thumbnailUrl]="slots[10]"
+                    (activated)="onActivated(10)"
+                  ></pg-square-button>
+
+                  <div
+                    *cdkDragPreview
+                    class="bg-gray-500 p-1 w-12 h-12 rounded-md"
+                  >
+                    <img class="w-full h-full" [src]="slots[10]" />
+                  </div>
+
+                  <div *cdkDragPlaceholder></div>
+                </div>
+              </div>
+
+              <div
+                id="slot-12"
+                cdkDropList
+                [cdkDropListData]="slots[11] ? [slots[11]] : []"
+                (cdkDropListDropped)="onDropped($event)"
+                class="bg-gray-800 relative w-11 h-11"
+                style="padding: 0.12rem"
+              >
+                <span
+                  *ngIf="12 | pgSlotHotkey: hotkeys as hotkey"
+                  class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
+                  style="font-size: 0.5rem; line-height: 0.5rem"
+                >
+                  {{ hotkey }}
+                </span>
+
+                <div cdkDrag [cdkDragData]="slots[11]">
+                  <pg-square-button
+                    *ngIf="slots[11] !== null"
+                    [isActive]="active === 11"
+                    [thumbnailUrl]="slots[11]"
+                    (activated)="onActivated(11)"
+                  ></pg-square-button>
+
+                  <div
+                    *cdkDragPreview
+                    class="bg-gray-500 p-1 w-12 h-12 rounded-md"
+                  >
+                    <img class="w-full h-full" [src]="slots[11]" />
+                  </div>
+
+                  <div *cdkDragPlaceholder></div>
+                </div>
+              </div>
+            </div>
           </div>
-
-          <div class="flex gap-2">
-            <pg-square-button
-              #button10
-              buttonId="10"
-              [buttonKey]="'10' | pgButtonHotkey: hotkeys"
-              [isActive]="active === '10'"
-              [thumbnailUrl]="collections[3]"
-              (activated)="onActivated('10')"
-            ></pg-square-button>
-            <pg-square-button
-              #button11
-              buttonId="11"
-              [buttonKey]="'11' | pgButtonHotkey: hotkeys"
-              [isActive]="active === '11'"
-              [thumbnailUrl]="collections[4]"
-              (activated)="onActivated('11')"
-            ></pg-square-button>
-            <pg-square-button
-              #button12
-              buttonId="12"
-              [buttonKey]="'12' | pgButtonHotkey: hotkeys"
-              [isActive]="active === '12'"
-              [thumbnailUrl]="collections[5]"
-              (activated)="onActivated('12')"
-            ></pg-square-button>
-          </div>
-        </div>
-
-        <div>
-          <pg-round-button
-            #button13
-            buttonId="13"
-            [buttonKey]="'13' | pgButtonHotkey: hotkeys"
-            [isActive]="active === '13'"
-            thumbnailUrl="assets/power-17.png"
-            (activated)="onActivated('13')"
-          ></pg-round-button>
-
-          <pg-round-button
-            #button14
-            buttonId="14"
-            [buttonKey]="'14' | pgButtonHotkey: hotkeys"
-            [isActive]="active === '14'"
-            thumbnailUrl="assets/power-18.png"
-            (activated)="onActivated('14')"
-          ></pg-round-button>
         </div>
       </div>
     </div>
   `,
   standalone: true,
-  imports: [SquareButtonComponent, RoundButtonComponent, ButtonHotkeyPipe],
+  imports: [
+    CommonModule,
+    DragDropModule,
+    SquareButtonComponent,
+    SlotHotkeyPipe,
+  ],
 })
 export class DockComponent {
-  @ViewChild('button1') button1: SquareButtonComponent | null = null;
-  @ViewChild('button2') button2: SquareButtonComponent | null = null;
-  @ViewChild('button3') button3: SquareButtonComponent | null = null;
-  @ViewChild('button4') button4: SquareButtonComponent | null = null;
-  @ViewChild('button5') button5: SquareButtonComponent | null = null;
-  @ViewChild('button6') button6: SquareButtonComponent | null = null;
-  @ViewChild('button7') button7: SquareButtonComponent | null = null;
-  @ViewChild('button8') button8: SquareButtonComponent | null = null;
-  @ViewChild('button9') button9: SquareButtonComponent | null = null;
-  @ViewChild('button10') button10: SquareButtonComponent | null = null;
-  @ViewChild('button11') button11: SquareButtonComponent | null = null;
-  @ViewChild('button12') button12: RoundButtonComponent | null = null;
-  @ViewChild('button13') button13: RoundButtonComponent | null = null;
-  @ViewChild('button14') button14: RoundButtonComponent | null = null;
-  active: string | null = null;
-  instructions: string[] = [
-    'assets/power-1.png',
-    'assets/power-2.png',
-    'assets/power-3.png',
-    'assets/power-4.png',
-    'assets/power-5.png',
-    'assets/power-6.png',
-  ];
-  collections: string[] = [
-    'assets/power-7.png',
-    'assets/power-8.png',
-    'assets/power-9.png',
-    'assets/power-10.png',
-    'assets/power-11.png',
-    'assets/power-12.png',
-  ];
-  hotkeys = [
-    {
-      button: '1',
-      key: 'q',
-    },
-    {
-      button: '2',
-      key: 'w',
-    },
-    {
-      button: '3',
-      key: 'e',
-    },
-    {
-      button: '4',
-      key: 'r',
-    },
-    {
-      button: '5',
-      key: 't',
-    },
-    {
-      button: '6',
-      key: 'y',
-    },
-    {
-      button: '7',
-      key: '1',
-    },
-    {
-      button: '8',
-      key: '2',
-    },
-    {
-      button: '9',
-      key: '3',
-    },
-    {
-      button: '10',
-      key: '4',
-    },
-    {
-      button: '11',
-      key: '5',
-    },
-    {
-      button: '12',
-      key: '6',
-    },
-    {
-      button: '13',
-      key: 'v',
-    },
-    {
-      button: '14',
-      key: 'b',
-    },
-  ];
-
+  @Input() slots: (string | null)[] = [];
+  @Input() hotkeys: HotKey[] = [];
+  @Input() active: number | null = null;
+  @Output() swapSlots = new EventEmitter<[number, number]>();
+  @Output() removeFromSlot = new EventEmitter<number>();
+  @Output() activateSlot = new EventEmitter<number>();
   @HostListener('document:keydown', ['$event'])
   onKeydown(event: KeyboardEvent) {
-    if (event.key === 'Escape' && this.active !== null) {
-      const button = [
-        this.button1,
-        this.button2,
-        this.button3,
-        this.button4,
-        this.button5,
-        this.button6,
-        this.button7,
-        this.button8,
-        this.button9,
-        this.button10,
-        this.button11,
-        this.button12,
-        this.button13,
-        this.button14,
-      ].find((button) => button?.buttonId === this.active);
+    const hotkey = this.hotkeys.find((hotkey) => hotkey.key === event.key);
 
-      button?.deactivate();
-      this.active = null;
-    } else {
-      const hotkey = this.hotkeys.find((hotkey) => hotkey.key === event.key);
-
-      if (hotkey !== undefined) {
-        const button = [
-          this.button1,
-          this.button2,
-          this.button3,
-          this.button4,
-          this.button5,
-          this.button6,
-          this.button7,
-          this.button8,
-          this.button9,
-          this.button10,
-          this.button11,
-          this.button12,
-          this.button13,
-          this.button14,
-        ].find((button) => button?.buttonId === hotkey.button);
-
-        button?.activate();
-      }
+    if (hotkey !== undefined) {
+      this.activateSlot.emit(hotkey.slot - 1);
     }
   }
 
-  onActivated(id: string) {
-    const buttons = [
-      this.button1,
-      this.button2,
-      this.button3,
-      this.button4,
-      this.button5,
-      this.button6,
-      this.button7,
-      this.button8,
-      this.button9,
-      this.button10,
-      this.button11,
-      this.button12,
-      this.button13,
-      this.button14,
-    ];
+  onActivated(index: number) {
+    this.activateSlot.emit(index);
+  }
 
-    if (this.active === null) {
-      const newlyActive =
-        buttons?.find((button) => button?.buttonId === id) ?? null;
-
-      if (newlyActive === null) {
-        throw new Error('There should be an active button with the same id.');
-      } else {
-        this.active = id;
-      }
+  onDropped(event: CdkDragDrop<string[]>) {
+    if (!event.isPointerOverContainer) {
+      const [, index] = event.previousContainer.id.split('slot-');
+      this.removeFromSlot.emit(parseInt(index) - 1);
     } else {
-      if (this.active !== id) {
-        const currentlyActive =
-          buttons?.find((button) => button?.buttonId === this.active) ?? null;
-        const newlyActive =
-          buttons?.find((button) => button?.buttonId === id) ?? null;
+      const [, previousIndex] = event.previousContainer.id.split('slot-');
+      const [, newIndex] = event.container.id.split('slot-');
 
-        if (currentlyActive === null || newlyActive === null) {
-          throw new Error('There should be an active button with the same id.');
-        } else {
-          currentlyActive.deactivate();
-          this.active = id;
-        }
-      }
+      this.swapSlots.emit([
+        parseInt(previousIndex) - 1,
+        parseInt(newIndex) - 1,
+      ]);
     }
   }
 }
