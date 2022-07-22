@@ -25,6 +25,7 @@ import {
       (swapSlots)="onSwapSlots($event[0], $event[1])"
       (removeFromSlot)="onRemoveFromSlot($event)"
       (activateSlot)="onSlotActivate($event)"
+      (updateSlot)="onUpdateSlot($event.index, $event.data)"
     ></pg-dock>
     <pg-board></pg-board>
   `,
@@ -150,7 +151,7 @@ export class AppComponent {
 
         break;
       }
-      case ',': {
+      case '.': {
         if (this.collectionsDialogRef === null) {
           this.collectionsDialogRef = this._dialog.open(CollectionsComponent, {
             data: this.collections,
@@ -159,7 +160,7 @@ export class AppComponent {
             hasBackdrop: false,
             scrollStrategy: new NoopScrollStrategy(),
             positionStrategy: new GlobalPositionStrategy()
-              .left('0')
+              .right('0')
               .centerVertically(),
             disableClose: true,
           });
@@ -173,7 +174,7 @@ export class AppComponent {
 
         break;
       }
-      case '.': {
+      case ',': {
         if (this.instructionsDialogRef === null) {
           this.instructionsDialogRef = this._dialog.open(
             InstructionsComponent,
@@ -184,7 +185,7 @@ export class AppComponent {
               hasBackdrop: false,
               scrollStrategy: new NoopScrollStrategy(),
               positionStrategy: new GlobalPositionStrategy()
-                .right('0')
+                .left('0')
                 .centerVertically(),
               disableClose: true,
             }
@@ -216,5 +217,9 @@ export class AppComponent {
 
   onSlotActivate(index: number) {
     this.active = index;
+  }
+
+  onUpdateSlot(index: number, data: string) {
+    this.slots[index] = data;
   }
 }

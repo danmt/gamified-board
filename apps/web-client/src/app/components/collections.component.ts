@@ -13,7 +13,16 @@ import { SquareButtonComponent } from './square-button.component';
       <h1>Collections</h1>
 
       <div
+        id="collections"
         cdkDropList
+        [cdkDropListConnectedTo]="[
+          'slot-7',
+          'slot-8',
+          'slot-9',
+          'slot-10',
+          'slot-11',
+          'slot-12'
+        ]"
         [cdkDropListData]="collections"
         cdkDropListSortingDisabled
         class="flex flex-wrap gap-2"
@@ -39,6 +48,8 @@ import { SquareButtonComponent } from './square-button.component';
             <div *cdkDragPreview class="bg-gray-500 p-1 w-12 h-12 rounded-md">
               <img class="w-full h-full" [src]="collection" />
             </div>
+
+            <div *cdkDragPlaceholder></div>
           </div>
         </div>
       </div>

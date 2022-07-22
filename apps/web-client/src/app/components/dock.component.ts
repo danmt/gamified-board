@@ -488,6 +488,7 @@ export class DockComponent {
   @Output() swapSlots = new EventEmitter<[number, number]>();
   @Output() removeFromSlot = new EventEmitter<number>();
   @Output() activateSlot = new EventEmitter<number>();
+  @Output() updateSlot = new EventEmitter<{ index: number; data: string }>();
   @HostListener('document:keydown', ['$event'])
   onKeydown(event: KeyboardEvent) {
     const hotkey = this.hotkeys.find((hotkey) => hotkey.key === event.key);
@@ -501,10 +502,19 @@ export class DockComponent {
     this.activateSlot.emit(index);
   }
 
-  onDropped(event: CdkDragDrop<string[]>) {
+  onDropped(event: CdkDragDrop<string[], unknown, string>) {
     if (!event.isPointerOverContainer) {
       const [, index] = event.previousContainer.id.split('slot-');
       this.removeFromSlot.emit(parseInt(index) - 1);
+    } else if (
+      event.previousContainer.id === 'instructions' ||
+      event.previousContainer.id === 'collections'
+    ) {
+      const [, newIndex] = event.container.id.split('slot-');
+      this.updateSlot.emit({
+        data: event.item.data,
+        index: parseInt(newIndex) - 1,
+      });
     } else {
       const [, previousIndex] = event.previousContainer.id.split('slot-');
       const [, newIndex] = event.container.id.split('slot-');
