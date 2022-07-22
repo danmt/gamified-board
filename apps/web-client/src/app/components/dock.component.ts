@@ -19,6 +19,7 @@ export interface HotKey {
 @Pipe({
   name: 'pgSlotHotkey',
   standalone: true,
+  pure: true,
 })
 export class SlotHotkeyPipe implements PipeTransform {
   transform(slotId: number, hotkeys: HotKey[]): string | null {
@@ -479,6 +480,13 @@ export class SlotHotkeyPipe implements PipeTransform {
     DragDropModule,
     SquareButtonComponent,
     SlotHotkeyPipe,
+  ],
+  styles: [
+    `
+      .cdk-drop-list-dragging:hover {
+        @apply bg-gray-700;
+      }
+    `,
   ],
 })
 export class DockComponent {

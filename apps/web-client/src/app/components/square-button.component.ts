@@ -31,7 +31,6 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 })
 export class SquareButtonComponent {
   @Input() buttonId: string | null = null;
-  @Input() hotkey: string | null = null;
   @Input() thumbnailUrl: string | null = null;
   @Input() isActive = false;
   @Output() activated = new EventEmitter();
