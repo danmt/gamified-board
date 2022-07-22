@@ -493,7 +493,7 @@ export class DockComponent {
   onKeydown(event: KeyboardEvent) {
     const hotkey = this.hotkeys.find((hotkey) => hotkey.key === event.key);
 
-    if (hotkey !== undefined) {
+    if (hotkey !== undefined && this.slots[hotkey.slot - 1] !== null) {
       this.activateSlot.emit(hotkey.slot - 1);
     }
   }
