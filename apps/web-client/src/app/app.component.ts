@@ -12,13 +12,14 @@ import {
   InstructionsComponent,
   NavigationWrapperComponent,
 } from './components';
+import { Item } from './utils';
 
 @Component({
   selector: 'pg-root',
   template: `
     <pg-navigation-wrapper zPosition="z-30"></pg-navigation-wrapper>
     <pg-dock
-      class="fixed bottom-0 w-full z-10"
+      class="fixed bottom-0 z-10 -translate-x-1/2 left-1/2"
       [slots]="slots"
       [hotkeys]="hotkeys"
       [active]="active"
@@ -27,7 +28,11 @@ import {
       (activateSlot)="onSlotActivate($event)"
       (updateSlot)="onUpdateSlot($event.index, $event.data)"
     ></pg-dock>
-    <pg-board></pg-board>
+    <pg-board
+      [instructions]="boardInstructions"
+      [active]="active"
+      (use)="onUse($event, active)"
+    ></pg-board>
   `,
   standalone: true,
   imports: [
@@ -38,7 +43,69 @@ import {
   ],
 })
 export class AppComponent {
-  active: number | null = null;
+  active: Item | null = null;
+  boardInstructions = [
+    {
+      id: 1,
+      documents: ['assets/power-9.png'],
+      tasks: ['assets/power-1.png'],
+    },
+    {
+      id: 2,
+      documents: [],
+      tasks: [],
+    },
+    {
+      id: 3,
+      documents: [],
+      tasks: [],
+    },
+    {
+      id: 4,
+      documents: [],
+      tasks: [],
+    },
+    {
+      id: 5,
+      documents: [],
+      tasks: [],
+    },
+    {
+      id: 6,
+      documents: [],
+      tasks: [],
+    },
+    {
+      id: 7,
+      documents: [],
+      tasks: [],
+    },
+    {
+      id: 8,
+      documents: [],
+      tasks: [],
+    },
+    {
+      id: 9,
+      documents: [],
+      tasks: [],
+    },
+    {
+      id: 10,
+      documents: [],
+      tasks: [],
+    },
+    {
+      id: 11,
+      documents: [],
+      tasks: [],
+    },
+    {
+      id: 12,
+      documents: [],
+      tasks: [],
+    },
+  ];
   instructions: string[] = [
     'assets/power-1.png',
     'assets/power-2.png',
@@ -216,10 +283,21 @@ export class AppComponent {
   }
 
   onSlotActivate(index: number) {
-    this.active = index;
+    const data = this.slots[index] ?? null;
+
+    if (data !== null) {
+      this.active = {
+        kind: index < 6 ? 'instruction' : 'collection',
+        data: data,
+      };
+    }
   }
 
   onUpdateSlot(index: number, data: string) {
     this.slots[index] = data;
+  }
+
+  onUse(instructionId: number, item: Item | null) {
+    console.log({ instructionId, item });
   }
 }
