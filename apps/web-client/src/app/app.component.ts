@@ -3,7 +3,12 @@ import {
   GlobalPositionStrategy,
   NoopScrollStrategy,
 } from '@angular/cdk/overlay';
-import { Component, HostBinding, HostListener } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  HostBinding,
+  HostListener,
+} from '@angular/core';
 import {
   BoardComponent,
   CollectionsComponent,
@@ -12,7 +17,7 @@ import {
   InstructionsComponent,
   NavigationWrapperComponent,
 } from './components';
-import { Item } from './utils';
+import { BoardInstruction, Item } from './utils';
 
 @Component({
   selector: 'pg-root',
@@ -41,14 +46,15 @@ import { Item } from './utils';
     BoardComponent,
     NavigationWrapperComponent,
   ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AppComponent {
   active: Item | null = null;
-  boardInstructions = [
+  boardInstructions: BoardInstruction[] = [
     {
       id: 1,
-      documents: ['assets/power-9.png'],
-      tasks: ['assets/power-1.png'],
+      documents: [],
+      tasks: [],
     },
     {
       id: 2,
@@ -298,6 +304,26 @@ export class AppComponent {
   }
 
   onUse(instructionId: number, item: Item | null) {
-    console.log({ instructionId, item });
+    if (item !== null) {
+      this.active = null;
+
+      if (item.kind === 'instruction') {
+        this.boardInstructions[instructionId - 1] = {
+          ...this.boardInstructions[instructionId - 1],
+          tasks: [
+            ...this.boardInstructions[instructionId - 1].tasks,
+            item.data,
+          ],
+        };
+      } else {
+        this.boardInstructions[instructionId - 1] = {
+          ...this.boardInstructions[instructionId - 1],
+          documents: [
+            ...this.boardInstructions[instructionId - 1].documents,
+            item.data,
+          ],
+        };
+      }
+    }
   }
 }

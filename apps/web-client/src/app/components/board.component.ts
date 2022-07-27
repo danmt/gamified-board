@@ -1,6 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { Item } from '../utils';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  EventEmitter,
+  Input,
+  Output,
+} from '@angular/core';
+import { BoardInstruction, Item } from '../utils';
 import { DockComponent } from './dock.component';
 import { RowComponent } from './row.component';
 
@@ -16,7 +22,7 @@ export const BOARD_SIZE = 8000;
       class="relative"
     >
       <pg-row
-        *ngFor="let instruction of instructions"
+        *ngFor="let instruction of instructions; trackBy: trackBy"
         [active]="active"
         [documents]="instruction.documents"
         [tasks]="instruction.tasks"
@@ -28,11 +34,10 @@ export const BOARD_SIZE = 8000;
   `,
   standalone: true,
   imports: [RowComponent, CommonModule, DockComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BoardComponent {
-  @Input() instructions:
-    | { id: number; documents: string[]; tasks: string[] }[]
-    | null = null;
+  @Input() instructions: BoardInstruction[] | null = null;
   @Input() active: Item | null = null;
   @Output() use = new EventEmitter<number>();
   readonly boardSize = BOARD_SIZE;
@@ -40,5 +45,9 @@ export class BoardComponent {
 
   onUse(instructionId: number) {
     this.use.emit(instructionId);
+  }
+
+  trackBy(_: number, item: BoardInstruction): number {
+    return item.id;
   }
 }

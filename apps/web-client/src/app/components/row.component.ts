@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import {
+  ChangeDetectionStrategy,
   Component,
   EventEmitter,
   HostBinding,
@@ -22,8 +23,11 @@ import { Item } from '../utils';
       <div class="w-80">
         <p>Context</p>
 
-        <div class="flex gap-2">
-          <div class="p-2 bg-gray-800" *ngFor="let document of documents">
+        <div class="flex gap-2 flex-wrap">
+          <div
+            class="p-2 bg-gray-800"
+            *ngFor="let document of documents; trackBy: trackBy"
+          >
             <img [src]="document" class="w-12 h-12" />
           </div>
 
@@ -39,8 +43,11 @@ import { Item } from '../utils';
       <div class="w-80">
         <p>Handler</p>
 
-        <div class="flex gap-2">
-          <div class="p-2 bg-gray-800" *ngFor="let task of tasks">
+        <div class="flex gap-2 flex-wrap">
+          <div
+            class="p-2 bg-gray-800"
+            *ngFor="let task of tasks; trackBy: trackBy"
+          >
             <img [src]="task" class="w-12 h-12" />
           </div>
 
@@ -58,6 +65,7 @@ import { Item } from '../utils';
   `,
   standalone: true,
   imports: [CommonModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RowComponent {
   @Input() active: Item | null = null;
@@ -72,5 +80,9 @@ export class RowComponent {
     if (this.active !== null) {
       this.useActive.emit();
     }
+  }
+
+  trackBy(index: number): number {
+    return index;
   }
 }

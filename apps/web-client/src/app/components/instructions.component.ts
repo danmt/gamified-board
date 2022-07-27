@@ -4,7 +4,6 @@ import { CommonModule } from '@angular/common';
 import { Component, Inject } from '@angular/core';
 import { PushModule } from '@ngrx/component';
 import { BehaviorSubject } from 'rxjs';
-import { SquareButtonComponent } from './square-button.component';
 
 @Component({
   selector: 'pg-instructions',
@@ -61,7 +60,7 @@ import { SquareButtonComponent } from './square-button.component';
     </div>
   `,
   standalone: true,
-  imports: [DragDropModule, CommonModule, SquareButtonComponent, PushModule],
+  imports: [DragDropModule, CommonModule, PushModule],
 })
 export class InstructionsComponent {
   private readonly _isDragging = new BehaviorSubject<string | null>(null);
