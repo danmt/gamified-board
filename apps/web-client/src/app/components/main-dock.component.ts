@@ -9,7 +9,7 @@ import {
   Pipe,
   PipeTransform,
 } from '@angular/core';
-import { Item } from '../utils';
+import { ActiveItem, Collection, Instruction, Option } from '../utils';
 
 export interface HotKey {
   slot: number;
@@ -83,7 +83,7 @@ export class SquareButtonComponent {
 }
 
 @Component({
-  selector: 'pg-dock',
+  selector: 'pg-main-dock',
   template: `
     <div
       class="w-auto mx-auto p-4 bg-white flex gap-4 justify-center items-start"
@@ -112,7 +112,7 @@ export class SquareButtonComponent {
               <pg-square-button
                 *ngIf="slots[0] !== null"
                 [isActive]="active?.data === slots[0]"
-                [thumbnailUrl]="slots[0]"
+                [thumbnailUrl]="slots[0].thumbnailUrl"
                 (activated)="onActivated(0)"
               ></pg-square-button>
 
@@ -144,7 +144,7 @@ export class SquareButtonComponent {
               <pg-square-button
                 *ngIf="slots[1] !== null"
                 [isActive]="active?.data === slots[1]"
-                [thumbnailUrl]="slots[1]"
+                [thumbnailUrl]="slots[1].thumbnailUrl"
                 (activated)="onActivated(1)"
               ></pg-square-button>
 
@@ -176,7 +176,7 @@ export class SquareButtonComponent {
               <pg-square-button
                 *ngIf="slots[2] !== null"
                 [isActive]="active?.data === slots[2]"
-                [thumbnailUrl]="slots[2]"
+                [thumbnailUrl]="slots[2].thumbnailUrl"
                 (activated)="onActivated(2)"
               ></pg-square-button>
 
@@ -208,7 +208,7 @@ export class SquareButtonComponent {
               <pg-square-button
                 *ngIf="slots[3] !== null"
                 [isActive]="active?.data === slots[3]"
-                [thumbnailUrl]="slots[3]"
+                [thumbnailUrl]="slots[3].thumbnailUrl"
                 (activated)="onActivated(3)"
               ></pg-square-button>
 
@@ -240,7 +240,7 @@ export class SquareButtonComponent {
               <pg-square-button
                 *ngIf="slots[4] !== null"
                 [isActive]="active?.data === slots[4]"
-                [thumbnailUrl]="slots[4]"
+                [thumbnailUrl]="slots[4].thumbnailUrl"
                 (activated)="onActivated(4)"
               ></pg-square-button>
 
@@ -272,7 +272,7 @@ export class SquareButtonComponent {
               <pg-square-button
                 *ngIf="slots[5] !== null"
                 [isActive]="active?.data === slots[5]"
-                [thumbnailUrl]="slots[5]"
+                [thumbnailUrl]="slots[5].thumbnailUrl"
                 (activated)="onActivated(5)"
               ></pg-square-button>
 
@@ -311,7 +311,7 @@ export class SquareButtonComponent {
                 <pg-square-button
                   *ngIf="slots[6] !== null"
                   [isActive]="active?.data === slots[6]"
-                  [thumbnailUrl]="slots[6]"
+                  [thumbnailUrl]="slots[6].thumbnailUrl"
                   (activated)="onActivated(6)"
                 ></pg-square-button>
 
@@ -346,7 +346,7 @@ export class SquareButtonComponent {
                 <pg-square-button
                   *ngIf="slots[7] !== null"
                   [isActive]="active?.data === slots[7]"
-                  [thumbnailUrl]="slots[7]"
+                  [thumbnailUrl]="slots[7].thumbnailUrl"
                   (activated)="onActivated(7)"
                 ></pg-square-button>
 
@@ -381,7 +381,7 @@ export class SquareButtonComponent {
                 <pg-square-button
                   *ngIf="slots[8] !== null"
                   [isActive]="active?.data === slots[8]"
-                  [thumbnailUrl]="slots[8]"
+                  [thumbnailUrl]="slots[8].thumbnailUrl"
                   (activated)="onActivated(8)"
                 ></pg-square-button>
 
@@ -418,7 +418,7 @@ export class SquareButtonComponent {
                 <pg-square-button
                   *ngIf="slots[9] !== null"
                   [isActive]="active?.data === slots[9]"
-                  [thumbnailUrl]="slots[9]"
+                  [thumbnailUrl]="slots[9].thumbnailUrl"
                   (activated)="onActivated(9)"
                 ></pg-square-button>
 
@@ -453,7 +453,7 @@ export class SquareButtonComponent {
                 <pg-square-button
                   *ngIf="slots[10] !== null"
                   [isActive]="active?.data === slots[10]"
-                  [thumbnailUrl]="slots[10]"
+                  [thumbnailUrl]="slots[10].thumbnailUrl"
                   (activated)="onActivated(10)"
                 ></pg-square-button>
 
@@ -488,7 +488,7 @@ export class SquareButtonComponent {
                 <pg-square-button
                   *ngIf="slots[11] !== null"
                   [isActive]="active?.data === slots[11]"
-                  [thumbnailUrl]="slots[11]"
+                  [thumbnailUrl]="slots[11].thumbnailUrl"
                   (activated)="onActivated(11)"
                 ></pg-square-button>
 
@@ -522,14 +522,17 @@ export class SquareButtonComponent {
     `,
   ],
 })
-export class DockComponent {
-  @Input() slots: (string | null)[] = [];
+export class MainDockComponent {
+  @Input() slots: Option<Instruction | Collection>[] = [];
   @Input() hotkeys: HotKey[] = [];
-  @Input() active: Item | null = null;
+  @Input() active: Option<ActiveItem> = null;
   @Output() swapSlots = new EventEmitter<[number, number]>();
   @Output() removeFromSlot = new EventEmitter<number>();
   @Output() activateSlot = new EventEmitter<number>();
-  @Output() updateSlot = new EventEmitter<{ index: number; data: string }>();
+  @Output() updateSlot = new EventEmitter<{
+    index: number;
+    data: Instruction | Collection;
+  }>();
   @HostListener('document:keydown', ['$event'])
   onKeydown(event: KeyboardEvent) {
     const hotkey = this.hotkeys.find((hotkey) => hotkey.key === event.key);
@@ -543,7 +546,13 @@ export class DockComponent {
     this.activateSlot.emit(index);
   }
 
-  onDropped(event: CdkDragDrop<string[], unknown, string>) {
+  onDropped(
+    event: CdkDragDrop<
+      (Instruction | Collection)[],
+      unknown,
+      Instruction | Collection
+    >
+  ) {
     if (!event.isPointerOverContainer) {
       const [, index] = event.previousContainer.id.split('slot-');
       this.removeFromSlot.emit(parseInt(index) - 1);

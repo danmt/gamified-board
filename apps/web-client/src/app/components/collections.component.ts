@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { Component, Inject } from '@angular/core';
 import { PushModule } from '@ngrx/component';
 import { BehaviorSubject } from 'rxjs';
+import { Collection } from '../utils';
 
 @Component({
   selector: 'pg-collections',
@@ -30,12 +31,12 @@ import { BehaviorSubject } from 'rxjs';
           *ngFor="let collection of collections; trackBy: trackBy"
           class="relative"
         >
-          <ng-container *ngIf="(isDragging$ | ngrxPush) === collection">
+          <ng-container *ngIf="(isDragging$ | ngrxPush) === collection.id">
             <div
               class="w-full h-full absolute z-20 bg-black bg-opacity-50"
             ></div>
             <div class="bg-yellow-500 p-0.5 w-11 h-11">
-              <img class="w-full h-full" [src]="collection" />
+              <img class="w-full h-full" [src]="collection.thumbnailUrl" />
             </div>
           </ng-container>
 
@@ -46,11 +47,11 @@ import { BehaviorSubject } from 'rxjs';
             (cdkDragEnded)="onDragEnd()"
           >
             <div class="bg-yellow-500 p-0.5 w-11 h-11">
-              <img class="w-full h-full" [src]="collection" />
+              <img class="w-full h-full" [src]="collection.thumbnailUrl" />
             </div>
 
             <div *cdkDragPreview class="bg-gray-500 p-1 w-12 h-12 rounded-md">
-              <img class="w-full h-full" [src]="collection" />
+              <img class="w-full h-full" [src]="collection.thumbnailUrl" />
             </div>
 
             <div *cdkDragPlaceholder></div>
@@ -65,14 +66,14 @@ import { BehaviorSubject } from 'rxjs';
 export class CollectionsComponent {
   private readonly _isDragging = new BehaviorSubject<string | null>(null);
   readonly isDragging$ = this._isDragging.asObservable();
-  collections: string[];
+  collections: Collection[];
 
-  constructor(@Inject(DIALOG_DATA) data: string[]) {
+  constructor(@Inject(DIALOG_DATA) data: Collection[]) {
     this.collections = data;
   }
 
   onDragStart(event: CdkDragStart) {
-    this._isDragging.next(event.source.data);
+    this._isDragging.next(event.source.data.id);
   }
 
   onDragEnd() {
