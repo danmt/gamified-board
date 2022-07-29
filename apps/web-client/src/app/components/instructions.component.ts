@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 import { Component, Inject } from '@angular/core';
 import { PushModule } from '@ngrx/component';
 import { BehaviorSubject } from 'rxjs';
-import { SquareButtonComponent } from './square-button.component';
+import { Instruction, Option } from '../utils';
 
 @Component({
   selector: 'pg-instructions',
@@ -31,12 +31,12 @@ import { SquareButtonComponent } from './square-button.component';
           *ngFor="let instruction of instructions; trackBy: trackBy"
           class="relative"
         >
-          <ng-container *ngIf="(isDragging$ | ngrxPush) === instruction">
+          <ng-container *ngIf="(isDragging$ | ngrxPush) === instruction.id">
             <div
               class="w-full h-full absolute z-20 bg-black bg-opacity-50"
             ></div>
             <div class="bg-yellow-500 p-0.5 w-11 h-11">
-              <img class="w-full h-full" [src]="instruction" />
+              <img class="w-full h-full" [src]="instruction.thumbnailUrl" />
             </div>
           </ng-container>
 
@@ -47,11 +47,11 @@ import { SquareButtonComponent } from './square-button.component';
             (cdkDragEnded)="onDragEnd()"
           >
             <div class="bg-yellow-500 p-0.5 w-11 h-11">
-              <img class="w-full h-full" [src]="instruction" />
+              <img class="w-full h-full" [src]="instruction.thumbnailUrl" />
             </div>
 
             <div *cdkDragPreview class="bg-gray-500 p-1 w-12 h-12 rounded-md">
-              <img class="w-full h-full" [src]="instruction" />
+              <img class="w-full h-full" [src]="instruction.thumbnailUrl" />
             </div>
 
             <div *cdkDragPlaceholder></div>
@@ -61,19 +61,19 @@ import { SquareButtonComponent } from './square-button.component';
     </div>
   `,
   standalone: true,
-  imports: [DragDropModule, CommonModule, SquareButtonComponent, PushModule],
+  imports: [DragDropModule, CommonModule, PushModule],
 })
 export class InstructionsComponent {
-  private readonly _isDragging = new BehaviorSubject<string | null>(null);
+  private readonly _isDragging = new BehaviorSubject<Option<string>>(null);
   readonly isDragging$ = this._isDragging.asObservable();
-  instructions: string[];
+  instructions: Instruction[];
 
-  constructor(@Inject(DIALOG_DATA) data: string[]) {
+  constructor(@Inject(DIALOG_DATA) data: Instruction[]) {
     this.instructions = data;
   }
 
   onDragStart(event: CdkDragStart) {
-    this._isDragging.next(event.source.data);
+    this._isDragging.next(event.source.data.id);
   }
 
   onDragEnd() {

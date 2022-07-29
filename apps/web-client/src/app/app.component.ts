@@ -1,24 +1,43 @@
 import { Dialog, DialogModule, DialogRef } from '@angular/cdk/dialog';
+import { moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import {
   GlobalPositionStrategy,
   NoopScrollStrategy,
 } from '@angular/cdk/overlay';
-import { Component, HostBinding, HostListener } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  HostBinding,
+  HostListener,
+} from '@angular/core';
+import { v4 as uuid } from 'uuid';
 import {
   BoardComponent,
   CollectionsComponent,
-  DockComponent,
   HotKey,
   InstructionsComponent,
+  MainDockComponent,
   NavigationWrapperComponent,
+  SelectedDockComponent,
 } from './components';
+import {
+  ActiveItem,
+  BoardInstruction,
+  BoardItemKind,
+  Collection,
+  Instruction,
+  Option,
+  SelectedBoardItem,
+} from './utils';
 
 @Component({
   selector: 'pg-root',
   template: `
     <pg-navigation-wrapper zPosition="z-30"></pg-navigation-wrapper>
-    <pg-dock
-      class="fixed bottom-0 w-full z-10"
+    <pg-main-dock
+      *ngIf="selected === null"
+      class="fixed bottom-0 z-10 -translate-x-1/2 left-1/2"
       [slots]="slots"
       [hotkeys]="hotkeys"
       [active]="active"
@@ -26,48 +45,152 @@ import {
       (removeFromSlot)="onRemoveFromSlot($event)"
       (activateSlot)="onSlotActivate($event)"
       (updateSlot)="onUpdateSlot($event.index, $event.data)"
-    ></pg-dock>
-    <pg-board></pg-board>
+    ></pg-main-dock>
+    <pg-selected-dock
+      *ngIf="selected !== null"
+      [selected]="selected"
+      class="fixed bottom-0 z-10 -translate-x-1/2 left-1/2"
+    ></pg-selected-dock>
+    <pg-board
+      [instructions]="boardInstructions"
+      [active]="active"
+      (useItem)="onUseItem($event.instructionId, $event.item)"
+      (selectItem)="
+        onSelectItem($event.instructionId, $event.itemId, $event.kind)
+      "
+      (moveDocument)="
+        onMoveDocument(
+          $event.instructionId,
+          $event.previousIndex,
+          $event.newIndex
+        )
+      "
+      (transferDocument)="
+        onTransferDocument(
+          $event.previousInstructionId,
+          $event.newInstructionId,
+          $event.previousIndex,
+          $event.newIndex
+        )
+      "
+      (moveTask)="
+        onMoveTask($event.instructionId, $event.previousIndex, $event.newIndex)
+      "
+      (transferTask)="
+        onTransferTask(
+          $event.previousInstructionId,
+          $event.newInstructionId,
+          $event.previousIndex,
+          $event.newIndex
+        )
+      "
+    ></pg-board>
   `,
   standalone: true,
   imports: [
+    CommonModule,
     DialogModule,
-    DockComponent,
+    MainDockComponent,
+    SelectedDockComponent,
     BoardComponent,
     NavigationWrapperComponent,
   ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AppComponent {
-  active: number | null = null;
-  instructions: string[] = [
-    'assets/power-1.png',
-    'assets/power-2.png',
-    'assets/power-3.png',
-    'assets/power-4.png',
-    'assets/power-5.png',
-    'assets/power-6.png',
-    'assets/power-7.png',
-    'assets/power-8.png',
+  active: Option<ActiveItem> = null;
+  selected: Option<SelectedBoardItem> = null;
+  boardInstructions: BoardInstruction[] = [
+    {
+      id: uuid(),
+      documents: [],
+      tasks: [],
+    },
+    {
+      id: uuid(),
+      documents: [],
+      tasks: [],
+    },
+    {
+      id: uuid(),
+      documents: [],
+      tasks: [],
+    },
+    {
+      id: uuid(),
+      documents: [],
+      tasks: [],
+    },
+    {
+      id: uuid(),
+      documents: [],
+      tasks: [],
+    },
+    {
+      id: uuid(),
+      documents: [],
+      tasks: [],
+    },
+    {
+      id: uuid(),
+      documents: [],
+      tasks: [],
+    },
+    {
+      id: uuid(),
+      documents: [],
+      tasks: [],
+    },
+    {
+      id: uuid(),
+      documents: [],
+      tasks: [],
+    },
+    {
+      id: uuid(),
+      documents: [],
+      tasks: [],
+    },
+    {
+      id: uuid(),
+      documents: [],
+      tasks: [],
+    },
+    {
+      id: uuid(),
+      documents: [],
+      tasks: [],
+    },
   ];
-  collections: string[] = [
-    'assets/power-9.png',
-    'assets/power-10.png',
-    'assets/power-11.png',
-    'assets/power-12.png',
-    'assets/power-13.png',
-    'assets/power-14.png',
-    'assets/power-15.png',
-    'assets/power-16.png',
+  instructions: Instruction[] = [
+    { id: uuid(), thumbnailUrl: 'assets/power-1.png' },
+    { id: uuid(), thumbnailUrl: 'assets/power-2.png' },
+    { id: uuid(), thumbnailUrl: 'assets/power-3.png' },
+    { id: uuid(), thumbnailUrl: 'assets/power-4.png' },
+    { id: uuid(), thumbnailUrl: 'assets/power-5.png' },
+    { id: uuid(), thumbnailUrl: 'assets/power-6.png' },
+    { id: uuid(), thumbnailUrl: 'assets/power-7.png' },
+    { id: uuid(), thumbnailUrl: 'assets/power-8.png' },
   ];
-  slots: (string | null)[] = [
-    'assets/power-1.png',
-    'assets/power-2.png',
-    'assets/power-3.png',
+  collections: Collection[] = [
+    { id: uuid(), thumbnailUrl: 'assets/power-9.png' },
+    { id: uuid(), thumbnailUrl: 'assets/power-10.png' },
+    { id: uuid(), thumbnailUrl: 'assets/power-11.png' },
+    { id: uuid(), thumbnailUrl: 'assets/power-12.png' },
+    { id: uuid(), thumbnailUrl: 'assets/power-13.png' },
+    { id: uuid(), thumbnailUrl: 'assets/power-14.png' },
+    { id: uuid(), thumbnailUrl: 'assets/power-15.png' },
+    { id: uuid(), thumbnailUrl: 'assets/power-16.png' },
+  ];
+  slots: Option<Collection | Instruction>[] = [
     null,
     null,
     null,
-    'assets/power-9.png',
-    'assets/power-10.png',
+    null,
+    null,
+    null,
+    null,
+    null,
     null,
     null,
     null,
@@ -124,18 +247,54 @@ export class AppComponent {
     },
   ];
 
-  collectionsDialogRef: DialogRef<
-    CollectionsComponent,
-    CollectionsComponent
-  > | null = null;
-  instructionsDialogRef: DialogRef<
-    InstructionsComponent,
-    InstructionsComponent
-  > | null = null;
+  collectionsDialogRef: Option<
+    DialogRef<CollectionsComponent, CollectionsComponent>
+  > = null;
+  instructionsDialogRef: Option<
+    DialogRef<InstructionsComponent, InstructionsComponent>
+  > = null;
   @HostBinding('class') class = 'block';
   @HostListener('document:keydown', ['$event'])
   onKeydown(event: KeyboardEvent) {
     switch (event.key) {
+      case 'Delete': {
+        if (this.selected !== null) {
+          if (confirm('Are you sure? This action cannot be reverted.')) {
+            const instructionIndex =
+              this.boardInstructions.findIndex(
+                ({ id }) => id === this.selected?.instructionId
+              ) ?? null;
+
+            if (instructionIndex !== null) {
+              this.boardInstructions = [
+                ...this.boardInstructions.slice(0, instructionIndex),
+                {
+                  ...this.boardInstructions[instructionIndex],
+                  // if kind is document remove the item from documents, otherwise dont change
+                  documents:
+                    this.selected.kind === 'document'
+                      ? this.boardInstructions[
+                          instructionIndex
+                        ].documents.filter(({ id }) => id !== this.selected?.id)
+                      : this.boardInstructions[instructionIndex].documents,
+                  // if kind is task remove the item from tasks, otherwise dont change
+                  tasks:
+                    this.selected.kind === 'task'
+                      ? this.boardInstructions[instructionIndex].tasks.filter(
+                          ({ id }) => id !== this.selected?.id
+                        )
+                      : this.boardInstructions[instructionIndex].tasks,
+                },
+                ...this.boardInstructions.slice(instructionIndex + 1),
+              ];
+            }
+
+            this.selected = null;
+          }
+        }
+
+        break;
+      }
       case 'Escape': {
         if (
           this.collectionsDialogRef !== null ||
@@ -145,8 +304,10 @@ export class AppComponent {
           this.collectionsDialogRef = null;
           this.instructionsDialogRef?.close();
           this.instructionsDialogRef = null;
-        } else {
+        } else if (this.active !== null) {
           this.active = null;
+        } else if (this.selected !== null) {
+          this.selected = null;
         }
 
         break;
@@ -210,16 +371,175 @@ export class AppComponent {
   }
 
   onSwapSlots(previousIndex: number, newIndex: number) {
-    const temp = this.slots[newIndex];
-    this.slots[newIndex] = this.slots[previousIndex];
-    this.slots[previousIndex] = temp;
+    moveItemInArray(this.slots, previousIndex, newIndex);
   }
 
   onSlotActivate(index: number) {
-    this.active = index;
+    const data = this.slots[index] ?? null;
+
+    if (data !== null) {
+      this.active = {
+        kind: index < 6 ? 'instruction' : 'collection',
+        data: data,
+      };
+    }
   }
 
-  onUpdateSlot(index: number, data: string) {
+  onUpdateSlot(index: number, data: Instruction | Collection) {
     this.slots[index] = data;
+  }
+
+  onUseItem(instructionId: string, item: Option<ActiveItem>) {
+    const instructionIndex =
+      this.boardInstructions.findIndex(({ id }) => id === instructionId) ??
+      null;
+
+    if (item !== null && instructionIndex !== null) {
+      this.active = null;
+
+      if (item.kind === 'instruction') {
+        this.boardInstructions[instructionIndex] = {
+          ...this.boardInstructions[instructionIndex],
+          tasks: [
+            ...this.boardInstructions[instructionIndex].tasks,
+            {
+              id: uuid(),
+              thumbnailUrl: item.data.thumbnailUrl,
+              kind: 'task',
+            },
+          ],
+        };
+      } else {
+        this.boardInstructions[instructionIndex] = {
+          ...this.boardInstructions[instructionIndex],
+          documents: [
+            ...this.boardInstructions[instructionIndex].documents,
+            {
+              id: uuid(),
+              thumbnailUrl: item.data.thumbnailUrl,
+              kind: 'document',
+            },
+          ],
+        };
+      }
+    }
+  }
+
+  onSelectItem(instructionId: string, itemId: string, kind: BoardItemKind) {
+    const instruction =
+      this.boardInstructions.find(({ id }) => id === instructionId) ?? null;
+
+    if (instruction !== null) {
+      if (kind === 'document') {
+        const document =
+          instruction.documents.find(({ id }) => id === itemId) ?? null;
+
+        if (document !== null) {
+          this.selected = { ...document, instructionId, kind };
+        }
+      } else if (kind === 'task') {
+        const task = instruction.tasks.find(({ id }) => id === itemId) ?? null;
+
+        if (task !== null) {
+          this.selected = { ...task, instructionId, kind };
+        }
+      }
+    }
+  }
+
+  onMoveDocument(
+    instructionId: string,
+    previousIndex: number,
+    newIndex: number
+  ) {
+    const instructionIndex = this.boardInstructions.findIndex(
+      ({ id }) => id === instructionId
+    );
+
+    if (instructionIndex === -1) {
+      throw new Error('Invalid instruction.');
+    }
+
+    moveItemInArray(
+      this.boardInstructions[instructionIndex].documents,
+      previousIndex,
+      newIndex
+    );
+  }
+
+  onTransferDocument(
+    previousInstructionId: string,
+    newInstructionId: string,
+    previousIndex: number,
+    newIndex: number
+  ) {
+    const previousInstructionIndex = this.boardInstructions.findIndex(
+      ({ id }) => id === previousInstructionId
+    );
+
+    if (previousInstructionIndex === -1) {
+      throw new Error('Invalid previous instruction.');
+    }
+
+    const newInstructionIndex = this.boardInstructions.findIndex(
+      ({ id }) => id === newInstructionId
+    );
+
+    if (newInstructionIndex === -1) {
+      throw new Error('Invalid new instruction.');
+    }
+
+    transferArrayItem(
+      this.boardInstructions[previousInstructionIndex].documents,
+      this.boardInstructions[newInstructionIndex].documents,
+      previousIndex,
+      newIndex
+    );
+  }
+
+  onMoveTask(instructionId: string, previousIndex: number, newIndex: number) {
+    const instructionIndex = this.boardInstructions.findIndex(
+      ({ id }) => id === instructionId
+    );
+
+    if (instructionIndex === -1) {
+      throw new Error('Invalid instruction.');
+    }
+
+    moveItemInArray(
+      this.boardInstructions[instructionIndex].tasks,
+      previousIndex,
+      newIndex
+    );
+  }
+
+  onTransferTask(
+    previousInstructionId: string,
+    newInstructionId: string,
+    previousIndex: number,
+    newIndex: number
+  ) {
+    const previousInstructionIndex = this.boardInstructions.findIndex(
+      ({ id }) => id === previousInstructionId
+    );
+
+    if (previousInstructionIndex === -1) {
+      throw new Error('Invalid previous instruction.');
+    }
+
+    const newInstructionIndex = this.boardInstructions.findIndex(
+      ({ id }) => id === newInstructionId
+    );
+
+    if (newInstructionIndex === -1) {
+      throw new Error('Invalid new instruction.');
+    }
+
+    transferArrayItem(
+      this.boardInstructions[previousInstructionIndex].tasks,
+      this.boardInstructions[newInstructionIndex].tasks,
+      previousIndex,
+      newIndex
+    );
   }
 }
