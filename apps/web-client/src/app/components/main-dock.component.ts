@@ -22,7 +22,7 @@ export interface HotKey {
   pure: true,
 })
 export class SlotHotkeyPipe implements PipeTransform {
-  transform(slotId: number, hotkeys: HotKey[]): string | null {
+  transform(slotId: number, hotkeys: HotKey[]): Option<string> {
     const hotkey = hotkeys.find((hotkey) => hotkey.slot === slotId);
 
     return hotkey?.key ?? null;
@@ -58,8 +58,8 @@ export class SlotHotkeyPipe implements PipeTransform {
   imports: [CommonModule],
 })
 export class SquareButtonComponent {
-  @Input() buttonId: string | null = null;
-  @Input() thumbnailUrl: string | null = null;
+  @Input() buttonId: Option<string> = null;
+  @Input() thumbnailUrl: Option<string> = null;
   @Input() isActive = false;
   @Output() activated = new EventEmitter();
   @Output() deactivated = new EventEmitter();

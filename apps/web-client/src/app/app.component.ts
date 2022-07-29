@@ -1,4 +1,5 @@
 import { Dialog, DialogModule, DialogRef } from '@angular/cdk/dialog';
+import { moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import {
   GlobalPositionStrategy,
   NoopScrollStrategy,
@@ -56,6 +57,32 @@ import {
       (useItem)="onUseItem($event.instructionId, $event.item)"
       (selectItem)="
         onSelectItem($event.instructionId, $event.itemId, $event.kind)
+      "
+      (moveDocument)="
+        onMoveDocument(
+          $event.instructionId,
+          $event.previousIndex,
+          $event.newIndex
+        )
+      "
+      (transferDocument)="
+        onTransferDocument(
+          $event.previousInstructionId,
+          $event.newInstructionId,
+          $event.previousIndex,
+          $event.newIndex
+        )
+      "
+      (moveTask)="
+        onMoveTask($event.instructionId, $event.previousIndex, $event.newIndex)
+      "
+      (transferTask)="
+        onTransferTask(
+          $event.previousInstructionId,
+          $event.newInstructionId,
+          $event.previousIndex,
+          $event.newIndex
+        )
       "
     ></pg-board>
   `,
@@ -380,6 +407,7 @@ export class AppComponent {
             {
               id: uuid(),
               thumbnailUrl: item.data.thumbnailUrl,
+              kind: 'task',
             },
           ],
         };
@@ -391,6 +419,7 @@ export class AppComponent {
             {
               id: uuid(),
               thumbnailUrl: item.data.thumbnailUrl,
+              kind: 'document',
             },
           ],
         };
@@ -418,5 +447,101 @@ export class AppComponent {
         }
       }
     }
+  }
+
+  onMoveDocument(
+    instructionId: string,
+    previousIndex: number,
+    newIndex: number
+  ) {
+    const instructionIndex = this.boardInstructions.findIndex(
+      ({ id }) => id === instructionId
+    );
+
+    if (instructionIndex === -1) {
+      throw new Error('Invalid instruction.');
+    }
+
+    moveItemInArray(
+      this.boardInstructions[instructionIndex].documents,
+      previousIndex,
+      newIndex
+    );
+  }
+
+  onTransferDocument(
+    previousInstructionId: string,
+    newInstructionId: string,
+    previousIndex: number,
+    newIndex: number
+  ) {
+    const previousInstructionIndex = this.boardInstructions.findIndex(
+      ({ id }) => id === previousInstructionId
+    );
+
+    if (previousInstructionIndex === -1) {
+      throw new Error('Invalid previous instruction.');
+    }
+
+    const newInstructionIndex = this.boardInstructions.findIndex(
+      ({ id }) => id === newInstructionId
+    );
+
+    if (newInstructionIndex === -1) {
+      throw new Error('Invalid new instruction.');
+    }
+
+    transferArrayItem(
+      this.boardInstructions[previousInstructionIndex].documents,
+      this.boardInstructions[newInstructionIndex].documents,
+      previousIndex,
+      newIndex
+    );
+  }
+
+  onMoveTask(instructionId: string, previousIndex: number, newIndex: number) {
+    const instructionIndex = this.boardInstructions.findIndex(
+      ({ id }) => id === instructionId
+    );
+
+    if (instructionIndex === -1) {
+      throw new Error('Invalid instruction.');
+    }
+
+    moveItemInArray(
+      this.boardInstructions[instructionIndex].tasks,
+      previousIndex,
+      newIndex
+    );
+  }
+
+  onTransferTask(
+    previousInstructionId: string,
+    newInstructionId: string,
+    previousIndex: number,
+    newIndex: number
+  ) {
+    const previousInstructionIndex = this.boardInstructions.findIndex(
+      ({ id }) => id === previousInstructionId
+    );
+
+    if (previousInstructionIndex === -1) {
+      throw new Error('Invalid previous instruction.');
+    }
+
+    const newInstructionIndex = this.boardInstructions.findIndex(
+      ({ id }) => id === newInstructionId
+    );
+
+    if (newInstructionIndex === -1) {
+      throw new Error('Invalid new instruction.');
+    }
+
+    transferArrayItem(
+      this.boardInstructions[previousInstructionIndex].tasks,
+      this.boardInstructions[newInstructionIndex].tasks,
+      previousIndex,
+      newIndex
+    );
   }
 }

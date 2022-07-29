@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
 import { map, Subscription } from 'rxjs';
-import { distance } from '../utils';
+import { distance, Option } from '../utils';
 import { BOARD_SIZE } from './board.component';
 
 @Component({
@@ -62,10 +62,10 @@ import { BOARD_SIZE } from './board.component';
 })
 export class NavigationWrapperComponent {
   @Input() zPosition = 'z-10';
-  moveRightSubscription: Subscription | null = null;
-  moveLeftSubscription: Subscription | null = null;
-  moveTopSubscription: Subscription | null = null;
-  moveBottomSubscription: Subscription | null = null;
+  moveRightSubscription: Option<Subscription> = null;
+  moveLeftSubscription: Option<Subscription> = null;
+  moveTopSubscription: Option<Subscription> = null;
+  moveBottomSubscription: Option<Subscription> = null;
 
   onMoveRight() {
     // 8000 total of the board

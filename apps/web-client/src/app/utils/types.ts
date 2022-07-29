@@ -12,11 +12,13 @@ export type BoardItemKind = 'document' | 'task';
 export interface BoardTask {
   id: string;
   thumbnailUrl: string;
+  kind: BoardItemKind;
 }
 
 export interface BoardDocument {
   id: string;
   thumbnailUrl: string;
+  kind: BoardItemKind;
 }
 
 export type SelectedBoardItem = (BoardTask | BoardDocument) & {

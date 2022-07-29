@@ -5,11 +5,23 @@ import {
   EventEmitter,
   Input,
   Output,
+  Pipe,
+  PipeTransform,
 } from '@angular/core';
-import { ActiveItem, BoardInstruction, BoardItemKind } from '../utils';
+import { ActiveItem, BoardInstruction, BoardItemKind, Option } from '../utils';
 import { RowComponent } from './row.component';
 
 export const BOARD_SIZE = 8000;
+
+@Pipe({
+  name: 'pgBoardItemDropLists',
+  standalone: true,
+})
+export class BoardItemDropListsPipe implements PipeTransform {
+  transform(value: BoardInstruction[], kind: BoardItemKind): string[] {
+    return value.map(({ id }) => `${id}-${kind}`);
+  }
+}
 
 @Component({
   selector: 'pg-board',
@@ -24,9 +36,31 @@ export const BOARD_SIZE = 8000;
         *ngFor="let instruction of instructions; trackBy: trackBy"
         [active]="active"
         [instruction]="instruction"
-        (useItem)="onUseItem($event.instructionId, $event.item)"
-        (selectItem)="
-          onSelectItem($event.instructionId, $event.itemId, $event.kind)
+        [documentsDropLists]="instructions | pgBoardItemDropLists: 'document'"
+        [tasksDropLists]="instructions | pgBoardItemDropLists: 'task'"
+        (useItem)="onUseItem(instruction.id, $event)"
+        (selectItem)="onSelectItem(instruction.id, $event.itemId, $event.kind)"
+        (moveDocument)="
+          onMoveDocument(instruction.id, $event.previousIndex, $event.newIndex)
+        "
+        (transferDocument)="
+          onTransferDocument(
+            $event.previousInstructionId,
+            $event.newInstructionId,
+            $event.previousIndex,
+            $event.newIndex
+          )
+        "
+        (moveTask)="
+          onMoveTask(instruction.id, $event.previousIndex, $event.newIndex)
+        "
+        (transferTask)="
+          onTransferTask(
+            $event.previousInstructionId,
+            $event.newInstructionId,
+            $event.previousIndex,
+            $event.newIndex
+          )
         "
       >
         <p>row {{ instruction.id }}</p>
@@ -34,12 +68,12 @@ export const BOARD_SIZE = 8000;
     </div>
   `,
   standalone: true,
-  imports: [RowComponent, CommonModule],
+  imports: [RowComponent, CommonModule, BoardItemDropListsPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BoardComponent {
-  @Input() instructions: BoardInstruction[] | null = null;
-  @Input() active: ActiveItem | null = null;
+  @Input() instructions: BoardInstruction[] = [];
+  @Input() active: Option<ActiveItem> = null;
   @Output() useItem = new EventEmitter<{
     instructionId: string;
     item: ActiveItem;
@@ -48,6 +82,28 @@ export class BoardComponent {
     instructionId: string;
     itemId: string;
     kind: BoardItemKind;
+  }>();
+  @Output() moveDocument = new EventEmitter<{
+    instructionId: string;
+    previousIndex: number;
+    newIndex: number;
+  }>();
+  @Output() transferDocument = new EventEmitter<{
+    previousInstructionId: string;
+    newInstructionId: string;
+    previousIndex: number;
+    newIndex: number;
+  }>();
+  @Output() moveTask = new EventEmitter<{
+    instructionId: string;
+    previousIndex: number;
+    newIndex: number;
+  }>();
+  @Output() transferTask = new EventEmitter<{
+    previousInstructionId: string;
+    newInstructionId: string;
+    previousIndex: number;
+    newIndex: number;
   }>();
   readonly boardSize = BOARD_SIZE;
   isHovered = false;
@@ -58,6 +114,54 @@ export class BoardComponent {
 
   onSelectItem(instructionId: string, itemId: string, kind: BoardItemKind) {
     this.selectItem.emit({ instructionId, itemId, kind });
+  }
+
+  onMoveDocument(
+    instructionId: string,
+    previousIndex: number,
+    newIndex: number
+  ) {
+    this.moveDocument.emit({
+      instructionId,
+      previousIndex,
+      newIndex,
+    });
+  }
+
+  onTransferDocument(
+    previousInstructionId: string,
+    newInstructionId: string,
+    previousIndex: number,
+    newIndex: number
+  ) {
+    this.transferDocument.emit({
+      previousInstructionId,
+      newInstructionId,
+      previousIndex,
+      newIndex,
+    });
+  }
+
+  onMoveTask(instructionId: string, previousIndex: number, newIndex: number) {
+    this.moveTask.emit({
+      instructionId,
+      previousIndex,
+      newIndex,
+    });
+  }
+
+  onTransferTask(
+    previousInstructionId: string,
+    newInstructionId: string,
+    previousIndex: number,
+    newIndex: number
+  ) {
+    this.transferTask.emit({
+      previousInstructionId,
+      newInstructionId,
+      previousIndex,
+      newIndex,
+    });
   }
 
   trackBy(_: number, item: BoardInstruction): string {

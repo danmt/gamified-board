@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { BoardDocument, BoardTask } from '../utils';
+import { BoardDocument, BoardTask, Option } from '../utils';
 
 @Component({
   selector: 'pg-selected-dock',
@@ -13,5 +13,5 @@ import { BoardDocument, BoardTask } from '../utils';
   standalone: true,
 })
 export class SelectedDockComponent {
-  @Input() selected: BoardDocument | BoardTask | null = null;
+  @Input() selected: Option<BoardDocument | BoardTask> = null;
 }

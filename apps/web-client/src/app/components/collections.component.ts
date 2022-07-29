@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 import { Component, Inject } from '@angular/core';
 import { PushModule } from '@ngrx/component';
 import { BehaviorSubject } from 'rxjs';
-import { Collection } from '../utils';
+import { Collection, Option } from '../utils';
 
 @Component({
   selector: 'pg-collections',
@@ -64,7 +64,7 @@ import { Collection } from '../utils';
   imports: [DragDropModule, CommonModule, PushModule],
 })
 export class CollectionsComponent {
-  private readonly _isDragging = new BehaviorSubject<string | null>(null);
+  private readonly _isDragging = new BehaviorSubject<Option<string>>(null);
   readonly isDragging$ = this._isDragging.asObservable();
   collections: Collection[];
 

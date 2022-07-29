@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 import { Component, Inject } from '@angular/core';
 import { PushModule } from '@ngrx/component';
 import { BehaviorSubject } from 'rxjs';
-import { Instruction } from '../utils';
+import { Instruction, Option } from '../utils';
 
 @Component({
   selector: 'pg-instructions',
@@ -64,7 +64,7 @@ import { Instruction } from '../utils';
   imports: [DragDropModule, CommonModule, PushModule],
 })
 export class InstructionsComponent {
-  private readonly _isDragging = new BehaviorSubject<string | null>(null);
+  private readonly _isDragging = new BehaviorSubject<Option<string>>(null);
   readonly isDragging$ = this._isDragging.asObservable();
   instructions: Instruction[];
 

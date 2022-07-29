@@ -1,3 +1,4 @@
+import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
 import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
@@ -7,7 +8,14 @@ import {
   Input,
   Output,
 } from '@angular/core';
-import { ActiveItem, BoardInstruction, BoardItemKind, Option } from '../utils';
+import {
+  ActiveItem,
+  BoardDocument,
+  BoardInstruction,
+  BoardItemKind,
+  BoardTask,
+  Option,
+} from '../utils';
 
 @Component({
   selector: 'pg-row',
@@ -17,89 +25,209 @@ import { ActiveItem, BoardInstruction, BoardItemKind, Option } from '../utils';
       class="text-2xl text-white uppercase relative h-full flex gap-4"
       (mouseenter)="isHovered = true"
       (mouseleave)="isHovered = false"
-      (click)="onUseItem(instruction.id, active)"
+      (click)="onUseItem(active)"
     >
       <ng-content></ng-content>
 
       <div class="w-80">
-        <p>Context</p>
+        <p>Documents</p>
 
-        <div class="flex gap-2 flex-wrap">
-          <button
-            class="p-2 bg-gray-800"
+        <div
+          [id]="instruction.id + '-document'"
+          cdkDropList
+          [cdkDropListData]="instruction.documents"
+          [cdkDropListConnectedTo]="documentsDropLists"
+          cdkDropListOrientation="horizontal"
+          (cdkDropListDropped)="onDropped($event)"
+          class="flex gap-2 flex-wrap h-full"
+        >
+          <div
             *ngFor="let document of instruction.documents; trackBy: trackBy"
-            (click)="onSelectItem(instruction.id, document.id, 'document')"
+            cdkDrag
+            [cdkDragData]="document"
+            class="bg-gray-800 relative w-11 h-11"
+            style="padding: 0.12rem"
           >
-            <img [src]="document.thumbnailUrl" class="w-12 h-12" />
-          </button>
+            <button
+              class="w-full h-full"
+              (click)="onSelectItem(document.id, 'document')"
+            >
+              <img class="w-full h-full" [src]="document.thumbnailUrl" />
+            </button>
+
+            <div *cdkDragPreview class="bg-gray-500 p-1 w-12 h-12 rounded-md">
+              <img class="w-full h-full" [src]="document.thumbnailUrl" />
+            </div>
+
+            <div
+              *cdkDragPlaceholder=""
+              class="bg-yellow-500 p-1 w-12 h-12 rounded-md"
+            >
+              <img class="w-full h-full" [src]="document.thumbnailUrl" />
+            </div>
+          </div>
 
           <div
             *ngIf="isHovered && active !== null && active.kind === 'collection'"
-            class="p-2 bg-gray-800"
+            class="bg-gray-800 relative w-11 h-11"
+            style="padding: 0.12rem"
           >
-            <img [src]="active.data.thumbnailUrl" class="w-12 h-12" />
+            <img class="w-full h-full" [src]="active.data.thumbnailUrl" />
           </div>
         </div>
       </div>
 
       <div class="w-80">
-        <p>Handler</p>
+        <p>Tasks</p>
 
-        <div class="flex gap-2 flex-wrap">
-          <button
-            class="p-2 bg-gray-800"
+        <div
+          [id]="instruction.id + '-task'"
+          cdkDropList
+          [cdkDropListData]="instruction.tasks"
+          [cdkDropListConnectedTo]="tasksDropLists"
+          cdkDropListOrientation="horizontal"
+          (cdkDropListDropped)="onDropped($event)"
+          class="flex gap-2 flex-wrap h-full"
+        >
+          <div
             *ngFor="let task of instruction.tasks; trackBy: trackBy"
-            (click)="onSelectItem(instruction.id, task.id, 'task')"
+            cdkDrag
+            [cdkDragData]="task"
+            class="bg-gray-800 relative w-11 h-11"
+            style="padding: 0.12rem"
           >
-            <img [src]="task.thumbnailUrl" class="w-12 h-12" />
-          </button>
+            <button
+              class="w-full h-full"
+              (click)="onSelectItem(task.id, 'task')"
+            >
+              <img class="w-full h-full" [src]="task.thumbnailUrl" />
+            </button>
+
+            <div *cdkDragPreview class="bg-gray-500 p-1 w-12 h-12 rounded-md">
+              <img class="w-full h-full" [src]="task.thumbnailUrl" />
+            </div>
+
+            <div
+              *cdkDragPlaceholder=""
+              class="bg-yellow-500 p-1 w-12 h-12 rounded-md"
+            >
+              <img class="w-full h-full" [src]="task.thumbnailUrl" />
+            </div>
+          </div>
 
           <div
             *ngIf="
               isHovered && active !== null && active.kind === 'instruction'
             "
-            class="p-2 bg-gray-800"
+            class="bg-gray-800 relative w-11 h-11"
+            style="padding: 0.12rem"
           >
-            <img [src]="active.data.thumbnailUrl" class="w-12 h-12" />
+            <img class="w-full h-full" [src]="active.data.thumbnailUrl" />
           </div>
         </div>
       </div>
     </div>
   `,
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, DragDropModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RowComponent {
-  @Input() active: ActiveItem | null = null;
-  @Input() instruction: BoardInstruction | null = null;
-  @Output() useItem = new EventEmitter<{
-    instructionId: string;
-    item: ActiveItem;
-  }>();
+  @Input() active: Option<ActiveItem> = null;
+  @Input() instruction: Option<BoardInstruction> = null;
+  @Input() documentsDropLists: string[] = [];
+  @Input() tasksDropLists: string[] = [];
+  @Output() useItem = new EventEmitter<ActiveItem>();
   @Output() selectItem = new EventEmitter<{
-    instructionId: string;
     itemId: string;
     kind: BoardItemKind;
+  }>();
+  @Output() moveDocument = new EventEmitter<{
+    previousIndex: number;
+    newIndex: number;
+  }>();
+  @Output() transferDocument = new EventEmitter<{
+    previousInstructionId: string;
+    newInstructionId: string;
+    previousIndex: number;
+    newIndex: number;
+  }>();
+  @Output() moveTask = new EventEmitter<{
+    previousIndex: number;
+    newIndex: number;
+  }>();
+  @Output() transferTask = new EventEmitter<{
+    previousInstructionId: string;
+    newInstructionId: string;
+    previousIndex: number;
+    newIndex: number;
   }>();
   isHovered = false;
   @HostBinding('class') class =
     'block w-full h-64 bg-blue-300 border border-blue-500 bg-bp-bricks ';
 
-  onUseItem(instructionId: string, active: Option<ActiveItem>) {
+  onUseItem(active: Option<ActiveItem>) {
     if (active !== null) {
-      this.useItem.emit({
-        instructionId,
-        item: active,
-      });
+      this.useItem.emit(active);
     }
   }
 
-  onSelectItem(instructionId: string, itemId: string, kind: BoardItemKind) {
-    this.selectItem.emit({ instructionId, itemId, kind });
+  onSelectItem(itemId: string, kind: BoardItemKind) {
+    this.selectItem.emit({ itemId, kind });
   }
 
   trackBy(index: number): number {
     return index;
+  }
+
+  onDropped(
+    event: CdkDragDrop<
+      (BoardTask | BoardDocument)[],
+      unknown,
+      BoardTask | BoardDocument
+    >
+  ) {
+    switch (event.item.data.kind) {
+      case 'document': {
+        if (event.container.id === event.previousContainer.id) {
+          this.moveDocument.emit({
+            previousIndex: event.previousIndex,
+            newIndex: event.currentIndex,
+          });
+        } else {
+          const previousInstructionId =
+            event.previousContainer.id.split('-document')[0];
+          const newInstructionId = event.container.id.split('-document')[0];
+          this.transferDocument.emit({
+            previousInstructionId,
+            newInstructionId,
+            previousIndex: event.previousIndex,
+            newIndex: event.currentIndex,
+          });
+        }
+
+        break;
+      }
+      case 'task': {
+        if (event.container.id === event.previousContainer.id) {
+          this.moveTask.emit({
+            previousIndex: event.previousIndex,
+            newIndex: event.currentIndex,
+          });
+        } else {
+          const previousInstructionId =
+            event.previousContainer.id.split('-task')[0];
+          const newInstructionId = event.container.id.split('-task')[0];
+          this.transferTask.emit({
+            previousInstructionId,
+            newInstructionId,
+            previousIndex: event.previousIndex,
+            newIndex: event.currentIndex,
+          });
+        }
+
+        break;
+      }
+    }
   }
 }
