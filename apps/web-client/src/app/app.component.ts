@@ -371,9 +371,7 @@ export class AppComponent {
   }
 
   onSwapSlots(previousIndex: number, newIndex: number) {
-    const temp = this.slots[newIndex];
-    this.slots[newIndex] = this.slots[previousIndex];
-    this.slots[previousIndex] = temp;
+    moveItemInArray(this.slots, previousIndex, newIndex);
   }
 
   onSlotActivate(index: number) {
