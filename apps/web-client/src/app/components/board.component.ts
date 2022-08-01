@@ -30,7 +30,6 @@ export class BoardItemDropListsPipe implements PipeTransform {
       [ngStyle]="{ width: boardSize + 'px' }"
       (mouseover)="isHovered = true"
       (mouseout)="isHovered = false"
-      class="relative"
     >
       <pg-row
         *ngFor="let instruction of instructions; trackBy: trackBy"

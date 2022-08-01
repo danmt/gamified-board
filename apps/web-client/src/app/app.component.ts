@@ -10,6 +10,7 @@ import {
   Component,
   HostBinding,
   HostListener,
+  inject,
 } from '@angular/core';
 import { v4 as uuid } from 'uuid';
 import {
@@ -21,12 +22,14 @@ import {
   NavigationWrapperComponent,
   SelectedDockComponent,
 } from './components';
+import { PluginsService } from './plugins';
 import {
   ActiveItem,
   BoardInstruction,
   BoardItemKind,
   Collection,
   Instruction,
+  MainDockSlots,
   Option,
   SelectedBoardItem,
 } from './utils';
@@ -98,6 +101,9 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AppComponent {
+  private readonly _pluginsService = inject(PluginsService);
+  private readonly _dialog = inject(Dialog);
+
   active: Option<ActiveItem> = null;
   selected: Option<SelectedBoardItem> = null;
   boardInstructions: BoardInstruction[] = [
@@ -162,27 +168,8 @@ export class AppComponent {
       tasks: [],
     },
   ];
-  instructions: Instruction[] = [
-    { id: uuid(), thumbnailUrl: 'assets/power-1.png' },
-    { id: uuid(), thumbnailUrl: 'assets/power-2.png' },
-    { id: uuid(), thumbnailUrl: 'assets/power-3.png' },
-    { id: uuid(), thumbnailUrl: 'assets/power-4.png' },
-    { id: uuid(), thumbnailUrl: 'assets/power-5.png' },
-    { id: uuid(), thumbnailUrl: 'assets/power-6.png' },
-    { id: uuid(), thumbnailUrl: 'assets/power-7.png' },
-    { id: uuid(), thumbnailUrl: 'assets/power-8.png' },
-  ];
-  collections: Collection[] = [
-    { id: uuid(), thumbnailUrl: 'assets/power-9.png' },
-    { id: uuid(), thumbnailUrl: 'assets/power-10.png' },
-    { id: uuid(), thumbnailUrl: 'assets/power-11.png' },
-    { id: uuid(), thumbnailUrl: 'assets/power-12.png' },
-    { id: uuid(), thumbnailUrl: 'assets/power-13.png' },
-    { id: uuid(), thumbnailUrl: 'assets/power-14.png' },
-    { id: uuid(), thumbnailUrl: 'assets/power-15.png' },
-    { id: uuid(), thumbnailUrl: 'assets/power-16.png' },
-  ];
-  slots: Option<Collection | Instruction>[] = [
+  plugins = this._pluginsService.plugins;
+  slots: MainDockSlots = [
     null,
     null,
     null,
@@ -198,51 +185,51 @@ export class AppComponent {
   ];
   hotkeys: HotKey[] = [
     {
-      slot: 1,
+      slot: 0,
       key: 'q',
     },
     {
-      slot: 2,
+      slot: 1,
       key: 'w',
     },
     {
-      slot: 3,
+      slot: 2,
       key: 'e',
     },
     {
-      slot: 4,
+      slot: 3,
       key: 'r',
     },
     {
-      slot: 5,
+      slot: 4,
       key: 't',
     },
     {
-      slot: 6,
+      slot: 5,
       key: 'y',
     },
     {
-      slot: 7,
+      slot: 6,
       key: '1',
     },
     {
-      slot: 8,
+      slot: 7,
       key: '2',
     },
     {
-      slot: 9,
+      slot: 8,
       key: '3',
     },
     {
-      slot: 10,
+      slot: 9,
       key: '4',
     },
     {
-      slot: 11,
+      slot: 10,
       key: '5',
     },
     {
-      slot: 12,
+      slot: 11,
       key: '6',
     },
   ];
@@ -315,7 +302,7 @@ export class AppComponent {
       case '.': {
         if (this.collectionsDialogRef === null) {
           this.collectionsDialogRef = this._dialog.open(CollectionsComponent, {
-            data: this.collections,
+            data: this._pluginsService.plugins,
             width: '300px',
             height: '500px',
             hasBackdrop: false,
@@ -340,7 +327,7 @@ export class AppComponent {
           this.instructionsDialogRef = this._dialog.open(
             InstructionsComponent,
             {
-              data: this.instructions,
+              data: this._pluginsService.plugins,
               width: '300px',
               height: '500px',
               hasBackdrop: false,
@@ -364,14 +351,14 @@ export class AppComponent {
     }
   }
 
-  constructor(private readonly _dialog: Dialog) {}
-
   onRemoveFromSlot(index: number) {
     this.slots[index] = null;
   }
 
   onSwapSlots(previousIndex: number, newIndex: number) {
-    moveItemInArray(this.slots, previousIndex, newIndex);
+    const temp = this.slots[newIndex];
+    this.slots[newIndex] = this.slots[previousIndex];
+    this.slots[previousIndex] = temp;
   }
 
   onSlotActivate(index: number) {

@@ -9,7 +9,13 @@ import {
   Pipe,
   PipeTransform,
 } from '@angular/core';
-import { ActiveItem, Collection, Instruction, Option } from '../utils';
+import {
+  ActiveItem,
+  Collection,
+  Instruction,
+  MainDockSlots,
+  Option,
+} from '../utils';
 
 export interface HotKey {
   slot: number;
@@ -33,26 +39,28 @@ export class SlotHotkeyPipe implements PipeTransform {
   selector: 'pg-square-button',
   template: `
     <button
-      class="w-full h-full"
+      *ngIf="thumbnailUrl !== null; else emptySlot"
       (click)="activate()"
       (mouseover)="onMouseOver()"
       (mouseout)="onMouseOut()"
+      [ngClass]="{
+        'opacity-80 border-l-gray-500 border-t-gray-400 border-r-gray-600 border-b-gray-700':
+          !isActive && !isHovered,
+        'opacity-90 border-l-gray-400 border-t-gray-300 border-r-gray-500 border-b-gray-600':
+          !isActive && isHovered,
+        'opacity-100 border-l-gray-300 border-t-gray-200 border-r-gray-400 border-b-gray-500':
+          isActive
+      }"
+      style="border-width: 0.2rem; margin: 0.12rem"
     >
-      <img
-        *ngIf="thumbnailUrl !== null"
-        [src]="thumbnailUrl"
-        class="w-full h-full box-border"
-        style="border-width: 0.2rem"
-        [ngClass]="{
-          'opacity-80 border-l-gray-500 border-t-gray-400 border-r-gray-600 border-b-gray-700':
-            !isActive && !isHovered,
-          'opacity-90 border-l-gray-400 border-t-gray-300 border-r-gray-500 border-b-gray-600':
-            !isActive && isHovered,
-          'opacity-100 border-l-gray-300 border-t-gray-200 border-r-gray-400 border-b-gray-500':
-            isActive
-        }"
-      />
+      <figure>
+        <img [src]="thumbnailUrl" class="w-9 h-9 object-cover" />
+      </figure>
     </button>
+
+    <ng-template #emptySlot>
+      <div class="w-9 h-9"></div>
+    </ng-template>
   `,
   standalone: true,
   imports: [CommonModule],
@@ -93,15 +101,15 @@ export class SquareButtonComponent {
 
         <div cdkDropListGroup class="flex gap-2 mb-2">
           <div
-            id="slot-1"
+            id="slot-0"
             cdkDropList
             [cdkDropListData]="slots[0] ? [slots[0]] : []"
             (cdkDropListDropped)="onDropped($event)"
-            class="bg-gray-800 relative w-11 h-11"
-            style="padding: 0.12rem"
+            class="bg-gray-800 relative"
+            style="width: 2.89rem; height: 2.89rem"
           >
             <span
-              *ngIf="1 | pgSlotHotkey: hotkeys as hotkey"
+              *ngIf="0 | pgSlotHotkey: hotkeys as hotkey"
               class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
               style="font-size: 0.5rem; line-height: 0.5rem"
             >
@@ -110,14 +118,13 @@ export class SquareButtonComponent {
 
             <div cdkDrag [cdkDragData]="slots[0]">
               <pg-square-button
-                *ngIf="slots[0] !== null"
                 [isActive]="active?.data === slots[0]"
-                [thumbnailUrl]="slots[0].thumbnailUrl"
+                [thumbnailUrl]="slots[0]?.thumbnailUrl ?? null"
                 (activated)="onActivated(0)"
               ></pg-square-button>
 
-              <div *cdkDragPreview class="bg-gray-500 p-1 w-12 h-12 rounded-md">
-                <img class="w-full h-full" [src]="slots[0]" />
+              <div *cdkDragPreview class="bg-gray-500 p-1 rounded-md">
+                <img class="w-full h-full" [src]="slots[0]?.thumbnailUrl" />
               </div>
 
               <div *cdkDragPlaceholder></div>
@@ -125,15 +132,15 @@ export class SquareButtonComponent {
           </div>
 
           <div
-            id="slot-2"
+            id="slot-1"
             cdkDropList
             [cdkDropListData]="slots[1] ? [slots[1]] : []"
             (cdkDropListDropped)="onDropped($event)"
-            class="bg-gray-800 relative w-11 h-11"
-            style="padding: 0.12rem"
+            class="bg-gray-800 relative"
+            style="width: 2.89rem; height: 2.89rem"
           >
             <span
-              *ngIf="2 | pgSlotHotkey: hotkeys as hotkey"
+              *ngIf="1 | pgSlotHotkey: hotkeys as hotkey"
               class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
               style="font-size: 0.5rem; line-height: 0.5rem"
             >
@@ -149,7 +156,38 @@ export class SquareButtonComponent {
               ></pg-square-button>
 
               <div *cdkDragPreview class="bg-gray-500 p-1 w-12 h-12 rounded-md">
-                <img class="w-full h-full" [src]="slots[1]" />
+                <img class="w-full h-full" [src]="slots[1]?.thumbnailUrl" />
+              </div>
+
+              <div *cdkDragPlaceholder></div>
+            </div>
+          </div>
+
+          <div
+            id="slot-2"
+            cdkDropList
+            [cdkDropListData]="slots[2] ? [slots[2]] : []"
+            (cdkDropListDropped)="onDropped($event)"
+            class="bg-gray-800 relative"
+            style="width: 2.89rem; height: 2.89rem"
+          >
+            <span
+              *ngIf="2 | pgSlotHotkey: hotkeys as hotkey"
+              class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
+              style="font-size: 0.5rem; line-height: 0.5rem"
+            >
+              {{ hotkey }}
+            </span>
+
+            <div cdkDrag [cdkDragData]="slots[2]">
+              <pg-square-button
+                [isActive]="active?.data === slots[2]"
+                [thumbnailUrl]="slots[2]?.thumbnailUrl ?? null"
+                (activated)="onActivated(2)"
+              ></pg-square-button>
+
+              <div *cdkDragPreview class="bg-gray-500 p-1 rounded-md">
+                <img class="w-full h-full" [src]="slots[2]?.thumbnailUrl" />
               </div>
 
               <div *cdkDragPlaceholder></div>
@@ -159,10 +197,10 @@ export class SquareButtonComponent {
           <div
             id="slot-3"
             cdkDropList
-            [cdkDropListData]="slots[2] ? [slots[2]] : []"
+            [cdkDropListData]="slots[3] ? [slots[3]] : []"
             (cdkDropListDropped)="onDropped($event)"
-            class="bg-gray-800 relative w-11 h-11"
-            style="padding: 0.12rem"
+            class="bg-gray-800 relative"
+            style="width: 2.89rem; height: 2.89rem"
           >
             <span
               *ngIf="3 | pgSlotHotkey: hotkeys as hotkey"
@@ -172,16 +210,15 @@ export class SquareButtonComponent {
               {{ hotkey }}
             </span>
 
-            <div cdkDrag [cdkDragData]="slots[2]">
+            <div cdkDrag [cdkDragData]="slots[3]">
               <pg-square-button
-                *ngIf="slots[2] !== null"
-                [isActive]="active?.data === slots[2]"
-                [thumbnailUrl]="slots[2].thumbnailUrl"
-                (activated)="onActivated(2)"
+                [isActive]="active?.data === slots[3]"
+                [thumbnailUrl]="slots[3]?.thumbnailUrl ?? null"
+                (activated)="onActivated(3)"
               ></pg-square-button>
 
-              <div *cdkDragPreview class="bg-gray-500 p-1 w-12 h-12 rounded-md">
-                <img class="w-full h-full" [src]="slots[2]" />
+              <div *cdkDragPreview class="bg-gray-500 p-1 rounded-md">
+                <img class="w-full h-full" [src]="slots[3]?.thumbnailUrl" />
               </div>
 
               <div *cdkDragPlaceholder></div>
@@ -191,10 +228,10 @@ export class SquareButtonComponent {
           <div
             id="slot-4"
             cdkDropList
-            [cdkDropListData]="slots[3] ? [slots[3]] : []"
+            [cdkDropListData]="slots[4] ? [slots[4]] : []"
             (cdkDropListDropped)="onDropped($event)"
-            class="bg-gray-800 relative w-11 h-11"
-            style="padding: 0.12rem"
+            class="bg-gray-800 relative"
+            style="width: 2.89rem; height: 2.89rem"
           >
             <span
               *ngIf="4 | pgSlotHotkey: hotkeys as hotkey"
@@ -204,16 +241,15 @@ export class SquareButtonComponent {
               {{ hotkey }}
             </span>
 
-            <div cdkDrag [cdkDragData]="slots[3]">
+            <div cdkDrag [cdkDragData]="slots[4]">
               <pg-square-button
-                *ngIf="slots[3] !== null"
-                [isActive]="active?.data === slots[3]"
-                [thumbnailUrl]="slots[3].thumbnailUrl"
-                (activated)="onActivated(3)"
+                [isActive]="active?.data === slots[4]"
+                [thumbnailUrl]="slots[4]?.thumbnailUrl ?? null"
+                (activated)="onActivated(4)"
               ></pg-square-button>
 
-              <div *cdkDragPreview class="bg-gray-500 p-1 w-12 h-12 rounded-md">
-                <img class="w-full h-full" [src]="slots[3]" />
+              <div *cdkDragPreview class="bg-gray-500 p-1 rounded-md">
+                <img class="w-full h-full" [src]="slots[4]?.thumbnailUrl" />
               </div>
 
               <div *cdkDragPlaceholder></div>
@@ -223,10 +259,10 @@ export class SquareButtonComponent {
           <div
             id="slot-5"
             cdkDropList
-            [cdkDropListData]="slots[4] ? [slots[4]] : []"
+            [cdkDropListData]="slots[5] ? [slots[5]] : []"
             (cdkDropListDropped)="onDropped($event)"
-            class="bg-gray-800 relative w-11 h-11"
-            style="padding: 0.12rem"
+            class="bg-gray-800 relative"
+            style="width: 2.89rem; height: 2.89rem"
           >
             <span
               *ngIf="5 | pgSlotHotkey: hotkeys as hotkey"
@@ -236,48 +272,15 @@ export class SquareButtonComponent {
               {{ hotkey }}
             </span>
 
-            <div cdkDrag [cdkDragData]="slots[4]">
-              <pg-square-button
-                *ngIf="slots[4] !== null"
-                [isActive]="active?.data === slots[4]"
-                [thumbnailUrl]="slots[4].thumbnailUrl"
-                (activated)="onActivated(4)"
-              ></pg-square-button>
-
-              <div *cdkDragPreview class="bg-gray-500 p-1 w-12 h-12 rounded-md">
-                <img class="w-full h-full" [src]="slots[4]" />
-              </div>
-
-              <div *cdkDragPlaceholder></div>
-            </div>
-          </div>
-
-          <div
-            id="slot-6"
-            cdkDropList
-            [cdkDropListData]="slots[5] ? [slots[5]] : []"
-            (cdkDropListDropped)="onDropped($event)"
-            class="bg-gray-800 relative w-11 h-11"
-            style="padding: 0.12rem"
-          >
-            <span
-              *ngIf="6 | pgSlotHotkey: hotkeys as hotkey"
-              class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
-              style="font-size: 0.5rem; line-height: 0.5rem"
-            >
-              {{ hotkey }}
-            </span>
-
             <div cdkDrag [cdkDragData]="slots[5]">
               <pg-square-button
-                *ngIf="slots[5] !== null"
                 [isActive]="active?.data === slots[5]"
-                [thumbnailUrl]="slots[5].thumbnailUrl"
+                [thumbnailUrl]="slots[5]?.thumbnailUrl ?? null"
                 (activated)="onActivated(5)"
               ></pg-square-button>
 
-              <div *cdkDragPreview class="bg-gray-500 p-1 w-12 h-12 rounded-md">
-                <img class="w-full h-full" [src]="slots[5]" />
+              <div *cdkDragPreview class="bg-gray-500 p-1 rounded-md">
+                <img class="w-full h-full" [src]="slots[5]?.thumbnailUrl" />
               </div>
 
               <div *cdkDragPlaceholder></div>
@@ -292,15 +295,15 @@ export class SquareButtonComponent {
         <div cdkDropListGroup>
           <div class="flex gap-2 mb-2">
             <div
-              id="slot-7"
+              id="slot-6"
               cdkDropList
               [cdkDropListData]="slots[6] ? [slots[6]] : []"
               (cdkDropListDropped)="onDropped($event)"
-              class="bg-gray-800 relative w-11 h-11"
-              style="padding: 0.12rem"
+              class="bg-gray-800 relative"
+              style="width: 2.89rem; height: 2.89rem"
             >
               <span
-                *ngIf="7 | pgSlotHotkey: hotkeys as hotkey"
+                *ngIf="6 | pgSlotHotkey: hotkeys as hotkey"
                 class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
                 style="font-size: 0.5rem; line-height: 0.5rem"
               >
@@ -319,7 +322,7 @@ export class SquareButtonComponent {
                   *cdkDragPreview
                   class="bg-gray-500 p-1 w-12 h-12 rounded-md"
                 >
-                  <img class="w-full h-full" [src]="slots[6]" />
+                  <img class="w-full h-full" [src]="slots[6]?.thumbnailUrl" />
                 </div>
 
                 <div *cdkDragPlaceholder></div>
@@ -327,15 +330,15 @@ export class SquareButtonComponent {
             </div>
 
             <div
-              id="slot-8"
+              id="slot-7"
               cdkDropList
               [cdkDropListData]="slots[7] ? [slots[7]] : []"
               (cdkDropListDropped)="onDropped($event)"
-              class="bg-gray-800 relative w-11 h-11"
-              style="padding: 0.12rem"
+              class="bg-gray-800 relative"
+              style="width: 2.89rem; height: 2.89rem"
             >
               <span
-                *ngIf="8 | pgSlotHotkey: hotkeys as hotkey"
+                *ngIf="7 | pgSlotHotkey: hotkeys as hotkey"
                 class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
                 style="font-size: 0.5rem; line-height: 0.5rem"
               >
@@ -354,7 +357,7 @@ export class SquareButtonComponent {
                   *cdkDragPreview
                   class="bg-gray-500 p-1 w-12 h-12 rounded-md"
                 >
-                  <img class="w-full h-full" [src]="slots[7]" />
+                  <img class="w-full h-full" [src]="slots[7]?.thumbnailUrl" />
                 </div>
 
                 <div *cdkDragPlaceholder></div>
@@ -362,15 +365,15 @@ export class SquareButtonComponent {
             </div>
 
             <div
-              id="slot-9"
+              id="slot-8"
               cdkDropList
               [cdkDropListData]="slots[8] ? [slots[8]] : []"
               (cdkDropListDropped)="onDropped($event)"
-              class="bg-gray-800 relative w-11 h-11"
-              style="padding: 0.12rem"
+              class="bg-gray-800 relative"
+              style="width: 2.89rem; height: 2.89rem"
             >
               <span
-                *ngIf="9 | pgSlotHotkey: hotkeys as hotkey"
+                *ngIf="8 | pgSlotHotkey: hotkeys as hotkey"
                 class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
                 style="font-size: 0.5rem; line-height: 0.5rem"
               >
@@ -389,7 +392,7 @@ export class SquareButtonComponent {
                   *cdkDragPreview
                   class="bg-gray-500 p-1 w-12 h-12 rounded-md"
                 >
-                  <img class="w-full h-full" [src]="slots[8]" />
+                  <img class="w-full h-full" [src]="slots[8]?.thumbnailUrl" />
                 </div>
 
                 <div *cdkDragPlaceholder></div>
@@ -399,15 +402,15 @@ export class SquareButtonComponent {
 
           <div class="flex gap-2 mb-2">
             <div
-              id="slot-10"
+              id="slot-9"
               cdkDropList
               [cdkDropListData]="slots[9] ? [slots[9]] : []"
               (cdkDropListDropped)="onDropped($event)"
-              class="bg-gray-800 relative w-11 h-11"
-              style="padding: 0.12rem"
+              class="bg-gray-800 relative"
+              style="width: 2.89rem; height: 2.89rem"
             >
               <span
-                *ngIf="10 | pgSlotHotkey: hotkeys as hotkey"
+                *ngIf="9 | pgSlotHotkey: hotkeys as hotkey"
                 class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
                 style="font-size: 0.5rem; line-height: 0.5rem"
               >
@@ -426,7 +429,7 @@ export class SquareButtonComponent {
                   *cdkDragPreview
                   class="bg-gray-500 p-1 w-12 h-12 rounded-md"
                 >
-                  <img class="w-full h-full" [src]="slots[9]" />
+                  <img class="w-full h-full" [src]="slots[9]?.thumbnailUrl" />
                 </div>
 
                 <div *cdkDragPlaceholder></div>
@@ -434,15 +437,15 @@ export class SquareButtonComponent {
             </div>
 
             <div
-              id="slot-11"
+              id="slot-10"
               cdkDropList
               [cdkDropListData]="slots[10] ? [slots[10]] : []"
               (cdkDropListDropped)="onDropped($event)"
-              class="bg-gray-800 relative w-11 h-11"
-              style="padding: 0.12rem"
+              class="bg-gray-800 relative"
+              style="width: 2.89rem; height: 2.89rem"
             >
               <span
-                *ngIf="11 | pgSlotHotkey: hotkeys as hotkey"
+                *ngIf="10 | pgSlotHotkey: hotkeys as hotkey"
                 class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
                 style="font-size: 0.5rem; line-height: 0.5rem"
               >
@@ -461,7 +464,7 @@ export class SquareButtonComponent {
                   *cdkDragPreview
                   class="bg-gray-500 p-1 w-12 h-12 rounded-md"
                 >
-                  <img class="w-full h-full" [src]="slots[10]" />
+                  <img class="w-full h-full" [src]="slots[10]?.thumbnailUrl" />
                 </div>
 
                 <div *cdkDragPlaceholder></div>
@@ -469,15 +472,15 @@ export class SquareButtonComponent {
             </div>
 
             <div
-              id="slot-12"
+              id="slot-11"
               cdkDropList
               [cdkDropListData]="slots[11] ? [slots[11]] : []"
               (cdkDropListDropped)="onDropped($event)"
-              class="bg-gray-800 relative w-11 h-11"
-              style="padding: 0.12rem"
+              class="bg-gray-800 relative"
+              style="width: 2.89rem; height: 2.89rem"
             >
               <span
-                *ngIf="12 | pgSlotHotkey: hotkeys as hotkey"
+                *ngIf="11 | pgSlotHotkey: hotkeys as hotkey"
                 class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
                 style="font-size: 0.5rem; line-height: 0.5rem"
               >
@@ -496,7 +499,7 @@ export class SquareButtonComponent {
                   *cdkDragPreview
                   class="bg-gray-500 p-1 w-12 h-12 rounded-md"
                 >
-                  <img class="w-full h-full" [src]="slots[11]" />
+                  <img class="w-full h-full" [src]="slots[11]?.thumbnailUrl" />
                 </div>
 
                 <div *cdkDragPlaceholder></div>
@@ -523,7 +526,20 @@ export class SquareButtonComponent {
   ],
 })
 export class MainDockComponent {
-  @Input() slots: Option<Instruction | Collection>[] = [];
+  @Input() slots: MainDockSlots = [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+  ];
   @Input() hotkeys: HotKey[] = [];
   @Input() active: Option<ActiveItem> = null;
   @Output() swapSlots = new EventEmitter<[number, number]>();
@@ -537,8 +553,8 @@ export class MainDockComponent {
   onKeydown(event: KeyboardEvent) {
     const hotkey = this.hotkeys.find((hotkey) => hotkey.key === event.key);
 
-    if (hotkey !== undefined && this.slots[hotkey.slot - 1] !== null) {
-      this.activateSlot.emit(hotkey.slot - 1);
+    if (hotkey !== undefined && this.slots[hotkey.slot] !== null) {
+      this.activateSlot.emit(hotkey.slot);
     }
   }
 
@@ -547,32 +563,27 @@ export class MainDockComponent {
   }
 
   onDropped(
-    event: CdkDragDrop<
-      (Instruction | Collection)[],
-      unknown,
-      Instruction | Collection
-    >
+    event:
+      | CdkDragDrop<Instruction[], unknown, Instruction>
+      | CdkDragDrop<Collection[], unknown, Collection>
   ) {
     if (!event.isPointerOverContainer) {
       const [, index] = event.previousContainer.id.split('slot-');
-      this.removeFromSlot.emit(parseInt(index) - 1);
+      this.removeFromSlot.emit(parseInt(index));
     } else if (
-      event.previousContainer.id === 'instructions' ||
-      event.previousContainer.id === 'collections'
+      event.previousContainer.id.includes('instructions') ||
+      event.previousContainer.id.includes('collections')
     ) {
       const [, newIndex] = event.container.id.split('slot-');
       this.updateSlot.emit({
         data: event.item.data,
-        index: parseInt(newIndex) - 1,
+        index: parseInt(newIndex),
       });
     } else {
       const [, previousIndex] = event.previousContainer.id.split('slot-');
       const [, newIndex] = event.container.id.split('slot-');
 
-      this.swapSlots.emit([
-        parseInt(previousIndex) - 1,
-        parseInt(newIndex) - 1,
-      ]);
+      this.swapSlots.emit([parseInt(previousIndex), parseInt(newIndex)]);
     }
   }
 }
