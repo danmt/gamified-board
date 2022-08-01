@@ -29,7 +29,7 @@ import {
     >
       <ng-content></ng-content>
 
-      <div class="w-80">
+      <div class="flex flex-col">
         <p>Documents</p>
 
         <div
@@ -39,7 +39,7 @@ import {
           [cdkDropListConnectedTo]="documentsDropLists"
           cdkDropListOrientation="horizontal"
           (cdkDropListDropped)="onDropped($event)"
-          class="flex gap-2 flex-wrap h-full"
+          class="flex gap-2 flex-1"
         >
           <div
             *ngFor="let document of instruction.documents; trackBy: trackBy"
@@ -77,7 +77,7 @@ import {
         </div>
       </div>
 
-      <div class="w-80">
+      <div class="flex flex-col">
         <p>Tasks</p>
 
         <div
@@ -87,7 +87,7 @@ import {
           [cdkDropListConnectedTo]="tasksDropLists"
           cdkDropListOrientation="horizontal"
           (cdkDropListDropped)="onDropped($event)"
-          class="flex gap-2 flex-wrap h-full"
+          class="flex gap-2 flex-1"
         >
           <div
             *ngFor="let task of instruction.tasks; trackBy: trackBy"

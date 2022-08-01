@@ -34,6 +34,7 @@ export interface BoardInstruction {
 
 export interface Instruction {
   id: string;
+  pluginName: string;
   thumbnailUrl: string;
 }
 
@@ -41,3 +42,18 @@ export interface Collection {
   id: string;
   thumbnailUrl: string;
 }
+
+export type MainDockSlots = [
+  Option<Instruction>,
+  Option<Instruction>,
+  Option<Instruction>,
+  Option<Instruction>,
+  Option<Instruction>,
+  Option<Instruction>,
+  Option<Collection>,
+  Option<Collection>,
+  Option<Collection>,
+  Option<Collection>,
+  Option<Collection>,
+  Option<Collection>
+];
