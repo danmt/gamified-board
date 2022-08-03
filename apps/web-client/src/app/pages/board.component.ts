@@ -12,6 +12,8 @@ import {
   HostListener,
   inject,
 } from '@angular/core';
+import { ActivatedRoute, RouterModule } from '@angular/router';
+import { map, of, switchMap } from 'rxjs';
 import { v4 as uuid } from 'uuid';
 import {
   BoardComponent,
@@ -23,6 +25,7 @@ import {
   SelectedDockComponent,
 } from '../components';
 import { PluginsService } from '../plugins';
+import { ApplicationApiService } from '../services';
 import {
   ActiveItem,
   BoardInstruction,
@@ -92,6 +95,7 @@ import {
   standalone: true,
   imports: [
     CommonModule,
+    RouterModule,
     DialogModule,
     MainDockComponent,
     SelectedDockComponent,
@@ -103,6 +107,24 @@ import {
 export class BoardPageComponent {
   private readonly _pluginsService = inject(PluginsService);
   private readonly _dialog = inject(Dialog);
+  private readonly _activatedRoute = inject(ActivatedRoute);
+  private readonly _applicationApiService = inject(ApplicationApiService);
+
+  readonly workspaceId$ = this._activatedRoute.paramMap.pipe(
+    map((paramMap) => paramMap.get('workspaceId'))
+  );
+  readonly applicationId$ = this._activatedRoute.paramMap.pipe(
+    map((paramMap) => paramMap.get('applicationId'))
+  );
+  readonly workspaceApplications$ = this.workspaceId$.pipe(
+    switchMap((workspaceId) => {
+      if (workspaceId === null) {
+        return of(null);
+      }
+
+      return this._applicationApiService.getWorkspaceApplications(workspaceId);
+    })
+  );
 
   active: Option<ActiveItem> = null;
   selected: Option<SelectedBoardItem> = null;
@@ -302,7 +324,12 @@ export class BoardPageComponent {
       case '.': {
         if (this.collectionsDialogRef === null) {
           this.collectionsDialogRef = this._dialog.open(CollectionsComponent, {
-            data: this._pluginsService.plugins,
+            data: {
+              plugins: this._pluginsService.plugins,
+              workspaceId$: this.workspaceId$,
+              applicationId$: this.applicationId$,
+              applications$: this.workspaceApplications$,
+            },
             width: '300px',
             height: '500px',
             hasBackdrop: false,
@@ -327,7 +354,12 @@ export class BoardPageComponent {
           this.instructionsDialogRef = this._dialog.open(
             InstructionsComponent,
             {
-              data: this._pluginsService.plugins,
+              data: {
+                plugins: this._pluginsService.plugins,
+                workspaceId$: this.workspaceId$,
+                applicationId$: this.applicationId$,
+                applications$: this.workspaceApplications$,
+              },
               width: '300px',
               height: '500px',
               hasBackdrop: false,

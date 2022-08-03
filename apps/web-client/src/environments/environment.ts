@@ -4,6 +4,15 @@
 
 export const environment = {
   production: false,
+  firebaseConfig: {
+    apiKey: 'AIzaSyANhJWh9MiXTVGOh33QxmuCyj3fPPjgnXk',
+    authDomain: 'hd-bulldozer.firebaseapp.com',
+    projectId: 'hd-bulldozer',
+    storageBucket: 'hd-bulldozer.appspot.com',
+    messagingSenderId: '177046212556',
+    appId: '1:177046212556:web:d789d545a55e2562f95769',
+    measurementId: 'G-FKXKLP8BDP',
+  },
 };
 
 /*

@@ -1,4 +1,6 @@
 import { enableProdMode, importProvidersFrom } from '@angular/core';
+import { initializeApp, provideFirebaseApp } from '@angular/fire/app';
+import { getFirestore, provideFirestore } from '@angular/fire/firestore';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterModule } from '@angular/router';
@@ -29,13 +31,6 @@ bootstrapApplication(AppComponent, {
           path: '',
           children: [
             {
-              path: 'board',
-              loadComponent: () =>
-                import('./app/pages/board.component').then(
-                  (m) => m.BoardPageComponent
-                ),
-            },
-            {
               path: 'lobby',
               loadComponent: () =>
                 import('./app/pages/lobby.component').then(
@@ -50,12 +45,21 @@ bootstrapApplication(AppComponent, {
                 ),
             },
             {
+              path: 'board/:workspaceId/:applicationId',
+              loadComponent: () =>
+                import('./app/pages/board.component').then(
+                  (m) => m.BoardPageComponent
+                ),
+            },
+            {
               path: '**',
               redirectTo: 'lobby',
             },
           ],
         },
-      ])
+      ]),
+      provideFirebaseApp(() => initializeApp(environment.firebaseConfig)),
+      provideFirestore(() => getFirestore())
     ),
   ],
 }).catch((err) => console.error(err));
