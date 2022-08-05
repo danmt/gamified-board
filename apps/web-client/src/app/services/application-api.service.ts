@@ -40,43 +40,65 @@ export class ApplicationApiService {
           applicationsRefs.map((applicationRef) =>
             docData(applicationRef).pipe(
               switchMap((application) =>
-                combineLatest({
-                  collections: collectionData(
+                combineLatest([
+                  collectionData(
                     query(
                       collectionGroup(
                         this._firestore,
                         'collections'
-                      ).withConverter<{ id: string; name: string }>({
-                        fromFirestore: (snapshot) => ({
-                          id: snapshot.id,
-                          name: snapshot.data()['name'],
-                        }),
-                        toFirestore: (it: { id: string; name: string }) => it,
+                      ).withConverter<DocumentReference<DocumentData>>({
+                        fromFirestore: (snapshot) =>
+                          snapshot.data()['collectionRef'],
+                        toFirestore: (it: DocumentReference<DocumentData>) =>
+                          it,
                       }),
                       orderBy(documentId()),
                       startAt(applicationRef.path),
                       endAt(applicationRef.path + '\uf8ff')
                     )
                   ),
-                  instructions: collectionData(
+                  collectionData(
                     query(
                       collectionGroup(
                         this._firestore,
                         'instructions'
-                      ).withConverter<{ id: string; name: string }>({
-                        fromFirestore: (snapshot) => ({
-                          id: snapshot.id,
-                          name: snapshot.data()['name'],
-                        }),
-                        toFirestore: (it: { id: string; name: string }) => it,
+                      ).withConverter<DocumentReference<DocumentData>>({
+                        fromFirestore: (snapshot) =>
+                          snapshot.data()['instructionRef'],
+                        toFirestore: (it: DocumentReference<DocumentData>) =>
+                          it,
                       }),
                       orderBy(documentId()),
                       startAt(applicationRef.path),
                       endAt(applicationRef.path + '\uf8ff')
                     )
                   ),
-                }).pipe(
-                  map(({ collections, instructions }) => ({
+                ]).pipe(
+                  switchMap(([collectionsRefs, instructionsRefs]) =>
+                    combineLatest([
+                      combineLatest(
+                        collectionsRefs.map((collectionRef) =>
+                          docData(collectionRef).pipe(
+                            map((collection) => ({
+                              id: collectionRef.id,
+                              name: collection['name'],
+                            }))
+                          )
+                        )
+                      ),
+                      combineLatest(
+                        instructionsRefs.map((instructionRef) =>
+                          docData(instructionRef).pipe(
+                            map((instruction) => ({
+                              id: instructionRef.id,
+                              name: instruction['name'],
+                            }))
+                          )
+                        )
+                      ),
+                    ])
+                  ),
+                  map(([collections, instructions]) => ({
                     id: applicationRef.id,
                     name: application['name'],
                     collections,
