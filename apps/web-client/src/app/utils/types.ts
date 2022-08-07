@@ -17,6 +17,7 @@ export interface BoardTask {
     name: string;
     workspaceId: string;
     applicationId: string;
+    thumbnailUrl: string;
   };
 }
 
@@ -28,13 +29,19 @@ export interface BoardDocument {
     name: string;
     workspaceId: string;
     applicationId: string;
+    thumbnailUrl: string;
   };
 }
 
-export type SelectedBoardItem = (BoardTask | BoardDocument) & {
-  instructionId: string;
-  kind: BoardItemKind;
-};
+export type SelectedBoardItem =
+  | (BoardTask & {
+      instructionId: string;
+      kind: 'task';
+    })
+  | (BoardDocument & {
+      instructionId: string;
+      kind: 'document';
+    });
 
 export interface BoardInstruction {
   id: string;

@@ -192,9 +192,10 @@ export class ApplicationApiService {
                   name: document.name,
                   collection: {
                     id: document.collectionRef.id,
-                    name: collection['name'],
-                    workspaceId: collection['workspaceRef'].id,
-                    applicationId: collection['applicationRef'].id,
+                    name: collection['name'] as string,
+                    workspaceId: collection['workspaceRef'].id as string,
+                    applicationId: collection['applicationRef'].id as string,
+                    thumbnailUrl: collection['thumbnailUrl'] as string,
                   },
                 }))
               )
@@ -240,9 +241,10 @@ export class ApplicationApiService {
                   name: task.name,
                   instruction: {
                     id: task.instructionRef.id,
-                    name: instruction['name'],
-                    workspaceId: instruction['workspaceRef'].id,
-                    applicationId: instruction['applicationRef'].id,
+                    name: instruction['name'] as string,
+                    workspaceId: instruction['workspaceRef'].id as string,
+                    applicationId: instruction['applicationRef'].id as string,
+                    thumbnailUrl: instruction['thumbnailUrl'] as string,
                   },
                 }))
               )

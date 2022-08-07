@@ -54,30 +54,14 @@ import {
             >
               <img
                 class="w-full h-full"
-                [src]="
-                  'assets/workspaces/' +
-                  document.collection.workspaceId +
-                  '/' +
-                  document.collection.applicationId +
-                  '/collections/' +
-                  document.collection.id +
-                  '.png'
-                "
+                [src]="document.collection.thumbnailUrl"
               />
             </button>
 
             <div *cdkDragPreview class="bg-gray-500 p-1 w-12 h-12 rounded-md">
               <img
                 class="w-full h-full"
-                [src]="
-                  'assets/workspaces/' +
-                  document.collection.workspaceId +
-                  '/' +
-                  document.collection.applicationId +
-                  '/collections/' +
-                  document.collection.id +
-                  '.png'
-                "
+                [src]="document.collection.thumbnailUrl"
               />
             </div>
 
@@ -87,15 +71,7 @@ import {
             >
               <img
                 class="w-full h-full"
-                [src]="
-                  'assets/workspaces/' +
-                  document.collection.workspaceId +
-                  '/' +
-                  document.collection.applicationId +
-                  '/collections/' +
-                  document.collection.id +
-                  '.png'
-                "
+                [src]="document.collection.thumbnailUrl"
               />
             </div>
           </div>
@@ -135,30 +111,14 @@ import {
             >
               <img
                 class="w-full h-full"
-                [src]="
-                  'assets/workspaces/' +
-                  task.instruction.workspaceId +
-                  '/' +
-                  task.instruction.applicationId +
-                  '/instructions/' +
-                  task.instruction.id +
-                  '.png'
-                "
+                [src]="task.instruction.thumbnailUrl"
               />
             </button>
 
             <div *cdkDragPreview class="bg-gray-500 p-1 w-12 h-12 rounded-md">
               <img
                 class="w-full h-full"
-                [src]="
-                  'assets/workspaces/' +
-                  task.instruction.workspaceId +
-                  '/' +
-                  task.instruction.applicationId +
-                  '/instructions/' +
-                  task.instruction.id +
-                  '.png'
-                "
+                [src]="task.instruction.thumbnailUrl"
               />
             </div>
 
@@ -168,15 +128,7 @@ import {
             >
               <img
                 class="w-full h-full"
-                [src]="
-                  'assets/workspaces/' +
-                  task.instruction.workspaceId +
-                  '/' +
-                  task.instruction.applicationId +
-                  '/instructions/' +
-                  task.instruction.id +
-                  '.png'
-                "
+                [src]="task.instruction.thumbnailUrl"
               />
             </div>
           </div>

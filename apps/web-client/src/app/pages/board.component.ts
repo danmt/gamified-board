@@ -22,14 +22,17 @@ import {
   InstructionsComponent,
   MainDockComponent,
   NavigationWrapperComponent,
-  SelectedDockComponent,
+  SelectedDocumentDockComponent,
+  SelectedTaskDockComponent,
 } from '../components';
 import { PluginsService } from '../plugins';
 import { ApplicationApiService } from '../services';
 import {
   ActiveItem,
+  BoardDocument,
   BoardInstruction,
   BoardItemKind,
+  BoardTask,
   Collection,
   Instruction,
   MainDockSlots,
@@ -42,7 +45,7 @@ import {
   template: `
     <pg-navigation-wrapper zPosition="z-30"></pg-navigation-wrapper>
     <pg-main-dock
-      *ngIf="selected === null"
+      *ngIf="selectedTask === null && selectedDocument === null"
       class="fixed bottom-0 z-10 -translate-x-1/2 left-1/2"
       [slots]="slots"
       [hotkeys]="hotkeys"
@@ -52,11 +55,16 @@ import {
       (activateSlot)="onSlotActivate($event)"
       (updateSlot)="onUpdateSlot($event.index, $event.data)"
     ></pg-main-dock>
-    <pg-selected-dock
-      *ngIf="selected !== null"
-      [selected]="selected"
+    <pg-selected-task-dock
+      *ngIf="selectedTask !== null"
+      [selected]="selectedTask"
       class="fixed bottom-0 z-10 -translate-x-1/2 left-1/2"
-    ></pg-selected-dock>
+    ></pg-selected-task-dock>
+    <pg-selected-document-dock
+      *ngIf="selectedDocument !== null"
+      [selected]="selectedDocument"
+      class="fixed bottom-0 z-10 -translate-x-1/2 left-1/2"
+    ></pg-selected-document-dock>
     <pg-board
       [instructions]="(currentApplicationInstructions$ | async) ?? []"
       [active]="active"
@@ -98,7 +106,8 @@ import {
     RouterModule,
     DialogModule,
     MainDockComponent,
-    SelectedDockComponent,
+    SelectedTaskDockComponent,
+    SelectedDocumentDockComponent,
     BoardComponent,
     NavigationWrapperComponent,
   ],
@@ -139,6 +148,8 @@ export class BoardPageComponent {
 
   active: Option<ActiveItem> = null;
   selected: Option<SelectedBoardItem> = null;
+  selectedTask: Option<BoardTask> = null;
+  selectedDocument: Option<BoardDocument> = null;
   boardInstructions: BoardInstruction[] = [
     {
       id: uuid(),
@@ -452,6 +463,7 @@ export class BoardPageComponent {
                 name: '',
                 applicationId: '',
                 workspaceId: '',
+                thumbnailUrl: '',
               },
             },
           ],
@@ -469,6 +481,7 @@ export class BoardPageComponent {
                 name: '',
                 applicationId: '',
                 workspaceId: '',
+                thumbnailUrl: '',
               },
             },
           ],
@@ -487,13 +500,15 @@ export class BoardPageComponent {
           instruction.documents.find(({ id }) => id === itemId) ?? null;
 
         if (document !== null) {
-          this.selected = { ...document, instructionId, kind };
+          this.selectedDocument = document;
+          this.selectedTask = null;
         }
       } else if (kind === 'task') {
         const task = instruction.tasks.find(({ id }) => id === itemId) ?? null;
 
         if (task !== null) {
-          this.selected = { ...task, instructionId, kind };
+          this.selectedTask = task;
+          this.selectedDocument = null;
         }
       }
     }
