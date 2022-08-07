@@ -58,7 +58,7 @@ import {
       class="fixed bottom-0 z-10 -translate-x-1/2 left-1/2"
     ></pg-selected-dock>
     <pg-board
-      [instructions]="boardInstructions"
+      [instructions]="(currentApplicationInstructions$ | async) ?? []"
       [active]="active"
       (useItem)="onUseItem($event.instructionId, $event.item)"
       (selectItem)="
@@ -125,67 +125,90 @@ export class BoardPageComponent {
       return this._applicationApiService.getWorkspaceApplications(workspaceId);
     })
   );
+  readonly currentApplicationInstructions$ = this.applicationId$.pipe(
+    switchMap((applicationId) => {
+      if (applicationId === null) {
+        return of([]);
+      }
+
+      return this._applicationApiService.getApplicationInstructions(
+        applicationId
+      );
+    })
+  );
 
   active: Option<ActiveItem> = null;
   selected: Option<SelectedBoardItem> = null;
   boardInstructions: BoardInstruction[] = [
     {
       id: uuid(),
+      name: 'ix1',
       documents: [],
       tasks: [],
     },
     {
       id: uuid(),
+      name: 'ix1',
       documents: [],
       tasks: [],
     },
     {
       id: uuid(),
+      name: 'ix1',
       documents: [],
       tasks: [],
     },
     {
       id: uuid(),
+      name: 'ix1',
       documents: [],
       tasks: [],
     },
     {
       id: uuid(),
+      name: 'ix1',
       documents: [],
       tasks: [],
     },
     {
       id: uuid(),
+      name: 'ix1',
       documents: [],
       tasks: [],
     },
     {
       id: uuid(),
+      name: 'ix1',
       documents: [],
       tasks: [],
     },
     {
       id: uuid(),
+      name: 'ix1',
       documents: [],
       tasks: [],
     },
     {
       id: uuid(),
+      name: 'ix1',
       documents: [],
       tasks: [],
     },
     {
       id: uuid(),
+      name: 'ix1',
       documents: [],
       tasks: [],
     },
     {
       id: uuid(),
+      name: 'ix1',
       documents: [],
       tasks: [],
     },
     {
       id: uuid(),
+      name: 'ix1',
       documents: [],
       tasks: [],
     },
@@ -423,8 +446,13 @@ export class BoardPageComponent {
             ...this.boardInstructions[instructionIndex].tasks,
             {
               id: uuid(),
-              thumbnailUrl: item.data.thumbnailUrl,
-              kind: 'task',
+              name: 'asd',
+              instruction: {
+                id: '',
+                name: '',
+                applicationId: '',
+                workspaceId: '',
+              },
             },
           ],
         };
@@ -435,8 +463,13 @@ export class BoardPageComponent {
             ...this.boardInstructions[instructionIndex].documents,
             {
               id: uuid(),
-              thumbnailUrl: item.data.thumbnailUrl,
-              kind: 'document',
+              name: 'asd',
+              collection: {
+                id: '',
+                name: '',
+                applicationId: '',
+                workspaceId: '',
+              },
             },
           ],
         };

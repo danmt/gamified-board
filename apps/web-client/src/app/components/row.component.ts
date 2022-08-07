@@ -38,7 +38,7 @@ import {
           [cdkDropListData]="instruction.documents"
           [cdkDropListConnectedTo]="documentsDropLists"
           cdkDropListOrientation="horizontal"
-          (cdkDropListDropped)="onDropped($event)"
+          (cdkDropListDropped)="onCollectionDropped($event)"
           class="flex gap-2 flex-1"
         >
           <div
@@ -52,18 +52,51 @@ import {
               class="w-full h-full"
               (click)="onSelectItem(document.id, 'document')"
             >
-              <img class="w-full h-full" [src]="document.thumbnailUrl" />
+              <img
+                class="w-full h-full"
+                [src]="
+                  'assets/workspaces/' +
+                  document.collection.workspaceId +
+                  '/' +
+                  document.collection.applicationId +
+                  '/collections/' +
+                  document.collection.id +
+                  '.png'
+                "
+              />
             </button>
 
             <div *cdkDragPreview class="bg-gray-500 p-1 w-12 h-12 rounded-md">
-              <img class="w-full h-full" [src]="document.thumbnailUrl" />
+              <img
+                class="w-full h-full"
+                [src]="
+                  'assets/workspaces/' +
+                  document.collection.workspaceId +
+                  '/' +
+                  document.collection.applicationId +
+                  '/collections/' +
+                  document.collection.id +
+                  '.png'
+                "
+              />
             </div>
 
             <div
               *cdkDragPlaceholder=""
               class="bg-yellow-500 p-1 w-12 h-12 rounded-md"
             >
-              <img class="w-full h-full" [src]="document.thumbnailUrl" />
+              <img
+                class="w-full h-full"
+                [src]="
+                  'assets/workspaces/' +
+                  document.collection.workspaceId +
+                  '/' +
+                  document.collection.applicationId +
+                  '/collections/' +
+                  document.collection.id +
+                  '.png'
+                "
+              />
             </div>
           </div>
 
@@ -86,7 +119,7 @@ import {
           [cdkDropListData]="instruction.tasks"
           [cdkDropListConnectedTo]="tasksDropLists"
           cdkDropListOrientation="horizontal"
-          (cdkDropListDropped)="onDropped($event)"
+          (cdkDropListDropped)="onInstructionDropped($event)"
           class="flex gap-2 flex-1"
         >
           <div
@@ -100,18 +133,51 @@ import {
               class="w-full h-full"
               (click)="onSelectItem(task.id, 'task')"
             >
-              <img class="w-full h-full" [src]="task.thumbnailUrl" />
+              <img
+                class="w-full h-full"
+                [src]="
+                  'assets/workspaces/' +
+                  task.instruction.workspaceId +
+                  '/' +
+                  task.instruction.applicationId +
+                  '/instructions/' +
+                  task.instruction.id +
+                  '.png'
+                "
+              />
             </button>
 
             <div *cdkDragPreview class="bg-gray-500 p-1 w-12 h-12 rounded-md">
-              <img class="w-full h-full" [src]="task.thumbnailUrl" />
+              <img
+                class="w-full h-full"
+                [src]="
+                  'assets/workspaces/' +
+                  task.instruction.workspaceId +
+                  '/' +
+                  task.instruction.applicationId +
+                  '/instructions/' +
+                  task.instruction.id +
+                  '.png'
+                "
+              />
             </div>
 
             <div
               *cdkDragPlaceholder=""
               class="bg-yellow-500 p-1 w-12 h-12 rounded-md"
             >
-              <img class="w-full h-full" [src]="task.thumbnailUrl" />
+              <img
+                class="w-full h-full"
+                [src]="
+                  'assets/workspaces/' +
+                  task.instruction.workspaceId +
+                  '/' +
+                  task.instruction.applicationId +
+                  '/instructions/' +
+                  task.instruction.id +
+                  '.png'
+                "
+              />
             </div>
           </div>
 
@@ -180,54 +246,43 @@ export class RowComponent {
     return index;
   }
 
-  onDropped(
-    event: CdkDragDrop<
-      (BoardTask | BoardDocument)[],
-      unknown,
-      BoardTask | BoardDocument
-    >
+  onCollectionDropped(
+    event: CdkDragDrop<BoardDocument[], unknown, BoardDocument>
   ) {
-    switch (event.item.data.kind) {
-      case 'document': {
-        if (event.container.id === event.previousContainer.id) {
-          this.moveDocument.emit({
-            previousIndex: event.previousIndex,
-            newIndex: event.currentIndex,
-          });
-        } else {
-          const previousInstructionId =
-            event.previousContainer.id.split('-document')[0];
-          const newInstructionId = event.container.id.split('-document')[0];
-          this.transferDocument.emit({
-            previousInstructionId,
-            newInstructionId,
-            previousIndex: event.previousIndex,
-            newIndex: event.currentIndex,
-          });
-        }
+    if (event.container.id === event.previousContainer.id) {
+      this.moveDocument.emit({
+        previousIndex: event.previousIndex,
+        newIndex: event.currentIndex,
+      });
+    } else {
+      const previousInstructionId =
+        event.previousContainer.id.split('-document')[0];
+      const newInstructionId = event.container.id.split('-document')[0];
+      this.transferDocument.emit({
+        previousInstructionId,
+        newInstructionId,
+        previousIndex: event.previousIndex,
+        newIndex: event.currentIndex,
+      });
+    }
+  }
 
-        break;
-      }
-      case 'task': {
-        if (event.container.id === event.previousContainer.id) {
-          this.moveTask.emit({
-            previousIndex: event.previousIndex,
-            newIndex: event.currentIndex,
-          });
-        } else {
-          const previousInstructionId =
-            event.previousContainer.id.split('-task')[0];
-          const newInstructionId = event.container.id.split('-task')[0];
-          this.transferTask.emit({
-            previousInstructionId,
-            newInstructionId,
-            previousIndex: event.previousIndex,
-            newIndex: event.currentIndex,
-          });
-        }
-
-        break;
-      }
+  onInstructionDropped(event: CdkDragDrop<BoardTask[], unknown, BoardTask>) {
+    if (event.container.id === event.previousContainer.id) {
+      this.moveTask.emit({
+        previousIndex: event.previousIndex,
+        newIndex: event.currentIndex,
+      });
+    } else {
+      const previousInstructionId =
+        event.previousContainer.id.split('-task')[0];
+      const newInstructionId = event.container.id.split('-task')[0];
+      this.transferTask.emit({
+        previousInstructionId,
+        newInstructionId,
+        previousIndex: event.previousIndex,
+        newIndex: event.currentIndex,
+      });
     }
   }
 }

@@ -11,14 +11,24 @@ export type BoardItemKind = 'document' | 'task';
 
 export interface BoardTask {
   id: string;
-  thumbnailUrl: string;
-  kind: BoardItemKind;
+  name: string;
+  instruction: {
+    id: string;
+    name: string;
+    workspaceId: string;
+    applicationId: string;
+  };
 }
 
 export interface BoardDocument {
   id: string;
-  thumbnailUrl: string;
-  kind: BoardItemKind;
+  name: string;
+  collection: {
+    id: string;
+    name: string;
+    workspaceId: string;
+    applicationId: string;
+  };
 }
 
 export type SelectedBoardItem = (BoardTask | BoardDocument) & {
@@ -28,6 +38,7 @@ export type SelectedBoardItem = (BoardTask | BoardDocument) & {
 
 export interface BoardInstruction {
   id: string;
+  name: string;
   tasks: BoardTask[];
   documents: BoardDocument[];
 }
