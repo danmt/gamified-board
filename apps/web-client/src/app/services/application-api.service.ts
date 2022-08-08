@@ -16,9 +16,17 @@ import {
   startAt,
   updateDoc,
 } from '@angular/fire/firestore';
+
 import { combineLatest, defer, from, map, of, switchMap } from 'rxjs';
+import { v4 as uuid } from 'uuid';
 import { PluginsService } from '../plugins';
-import { BoardDocument, BoardTask, Option } from '../utils';
+import {
+  BoardDocument,
+  BoardTask,
+  Collection,
+  Instruction,
+  Option,
+} from '../utils';
 
 @Injectable({ providedIn: 'root' })
 export class ApplicationApiService {
@@ -88,6 +96,9 @@ export class ApplicationApiService {
                             map((collection) => ({
                               id: collectionRef.id,
                               name: collection['name'],
+                              thumbnailUrl: collection['thumbnailUrl'],
+                              workspaceId,
+                              applicationId: applicationRef.id,
                             }))
                           )
                         )
@@ -98,6 +109,9 @@ export class ApplicationApiService {
                             map((instruction) => ({
                               id: instructionRef.id,
                               name: instruction['name'],
+                              thumbnailUrl: instruction['thumbnailUrl'],
+                              workspaceId,
+                              applicationId: applicationRef.id,
                             }))
                           )
                         )
@@ -611,6 +625,121 @@ export class ApplicationApiService {
           // update new instruction tasks order
           transaction.update(newInstructionRef, {
             tasksOrder: newInstructionTasks,
+          });
+
+          return {};
+        })
+      )
+    );
+  }
+
+  deleteInstructionTask(instructionId: string, taskId: string) {
+    return defer(() =>
+      from(
+        runTransaction(this._firestore, async (transaction) => {
+          const instructionRef = doc(
+            this._firestore,
+            `instructions/${instructionId}`
+          );
+
+          const instruction = await transaction.get(instructionRef);
+          const tasksOrder = instruction
+            .data()
+            ?.['tasksOrder'].filter((task: string) => task !== taskId);
+
+          transaction.update(instructionRef, { tasksOrder });
+          transaction.delete(
+            doc(
+              this._firestore,
+              `instructions/${instructionId}/tasks/${taskId}`
+            )
+          );
+
+          return {};
+        })
+      )
+    );
+  }
+
+  createInstructionDocument(
+    instructionId: string,
+    documentCollection: Collection
+  ) {
+    return defer(() =>
+      from(
+        runTransaction(this._firestore, async (transaction) => {
+          const instructionRef = doc(
+            this._firestore,
+            `instructions/${instructionId}`
+          );
+          const newDocumentId = uuid();
+          const newDocumentRef = doc(
+            this._firestore,
+            `instructions/${instructionId}/documents/${newDocumentId}`
+          );
+          const instruction = await transaction.get(instructionRef);
+          const instructionData = instruction.data();
+
+          // create the new document
+          transaction.set(newDocumentRef, {
+            name: 'sample #1',
+            isInternal: documentCollection.isInternal,
+            collectionRef: doc(
+              this._firestore,
+              `collections/${documentCollection.id}`
+            ),
+            namespace: documentCollection.namespace ?? null,
+            plugin: documentCollection.plugin ?? null,
+            account: documentCollection.account ?? null,
+          });
+          // push document id to the documentsOrder
+          transaction.update(instructionRef, {
+            documentsOrder: [
+              ...(instructionData ? instructionData['documentsOrder'] : []),
+              newDocumentId,
+            ],
+          });
+
+          return {};
+        })
+      )
+    );
+  }
+
+  createInstructionTask(instructionId: string, taskInstruction: Instruction) {
+    return defer(() =>
+      from(
+        runTransaction(this._firestore, async (transaction) => {
+          const instructionRef = doc(
+            this._firestore,
+            `instructions/${instructionId}`
+          );
+          const newTaskId = uuid();
+          const newTaskRef = doc(
+            this._firestore,
+            `instructions/${instructionId}/tasks/${newTaskId}`
+          );
+          const instruction = await transaction.get(instructionRef);
+          const instructionData = instruction.data();
+
+          // create the new task
+          transaction.set(newTaskRef, {
+            name: 'sample #1',
+            isInternal: taskInstruction.isInternal,
+            instructionRef: doc(
+              this._firestore,
+              `instructions/${taskInstruction.id}`
+            ),
+            namespace: taskInstruction.namespace ?? null,
+            plugin: taskInstruction.plugin ?? null,
+            instruction: taskInstruction.name ?? null,
+          });
+          // push task id to the tasksOrder
+          transaction.update(instructionRef, {
+            tasksOrder: [
+              ...(instructionData ? instructionData['tasksOrder'] : []),
+              newTaskId,
+            ],
           });
 
           return {};

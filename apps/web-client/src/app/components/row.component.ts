@@ -14,6 +14,8 @@ import {
   BoardInstruction,
   BoardItemKind,
   BoardTask,
+  Collection,
+  Instruction,
   Option,
 } from '../utils';
 
@@ -156,6 +158,8 @@ export class RowComponent {
   @Input() documentsDropLists: string[] = [];
   @Input() tasksDropLists: string[] = [];
   @Output() useItem = new EventEmitter<ActiveItem>();
+  @Output() useCollection = new EventEmitter<Collection>();
+  @Output() useInstruction = new EventEmitter<Instruction>();
   @Output() selectItem = new EventEmitter<{
     itemId: string;
     kind: BoardItemKind;
@@ -188,7 +192,11 @@ export class RowComponent {
 
   onUseItem(active: Option<ActiveItem>) {
     if (active !== null) {
-      this.useItem.emit(active);
+      if (active.kind === 'collection') {
+        this.useCollection.emit(active.data);
+      } else {
+        this.useInstruction.emit(active.data);
+      }
     }
   }
 

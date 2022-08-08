@@ -41,10 +41,7 @@ import { Option } from '../utils';
                 class="relative"
               >
                 <ng-container
-                  *ngIf="
-                    (isDragging$ | ngrxPush) ===
-                    workspaceId + '/' + application.id + '/' + instruction.id
-                  "
+                  *ngIf="(isDragging$ | ngrxPush) === instruction.id"
                 >
                   <div
                     class="w-full h-full absolute z-20 bg-black bg-opacity-50"
@@ -52,15 +49,7 @@ import { Option } from '../utils';
                   <div class="bg-yellow-500 p-0.5 w-11 h-11">
                     <img
                       class="w-full h-full object-cover"
-                      [src]="
-                        'assets/workspaces/' +
-                        workspaceId +
-                        '/' +
-                        application.id +
-                        '/instructions/' +
-                        instruction.id +
-                        '.png'
-                      "
+                      [src]="instruction.thumbnailUrl"
                     />
                   </div>
                 </ng-container>
@@ -68,16 +57,14 @@ import { Option } from '../utils';
                 <div
                   cdkDrag
                   [cdkDragData]="{
-                    id:
-                      workspaceId + '/' + application.id + '/' + instruction.id,
-                    thumbnailUrl:
-                      'assets/workspaces/' +
-                      workspaceId +
-                      '/' +
-                      application.id +
-                      '/instructions/' +
-                      instruction.id +
-                      '.png'
+                    workspaceId,
+                    applicationId: application.id,
+                    id: instruction.id,
+                    name: instruction.name,
+                    thumbnailUrl: instruction.thumbnailUrl,
+                    isInternal: true,
+                    namespace: null,
+                    plugin: null
                   }"
                   (cdkDragStarted)="onDragStart($event)"
                   (cdkDragEnded)="onDragEnd()"
@@ -85,15 +72,7 @@ import { Option } from '../utils';
                   <div class="bg-yellow-500 p-0.5 w-11 h-11">
                     <img
                       class="w-full h-full object-cover"
-                      [src]="
-                        'assets/workspaces/' +
-                        workspaceId +
-                        '/' +
-                        application.id +
-                        '/instructions/' +
-                        instruction.id +
-                        '.png'
-                      "
+                      [src]="instruction.thumbnailUrl"
                     />
                   </div>
 
@@ -149,10 +128,7 @@ import { Option } from '../utils';
                 class="relative"
               >
                 <ng-container
-                  *ngIf="
-                    (isDragging$ | ngrxPush) ===
-                    workspaceId + '/' + application.id + '/' + instruction.id
-                  "
+                  *ngIf="(isDragging$ | ngrxPush) === instruction.id"
                 >
                   <div
                     class="w-full h-full absolute z-20 bg-black bg-opacity-50"
@@ -160,15 +136,7 @@ import { Option } from '../utils';
                   <div class="bg-yellow-500 p-0.5 w-11 h-11">
                     <img
                       class="w-full h-full object-cover"
-                      [src]="
-                        'assets/workspaces/' +
-                        workspaceId +
-                        '/' +
-                        application.id +
-                        '/instructions/' +
-                        instruction.id +
-                        '.png'
-                      "
+                      [src]="instruction.thumbnailUrl"
                     />
                   </div>
                 </ng-container>
@@ -176,16 +144,14 @@ import { Option } from '../utils';
                 <div
                   cdkDrag
                   [cdkDragData]="{
-                    id:
-                      workspaceId + '/' + application.id + '/' + instruction.id,
-                    thumbnailUrl:
-                      'assets/workspaces/' +
-                      workspaceId +
-                      '/' +
-                      application.id +
-                      '/instructions/' +
-                      instruction.id +
-                      '.png'
+                    workspaceId,
+                    applicationId: application.id,
+                    id: instruction.id,
+                    name: instruction.name,
+                    thumbnailUrl: instruction.thumbnailUrl,
+                    isInternal: true,
+                    namespace: null,
+                    plugin: null
                   }"
                   (cdkDragStarted)="onDragStart($event)"
                   (cdkDragEnded)="onDragEnd()"
@@ -193,15 +159,7 @@ import { Option } from '../utils';
                   <div class="bg-yellow-500 p-0.5 w-11 h-11">
                     <img
                       class="w-full h-full object-cover"
-                      [src]="
-                        'assets/workspaces/' +
-                        workspaceId +
-                        '/' +
-                        application.id +
-                        '/instructions/' +
-                        instruction.id +
-                        '.png'
-                      "
+                      [src]="instruction.thumbnailUrl"
                     />
                   </div>
 
@@ -211,15 +169,7 @@ import { Option } from '../utils';
                   >
                     <img
                       class="w-full h-full object-cover"
-                      [src]="
-                        'assets/workspaces/' +
-                        workspaceId +
-                        '/' +
-                        application.id +
-                        '/instructions/' +
-                        instruction.id +
-                        '.png'
-                      "
+                      [src]="instruction.thumbnailUrl"
                     />
                   </div>
 
@@ -264,25 +214,17 @@ import { Option } from '../utils';
                   class="w-full h-full absolute z-20 bg-black bg-opacity-50"
                 ></div>
                 <div class="bg-yellow-500 p-0.5 w-11 h-11">
-                  <img
-                    class="w-full h-full object-cover"
-                    [src]="
-                      'assets/plugins/' +
-                      plugin.namespace +
-                      '/' +
-                      plugin.name +
-                      '/instructions/' +
-                      instruction.name +
-                      '.png'
-                    "
-                  />
+                  <img class="w-full h-full object-cover" [src]="plugin" />
                 </div>
               </ng-container>
 
               <div
                 cdkDrag
                 [cdkDragData]="{
-                  id: plugin.name + '/' + instruction.name,
+                  namespace: plugin.namespace,
+                  plugin: plugin.name,
+                  id: instruction.name,
+                  name: instruction.name,
                   thumbnailUrl:
                     'assets/plugins/' +
                     plugin.namespace +
@@ -290,7 +232,10 @@ import { Option } from '../utils';
                     plugin.name +
                     '/instructions/' +
                     instruction.name +
-                    '.png'
+                    '.png',
+                  isInternal: false,
+                  workspaceId: null,
+                  applicationId: null
                 }"
                 (cdkDragStarted)="onDragStart($event)"
                 (cdkDragEnded)="onDragEnd()"
@@ -348,7 +293,7 @@ export class InstructionsComponent {
       {
         id: string;
         name: string;
-        instructions: { id: string; name: string }[];
+        instructions: { id: string; name: string; thumbnailUrl: string }[];
       }[]
     >;
   }>(DIALOG_DATA);

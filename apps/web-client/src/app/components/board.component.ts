@@ -8,7 +8,14 @@ import {
   Pipe,
   PipeTransform,
 } from '@angular/core';
-import { ActiveItem, BoardInstruction, BoardItemKind, Option } from '../utils';
+import {
+  ActiveItem,
+  BoardInstruction,
+  BoardItemKind,
+  Collection,
+  Instruction,
+  Option,
+} from '../utils';
 import { RowComponent } from './row.component';
 
 export const BOARD_SIZE = 8000;
@@ -37,8 +44,9 @@ export class BoardItemDropListsPipe implements PipeTransform {
         [instruction]="instruction"
         [documentsDropLists]="instructions | pgBoardItemDropLists: 'document'"
         [tasksDropLists]="instructions | pgBoardItemDropLists: 'task'"
-        (useItem)="onUseItem(instruction.id, $event)"
         (selectItem)="onSelectItem(instruction.id, $event.itemId, $event.kind)"
+        (useCollection)="onUseCollection(instruction.id, $event)"
+        (useInstruction)="onUseInstruction(instruction.id, $event)"
         (moveDocument)="
           onMoveDocument(instruction.id, $event.previousIndex, $event.newIndex)
         "
@@ -75,9 +83,13 @@ export class BoardItemDropListsPipe implements PipeTransform {
 export class BoardComponent {
   @Input() instructions: BoardInstruction[] = [];
   @Input() active: Option<ActiveItem> = null;
-  @Output() useItem = new EventEmitter<{
+  @Output() useCollection = new EventEmitter<{
     instructionId: string;
-    item: ActiveItem;
+    collection: Collection;
+  }>();
+  @Output() useInstruction = new EventEmitter<{
+    instructionId: string;
+    instruction: Instruction;
   }>();
   @Output() selectItem = new EventEmitter<{
     instructionId: string;
@@ -111,8 +123,18 @@ export class BoardComponent {
   readonly boardSize = BOARD_SIZE;
   isHovered = false;
 
-  onUseItem(instructionId: string, item: ActiveItem) {
-    this.useItem.emit({ instructionId, item });
+  onUseCollection(instructionId: string, collection: Collection) {
+    this.useCollection.emit({
+      instructionId,
+      collection,
+    });
+  }
+
+  onUseInstruction(instructionId: string, instruction: Instruction) {
+    this.useInstruction.emit({
+      instructionId,
+      instruction,
+    });
   }
 
   onSelectItem(instructionId: string, itemId: string, kind: BoardItemKind) {

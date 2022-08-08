@@ -60,13 +60,26 @@ export interface BoardInstruction {
 
 export interface Instruction {
   id: string;
-  pluginName: string;
+  name: string;
+  isInternal: boolean;
   thumbnailUrl: string;
+  workspaceId: Option<string>;
+  applicationId: Option<string>;
+  namespace: Option<string>;
+  plugin: Option<string>;
+  account: Option<string>;
 }
 
 export interface Collection {
   id: string;
+  name: string;
+  isInternal: boolean;
   thumbnailUrl: string;
+  workspaceId: Option<string>;
+  applicationId: Option<string>;
+  namespace: Option<string>;
+  plugin: Option<string>;
+  account: Option<string>;
 }
 
 export type MainDockSlots = [

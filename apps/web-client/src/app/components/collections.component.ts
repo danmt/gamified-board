@@ -52,15 +52,7 @@ import { Option } from '../utils';
                   <div class="bg-yellow-500 p-0.5 w-11 h-11">
                     <img
                       class="w-full h-full object-cover"
-                      [src]="
-                        'assets/workspaces/' +
-                        workspaceId +
-                        '/' +
-                        application.id +
-                        '/collections/' +
-                        collection.id +
-                        '.png'
-                      "
+                      [src]="collection.thumbnailUrl"
                     />
                   </div>
                 </ng-container>
@@ -68,16 +60,14 @@ import { Option } from '../utils';
                 <div
                   cdkDrag
                   [cdkDragData]="{
-                    id:
-                      workspaceId + '/' + application.id + '/' + collection.id,
-                    thumbnailUrl:
-                      'assets/workspaces/' +
-                      workspaceId +
-                      '/' +
-                      application.id +
-                      '/collections/' +
-                      collection.id +
-                      '.png'
+                    workspaceId,
+                    applicationId: application.id,
+                    id: collection.id,
+                    name: collection.name,
+                    thumbnailUrl: collection.thumbnailUrl,
+                    isInternal: true,
+                    namespace: null,
+                    plugin: null
                   }"
                   (cdkDragStarted)="onDragStart($event)"
                   (cdkDragEnded)="onDragEnd()"
@@ -85,15 +75,7 @@ import { Option } from '../utils';
                   <div class="bg-yellow-500 p-0.5 w-11 h-11">
                     <img
                       class="w-full h-full object-cover"
-                      [src]="
-                        'assets/workspaces/' +
-                        workspaceId +
-                        '/' +
-                        application.id +
-                        '/collections/' +
-                        collection.id +
-                        '.png'
-                      "
+                      [src]="collection.thumbnailUrl"
                     />
                   </div>
 
@@ -103,15 +85,7 @@ import { Option } from '../utils';
                   >
                     <img
                       class="w-full h-full object-cover"
-                      [src]="
-                        'assets/workspaces/' +
-                        workspaceId +
-                        '/' +
-                        application.id +
-                        '/collections/' +
-                        collection.id +
-                        '.png'
-                      "
+                      [src]="collection.thumbnailUrl"
                     />
                   </div>
 
@@ -160,15 +134,7 @@ import { Option } from '../utils';
                   <div class="bg-yellow-500 p-0.5 w-11 h-11">
                     <img
                       class="w-full h-full object-cover"
-                      [src]="
-                        'assets/workspaces/' +
-                        workspaceId +
-                        '/' +
-                        application.id +
-                        '/collections/' +
-                        collection.id +
-                        '.png'
-                      "
+                      [src]="collection.thumbnailUrl"
                     />
                   </div>
                 </ng-container>
@@ -176,16 +142,14 @@ import { Option } from '../utils';
                 <div
                   cdkDrag
                   [cdkDragData]="{
-                    id:
-                      workspaceId + '/' + application.id + '/' + collection.id,
-                    thumbnailUrl:
-                      'assets/workspaces/' +
-                      workspaceId +
-                      '/' +
-                      application.id +
-                      '/collections/' +
-                      collection.id +
-                      '.png'
+                    workspaceId,
+                    applicationId: application.id,
+                    id: collection.id,
+                    name: collection.name,
+                    thumbnailUrl: collection.thumbnailUrl,
+                    isInternal: true,
+                    namespace: null,
+                    plugin: null
                   }"
                   (cdkDragStarted)="onDragStart($event)"
                   (cdkDragEnded)="onDragEnd()"
@@ -193,15 +157,7 @@ import { Option } from '../utils';
                   <div class="bg-yellow-500 p-0.5 w-11 h-11">
                     <img
                       class="w-full h-full object-cover"
-                      [src]="
-                        'assets/workspaces/' +
-                        workspaceId +
-                        '/' +
-                        application.id +
-                        '/collections/' +
-                        collection.id +
-                        '.png'
-                      "
+                      [src]="collection.thumbnailUrl"
                     />
                   </div>
 
@@ -211,15 +167,7 @@ import { Option } from '../utils';
                   >
                     <img
                       class="w-full h-full object-cover"
-                      [src]="
-                        'assets/workspaces/' +
-                        workspaceId +
-                        '/' +
-                        application.id +
-                        '/collections/' +
-                        collection.id +
-                        '.png'
-                      "
+                      [src]="collection.thumbnailUrl"
                     />
                   </div>
 
@@ -281,7 +229,10 @@ import { Option } from '../utils';
               <div
                 cdkDrag
                 [cdkDragData]="{
-                  id: plugin.name + '/' + account.name,
+                  namespace: plugin.namespace,
+                  plugin: plugin.name,
+                  id: account.name,
+                  name: account.name,
                   thumbnailUrl:
                     'assets/plugins/' +
                     plugin.namespace +
@@ -289,7 +240,10 @@ import { Option } from '../utils';
                     plugin.name +
                     '/accounts/' +
                     account.name +
-                    '.png'
+                    '.png',
+                  isInternal: false,
+                  workspaceId: null,
+                  applicationId: null
                 }"
                 (cdkDragStarted)="onDragStart($event)"
                 (cdkDragEnded)="onDragEnd()"
@@ -347,7 +301,7 @@ export class CollectionsComponent {
       {
         id: string;
         name: string;
-        collections: { id: string; name: string }[];
+        collections: { id: string; name: string; thumbnailUrl: string }[];
       }[]
     >;
   }>(DIALOG_DATA);

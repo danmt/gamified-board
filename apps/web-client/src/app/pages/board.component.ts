@@ -70,9 +70,17 @@ import {
       *ngrxLet="currentApplicationInstructions$; let instructions"
       [instructions]="instructions ?? []"
       [active]="active"
-      (useItem)="onUseItem($event.instructionId, $event.item)"
+      (useCollection)="onUseCollection($event.instructionId, $event.collection)"
+      (useInstruction)="
+        onUseInstruction($event.instructionId, $event.instruction)
+      "
       (selectItem)="
-        onSelectItem($event.instructionId, $event.itemId, $event.kind)
+        onSelectItem(
+          instructions,
+          $event.instructionId,
+          $event.itemId,
+          $event.kind
+        )
       "
       (moveDocument)="
         onMoveDocument(
@@ -314,7 +322,7 @@ export class BoardPageComponent {
   onKeydown(event: KeyboardEvent) {
     switch (event.key) {
       case 'Delete': {
-        if (this.selected !== null) {
+        if (this.selectedTask !== null) {
           if (confirm('Are you sure? This action cannot be reverted.')) {
             const instructionIndex =
               this.boardInstructions.findIndex(
@@ -326,26 +334,39 @@ export class BoardPageComponent {
                 ...this.boardInstructions.slice(0, instructionIndex),
                 {
                   ...this.boardInstructions[instructionIndex],
-                  // if kind is document remove the item from documents, otherwise dont change
-                  documents:
-                    this.selected.kind === 'document'
-                      ? this.boardInstructions[
-                          instructionIndex
-                        ].documents.filter(({ id }) => id !== this.selected?.id)
-                      : this.boardInstructions[instructionIndex].documents,
-                  // if kind is task remove the item from tasks, otherwise dont change
-                  tasks:
-                    this.selected.kind === 'task'
-                      ? this.boardInstructions[instructionIndex].tasks.filter(
-                          ({ id }) => id !== this.selected?.id
-                        )
-                      : this.boardInstructions[instructionIndex].tasks,
+                  tasks: this.boardInstructions[instructionIndex].tasks.filter(
+                    ({ id }) => id !== this.selectedTask?.id
+                  ),
                 },
                 ...this.boardInstructions.slice(instructionIndex + 1),
               ];
             }
 
-            this.selected = null;
+            this.selectedTask = null;
+          }
+        } else if (this.selectedDocument !== null) {
+          if (confirm('Are you sure? This action cannot be reverted.')) {
+            const instructionIndex =
+              this.boardInstructions.findIndex(
+                ({ id }) => id === this.selected?.instructionId
+              ) ?? null;
+
+            if (instructionIndex !== null) {
+              this.boardInstructions = [
+                ...this.boardInstructions.slice(0, instructionIndex),
+                {
+                  ...this.boardInstructions[instructionIndex],
+                  documents: this.boardInstructions[
+                    instructionIndex
+                  ].documents.filter(
+                    ({ id }) => id !== this.selectedDocument?.id
+                  ),
+                },
+                ...this.boardInstructions.slice(instructionIndex + 1),
+              ];
+            }
+
+            this.selectedDocument = null;
           }
         }
 
@@ -362,8 +383,10 @@ export class BoardPageComponent {
           this.instructionsDialogRef = null;
         } else if (this.active !== null) {
           this.active = null;
-        } else if (this.selected !== null) {
-          this.selected = null;
+        } else if (this.selectedTask !== null) {
+          this.selectedTask = null;
+        } else if (this.selectedDocument !== null) {
+          this.selectedDocument = null;
         }
 
         break;
@@ -460,6 +483,8 @@ export class BoardPageComponent {
       this.boardInstructions.findIndex(({ id }) => id === instructionId) ??
       null;
 
+    // create a new document/task
+
     if (item !== null && instructionIndex !== null) {
       this.active = null;
 
@@ -511,9 +536,26 @@ export class BoardPageComponent {
     }
   }
 
-  onSelectItem(instructionId: string, itemId: string, kind: BoardItemKind) {
+  onUseCollection(instructionId: string, collection: Collection) {
+    this._applicationApiService
+      .createInstructionDocument(instructionId, collection)
+      .subscribe();
+  }
+
+  onUseInstruction(instructionId: string, instruction: Instruction) {
+    this._applicationApiService
+      .createInstructionTask(instructionId, instruction)
+      .subscribe();
+  }
+
+  onSelectItem(
+    instructions: BoardInstruction[],
+    instructionId: string,
+    itemId: string,
+    kind: BoardItemKind
+  ) {
     const instruction =
-      this.boardInstructions.find(({ id }) => id === instructionId) ?? null;
+      instructions.find(({ id }) => id === instructionId) ?? null;
 
     if (instruction !== null) {
       if (kind === 'document') {
@@ -536,7 +578,7 @@ export class BoardPageComponent {
   }
 
   onMoveDocument(
-    instructions: { id: string; documents: { id: string }[] }[],
+    instructions: BoardInstruction[],
     instructionId: string,
     previousIndex: number,
     newIndex: number
@@ -561,7 +603,7 @@ export class BoardPageComponent {
   }
 
   onTransferDocument(
-    instructions: { id: string; documents: { id: string }[] }[],
+    instructions: BoardInstruction[],
     previousInstructionId: string,
     newInstructionId: string,
     documentId: string,
@@ -581,7 +623,7 @@ export class BoardPageComponent {
   }
 
   onMoveTask(
-    instructions: { id: string; tasks: { id: string }[] }[],
+    instructions: BoardInstruction[],
     instructionId: string,
     previousIndex: number,
     newIndex: number
@@ -604,7 +646,7 @@ export class BoardPageComponent {
   }
 
   onTransferTask(
-    instructions: { id: string; tasks: { id: string }[] }[],
+    instructions: BoardInstruction[],
     previousInstructionId: string,
     newInstructionId: string,
     taskId: string,
