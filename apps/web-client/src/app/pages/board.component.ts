@@ -478,64 +478,6 @@ export class BoardPageComponent {
     this.slots[index] = data;
   }
 
-  onUseItem(instructionId: string, item: Option<ActiveItem>) {
-    const instructionIndex =
-      this.boardInstructions.findIndex(({ id }) => id === instructionId) ??
-      null;
-
-    // create a new document/task
-
-    if (item !== null && instructionIndex !== null) {
-      this.active = null;
-
-      if (item.kind === 'instruction') {
-        this.boardInstructions[instructionIndex] = {
-          ...this.boardInstructions[instructionIndex],
-          tasks: [
-            ...this.boardInstructions[instructionIndex].tasks,
-            {
-              id: uuid(),
-              name: 'asd',
-              instruction: {
-                id: '',
-                name: '',
-                applicationId: '',
-                workspaceId: '',
-                thumbnailUrl: '',
-                isInternal: false,
-                instruction: '',
-                namespace: '',
-                plugin: '',
-              },
-            },
-          ],
-        };
-      } else {
-        this.boardInstructions[instructionIndex] = {
-          ...this.boardInstructions[instructionIndex],
-          documents: [
-            ...this.boardInstructions[instructionIndex].documents,
-            {
-              id: uuid(),
-              name: 'asd',
-              collection: {
-                id: '',
-                name: '',
-                applicationId: '',
-                workspaceId: '',
-                thumbnailUrl: '',
-                isInternal: true,
-                account: null,
-                namespace: null,
-                plugin: null,
-              },
-            },
-          ],
-        };
-      }
-    }
-  }
-
   onUseCollection(instructionId: string, collection: Collection) {
     this._applicationApiService
       .createInstructionDocument(instructionId, collection)
