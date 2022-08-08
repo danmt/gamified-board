@@ -14,10 +14,13 @@ import {
   startAt,
 } from '@angular/fire/firestore';
 import { combineLatest, map, of, switchMap } from 'rxjs';
+import { PluginsService } from '../plugins';
+import { Option } from '../utils';
 
 @Injectable({ providedIn: 'root' })
 export class ApplicationApiService {
   private readonly _firestore = inject(Firestore);
+  private readonly _pluginsService = inject(PluginsService);
 
   getWorkspaceApplications(workspaceId: string) {
     const workspaceRef = doc(this._firestore, `workspaces/${workspaceId}`);
@@ -159,19 +162,32 @@ export class ApplicationApiService {
           collectionGroup(this._firestore, 'documents').withConverter<{
             id: string;
             name: string;
-            collectionRef: DocumentReference<DocumentData>;
+            collectionRef: Option<DocumentReference<DocumentData>>;
+            isInternal: boolean;
+            namespace: Option<string>;
+            plugin: Option<string>;
+            account: Option<string>;
           }>({
             fromFirestore: (snapshot) => ({
               id: snapshot.id,
               name: snapshot.data()['name'] as string,
-              collectionRef: snapshot.data()[
-                'collectionRef'
-              ] as DocumentReference<DocumentData>,
+              collectionRef:
+                snapshot.data()['collectionRef'] ??
+                (null as Option<DocumentReference<DocumentData>>),
+              isInternal: snapshot.data()['isInternal'] as boolean,
+              namespace:
+                snapshot.data()['namespace'] ?? (null as Option<string>),
+              plugin: snapshot.data()['plugin'] ?? (null as Option<string>),
+              account: snapshot.data()['account'] ?? (null as Option<string>),
             }),
             toFirestore: (it: {
               id: string;
               name: string;
-              collectionRef: DocumentReference<DocumentData>;
+              collectionRef: Option<DocumentReference<DocumentData>>;
+              isInternal: boolean;
+              namespace: Option<string>;
+              plugin: Option<string>;
+              account: Option<string>;
             }) => it,
           }),
           orderBy(documentId()),
@@ -185,21 +201,75 @@ export class ApplicationApiService {
           }
 
           return combineLatest(
-            documents.map((document) =>
-              docData(document.collectionRef).pipe(
-                map((collection) => ({
+            documents.map((document) => {
+              const { isInternal, collectionRef } = document;
+
+              if (isInternal) {
+                if (collectionRef === null) {
+                  throw new Error(
+                    'CollectionRef is missing from internal document.'
+                  );
+                }
+
+                return docData(collectionRef).pipe(
+                  map((collection) => ({
+                    id: document.id,
+                    name: document.name,
+                    collection: {
+                      id: collectionRef.id,
+                      name: collection['name'] as string,
+                      isInternal: true,
+                      thumbnailUrl: collection['thumbnailUrl'] as string,
+                      workspaceId:
+                        collection['workspaceRef'].id ??
+                        (null as Option<string>),
+                      applicationId:
+                        collection['applicationRef'].id ??
+                        (null as Option<string>),
+                      namespace: null,
+                      plugin: null,
+                      account: null,
+                    },
+                  }))
+                );
+              } else {
+                const plugin =
+                  this._pluginsService.plugins.find(
+                    (plugin) =>
+                      plugin.namespace === document.namespace &&
+                      plugin.name === document.plugin
+                  ) ?? null;
+
+                if (plugin === null) {
+                  throw new Error('Plugin not found');
+                }
+
+                const account =
+                  plugin.accounts.find(
+                    (account) => account.name === document.account
+                  ) ?? null;
+
+                if (account === null) {
+                  throw new Error('Account not found');
+                }
+
+                return of({
                   id: document.id,
                   name: document.name,
                   collection: {
-                    id: document.collectionRef.id,
-                    name: collection['name'] as string,
-                    workspaceId: collection['workspaceRef'].id as string,
-                    applicationId: collection['applicationRef'].id as string,
-                    thumbnailUrl: collection['thumbnailUrl'] as string,
+                    id: account.name,
+                    name: account.name,
+                    isInternal: false,
+                    namespace: document.namespace,
+                    plugin: document.plugin,
+                    account: document.account,
+                    thumbnailUrl: `assets/plugins/${document.namespace}/${document.plugin}/accounts/${document.account}.png`,
+                    workspaceId: null,
+                    applicationId: null,
                   },
-                }))
-              )
-            )
+                });
+              }
+            })
           );
         })
       ),
@@ -208,19 +278,33 @@ export class ApplicationApiService {
           collectionGroup(this._firestore, 'tasks').withConverter<{
             id: string;
             name: string;
-            instructionRef: DocumentReference<DocumentData>;
+            instructionRef: Option<DocumentReference<DocumentData>>;
+            isInternal: boolean;
+            namespace: Option<string>;
+            plugin: Option<string>;
+            instruction: Option<string>;
           }>({
             fromFirestore: (snapshot) => ({
               id: snapshot.id,
               name: snapshot.data()['name'] as string,
-              instructionRef: snapshot.data()[
-                'instructionRef'
-              ] as DocumentReference<DocumentData>,
+              instructionRef:
+                snapshot.data()['instructionRef'] ??
+                (null as Option<DocumentReference<DocumentData>>),
+              isInternal: snapshot.data()['isInternal'] as boolean,
+              namespace:
+                snapshot.data()['namespace'] ?? (null as Option<string>),
+              plugin: snapshot.data()['plugin'] ?? (null as Option<string>),
+              instruction:
+                snapshot.data()['instruction'] ?? (null as Option<string>),
             }),
             toFirestore: (it: {
               id: string;
               name: string;
-              instructionRef: DocumentReference<DocumentData>;
+              instructionRef: Option<DocumentReference<DocumentData>>;
+              isInternal: boolean;
+              namespace: Option<string>;
+              plugin: Option<string>;
+              instruction: Option<string>;
             }) => it,
           }),
           orderBy(documentId()),
@@ -234,21 +318,75 @@ export class ApplicationApiService {
           }
 
           return combineLatest(
-            tasks.map((task) =>
-              docData(task.instructionRef).pipe(
-                map((instruction) => ({
+            tasks.map((task) => {
+              const { isInternal, instructionRef } = task;
+
+              if (isInternal) {
+                if (instructionRef === null) {
+                  throw new Error(
+                    'InstructionRef is missing from internal task.'
+                  );
+                }
+
+                return docData(instructionRef).pipe(
+                  map((instruction) => ({
+                    id: task.id,
+                    name: task.name,
+                    instruction: {
+                      id: instructionRef.id,
+                      name: instruction['name'] as string,
+                      isInternal: true,
+                      thumbnailUrl: instruction['thumbnailUrl'] as string,
+                      workspaceId:
+                        instruction['workspaceRef'].id ??
+                        (null as Option<string>),
+                      applicationId:
+                        instruction['applicationRef'].id ??
+                        (null as Option<string>),
+                      namespace: null,
+                      plugin: null,
+                      instruction: null,
+                    },
+                  }))
+                );
+              } else {
+                const plugin =
+                  this._pluginsService.plugins.find(
+                    (plugin) =>
+                      plugin.namespace === task.namespace &&
+                      plugin.name === task.plugin
+                  ) ?? null;
+
+                if (plugin === null) {
+                  throw new Error('Plugin not found');
+                }
+
+                const instruction =
+                  plugin.instructions.find(
+                    (instruction) => instruction.name === task.instruction
+                  ) ?? null;
+
+                if (instruction === null) {
+                  throw new Error('Account not found');
+                }
+
+                return of({
                   id: task.id,
                   name: task.name,
                   instruction: {
-                    id: task.instructionRef.id,
-                    name: instruction['name'] as string,
-                    workspaceId: instruction['workspaceRef'].id as string,
-                    applicationId: instruction['applicationRef'].id as string,
-                    thumbnailUrl: instruction['thumbnailUrl'] as string,
+                    id: instruction.name,
+                    name: instruction.name,
+                    isInternal: false,
+                    namespace: task.namespace,
+                    plugin: task.plugin,
+                    instruction: task.instruction,
+                    thumbnailUrl: `assets/plugins/${task.namespace}/${task.plugin}/instructions/${task.instruction}.png`,
+                    workspaceId: null,
+                    applicationId: null,
                   },
-                }))
-              )
-            )
+                });
+              }
+            })
           );
         })
       ),

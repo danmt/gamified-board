@@ -268,6 +268,8 @@ import { Option } from '../utils';
                     class="w-full h-full object-cover"
                     [src]="
                       'assets/plugins/' +
+                      plugin.namespace +
+                      '/' +
                       plugin.name +
                       '/instructions/' +
                       instruction.name +
@@ -283,6 +285,8 @@ import { Option } from '../utils';
                   id: plugin.name + '/' + instruction.name,
                   thumbnailUrl:
                     'assets/plugins/' +
+                    plugin.namespace +
+                    '/' +
                     plugin.name +
                     '/instructions/' +
                     instruction.name +
@@ -296,6 +300,8 @@ import { Option } from '../utils';
                     class="w-full h-full object-cover"
                     [src]="
                       'assets/plugins/' +
+                      plugin.namespace +
+                      '/' +
                       plugin.name +
                       '/instructions/' +
                       instruction.name +
@@ -312,6 +318,8 @@ import { Option } from '../utils';
                     class="w-full h-full object-cover"
                     [src]="
                       'assets/plugins/' +
+                      plugin.namespace +
+                      '/' +
                       plugin.name +
                       '/instructions/' +
                       instruction.name +

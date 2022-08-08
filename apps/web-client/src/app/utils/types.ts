@@ -15,9 +15,13 @@ export interface BoardTask {
   instruction: {
     id: string;
     name: string;
-    workspaceId: string;
-    applicationId: string;
+    isInternal: boolean;
     thumbnailUrl: string;
+    workspaceId: Option<string>;
+    applicationId: Option<string>;
+    namespace: Option<string>;
+    plugin: Option<string>;
+    instruction: Option<string>;
   };
 }
 
@@ -27,9 +31,13 @@ export interface BoardDocument {
   collection: {
     id: string;
     name: string;
-    workspaceId: string;
-    applicationId: string;
+    isInternal: boolean;
     thumbnailUrl: string;
+    workspaceId: Option<string>;
+    applicationId: Option<string>;
+    namespace: Option<string>;
+    plugin: Option<string>;
+    account: Option<string>;
   };
 }
 

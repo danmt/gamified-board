@@ -267,6 +267,8 @@ import { Option } from '../utils';
                     class="w-full h-full object-cover"
                     [src]="
                       'assets/plugins/' +
+                      plugin.namespace +
+                      '/' +
                       plugin.name +
                       '/accounts/' +
                       account.name +
@@ -282,6 +284,8 @@ import { Option } from '../utils';
                   id: plugin.name + '/' + account.name,
                   thumbnailUrl:
                     'assets/plugins/' +
+                    plugin.namespace +
+                    '/' +
                     plugin.name +
                     '/accounts/' +
                     account.name +
@@ -295,6 +299,8 @@ import { Option } from '../utils';
                     class="w-full h-full object-cover"
                     [src]="
                       'assets/plugins/' +
+                      plugin.namespace +
+                      '/' +
                       plugin.name +
                       '/accounts/' +
                       account.name +
@@ -311,6 +317,8 @@ import { Option } from '../utils';
                     class="w-full h-full object-cover"
                     [src]="
                       'assets/plugins/' +
+                      plugin.namespace +
+                      '/' +
                       plugin.name +
                       '/accounts/' +
                       account.name +
