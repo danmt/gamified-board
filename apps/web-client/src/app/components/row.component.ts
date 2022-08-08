@@ -167,6 +167,7 @@ export class RowComponent {
   @Output() transferDocument = new EventEmitter<{
     previousInstructionId: string;
     newInstructionId: string;
+    documentId: string;
     previousIndex: number;
     newIndex: number;
   }>();
@@ -177,6 +178,7 @@ export class RowComponent {
   @Output() transferTask = new EventEmitter<{
     previousInstructionId: string;
     newInstructionId: string;
+    documentId: string;
     previousIndex: number;
     newIndex: number;
   }>();
@@ -210,9 +212,11 @@ export class RowComponent {
       const previousInstructionId =
         event.previousContainer.id.split('-document')[0];
       const newInstructionId = event.container.id.split('-document')[0];
+
       this.transferDocument.emit({
         previousInstructionId,
         newInstructionId,
+        documentId: event.item.data.id,
         previousIndex: event.previousIndex,
         newIndex: event.currentIndex,
       });
@@ -232,6 +236,7 @@ export class RowComponent {
       this.transferTask.emit({
         previousInstructionId,
         newInstructionId,
+        documentId: event.item.data.id,
         previousIndex: event.previousIndex,
         newIndex: event.currentIndex,
       });

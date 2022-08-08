@@ -1,3 +1,4 @@
+import { transferArrayItem } from '@angular/cdk/drag-drop';
 import { inject, Injectable } from '@angular/core';
 import {
   collectionData,
@@ -11,11 +12,13 @@ import {
   Firestore,
   orderBy,
   query,
+  runTransaction,
   startAt,
+  updateDoc,
 } from '@angular/fire/firestore';
-import { combineLatest, map, of, switchMap } from 'rxjs';
+import { combineLatest, defer, from, map, of, switchMap } from 'rxjs';
 import { PluginsService } from '../plugins';
-import { Option } from '../utils';
+import { BoardDocument, BoardTask, Option } from '../utils';
 
 @Injectable({ providedIn: 'root' })
 export class ApplicationApiService {
@@ -164,6 +167,7 @@ export class ApplicationApiService {
             name: string;
             collectionRef: Option<DocumentReference<DocumentData>>;
             isInternal: boolean;
+            position: number;
             namespace: Option<string>;
             plugin: Option<string>;
             account: Option<string>;
@@ -171,10 +175,11 @@ export class ApplicationApiService {
             fromFirestore: (snapshot) => ({
               id: snapshot.id,
               name: snapshot.data()['name'] as string,
+              isInternal: snapshot.data()['isInternal'] as boolean,
+              position: snapshot.data()['position'] as number,
               collectionRef:
                 snapshot.data()['collectionRef'] ??
                 (null as Option<DocumentReference<DocumentData>>),
-              isInternal: snapshot.data()['isInternal'] as boolean,
               namespace:
                 snapshot.data()['namespace'] ?? (null as Option<string>),
               plugin: snapshot.data()['plugin'] ?? (null as Option<string>),
@@ -185,6 +190,7 @@ export class ApplicationApiService {
               name: string;
               collectionRef: Option<DocumentReference<DocumentData>>;
               isInternal: boolean;
+              position: number;
               namespace: Option<string>;
               plugin: Option<string>;
               account: Option<string>;
@@ -215,6 +221,7 @@ export class ApplicationApiService {
                   map((collection) => ({
                     id: document.id,
                     name: document.name,
+                    position: document.position,
                     collection: {
                       id: collectionRef.id,
                       name: collection['name'] as string,
@@ -256,6 +263,7 @@ export class ApplicationApiService {
                 return of({
                   id: document.id,
                   name: document.name,
+                  position: document.position,
                   collection: {
                     id: account.name,
                     name: account.name,
@@ -278,8 +286,9 @@ export class ApplicationApiService {
           collectionGroup(this._firestore, 'tasks').withConverter<{
             id: string;
             name: string;
-            instructionRef: Option<DocumentReference<DocumentData>>;
             isInternal: boolean;
+            position: number;
+            instructionRef: Option<DocumentReference<DocumentData>>;
             namespace: Option<string>;
             plugin: Option<string>;
             instruction: Option<string>;
@@ -287,10 +296,11 @@ export class ApplicationApiService {
             fromFirestore: (snapshot) => ({
               id: snapshot.id,
               name: snapshot.data()['name'] as string,
+              isInternal: snapshot.data()['isInternal'] as boolean,
+              position: snapshot.data()['position'] as number,
               instructionRef:
                 snapshot.data()['instructionRef'] ??
                 (null as Option<DocumentReference<DocumentData>>),
-              isInternal: snapshot.data()['isInternal'] as boolean,
               namespace:
                 snapshot.data()['namespace'] ?? (null as Option<string>),
               plugin: snapshot.data()['plugin'] ?? (null as Option<string>),
@@ -300,8 +310,9 @@ export class ApplicationApiService {
             toFirestore: (it: {
               id: string;
               name: string;
-              instructionRef: Option<DocumentReference<DocumentData>>;
               isInternal: boolean;
+              position: number;
+              instructionRef: Option<DocumentReference<DocumentData>>;
               namespace: Option<string>;
               plugin: Option<string>;
               instruction: Option<string>;
@@ -332,6 +343,7 @@ export class ApplicationApiService {
                   map((instruction) => ({
                     id: task.id,
                     name: task.name,
+                    position: task.position,
                     instruction: {
                       id: instructionRef.id,
                       name: instruction['name'] as string,
@@ -373,6 +385,7 @@ export class ApplicationApiService {
                 return of({
                   id: task.id,
                   name: task.name,
+                  position: task.position,
                   instruction: {
                     id: instruction.name,
                     name: instruction.name,
@@ -394,9 +407,215 @@ export class ApplicationApiService {
       map(([instruction, documents, tasks]) => ({
         id: instructionRef.id,
         name: instruction['name'] as string,
-        documents,
-        tasks,
+        documents: instruction['documentsOrder'].reduce(
+          (orderedDocuments: BoardDocument[], documentId: string) => {
+            const documentFound =
+              documents.find((document) => document.id === documentId) ?? null;
+
+            if (documentFound === null) {
+              return orderedDocuments;
+            }
+
+            return [...orderedDocuments, documentFound];
+          },
+          []
+        ),
+        tasks: instruction['tasksOrder'].reduce(
+          (orderedTasks: BoardTask[], taskId: string) => {
+            const taskFound = tasks.find((task) => task.id === taskId) ?? null;
+
+            if (taskFound === null) {
+              return orderedTasks;
+            }
+
+            return [...orderedTasks, taskFound];
+          },
+          []
+        ),
       }))
+    );
+  }
+
+  updateInstructionDocumentsOrder(
+    instructionId: string,
+    documentsOrder: string[]
+  ) {
+    const instructionRef = doc(
+      this._firestore,
+      `instructions/${instructionId}`
+    );
+
+    return defer(() => from(updateDoc(instructionRef, { documentsOrder })));
+  }
+
+  updateInstructionTasksOrder(instructionId: string, tasksOrder: string[]) {
+    const instructionRef = doc(
+      this._firestore,
+      `instructions/${instructionId}`
+    );
+
+    return defer(() => from(updateDoc(instructionRef, { tasksOrder })));
+  }
+
+  transferInstructionDocument(
+    instructions: { id: string; documents: { id: string }[] }[],
+    previousInstructionId: string,
+    newInstructionId: string,
+    documentId: string,
+    previousIndex: number,
+    newIndex: number
+  ) {
+    return defer(() =>
+      from(
+        runTransaction(this._firestore, async (transaction) => {
+          const previousInstructionIndex = instructions.findIndex(
+            ({ id }) => id === previousInstructionId
+          );
+
+          if (previousInstructionIndex === -1) {
+            throw new Error('Invalid previous instruction.');
+          }
+
+          const previousInstructionRef = doc(
+            this._firestore,
+            `instructions/${previousInstructionId}`
+          );
+
+          const newInstructionIndex = instructions.findIndex(
+            ({ id }) => id === newInstructionId
+          );
+
+          if (newInstructionIndex === -1) {
+            throw new Error('Invalid new instruction.');
+          }
+
+          const newInstructionRef = doc(
+            this._firestore,
+            `instructions/${newInstructionId}`
+          );
+
+          const previousInstructionDocuments = instructions[
+            previousInstructionIndex
+          ].documents.map(({ id }) => id);
+          const newInstructionDocuments = instructions[
+            newInstructionIndex
+          ].documents.map(({ id }) => id);
+
+          transferArrayItem(
+            previousInstructionDocuments,
+            newInstructionDocuments,
+            previousIndex,
+            newIndex
+          );
+
+          const currentDocumentRef = doc(
+            this._firestore,
+            `instructions/${previousInstructionId}/documents/${documentId}`
+          );
+          const newDocumentRef = doc(
+            this._firestore,
+            `instructions/${newInstructionId}/documents/${documentId}`
+          );
+
+          const document = await transaction.get(currentDocumentRef);
+          // remove from previous instruction documents
+          transaction.update(previousInstructionRef, {
+            documentsOrder: previousInstructionDocuments,
+          });
+          // remove from previous instruction documentsOrder
+          transaction.delete(currentDocumentRef);
+
+          // add it to new instruction documents
+          transaction.set(newDocumentRef, document.data());
+          // update new instruction documents order
+          transaction.update(newInstructionRef, {
+            documentsOrder: newInstructionDocuments,
+          });
+
+          return {};
+        })
+      )
+    );
+  }
+
+  transferInstructionTask(
+    instructions: { id: string; tasks: { id: string }[] }[],
+    previousInstructionId: string,
+    newInstructionId: string,
+    taskId: string,
+    previousIndex: number,
+    newIndex: number
+  ) {
+    return defer(() =>
+      from(
+        runTransaction(this._firestore, async (transaction) => {
+          const previousInstructionIndex = instructions.findIndex(
+            ({ id }) => id === previousInstructionId
+          );
+
+          if (previousInstructionIndex === -1) {
+            throw new Error('Invalid previous instruction.');
+          }
+
+          const previousInstructionRef = doc(
+            this._firestore,
+            `instructions/${previousInstructionId}`
+          );
+
+          const newInstructionIndex = instructions.findIndex(
+            ({ id }) => id === newInstructionId
+          );
+
+          if (newInstructionIndex === -1) {
+            throw new Error('Invalid new instruction.');
+          }
+
+          const newInstructionRef = doc(
+            this._firestore,
+            `instructions/${newInstructionId}`
+          );
+
+          const previousInstructionTasks = instructions[
+            previousInstructionIndex
+          ].tasks.map(({ id }) => id);
+          const newInstructionTasks = instructions[
+            newInstructionIndex
+          ].tasks.map(({ id }) => id);
+
+          transferArrayItem(
+            previousInstructionTasks,
+            newInstructionTasks,
+            previousIndex,
+            newIndex
+          );
+
+          const currentTaskRef = doc(
+            this._firestore,
+            `instructions/${previousInstructionId}/tasks/${taskId}`
+          );
+          const newTaskRef = doc(
+            this._firestore,
+            `instructions/${newInstructionId}/tasks/${taskId}`
+          );
+
+          const task = await transaction.get(currentTaskRef);
+          // remove from previous instruction tasks
+          transaction.update(previousInstructionRef, {
+            tasksOrder: previousInstructionTasks,
+          });
+          // remove from previous instruction tasksOrder
+          transaction.delete(currentTaskRef);
+
+          // add it to new instruction tasks
+          transaction.set(newTaskRef, task.data());
+          // update new instruction tasks order
+          transaction.update(newInstructionRef, {
+            tasksOrder: newInstructionTasks,
+          });
+
+          return {};
+        })
+      )
     );
   }
 }

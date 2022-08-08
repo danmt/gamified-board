@@ -46,6 +46,7 @@ export class BoardItemDropListsPipe implements PipeTransform {
           onTransferDocument(
             $event.previousInstructionId,
             $event.newInstructionId,
+            $event.documentId,
             $event.previousIndex,
             $event.newIndex
           )
@@ -57,6 +58,7 @@ export class BoardItemDropListsPipe implements PipeTransform {
           onTransferTask(
             $event.previousInstructionId,
             $event.newInstructionId,
+            $event.documentId,
             $event.previousIndex,
             $event.newIndex
           )
@@ -90,6 +92,7 @@ export class BoardComponent {
   @Output() transferDocument = new EventEmitter<{
     previousInstructionId: string;
     newInstructionId: string;
+    documentId: string;
     previousIndex: number;
     newIndex: number;
   }>();
@@ -101,6 +104,7 @@ export class BoardComponent {
   @Output() transferTask = new EventEmitter<{
     previousInstructionId: string;
     newInstructionId: string;
+    documentId: string;
     previousIndex: number;
     newIndex: number;
   }>();
@@ -130,12 +134,14 @@ export class BoardComponent {
   onTransferDocument(
     previousInstructionId: string,
     newInstructionId: string,
+    documentId: string,
     previousIndex: number,
     newIndex: number
   ) {
     this.transferDocument.emit({
       previousInstructionId,
       newInstructionId,
+      documentId,
       previousIndex,
       newIndex,
     });
@@ -152,12 +158,14 @@ export class BoardComponent {
   onTransferTask(
     previousInstructionId: string,
     newInstructionId: string,
+    documentId: string,
     previousIndex: number,
     newIndex: number
   ) {
     this.transferTask.emit({
       previousInstructionId,
       newInstructionId,
+      documentId,
       previousIndex,
       newIndex,
     });

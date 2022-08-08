@@ -1,5 +1,5 @@
 import { Dialog, DialogModule, DialogRef } from '@angular/cdk/dialog';
-import { moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
+import { moveItemInArray } from '@angular/cdk/drag-drop';
 import {
   GlobalPositionStrategy,
   NoopScrollStrategy,
@@ -13,6 +13,7 @@ import {
   inject,
 } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
+import { LetModule } from '@ngrx/component';
 import { map, of, switchMap } from 'rxjs';
 import { v4 as uuid } from 'uuid';
 import {
@@ -66,7 +67,8 @@ import {
       class="fixed bottom-0 z-10 -translate-x-1/2 left-1/2"
     ></pg-selected-document-dock>
     <pg-board
-      [instructions]="(currentApplicationInstructions$ | async) ?? []"
+      *ngrxLet="currentApplicationInstructions$; let instructions"
+      [instructions]="instructions ?? []"
       [active]="active"
       (useItem)="onUseItem($event.instructionId, $event.item)"
       (selectItem)="
@@ -74,6 +76,7 @@ import {
       "
       (moveDocument)="
         onMoveDocument(
+          instructions,
           $event.instructionId,
           $event.previousIndex,
           $event.newIndex
@@ -81,19 +84,28 @@ import {
       "
       (transferDocument)="
         onTransferDocument(
+          instructions,
           $event.previousInstructionId,
           $event.newInstructionId,
+          $event.documentId,
           $event.previousIndex,
           $event.newIndex
         )
       "
       (moveTask)="
-        onMoveTask($event.instructionId, $event.previousIndex, $event.newIndex)
+        onMoveTask(
+          instructions,
+          $event.instructionId,
+          $event.previousIndex,
+          $event.newIndex
+        )
       "
       (transferTask)="
         onTransferTask(
+          instructions,
           $event.previousInstructionId,
           $event.newInstructionId,
+          $event.documentId,
           $event.previousIndex,
           $event.newIndex
         )
@@ -110,6 +122,7 @@ import {
     SelectedDocumentDockComponent,
     BoardComponent,
     NavigationWrapperComponent,
+    LetModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -523,11 +536,12 @@ export class BoardPageComponent {
   }
 
   onMoveDocument(
+    instructions: { id: string; documents: { id: string }[] }[],
     instructionId: string,
     previousIndex: number,
     newIndex: number
   ) {
-    const instructionIndex = this.boardInstructions.findIndex(
+    const instructionIndex = instructions.findIndex(
       ({ id }) => id === instructionId
     );
 
@@ -535,45 +549,44 @@ export class BoardPageComponent {
       throw new Error('Invalid instruction.');
     }
 
-    moveItemInArray(
-      this.boardInstructions[instructionIndex].documents,
-      previousIndex,
-      newIndex
+    const documentsOrder = instructions[instructionIndex].documents.map(
+      ({ id }) => id
     );
+
+    moveItemInArray(documentsOrder, previousIndex, newIndex);
+
+    this._applicationApiService
+      .updateInstructionDocumentsOrder(instructionId, documentsOrder)
+      .subscribe();
   }
 
   onTransferDocument(
+    instructions: { id: string; documents: { id: string }[] }[],
     previousInstructionId: string,
     newInstructionId: string,
+    documentId: string,
     previousIndex: number,
     newIndex: number
   ) {
-    const previousInstructionIndex = this.boardInstructions.findIndex(
-      ({ id }) => id === previousInstructionId
-    );
-
-    if (previousInstructionIndex === -1) {
-      throw new Error('Invalid previous instruction.');
-    }
-
-    const newInstructionIndex = this.boardInstructions.findIndex(
-      ({ id }) => id === newInstructionId
-    );
-
-    if (newInstructionIndex === -1) {
-      throw new Error('Invalid new instruction.');
-    }
-
-    transferArrayItem(
-      this.boardInstructions[previousInstructionIndex].documents,
-      this.boardInstructions[newInstructionIndex].documents,
-      previousIndex,
-      newIndex
-    );
+    this._applicationApiService
+      .transferInstructionDocument(
+        instructions,
+        previousInstructionId,
+        newInstructionId,
+        documentId,
+        previousIndex,
+        newIndex
+      )
+      .subscribe();
   }
 
-  onMoveTask(instructionId: string, previousIndex: number, newIndex: number) {
-    const instructionIndex = this.boardInstructions.findIndex(
+  onMoveTask(
+    instructions: { id: string; tasks: { id: string }[] }[],
+    instructionId: string,
+    previousIndex: number,
+    newIndex: number
+  ) {
+    const instructionIndex = instructions.findIndex(
       ({ id }) => id === instructionId
     );
 
@@ -581,40 +594,32 @@ export class BoardPageComponent {
       throw new Error('Invalid instruction.');
     }
 
-    moveItemInArray(
-      this.boardInstructions[instructionIndex].tasks,
-      previousIndex,
-      newIndex
-    );
+    const tasksOrder = instructions[instructionIndex].tasks.map(({ id }) => id);
+
+    moveItemInArray(tasksOrder, previousIndex, newIndex);
+
+    this._applicationApiService
+      .updateInstructionTasksOrder(instructionId, tasksOrder)
+      .subscribe();
   }
 
   onTransferTask(
+    instructions: { id: string; tasks: { id: string }[] }[],
     previousInstructionId: string,
     newInstructionId: string,
+    taskId: string,
     previousIndex: number,
     newIndex: number
   ) {
-    const previousInstructionIndex = this.boardInstructions.findIndex(
-      ({ id }) => id === previousInstructionId
-    );
-
-    if (previousInstructionIndex === -1) {
-      throw new Error('Invalid previous instruction.');
-    }
-
-    const newInstructionIndex = this.boardInstructions.findIndex(
-      ({ id }) => id === newInstructionId
-    );
-
-    if (newInstructionIndex === -1) {
-      throw new Error('Invalid new instruction.');
-    }
-
-    transferArrayItem(
-      this.boardInstructions[previousInstructionIndex].tasks,
-      this.boardInstructions[newInstructionIndex].tasks,
-      previousIndex,
-      newIndex
-    );
+    this._applicationApiService
+      .transferInstructionTask(
+        instructions,
+        previousInstructionId,
+        newInstructionId,
+        taskId,
+        previousIndex,
+        newIndex
+      )
+      .subscribe();
   }
 }
