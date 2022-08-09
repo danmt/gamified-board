@@ -643,6 +643,7 @@ export class ApplicationApiService {
           );
 
           const instruction = await transaction.get(instructionRef);
+
           const tasksOrder = instruction
             .data()
             ?.['tasksOrder'].filter((task: string) => task !== taskId);
@@ -652,6 +653,37 @@ export class ApplicationApiService {
             doc(
               this._firestore,
               `instructions/${instructionId}/tasks/${taskId}`
+            )
+          );
+
+          return {};
+        })
+      )
+    );
+  }
+
+  deleteInstructionDocument(instructionId: string, documentId: string) {
+    return defer(() =>
+      from(
+        runTransaction(this._firestore, async (transaction) => {
+          const instructionRef = doc(
+            this._firestore,
+            `instructions/${instructionId}`
+          );
+
+          const instruction = await transaction.get(instructionRef);
+
+          const documentsOrder = instruction
+            .data()
+            ?.['documentsOrder'].filter(
+              (document: string) => document !== documentId
+            );
+
+          transaction.update(instructionRef, { documentsOrder });
+          transaction.delete(
+            doc(
+              this._firestore,
+              `instructions/${instructionId}/documents/${documentId}`
             )
           );
 
@@ -684,10 +716,9 @@ export class ApplicationApiService {
           transaction.set(newDocumentRef, {
             name: 'sample #1',
             isInternal: documentCollection.isInternal,
-            collectionRef: doc(
-              this._firestore,
-              `collections/${documentCollection.id}`
-            ),
+            collectionRef: documentCollection.isInternal
+              ? doc(this._firestore, `collections/${documentCollection.id}`)
+              : null,
             namespace: documentCollection.namespace ?? null,
             plugin: documentCollection.plugin ?? null,
             account: documentCollection.account ?? null,

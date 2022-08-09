@@ -207,24 +207,37 @@ import { Option } from '../utils';
               <ng-container
                 *ngIf="
                   (isDragging$ | ngrxPush) ===
-                  plugin.name + '/' + instruction.name
+                  plugin.namespace + '/' + plugin.name + '/' + instruction.name
                 "
               >
                 <div
                   class="w-full h-full absolute z-20 bg-black bg-opacity-50"
                 ></div>
                 <div class="bg-yellow-500 p-0.5 w-11 h-11">
-                  <img class="w-full h-full object-cover" [src]="plugin" />
+                  <img
+                    class="w-full h-full object-cover"
+                    [src]="
+                      'assets/plugins/' +
+                      plugin.namespace +
+                      '/' +
+                      plugin.name +
+                      '/instructions/' +
+                      instruction.name +
+                      '.png'
+                    "
+                  />
                 </div>
               </ng-container>
 
               <div
+                [id]="plugin.name + '/' + instruction.name"
                 cdkDrag
                 [cdkDragData]="{
                   namespace: plugin.namespace,
                   plugin: plugin.name,
                   id: instruction.name,
                   name: instruction.name,
+                  instruction: instruction.name,
                   thumbnailUrl:
                     'assets/plugins/' +
                     plugin.namespace +
@@ -329,7 +342,11 @@ export class InstructionsComponent {
   );
 
   onDragStart(event: CdkDragStart) {
-    this._isDragging.next(event.source.data.id);
+    this._isDragging.next(
+      event.source.data.isInternal
+        ? event.source.data.id
+        : `${event.source.data.namespace}/${event.source.data.plugin}/${event.source.data.instruction}`
+    );
   }
 
   onDragEnd() {

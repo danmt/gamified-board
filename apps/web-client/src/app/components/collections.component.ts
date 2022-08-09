@@ -41,10 +41,7 @@ import { Option } from '../utils';
                 class="relative"
               >
                 <ng-container
-                  *ngIf="
-                    (isDragging$ | ngrxPush) ===
-                    workspaceId + '/' + application.id + '/' + collection.id
-                  "
+                  *ngIf="(isDragging$ | ngrxPush) === collection.id"
                 >
                   <div
                     class="w-full h-full absolute z-20 bg-black bg-opacity-50"
@@ -123,10 +120,7 @@ import { Option } from '../utils';
                 class="relative"
               >
                 <ng-container
-                  *ngIf="
-                    (isDragging$ | ngrxPush) ===
-                    workspaceId + '/' + application.id + '/' + collection.id
-                  "
+                  *ngIf="(isDragging$ | ngrxPush) === collection.id"
                 >
                   <div
                     class="w-full h-full absolute z-20 bg-black bg-opacity-50"
@@ -204,7 +198,8 @@ import { Option } from '../utils';
             >
               <ng-container
                 *ngIf="
-                  (isDragging$ | ngrxPush) === plugin.name + '/' + account.name
+                  (isDragging$ | ngrxPush) ===
+                  plugin.namespace + '/' + plugin.name + '/' + account.name
                 "
               >
                 <div
@@ -233,6 +228,7 @@ import { Option } from '../utils';
                   plugin: plugin.name,
                   id: account.name,
                   name: account.name,
+                  account: account.name,
                   thumbnailUrl:
                     'assets/plugins/' +
                     plugin.namespace +
@@ -336,7 +332,11 @@ export class CollectionsComponent {
   );
 
   onDragStart(event: CdkDragStart) {
-    this._isDragging.next(event.source.data.id);
+    this._isDragging.next(
+      event.source.data.isInternal
+        ? event.source.data.id
+        : `${event.source.data.namespace}/${event.source.data.plugin}/${event.source.data.account}`
+    );
   }
 
   onDragEnd() {

@@ -15,7 +15,6 @@ import {
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { LetModule } from '@ngrx/component';
 import { map, of, switchMap } from 'rxjs';
-import { v4 as uuid } from 'uuid';
 import {
   BoardComponent,
   CollectionsComponent,
@@ -30,15 +29,14 @@ import { PluginsService } from '../plugins';
 import { ApplicationApiService } from '../services';
 import {
   ActiveItem,
-  BoardDocument,
   BoardInstruction,
   BoardItemKind,
-  BoardTask,
   Collection,
   Instruction,
   MainDockSlots,
   Option,
-  SelectedBoardItem,
+  SelectedBoardDocument,
+  SelectedBoardTask,
 } from '../utils';
 
 @Component({
@@ -168,83 +166,8 @@ export class BoardPageComponent {
   );
 
   active: Option<ActiveItem> = null;
-  selected: Option<SelectedBoardItem> = null;
-  selectedTask: Option<BoardTask> = null;
-  selectedDocument: Option<BoardDocument> = null;
-  boardInstructions: BoardInstruction[] = [
-    {
-      id: uuid(),
-      name: 'ix1',
-      documents: [],
-      tasks: [],
-    },
-    {
-      id: uuid(),
-      name: 'ix1',
-      documents: [],
-      tasks: [],
-    },
-    {
-      id: uuid(),
-      name: 'ix1',
-      documents: [],
-      tasks: [],
-    },
-    {
-      id: uuid(),
-      name: 'ix1',
-      documents: [],
-      tasks: [],
-    },
-    {
-      id: uuid(),
-      name: 'ix1',
-      documents: [],
-      tasks: [],
-    },
-    {
-      id: uuid(),
-      name: 'ix1',
-      documents: [],
-      tasks: [],
-    },
-    {
-      id: uuid(),
-      name: 'ix1',
-      documents: [],
-      tasks: [],
-    },
-    {
-      id: uuid(),
-      name: 'ix1',
-      documents: [],
-      tasks: [],
-    },
-    {
-      id: uuid(),
-      name: 'ix1',
-      documents: [],
-      tasks: [],
-    },
-    {
-      id: uuid(),
-      name: 'ix1',
-      documents: [],
-      tasks: [],
-    },
-    {
-      id: uuid(),
-      name: 'ix1',
-      documents: [],
-      tasks: [],
-    },
-    {
-      id: uuid(),
-      name: 'ix1',
-      documents: [],
-      tasks: [],
-    },
-  ];
+  selectedTask: Option<SelectedBoardTask> = null;
+  selectedDocument: Option<SelectedBoardDocument> = null;
   plugins = this._pluginsService.plugins;
   slots: MainDockSlots = [
     null,
@@ -324,49 +247,21 @@ export class BoardPageComponent {
       case 'Delete': {
         if (this.selectedTask !== null) {
           if (confirm('Are you sure? This action cannot be reverted.')) {
-            const instructionIndex =
-              this.boardInstructions.findIndex(
-                ({ id }) => id === this.selected?.instructionId
-              ) ?? null;
-
-            if (instructionIndex !== null) {
-              this.boardInstructions = [
-                ...this.boardInstructions.slice(0, instructionIndex),
-                {
-                  ...this.boardInstructions[instructionIndex],
-                  tasks: this.boardInstructions[instructionIndex].tasks.filter(
-                    ({ id }) => id !== this.selectedTask?.id
-                  ),
-                },
-                ...this.boardInstructions.slice(instructionIndex + 1),
-              ];
-            }
-
-            this.selectedTask = null;
+            this._applicationApiService
+              .deleteInstructionTask(
+                this.selectedTask.instructionId,
+                this.selectedTask.id
+              )
+              .subscribe(() => (this.selectedTask = null));
           }
         } else if (this.selectedDocument !== null) {
           if (confirm('Are you sure? This action cannot be reverted.')) {
-            const instructionIndex =
-              this.boardInstructions.findIndex(
-                ({ id }) => id === this.selected?.instructionId
-              ) ?? null;
-
-            if (instructionIndex !== null) {
-              this.boardInstructions = [
-                ...this.boardInstructions.slice(0, instructionIndex),
-                {
-                  ...this.boardInstructions[instructionIndex],
-                  documents: this.boardInstructions[
-                    instructionIndex
-                  ].documents.filter(
-                    ({ id }) => id !== this.selectedDocument?.id
-                  ),
-                },
-                ...this.boardInstructions.slice(instructionIndex + 1),
-              ];
-            }
-
-            this.selectedDocument = null;
+            this._applicationApiService
+              .deleteInstructionDocument(
+                this.selectedDocument.instructionId,
+                this.selectedDocument.id
+              )
+              .subscribe(() => (this.selectedDocument = null));
           }
         }
 
@@ -479,12 +374,14 @@ export class BoardPageComponent {
   }
 
   onUseCollection(instructionId: string, collection: Collection) {
+    this.active = null;
     this._applicationApiService
       .createInstructionDocument(instructionId, collection)
       .subscribe();
   }
 
   onUseInstruction(instructionId: string, instruction: Instruction) {
+    this.active = null;
     this._applicationApiService
       .createInstructionTask(instructionId, instruction)
       .subscribe();
@@ -505,15 +402,49 @@ export class BoardPageComponent {
           instruction.documents.find(({ id }) => id === itemId) ?? null;
 
         if (document !== null) {
-          this.selectedDocument = document;
+          this.selectedDocument = {
+            id: document.id,
+            name: document.name,
+            instructionId,
+            collection: {
+              id: document.collection.id,
+              name: document.collection.name,
+              applicationId: document.collection.applicationId,
+              workspaceId: document.collection.workspaceId,
+              isInternal: document.collection.isInternal,
+              account: document.collection.account,
+              namespace: document.collection.namespace,
+              plugin: document.collection.plugin,
+              thumbnailUrl: document.collection.thumbnailUrl,
+            },
+            kind: 'document',
+          };
           this.selectedTask = null;
+          this.active = null;
         }
       } else if (kind === 'task') {
         const task = instruction.tasks.find(({ id }) => id === itemId) ?? null;
 
         if (task !== null) {
-          this.selectedTask = task;
+          this.selectedTask = {
+            id: task.id,
+            name: task.name,
+            instructionId,
+            instruction: {
+              id: task.instruction.id,
+              name: task.instruction.name,
+              applicationId: task.instruction.applicationId,
+              workspaceId: task.instruction.workspaceId,
+              isInternal: task.instruction.isInternal,
+              instruction: task.instruction.instruction,
+              namespace: task.instruction.namespace,
+              plugin: task.instruction.plugin,
+              thumbnailUrl: task.instruction.thumbnailUrl,
+            },
+            kind: 'task',
+          };
           this.selectedDocument = null;
+          this.active = null;
         }
       }
     }

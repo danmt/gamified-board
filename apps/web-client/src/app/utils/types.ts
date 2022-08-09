@@ -41,15 +41,15 @@ export interface BoardDocument {
   };
 }
 
-export type SelectedBoardItem =
-  | (BoardTask & {
-      instructionId: string;
-      kind: 'task';
-    })
-  | (BoardDocument & {
-      instructionId: string;
-      kind: 'document';
-    });
+export type SelectedBoardTask = BoardTask & {
+  instructionId: string;
+  kind: 'task';
+};
+export type SelectedBoardDocument = BoardDocument & {
+  instructionId: string;
+  kind: 'document';
+};
+export type SelectedBoardItem = SelectedBoardTask | SelectedBoardDocument;
 
 export interface BoardInstruction {
   id: string;
