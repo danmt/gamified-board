@@ -693,6 +693,92 @@ export class ApplicationApiService {
     );
   }
 
+  createInstruction(workspaceId: string, applicationId: string, name: string) {
+    return defer(() =>
+      from(
+        runTransaction(this._firestore, async (transaction) => {
+          const workspaceRef = doc(
+            this._firestore,
+            `workspaces/${workspaceId}`
+          );
+          const applicationRef = doc(
+            this._firestore,
+            `applications/${applicationId}`
+          );
+          const newInstructionId = uuid();
+          const newInstructionRef = doc(
+            this._firestore,
+            `instructions/${newInstructionId}`
+          );
+          const newApplicationInstructionId = uuid();
+          const newApplicationInstructionRef = doc(
+            this._firestore,
+            `applications/${applicationId}/instructions/${newApplicationInstructionId}`
+          );
+
+          // create the new instruction
+          transaction.set(newInstructionRef, {
+            name,
+            applicationRef,
+            workspaceRef,
+            thumbnailUrl: `assets/workspaces/${workspaceId}/${applicationId}/${newInstructionId}.png`,
+            tasksOrder: [],
+            documentsOrder: [],
+          });
+
+          // push instruction to application instructions
+          transaction.set(newApplicationInstructionRef, {
+            instructionRef: newInstructionRef,
+          });
+
+          return {};
+        })
+      )
+    );
+  }
+
+  createCollection(workspaceId: string, applicationId: string, name: string) {
+    return defer(() =>
+      from(
+        runTransaction(this._firestore, async (transaction) => {
+          const workspaceRef = doc(
+            this._firestore,
+            `workspaces/${workspaceId}`
+          );
+          const applicationRef = doc(
+            this._firestore,
+            `applications/${applicationId}`
+          );
+          const newCollectionId = uuid();
+          const newCollectionRef = doc(
+            this._firestore,
+            `collections/${newCollectionId}`
+          );
+          const newApplicationCollectionId = uuid();
+          const newApplicationCollectionRef = doc(
+            this._firestore,
+            `applications/${applicationId}/collections/${newApplicationCollectionId}`
+          );
+
+          // create the new collection
+          transaction.set(newCollectionRef, {
+            name,
+            applicationRef,
+            workspaceRef,
+            thumbnailUrl: `assets/workspaces/${workspaceId}/${applicationId}/${newCollectionId}.png`,
+          });
+
+          // push collection to application collections
+          transaction.set(newApplicationCollectionRef, {
+            collectionRef: newCollectionRef,
+          });
+
+          return {};
+        })
+      )
+    );
+  }
+
   createInstructionDocument(
     instructionId: string,
     documentCollection: Collection

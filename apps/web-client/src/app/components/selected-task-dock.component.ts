@@ -6,7 +6,7 @@ import { BoardTask, Option } from '../utils';
   selector: 'pg-selected-task-dock',
   template: `
     <div
-      class="w-auto mx-auto p-4 bg-white flex gap-4 justify-center items-start"
+      class="w-auto mx-auto p-4 bg-gray-700 flex gap-4 justify-center items-start"
     >
       <img [src]="selected?.instruction?.thumbnailUrl" />
     </div>

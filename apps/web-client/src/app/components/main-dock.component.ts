@@ -94,10 +94,19 @@ export class SquareButtonComponent {
   selector: 'pg-main-dock',
   template: `
     <div
-      class="w-auto mx-auto p-4 bg-white flex gap-4 justify-center items-start"
+      class="w-auto mx-auto p-4 bg-gray-700 flex gap-4 justify-center items-start"
     >
       <div>
-        <h2>Instructions</h2>
+        <header class="flex items-center gap-2 mb-2">
+          <h2>Instructions</h2>
+
+          <button
+            class="rounded-full bg-slate-400 w-8 h-8"
+            (click)="onCreateInstruction()"
+          >
+            +
+          </button>
+        </header>
 
         <div cdkDropListGroup class="flex gap-2 mb-2">
           <div
@@ -290,7 +299,16 @@ export class SquareButtonComponent {
       </div>
 
       <div>
-        <h2>Collections</h2>
+        <header class="flex items-center gap-2 mb-2">
+          <h2>Collections</h2>
+
+          <button
+            class="rounded-full bg-slate-400 w-8 h-8"
+            (click)="onCreateCollection()"
+          >
+            +
+          </button>
+        </header>
 
         <div cdkDropListGroup>
           <div class="flex gap-2 mb-2">
@@ -549,6 +567,8 @@ export class MainDockComponent {
     index: number;
     data: Instruction | Collection;
   }>();
+  @Output() createInstruction = new EventEmitter();
+  @Output() createCollection = new EventEmitter();
   @HostListener('document:keydown', ['$event'])
   onKeydown(event: KeyboardEvent) {
     const hotkey = this.hotkeys.find((hotkey) => hotkey.key === event.key);
@@ -585,5 +605,13 @@ export class MainDockComponent {
 
       this.swapSlots.emit([parseInt(previousIndex), parseInt(newIndex)]);
     }
+  }
+
+  onCreateInstruction() {
+    this.createInstruction.emit();
+  }
+
+  onCreateCollection() {
+    this.createCollection.emit();
   }
 }

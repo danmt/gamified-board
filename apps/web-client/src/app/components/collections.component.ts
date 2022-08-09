@@ -10,7 +10,7 @@ import { Option } from '../utils';
 @Component({
   selector: 'pg-collections',
   template: `
-    <div class="p-4 bg-white h-full">
+    <div class="p-4 bg-gray-500 h-full">
       <h1>Collections</h1>
 
       <ng-container *ngrxLet="workspaceId$; let workspaceId">

@@ -53,6 +53,8 @@ import {
       (removeFromSlot)="onRemoveFromSlot($event)"
       (activateSlot)="onSlotActivate($event)"
       (updateSlot)="onUpdateSlot($event.index, $event.data)"
+      (createCollection)="onCreateCollection()"
+      (createInstruction)="onCreateInstruction()"
     ></pg-main-dock>
     <pg-selected-task-dock
       *ngIf="selectedTask !== null"
@@ -535,6 +537,44 @@ export class BoardPageComponent {
         previousIndex,
         newIndex
       )
+      .subscribe();
+  }
+
+  onCreateInstruction() {
+    const workspaceId =
+      this._activatedRoute.snapshot.paramMap.get('workspaceId');
+    const applicationId =
+      this._activatedRoute.snapshot.paramMap.get('applicationId');
+
+    if (workspaceId === null) {
+      throw new Error('WorkspaceId not defined.');
+    }
+
+    if (applicationId === null) {
+      throw new Error('ApplicationId not defined.');
+    }
+
+    this._applicationApiService
+      .createInstruction(workspaceId, applicationId, 'my name')
+      .subscribe();
+  }
+
+  onCreateCollection() {
+    const workspaceId =
+      this._activatedRoute.snapshot.paramMap.get('workspaceId');
+    const applicationId =
+      this._activatedRoute.snapshot.paramMap.get('applicationId');
+
+    if (workspaceId === null) {
+      throw new Error('WorkspaceId not defined.');
+    }
+
+    if (applicationId === null) {
+      throw new Error('ApplicationId not defined.');
+    }
+
+    this._applicationApiService
+      .createCollection(workspaceId, applicationId, 'my name')
       .subscribe();
   }
 }
