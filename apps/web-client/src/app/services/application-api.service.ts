@@ -90,32 +90,36 @@ export class ApplicationApiService {
                 ]).pipe(
                   switchMap(([collectionsRefs, instructionsRefs]) =>
                     combineLatest([
-                      combineLatest(
-                        collectionsRefs.map((collectionRef) =>
-                          docData(collectionRef).pipe(
-                            map((collection) => ({
-                              id: collectionRef.id,
-                              name: collection['name'],
-                              thumbnailUrl: collection['thumbnailUrl'],
-                              workspaceId,
-                              applicationId: applicationRef.id,
-                            }))
-                          )
-                        )
-                      ),
-                      combineLatest(
-                        instructionsRefs.map((instructionRef) =>
-                          docData(instructionRef).pipe(
-                            map((instruction) => ({
-                              id: instructionRef.id,
-                              name: instruction['name'],
-                              thumbnailUrl: instruction['thumbnailUrl'],
-                              workspaceId,
-                              applicationId: applicationRef.id,
-                            }))
-                          )
-                        )
-                      ),
+                      collectionsRefs.length === 0
+                        ? of([])
+                        : combineLatest(
+                            collectionsRefs.map((collectionRef) =>
+                              docData(collectionRef).pipe(
+                                map((collection) => ({
+                                  id: collectionRef.id,
+                                  name: collection['name'],
+                                  thumbnailUrl: collection['thumbnailUrl'],
+                                  workspaceId,
+                                  applicationId: applicationRef.id,
+                                }))
+                              )
+                            )
+                          ),
+                      instructionsRefs.length === 0
+                        ? of([])
+                        : combineLatest(
+                            instructionsRefs.map((instructionRef) =>
+                              docData(instructionRef).pipe(
+                                map((instruction) => ({
+                                  id: instructionRef.id,
+                                  name: instruction['name'],
+                                  thumbnailUrl: instruction['thumbnailUrl'],
+                                  workspaceId,
+                                  applicationId: applicationRef.id,
+                                }))
+                              )
+                            )
+                          ),
                     ])
                   ),
                   map(([collections, instructions]) => ({
@@ -633,6 +637,48 @@ export class ApplicationApiService {
     );
   }
 
+  deleteCollection(applicationId: string, collectionId: string) {
+    return defer(() =>
+      from(
+        runTransaction(this._firestore, async (transaction) => {
+          const applicationCollectionRef = doc(
+            this._firestore,
+            `applications/${applicationId}/collections/${collectionId}`
+          );
+          const collectionRef = doc(
+            this._firestore,
+            `collections/${collectionId}`
+          );
+          transaction.delete(applicationCollectionRef);
+          transaction.delete(collectionRef);
+
+          return {};
+        })
+      )
+    );
+  }
+
+  deleteInstruction(applicationId: string, instructionId: string) {
+    return defer(() =>
+      from(
+        runTransaction(this._firestore, async (transaction) => {
+          const applicationInstructionRef = doc(
+            this._firestore,
+            `applications/${applicationId}/instructions/${instructionId}`
+          );
+          const instructionRef = doc(
+            this._firestore,
+            `instructions/${instructionId}`
+          );
+          transaction.delete(applicationInstructionRef);
+          transaction.delete(instructionRef);
+
+          return {};
+        })
+      )
+    );
+  }
+
   deleteInstructionTask(instructionId: string, taskId: string) {
     return defer(() =>
       from(
@@ -710,10 +756,9 @@ export class ApplicationApiService {
             this._firestore,
             `instructions/${newInstructionId}`
           );
-          const newApplicationInstructionId = uuid();
           const newApplicationInstructionRef = doc(
             this._firestore,
-            `applications/${applicationId}/instructions/${newApplicationInstructionId}`
+            `applications/${applicationId}/instructions/${newInstructionId}`
           );
 
           // create the new instruction
@@ -754,10 +799,9 @@ export class ApplicationApiService {
             this._firestore,
             `collections/${newCollectionId}`
           );
-          const newApplicationCollectionId = uuid();
           const newApplicationCollectionRef = doc(
             this._firestore,
-            `applications/${applicationId}/collections/${newApplicationCollectionId}`
+            `applications/${applicationId}/collections/${newCollectionId}`
           );
 
           // create the new collection

@@ -2,24 +2,210 @@ import { DIALOG_DATA } from '@angular/cdk/dialog';
 import { CdkDragStart, DragDropModule } from '@angular/cdk/drag-drop';
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
+import { RouterModule } from '@angular/router';
 import { LetModule, PushModule } from '@ngrx/component';
 import { BehaviorSubject, combineLatest, map, Observable } from 'rxjs';
 import { PluginInterface } from '../plugins';
+import { ApplicationApiService } from '../services';
 import { Option } from '../utils';
 
 @Component({
   selector: 'pg-instructions',
   template: `
-    <div class="p-4 bg-gray-500 h-full overflow-auto">
-      <h1>Instructions</h1>
+    <div class="bg-gray-500 h-full flex flex-col gap-4">
+      <h1 class="px-4 pt-4">Instructions</h1>
 
-      <ng-container *ngrxLet="workspaceId$; let workspaceId">
-        <ng-container *ngrxLet="currentApplication$; let application">
-          <div *ngIf="application !== null && workspaceId !== null">
-            <h2>{{ application.name }}</h2>
+      <div class="flex-1 px-4 overflow-auto">
+        <ng-container *ngrxLet="workspaceId$; let workspaceId">
+          <ng-container *ngrxLet="currentApplication$; let application">
+            <div *ngIf="application !== null && workspaceId !== null">
+              <h2>{{ application.name }}</h2>
+
+              <div
+                [id]="workspaceId + '-' + application.id + '-instructions'"
+                cdkDropList
+                [cdkDropListConnectedTo]="[
+                  'slot-0',
+                  'slot-1',
+                  'slot-2',
+                  'slot-3',
+                  'slot-4',
+                  'slot-5'
+                ]"
+                [cdkDropListData]="application.instructions"
+                cdkDropListSortingDisabled
+                class="flex flex-wrap gap-2"
+              >
+                <div
+                  *ngFor="
+                    let instruction of application.instructions;
+                    trackBy: trackBy
+                  "
+                  class="relative"
+                >
+                  <ng-container
+                    *ngIf="(isDragging$ | ngrxPush) === instruction.id"
+                  >
+                    <div
+                      class="w-full h-full absolute z-20 bg-black bg-opacity-50"
+                    ></div>
+                    <div class="bg-yellow-500 p-0.5 w-11 h-11">
+                      <img
+                        class="w-full h-full object-cover"
+                        [src]="instruction.thumbnailUrl"
+                      />
+                    </div>
+                  </ng-container>
+
+                  <div
+                    cdkDrag
+                    [cdkDragData]="{
+                      workspaceId,
+                      applicationId: application.id,
+                      id: instruction.id,
+                      name: instruction.name,
+                      thumbnailUrl: instruction.thumbnailUrl,
+                      isInternal: true,
+                      namespace: null,
+                      plugin: null
+                    }"
+                    (click)="
+                      onSelectInternalInstruction(
+                        workspaceId,
+                        application.id,
+                        instruction.id,
+                        instruction.name
+                      )
+                    "
+                    (cdkDragStarted)="onDragStart($event)"
+                    (cdkDragEnded)="onDragEnd()"
+                  >
+                    <div class="bg-yellow-500 p-0.5 w-11 h-11">
+                      <img
+                        class="w-full h-full object-cover"
+                        [src]="instruction.thumbnailUrl"
+                      />
+                    </div>
+
+                    <div
+                      *cdkDragPreview
+                      class="bg-gray-500 p-1 w-12 h-12 rounded-md"
+                    >
+                      <img
+                        class="w-full h-full object-cover"
+                        [src]="
+                          'assets/workspaces/' +
+                          workspaceId +
+                          '/' +
+                          application.id +
+                          '/instructions/' +
+                          instruction.id +
+                          '.png'
+                        "
+                      />
+                    </div>
+
+                    <div *cdkDragPlaceholder></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </ng-container>
+
+          <ng-container *ngFor="let application of otherApplications$ | async">
+            <div *ngIf="application !== null && workspaceId !== null">
+              <h2>{{ application.name }}</h2>
+
+              <div
+                [id]="workspaceId + '-' + application.id + '-instructions'"
+                cdkDropList
+                [cdkDropListConnectedTo]="[
+                  'slot-0',
+                  'slot-1',
+                  'slot-2',
+                  'slot-3',
+                  'slot-4',
+                  'slot-5'
+                ]"
+                [cdkDropListData]="application.instructions"
+                cdkDropListSortingDisabled
+                class="flex flex-wrap gap-2"
+              >
+                <div
+                  *ngFor="
+                    let instruction of application.instructions;
+                    trackBy: trackBy
+                  "
+                  class="relative"
+                >
+                  <ng-container
+                    *ngIf="(isDragging$ | ngrxPush) === instruction.id"
+                  >
+                    <div
+                      class="w-full h-full absolute z-20 bg-black bg-opacity-50"
+                    ></div>
+                    <div class="bg-yellow-500 p-0.5 w-11 h-11">
+                      <img
+                        class="w-full h-full object-cover"
+                        [src]="instruction.thumbnailUrl"
+                      />
+                    </div>
+                  </ng-container>
+
+                  <div
+                    cdkDrag
+                    [cdkDragData]="{
+                      workspaceId,
+                      applicationId: application.id,
+                      id: instruction.id,
+                      name: instruction.name,
+                      thumbnailUrl: instruction.thumbnailUrl,
+                      isInternal: true,
+                      namespace: null,
+                      plugin: null
+                    }"
+                    (click)="
+                      onSelectInternalInstruction(
+                        workspaceId,
+                        application.id,
+                        instruction.id,
+                        instruction.name
+                      )
+                    "
+                    (cdkDragStarted)="onDragStart($event)"
+                    (cdkDragEnded)="onDragEnd()"
+                  >
+                    <div class="bg-yellow-500 p-0.5 w-11 h-11">
+                      <img
+                        class="w-full h-full object-cover"
+                        [src]="instruction.thumbnailUrl"
+                      />
+                    </div>
+
+                    <div
+                      *cdkDragPreview
+                      class="bg-gray-500 p-1 w-12 h-12 rounded-md"
+                    >
+                      <img
+                        class="w-full h-full object-cover"
+                        [src]="instruction.thumbnailUrl"
+                      />
+                    </div>
+
+                    <div *cdkDragPlaceholder></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </ng-container>
+        </ng-container>
+
+        <ng-container *ngFor="let plugin of plugins">
+          <div *ngIf="plugin.instructions.length > 0">
+            <h2>{{ plugin.name }}</h2>
 
             <div
-              [id]="workspaceId + '-' + application.id + '-instructions'"
+              [id]="plugin.name + '-instructions'"
               cdkDropList
               [cdkDropListConnectedTo]="[
                 'slot-0',
@@ -29,19 +215,26 @@ import { Option } from '../utils';
                 'slot-4',
                 'slot-5'
               ]"
-              [cdkDropListData]="application.instructions"
+              [cdkDropListData]="plugin.instructions"
               cdkDropListSortingDisabled
               class="flex flex-wrap gap-2"
             >
               <div
                 *ngFor="
-                  let instruction of application.instructions;
+                  let instruction of plugin.instructions;
                   trackBy: trackBy
                 "
                 class="relative"
               >
                 <ng-container
-                  *ngIf="(isDragging$ | ngrxPush) === instruction.id"
+                  *ngIf="
+                    (isDragging$ | ngrxPush) ===
+                    plugin.namespace +
+                      '/' +
+                      plugin.name +
+                      '/' +
+                      instruction.name
+                  "
                 >
                   <div
                     class="w-full h-full absolute z-20 bg-black bg-opacity-50"
@@ -49,30 +242,62 @@ import { Option } from '../utils';
                   <div class="bg-yellow-500 p-0.5 w-11 h-11">
                     <img
                       class="w-full h-full object-cover"
-                      [src]="instruction.thumbnailUrl"
+                      [src]="
+                        'assets/plugins/' +
+                        plugin.namespace +
+                        '/' +
+                        plugin.name +
+                        '/instructions/' +
+                        instruction.name +
+                        '.png'
+                      "
                     />
                   </div>
                 </ng-container>
 
                 <div
+                  [id]="plugin.name + '/' + instruction.name"
                   cdkDrag
                   [cdkDragData]="{
-                    workspaceId,
-                    applicationId: application.id,
-                    id: instruction.id,
+                    namespace: plugin.namespace,
+                    plugin: plugin.name,
+                    id: instruction.name,
                     name: instruction.name,
-                    thumbnailUrl: instruction.thumbnailUrl,
-                    isInternal: true,
-                    namespace: null,
-                    plugin: null
+                    instruction: instruction.name,
+                    thumbnailUrl:
+                      'assets/plugins/' +
+                      plugin.namespace +
+                      '/' +
+                      plugin.name +
+                      '/instructions/' +
+                      instruction.name +
+                      '.png',
+                    isInternal: false,
+                    workspaceId: null,
+                    applicationId: null
                   }"
+                  (click)="
+                    onSelectExternalInstruction(
+                      plugin.namespace,
+                      plugin.name,
+                      instruction.name
+                    )
+                  "
                   (cdkDragStarted)="onDragStart($event)"
                   (cdkDragEnded)="onDragEnd()"
                 >
                   <div class="bg-yellow-500 p-0.5 w-11 h-11">
                     <img
                       class="w-full h-full object-cover"
-                      [src]="instruction.thumbnailUrl"
+                      [src]="
+                        'assets/plugins/' +
+                        plugin.namespace +
+                        '/' +
+                        plugin.name +
+                        '/instructions/' +
+                        instruction.name +
+                        '.png'
+                      "
                     />
                   </div>
 
@@ -83,12 +308,12 @@ import { Option } from '../utils';
                     <img
                       class="w-full h-full object-cover"
                       [src]="
-                        'assets/workspaces/' +
-                        workspaceId +
+                        'assets/plugins/' +
+                        plugin.namespace +
                         '/' +
-                        application.id +
+                        plugin.name +
                         '/instructions/' +
-                        instruction.id +
+                        instruction.name +
                         '.png'
                       "
                     />
@@ -100,204 +325,51 @@ import { Option } from '../utils';
             </div>
           </div>
         </ng-container>
+      </div>
 
-        <ng-container *ngFor="let application of otherApplications$ | async">
-          <div *ngIf="application !== null && workspaceId !== null">
-            <h2>{{ application.name }}</h2>
+      <div
+        class="w-full h-24 p-4 bg-black bg-opacity-25"
+        *ngrxLet="selectedInstruction$; let instruction"
+      >
+        {{ instruction?.name }}
 
-            <div
-              [id]="workspaceId + '-' + application.id + '-instructions'"
-              cdkDropList
-              [cdkDropListConnectedTo]="[
-                'slot-0',
-                'slot-1',
-                'slot-2',
-                'slot-3',
-                'slot-4',
-                'slot-5'
-              ]"
-              [cdkDropListData]="application.instructions"
-              cdkDropListSortingDisabled
-              class="flex flex-wrap gap-2"
-            >
-              <div
-                *ngFor="
-                  let instruction of application.instructions;
-                  trackBy: trackBy
-                "
-                class="relative"
-              >
-                <ng-container
-                  *ngIf="(isDragging$ | ngrxPush) === instruction.id"
-                >
-                  <div
-                    class="w-full h-full absolute z-20 bg-black bg-opacity-50"
-                  ></div>
-                  <div class="bg-yellow-500 p-0.5 w-11 h-11">
-                    <img
-                      class="w-full h-full object-cover"
-                      [src]="instruction.thumbnailUrl"
-                    />
-                  </div>
-                </ng-container>
+        <button
+          *ngIf="
+            instruction !== null &&
+            instruction.applicationId !== null &&
+            instruction.applicationId === (applicationId$ | ngrxPush)
+          "
+          class="rounded-full bg-slate-400 w-8 h-8"
+          (click)="
+            onDeleteInstruction(instruction.applicationId, instruction.id)
+          "
+        >
+          x
+        </button>
 
-                <div
-                  cdkDrag
-                  [cdkDragData]="{
-                    workspaceId,
-                    applicationId: application.id,
-                    id: instruction.id,
-                    name: instruction.name,
-                    thumbnailUrl: instruction.thumbnailUrl,
-                    isInternal: true,
-                    namespace: null,
-                    plugin: null
-                  }"
-                  (cdkDragStarted)="onDragStart($event)"
-                  (cdkDragEnded)="onDragEnd()"
-                >
-                  <div class="bg-yellow-500 p-0.5 w-11 h-11">
-                    <img
-                      class="w-full h-full object-cover"
-                      [src]="instruction.thumbnailUrl"
-                    />
-                  </div>
-
-                  <div
-                    *cdkDragPreview
-                    class="bg-gray-500 p-1 w-12 h-12 rounded-md"
-                  >
-                    <img
-                      class="w-full h-full object-cover"
-                      [src]="instruction.thumbnailUrl"
-                    />
-                  </div>
-
-                  <div *cdkDragPlaceholder></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </ng-container>
-      </ng-container>
-
-      <ng-container *ngFor="let plugin of plugins">
-        <div *ngIf="plugin.instructions.length > 0">
-          <h2>{{ plugin.name }}</h2>
-
-          <div
-            [id]="plugin.name + '-instructions'"
-            cdkDropList
-            [cdkDropListConnectedTo]="[
-              'slot-0',
-              'slot-1',
-              'slot-2',
-              'slot-3',
-              'slot-4',
-              'slot-5'
-            ]"
-            [cdkDropListData]="plugin.instructions"
-            cdkDropListSortingDisabled
-            class="flex flex-wrap gap-2"
-          >
-            <div
-              *ngFor="let instruction of plugin.instructions; trackBy: trackBy"
-              class="relative"
-            >
-              <ng-container
-                *ngIf="
-                  (isDragging$ | ngrxPush) ===
-                  plugin.namespace + '/' + plugin.name + '/' + instruction.name
-                "
-              >
-                <div
-                  class="w-full h-full absolute z-20 bg-black bg-opacity-50"
-                ></div>
-                <div class="bg-yellow-500 p-0.5 w-11 h-11">
-                  <img
-                    class="w-full h-full object-cover"
-                    [src]="
-                      'assets/plugins/' +
-                      plugin.namespace +
-                      '/' +
-                      plugin.name +
-                      '/instructions/' +
-                      instruction.name +
-                      '.png'
-                    "
-                  />
-                </div>
-              </ng-container>
-
-              <div
-                [id]="plugin.name + '/' + instruction.name"
-                cdkDrag
-                [cdkDragData]="{
-                  namespace: plugin.namespace,
-                  plugin: plugin.name,
-                  id: instruction.name,
-                  name: instruction.name,
-                  instruction: instruction.name,
-                  thumbnailUrl:
-                    'assets/plugins/' +
-                    plugin.namespace +
-                    '/' +
-                    plugin.name +
-                    '/instructions/' +
-                    instruction.name +
-                    '.png',
-                  isInternal: false,
-                  workspaceId: null,
-                  applicationId: null
-                }"
-                (cdkDragStarted)="onDragStart($event)"
-                (cdkDragEnded)="onDragEnd()"
-              >
-                <div class="bg-yellow-500 p-0.5 w-11 h-11">
-                  <img
-                    class="w-full h-full object-cover"
-                    [src]="
-                      'assets/plugins/' +
-                      plugin.namespace +
-                      '/' +
-                      plugin.name +
-                      '/instructions/' +
-                      instruction.name +
-                      '.png'
-                    "
-                  />
-                </div>
-
-                <div
-                  *cdkDragPreview
-                  class="bg-gray-500 p-1 w-12 h-12 rounded-md"
-                >
-                  <img
-                    class="w-full h-full object-cover"
-                    [src]="
-                      'assets/plugins/' +
-                      plugin.namespace +
-                      '/' +
-                      plugin.name +
-                      '/instructions/' +
-                      instruction.name +
-                      '.png'
-                    "
-                  />
-                </div>
-
-                <div *cdkDragPlaceholder></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </ng-container>
+        <a
+          class="underline"
+          *ngIf="
+            instruction !== null &&
+            instruction.workspaceId === (workspaceId$ | ngrxPush) &&
+            instruction.applicationId !== (applicationId$ | ngrxPush)
+          "
+          [routerLink]="[
+            '/board',
+            instruction.workspaceId,
+            instruction.applicationId
+          ]"
+        >
+          view
+        </a>
+      </div>
     </div>
   `,
   standalone: true,
-  imports: [DragDropModule, CommonModule, PushModule, LetModule],
+  imports: [DragDropModule, CommonModule, PushModule, LetModule, RouterModule],
 })
 export class InstructionsComponent {
+  private readonly _applicationApiService = inject(ApplicationApiService);
   private readonly _data = inject<{
     plugins: PluginInterface[];
     workspaceId$: Observable<Option<string>>;
@@ -310,9 +382,20 @@ export class InstructionsComponent {
       }[]
     >;
   }>(DIALOG_DATA);
-
+  private readonly _selectedInstruction = new BehaviorSubject<
+    Option<{
+      id: string;
+      name: string;
+      workspaceId: Option<string>;
+      applicationId: Option<string>;
+      namespace: Option<string>;
+      plugin: Option<string>;
+      isInternal: boolean;
+    }>
+  >(null);
   private readonly _isDragging = new BehaviorSubject<Option<string>>(null);
   readonly isDragging$ = this._isDragging.asObservable();
+  readonly selectedInstruction$ = this._selectedInstruction.asObservable();
   readonly plugins = this._data.plugins;
   readonly workspaceId$ = this._data.workspaceId$;
   readonly applicationId$ = this._data.applicationId$;
@@ -340,6 +423,45 @@ export class InstructionsComponent {
       return applications.filter(({ id }) => id !== applicationId) ?? null;
     })
   );
+
+  onSelectInternalInstruction(
+    workspaceId: string,
+    applicationId: string,
+    instructionId: string,
+    instructionName: string
+  ) {
+    this._selectedInstruction.next({
+      id: instructionId,
+      name: instructionName,
+      isInternal: true,
+      workspaceId,
+      applicationId,
+      namespace: null,
+      plugin: null,
+    });
+  }
+
+  onSelectExternalInstruction(
+    namespace: string,
+    plugin: string,
+    account: string
+  ) {
+    this._selectedInstruction.next({
+      id: account,
+      name: account,
+      isInternal: false,
+      workspaceId: null,
+      applicationId: null,
+      namespace,
+      plugin,
+    });
+  }
+
+  onDeleteInstruction(applicationId: string, instructionId: string) {
+    this._applicationApiService
+      .deleteInstruction(applicationId, instructionId)
+      .subscribe(() => this._selectedInstruction.next(null));
+  }
 
   onDragStart(event: CdkDragStart) {
     this._isDragging.next(
