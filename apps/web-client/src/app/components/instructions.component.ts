@@ -6,7 +6,7 @@ import { RouterModule } from '@angular/router';
 import { LetModule, PushModule } from '@ngrx/component';
 import { BehaviorSubject, combineLatest, map, Observable } from 'rxjs';
 import { PluginInterface } from '../plugins';
-import { ApplicationApiService } from '../services';
+import { InstructionApiService } from '../services';
 import { Option } from '../utils';
 
 @Component({
@@ -369,7 +369,7 @@ import { Option } from '../utils';
   imports: [DragDropModule, CommonModule, PushModule, LetModule, RouterModule],
 })
 export class InstructionsComponent {
-  private readonly _applicationApiService = inject(ApplicationApiService);
+  private readonly _instructionApiService = inject(InstructionApiService);
   private readonly _data = inject<{
     plugins: PluginInterface[];
     workspaceId$: Observable<Option<string>>;
@@ -458,7 +458,7 @@ export class InstructionsComponent {
   }
 
   onDeleteInstruction(applicationId: string, instructionId: string) {
-    this._applicationApiService
+    this._instructionApiService
       .deleteInstruction(applicationId, instructionId)
       .subscribe(() => this._selectedInstruction.next(null));
   }

@@ -26,7 +26,13 @@ import {
   SelectedTaskDockComponent,
 } from '../components';
 import { PluginsService } from '../plugins';
-import { ApplicationApiService } from '../services';
+import {
+  ApplicationApiService,
+  CollectionApiService,
+  DocumentApiService,
+  InstructionApiService,
+  TaskApiService,
+} from '../services';
 import {
   ActiveItem,
   BoardInstruction,
@@ -139,6 +145,10 @@ export class BoardPageComponent {
   private readonly _dialog = inject(Dialog);
   private readonly _activatedRoute = inject(ActivatedRoute);
   private readonly _applicationApiService = inject(ApplicationApiService);
+  private readonly _taskApiService = inject(TaskApiService);
+  private readonly _documentApiService = inject(DocumentApiService);
+  private readonly _collectionApiService = inject(CollectionApiService);
+  private readonly _instructionApiService = inject(InstructionApiService);
 
   readonly workspaceId$ = this._activatedRoute.paramMap.pipe(
     map((paramMap) => paramMap.get('workspaceId'))
@@ -249,17 +259,14 @@ export class BoardPageComponent {
       case 'Delete': {
         if (this.selectedTask !== null) {
           if (confirm('Are you sure? This action cannot be reverted.')) {
-            this._applicationApiService
-              .deleteInstructionTask(
-                this.selectedTask.instructionId,
-                this.selectedTask.id
-              )
+            this._taskApiService
+              .deleteTask(this.selectedTask.instructionId, this.selectedTask.id)
               .subscribe(() => (this.selectedTask = null));
           }
         } else if (this.selectedDocument !== null) {
           if (confirm('Are you sure? This action cannot be reverted.')) {
-            this._applicationApiService
-              .deleteInstructionDocument(
+            this._documentApiService
+              .deleteDocument(
                 this.selectedDocument.instructionId,
                 this.selectedDocument.id
               )
@@ -377,16 +384,14 @@ export class BoardPageComponent {
 
   onUseCollection(instructionId: string, collection: Collection) {
     this.active = null;
-    this._applicationApiService
-      .createInstructionDocument(instructionId, collection)
+    this._documentApiService
+      .createDocument(instructionId, collection)
       .subscribe();
   }
 
   onUseInstruction(instructionId: string, instruction: Instruction) {
     this.active = null;
-    this._applicationApiService
-      .createInstructionTask(instructionId, instruction)
-      .subscribe();
+    this._taskApiService.createTask(instructionId, instruction).subscribe();
   }
 
   onSelectItem(
@@ -472,7 +477,7 @@ export class BoardPageComponent {
 
     moveItemInArray(documentsOrder, previousIndex, newIndex);
 
-    this._applicationApiService
+    this._instructionApiService
       .updateInstructionDocumentsOrder(instructionId, documentsOrder)
       .subscribe();
   }
@@ -485,8 +490,8 @@ export class BoardPageComponent {
     previousIndex: number,
     newIndex: number
   ) {
-    this._applicationApiService
-      .transferInstructionDocument(
+    this._documentApiService
+      .transferDocument(
         instructions,
         previousInstructionId,
         newInstructionId,
@@ -515,7 +520,7 @@ export class BoardPageComponent {
 
     moveItemInArray(tasksOrder, previousIndex, newIndex);
 
-    this._applicationApiService
+    this._instructionApiService
       .updateInstructionTasksOrder(instructionId, tasksOrder)
       .subscribe();
   }
@@ -528,8 +533,8 @@ export class BoardPageComponent {
     previousIndex: number,
     newIndex: number
   ) {
-    this._applicationApiService
-      .transferInstructionTask(
+    this._taskApiService
+      .transferTask(
         instructions,
         previousInstructionId,
         newInstructionId,
@@ -554,7 +559,7 @@ export class BoardPageComponent {
       throw new Error('ApplicationId not defined.');
     }
 
-    this._applicationApiService
+    this._instructionApiService
       .createInstruction(workspaceId, applicationId, 'my name')
       .subscribe();
   }
@@ -573,7 +578,7 @@ export class BoardPageComponent {
       throw new Error('ApplicationId not defined.');
     }
 
-    this._applicationApiService
+    this._collectionApiService
       .createCollection(workspaceId, applicationId, 'my name')
       .subscribe();
   }

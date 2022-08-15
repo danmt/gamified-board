@@ -6,7 +6,7 @@ import { RouterModule } from '@angular/router';
 import { LetModule, PushModule } from '@ngrx/component';
 import { BehaviorSubject, combineLatest, map, Observable } from 'rxjs';
 import { PluginInterface } from '../plugins';
-import { ApplicationApiService } from '../services';
+import { CollectionApiService } from '../services';
 import { Option } from '../utils';
 
 @Component({
@@ -353,7 +353,7 @@ import { Option } from '../utils';
   imports: [DragDropModule, CommonModule, PushModule, LetModule, RouterModule],
 })
 export class CollectionsComponent {
-  private readonly _applicationApiService = inject(ApplicationApiService);
+  private readonly _collectionApiService = inject(CollectionApiService);
   private readonly _data = inject<{
     plugins: PluginInterface[];
     workspaceId$: Observable<Option<string>>;
@@ -442,7 +442,7 @@ export class CollectionsComponent {
   }
 
   onDeleteCollection(applicationId: string, collectionId: string) {
-    this._applicationApiService
+    this._collectionApiService
       .deleteCollection(applicationId, collectionId)
       .subscribe(() => this._selectedCollection.next(null));
   }
