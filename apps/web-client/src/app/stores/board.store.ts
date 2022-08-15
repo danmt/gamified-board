@@ -160,7 +160,7 @@ export class BoardStore
             this.patchState({
               workspace: {
                 id: workspaceId,
-                name: workspace['name'],
+                name: workspace.name,
                 applicationIds,
               },
             }),
@@ -189,7 +189,8 @@ export class BoardStore
           ]).pipe(
             map(([application, instructionIds, collectionIds]) => ({
               id: applicationId,
-              name: application['name'] as string,
+              name: application.name,
+              workspaceId: application.workspaceId,
               instructionIds,
               collectionIds,
             }))

@@ -16,7 +16,7 @@ import {
 import { map, Observable } from 'rxjs';
 import { Entity } from '../utils';
 
-export type ApplicationDto = Entity<{ name: string }>;
+export type ApplicationDto = Entity<{ name: string; workspaceId: string }>;
 
 @Injectable({ providedIn: 'root' })
 export class ApplicationApiService {
@@ -32,6 +32,7 @@ export class ApplicationApiService {
       map((application) => ({
         id: applicationId,
         name: application['name'],
+        workspaceId: application['workspaceRef'].id,
       }))
     );
   }

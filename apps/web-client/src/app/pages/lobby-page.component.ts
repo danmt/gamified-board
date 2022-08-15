@@ -3,8 +3,9 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { LetModule } from '@ngrx/component';
+import { provideComponentStore } from '@ngrx/component-store';
 import { combineLatest, map, startWith } from 'rxjs';
-import { WorkspaceApiService } from '../services';
+import { LobbyStore } from '../stores';
 import { Option } from '../utils';
 
 @Component({
@@ -52,10 +53,11 @@ import { Option } from '../utils';
   imports: [CommonModule, RouterModule, ReactiveFormsModule, LetModule],
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [provideComponentStore(LobbyStore)],
 })
 export class LobbyPageComponent {
   private readonly _formBuilder = inject(FormBuilder);
-  private readonly _workspaceApiService = inject(WorkspaceApiService);
+  private readonly _lobbyStore = inject(LobbyStore);
 
   readonly selectedWorkspaceControl =
     this._formBuilder.control<Option<string>>(null);
@@ -67,25 +69,19 @@ export class LobbyPageComponent {
   readonly selectedApplication$ =
     this.selectedApplicationControl.valueChanges.pipe(startWith(null));
 
-  readonly favoriteWorkspaces$ =
-    this._workspaceApiService.getFavoriteWorkspaces('p7xARjRPxv8cvbBOR59C');
+  readonly favoriteWorkspaces$ = this._lobbyStore.favoriteWorkspaces$;
   readonly selectedWorkspaceApplications$ = combineLatest([
-    this.favoriteWorkspaces$,
+    this._lobbyStore.applications$,
     this.selectedWorkspace$,
   ]).pipe(
-    map(([favoriteWorkspaces, selectedWorkspace]) => {
-      if (selectedWorkspace === null) {
+    map(([applications, selectedWorkspace]) => {
+      if (applications === null || selectedWorkspace === null) {
         return [];
       }
 
-      const workspace =
-        favoriteWorkspaces.find(({ id }) => id === selectedWorkspace) ?? null;
-
-      if (workspace === null) {
-        return [];
-      }
-
-      return workspace.applications;
+      return applications.filter(
+        ({ workspaceId }) => workspaceId === selectedWorkspace
+      );
     })
   );
 }
