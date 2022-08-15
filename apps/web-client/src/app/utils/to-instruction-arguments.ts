@@ -1,6 +1,7 @@
 import { BN } from '@heavy-duty/anchor';
 import { PublicKey } from '@solana/web3.js';
-import { IdlInstruction } from '../plugins';
+import { IdlInstruction, IdlInstructionArgument } from '../plugins';
+import { Option } from './types';
 
 const transformType = (type: string, value: string) => {
   if (type === 'publicKey') {
@@ -17,9 +18,10 @@ export const toInstructionArguments = (
   modelArgs: { [argName: string]: string }
 ): { [argName: string]: string | number | BN | PublicKey } => {
   return Object.keys(modelArgs).reduce((args, argName) => {
-    const ixArg = instruction.args.find((arg) => arg.name === argName);
+    const ixArg: Option<IdlInstructionArgument> =
+      instruction.args.find((arg) => arg.name === argName) ?? null;
 
-    if (ixArg === undefined) {
+    if (ixArg === null) {
       return args;
     }
 
