@@ -11,10 +11,12 @@ import {
   HostBinding,
   HostListener,
   inject,
+  OnInit,
 } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
-import { LetModule } from '@ngrx/component';
-import { map, of, switchMap } from 'rxjs';
+import { PushModule } from '@ngrx/component';
+import { provideComponentStore } from '@ngrx/component-store';
+import { map } from 'rxjs';
 import {
   BoardComponent,
   CollectionsComponent,
@@ -22,12 +24,13 @@ import {
   InstructionsComponent,
   MainDockComponent,
   NavigationWrapperComponent,
+  RowComponent,
   SelectedDocumentDockComponent,
   SelectedTaskDockComponent,
 } from '../components';
+import { BoardItemDropListsPipe } from '../pipes';
 import { PluginsService } from '../plugins';
 import {
-  ApplicationApiService,
   CollectionApiService,
   DocumentApiService,
   InstructionApiService,
@@ -38,12 +41,14 @@ import {
   BoardInstruction,
   BoardItemKind,
   Collection,
+  Entity,
   Instruction,
   MainDockSlots,
   Option,
   SelectedBoardDocument,
   SelectedBoardTask,
 } from '../utils';
+import { BoardStore } from './board.store';
 
 @Component({
   selector: 'pg-board-page',
@@ -73,58 +78,59 @@ import {
       class="fixed bottom-0 z-10 -translate-x-1/2 left-1/2"
     ></pg-selected-document-dock>
     <pg-board
-      *ngrxLet="currentApplicationInstructions$; let instructions"
-      [instructions]="instructions ?? []"
-      [active]="active"
-      (useCollection)="onUseCollection($event.instructionId, $event.collection)"
-      (useInstruction)="
-        onUseInstruction($event.instructionId, $event.instruction)
-      "
-      (selectItem)="
-        onSelectItem(
-          instructions,
-          $event.instructionId,
-          $event.itemId,
-          $event.kind
-        )
-      "
-      (moveDocument)="
-        onMoveDocument(
-          instructions,
-          $event.instructionId,
-          $event.previousIndex,
-          $event.newIndex
-        )
-      "
-      (transferDocument)="
-        onTransferDocument(
-          instructions,
-          $event.previousInstructionId,
-          $event.newInstructionId,
-          $event.documentId,
-          $event.previousIndex,
-          $event.newIndex
-        )
-      "
-      (moveTask)="
-        onMoveTask(
-          instructions,
-          $event.instructionId,
-          $event.previousIndex,
-          $event.newIndex
-        )
-      "
-      (transferTask)="
-        onTransferTask(
-          instructions,
-          $event.previousInstructionId,
-          $event.newInstructionId,
-          $event.documentId,
-          $event.previousIndex,
-          $event.newIndex
-        )
-      "
-    ></pg-board>
+      *ngIf="currentApplicationInstructions$ | ngrxPush as instructions"
+    >
+      <pg-row
+        *ngFor="let instruction of instructions; trackBy: trackBy"
+        [active]="active"
+        [instruction]="instruction"
+        [documentsDropLists]="instructions | pgBoardItemDropLists: 'document'"
+        [tasksDropLists]="instructions | pgBoardItemDropLists: 'task'"
+        (useCollection)="onUseCollection(instruction.id, $event)"
+        (useInstruction)="onUseInstruction(instruction.id, $event)"
+        (selectItem)="
+          onSelectItem(instructions, instruction.id, $event.itemId, $event.kind)
+        "
+        (moveDocument)="
+          onMoveDocument(
+            instructions,
+            instruction.id,
+            $event.previousIndex,
+            $event.newIndex
+          )
+        "
+        (transferDocument)="
+          onTransferDocument(
+            instructions,
+            $event.previousInstructionId,
+            $event.newInstructionId,
+            $event.documentId,
+            $event.previousIndex,
+            $event.newIndex
+          )
+        "
+        (moveTask)="
+          onMoveTask(
+            instructions,
+            instruction.id,
+            $event.previousIndex,
+            $event.newIndex
+          )
+        "
+        (transferTask)="
+          onTransferTask(
+            instructions,
+            $event.previousInstructionId,
+            $event.newInstructionId,
+            $event.documentId,
+            $event.previousIndex,
+            $event.newIndex
+          )
+        "
+      >
+        <p>row {{ instruction.id }}</p>
+      </pg-row>
+    </pg-board>
   `,
   standalone: true,
   imports: [
@@ -135,20 +141,23 @@ import {
     SelectedTaskDockComponent,
     SelectedDocumentDockComponent,
     BoardComponent,
+    RowComponent,
     NavigationWrapperComponent,
-    LetModule,
+    PushModule,
+    BoardItemDropListsPipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [provideComponentStore(BoardStore)],
 })
-export class BoardPageComponent {
+export class BoardPageComponent implements OnInit {
   private readonly _pluginsService = inject(PluginsService);
   private readonly _dialog = inject(Dialog);
   private readonly _activatedRoute = inject(ActivatedRoute);
-  private readonly _applicationApiService = inject(ApplicationApiService);
   private readonly _taskApiService = inject(TaskApiService);
   private readonly _documentApiService = inject(DocumentApiService);
   private readonly _collectionApiService = inject(CollectionApiService);
   private readonly _instructionApiService = inject(InstructionApiService);
+  private readonly _boardStore = inject(BoardStore);
 
   readonly workspaceId$ = this._activatedRoute.paramMap.pipe(
     map((paramMap) => paramMap.get('workspaceId'))
@@ -156,26 +165,9 @@ export class BoardPageComponent {
   readonly applicationId$ = this._activatedRoute.paramMap.pipe(
     map((paramMap) => paramMap.get('applicationId'))
   );
-  readonly workspaceApplications$ = this.workspaceId$.pipe(
-    switchMap((workspaceId) => {
-      if (workspaceId === null) {
-        return of(null);
-      }
-
-      return this._applicationApiService.getWorkspaceApplications(workspaceId);
-    })
-  );
-  readonly currentApplicationInstructions$ = this.applicationId$.pipe(
-    switchMap((applicationId) => {
-      if (applicationId === null) {
-        return of([]);
-      }
-
-      return this._applicationApiService.getApplicationInstructions(
-        applicationId
-      );
-    })
-  );
+  readonly workspaceApplications$ = this._boardStore.workspaceApplications$;
+  readonly currentApplicationInstructions$ =
+    this._boardStore.currentApplicationInstructions$;
 
   active: Option<ActiveItem> = null;
   selectedTask: Option<SelectedBoardTask> = null;
@@ -355,6 +347,13 @@ export class BoardPageComponent {
         break;
       }
     }
+  }
+
+  ngOnInit() {
+    this._boardStore.setWorkspaceId(this.workspaceId$);
+    this._boardStore.setCurrentApplicationId(this.applicationId$);
+
+    this._boardStore.state$.subscribe((a) => console.log(a));
   }
 
   onRemoveFromSlot(index: number) {
@@ -581,5 +580,9 @@ export class BoardPageComponent {
     this._collectionApiService
       .createCollection(workspaceId, applicationId, 'my name')
       .subscribe();
+  }
+
+  trackBy(_: number, item: Entity<unknown>): string {
+    return item.id;
   }
 }

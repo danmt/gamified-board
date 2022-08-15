@@ -1,11 +1,46 @@
 import { inject, Injectable } from '@angular/core';
-import { doc, Firestore, runTransaction } from '@angular/fire/firestore';
-import { defer, from } from 'rxjs';
+import {
+  doc,
+  docData,
+  Firestore,
+  runTransaction,
+} from '@angular/fire/firestore';
+import { combineLatest, defer, from, map, Observable, of } from 'rxjs';
 import { v4 as uuid } from 'uuid';
+import { Entity } from '../utils';
+
+export type CollectionDto = Entity<{
+  name: string;
+  thumbnailUrl: string;
+  applicationId: string;
+  workspaceId: string;
+}>;
 
 @Injectable({ providedIn: 'root' })
 export class CollectionApiService {
   private readonly _firestore = inject(Firestore);
+
+  getCollection(collectionId: string): Observable<CollectionDto> {
+    return docData(doc(this._firestore, `collections/${collectionId}`)).pipe(
+      map((collection) => ({
+        id: collectionId,
+        name: collection['name'],
+        thumbnailUrl: collection['thumbnailUrl'],
+        applicationId: collection['applicationRef'].id,
+        workspaceId: collection['workspaceRef'].id,
+      }))
+    );
+  }
+
+  getCollections(collectionIds: string[]): Observable<CollectionDto[]> {
+    if (collectionIds.length === 0) {
+      return of([]);
+    }
+
+    return combineLatest(
+      collectionIds.map((collectionId) => this.getCollection(collectionId))
+    );
+  }
 
   deleteCollection(applicationId: string, collectionId: string) {
     return defer(() =>

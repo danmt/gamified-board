@@ -1,5 +1,7 @@
 export type Option<T> = T | null;
 
+export type Entity<T> = T & { id: string };
+
 export type ActiveItemKind = 'collection' | 'instruction';
 
 export interface ActiveItem {
