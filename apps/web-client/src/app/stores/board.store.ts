@@ -51,79 +51,10 @@ export class BoardStore
 
   readonly workspaceId$ = this.select(({ workspaceId }) => workspaceId);
   readonly workspace$ = this.select(({ workspace }) => workspace);
-  readonly workspaceApplicationIds$ = this.select(
-    this.workspace$,
-    (workspace) => workspace?.applicationIds ?? null
-  );
   readonly currentApplicationId$ = this.select(
     ({ currentApplicationId }) => currentApplicationId
   );
   readonly applications$ = this.select(({ applications }) => applications);
-  readonly currentApplication$ = this.select(
-    this.applications$,
-    this.currentApplicationId$,
-    (applications, applicationId) =>
-      applications?.find(({ id }) => id === applicationId) ?? null
-  );
-  readonly currentApplicationInstructionIds$ = this.select(
-    this.currentApplication$,
-    (application) => application?.instructionIds ?? null
-  );
-  readonly currentApplicationCollectionIds$ = this.select(
-    this.currentApplication$,
-    (application) => application?.collectionIds ?? null
-  );
-  readonly currentApplicationInstructions$ = this.select(
-    ({ currentApplicationInstructions }) => currentApplicationInstructions
-  );
-  readonly workspaceInstructionIds$ = this.select(
-    this.workspace$,
-    this.applications$,
-    (workspace, applications) => {
-      if (workspace === null) {
-        return [];
-      }
-
-      return workspace.applicationIds.reduce<string[]>(
-        (instructionIds, applicationId) => {
-          const application =
-            applications?.find(({ id }) => id === applicationId) ?? null;
-
-          if (application === null) {
-            return instructionIds;
-          }
-
-          return [
-            ...new Set([...instructionIds, ...application.instructionIds]),
-          ];
-        },
-        []
-      );
-    }
-  );
-  readonly workspaceCollectionIds$ = this.select(
-    this.workspace$,
-    this.applications$,
-    (workspace, applications) => {
-      if (workspace === null) {
-        return [];
-      }
-
-      return workspace.applicationIds.reduce<string[]>(
-        (collectionIds, applicationId) => {
-          const application =
-            applications?.find(({ id }) => id === applicationId) ?? null;
-
-          if (application === null) {
-            return collectionIds;
-          }
-
-          return [...new Set([...collectionIds, ...application.collectionIds])];
-        },
-        []
-      );
-    }
-  );
   readonly workspaceInstructions$ = this.select(
     ({ workspaceInstructions }) => workspaceInstructions
   );
@@ -143,6 +74,61 @@ export class BoardStore
         collections:
           collections?.filter(({ applicationId }) => applicationId) ?? [],
       })) ?? []
+  );
+  readonly otherApplications$ = this.select(
+    this.applications$,
+    this.currentApplicationId$,
+    this.workspaceInstructions$,
+    this.workspaceCollections$,
+    (applications, applicationId, instructions, collections) =>
+      applications
+        ?.filter(({ id }) => id !== applicationId)
+        .map((application) => ({
+          id: application.id,
+          name: application.name,
+          instructions:
+            instructions?.filter(
+              (instruction) => instruction.applicationId === applicationId
+            ) ?? [],
+          collections:
+            collections?.filter(
+              (collection) => collection.applicationId === applicationId
+            ) ?? [],
+        })) ?? []
+  );
+  readonly currentApplication$ = this.select(
+    this.applications$,
+    this.currentApplicationId$,
+    this.workspaceInstructions$,
+    this.workspaceCollections$,
+    (applications, currentApplicationId, instructions, collections) => {
+      if (applications === null) {
+        return null;
+      }
+
+      const currentApplication =
+        applications.find(({ id }) => id === currentApplicationId) ?? null;
+
+      if (currentApplication === null) {
+        return null;
+      }
+
+      return {
+        id: currentApplication.id,
+        name: currentApplication.name,
+        instructions:
+          instructions?.filter(
+            (instruction) => instruction.applicationId === currentApplicationId
+          ) ?? [],
+        collections:
+          collections?.filter(
+            (collection) => collection.applicationId === currentApplicationId
+          ) ?? [],
+      };
+    }
+  );
+  readonly currentApplicationInstructions$ = this.select(
+    ({ currentApplicationInstructions }) => currentApplicationInstructions
   );
 
   readonly setWorkspaceId = this.updater<Option<string>>(
@@ -222,24 +208,23 @@ export class BoardStore
   );
 
   private readonly _loadCurrentApplicationInstructions$ = this.effect<
-    Option<string[]>
+    Option<InstructionDto[]>
   >(
-    switchMap((instructionIds) => {
-      if (instructionIds === null) {
+    switchMap((instructions) => {
+      if (instructions === null) {
         return EMPTY;
       }
 
       return combineLatest(
-        instructionIds.map((instructionId) =>
+        instructions.map((instruction) =>
           combineLatest([
-            this._instructionApiService.getInstruction(instructionId),
-            this._instructionApiService.getInstructionDocuments(instructionId),
-            this._instructionApiService.getInstructionTasks(instructionId),
+            this._instructionApiService.getInstructionDocuments(instruction.id),
+            this._instructionApiService.getInstructionTasks(instruction.id),
           ]).pipe(
-            map(([instruction, documents, tasks]) => ({
-              id: instructionId,
-              name: instruction['name'] as string,
-              documents: instruction['documentsOrder'].reduce(
+            map(([documents, tasks]) => ({
+              id: instruction.id,
+              name: instruction.name,
+              documents: instruction.documentsOrder.reduce(
                 (orderedDocuments: BoardDocument[], documentId: string) => {
                   const documentFound =
                     documents.find((document) => document.id === documentId) ??
@@ -253,7 +238,7 @@ export class BoardStore
                 },
                 []
               ),
-              tasks: instruction['tasksOrder'].reduce(
+              tasks: instruction.tasksOrder.reduce(
                 (orderedTasks: BoardTask[], taskId: string) => {
                   const taskFound =
                     tasks.find((task) => task.id === taskId) ?? null;
@@ -323,12 +308,72 @@ export class BoardStore
 
   ngrxOnStoreInit() {
     this._loadWorkspace$(this.workspaceId$);
-    this._loadApplications$(this.workspaceApplicationIds$);
-    this._loadCurrentApplicationInstructions$(
-      this.currentApplicationInstructionIds$
+    this._loadApplications$(
+      this.select(
+        this.workspace$,
+        (workspace) => workspace?.applicationIds ?? null
+      )
     );
-    this._loadWorkspaceCollections$(this.workspaceCollectionIds$);
-    this._loadWorkspaceInstructions$(this.workspaceInstructionIds$);
+    this._loadCurrentApplicationInstructions$(
+      this.select(
+        this.currentApplication$,
+        (application) => application?.instructions ?? null
+      )
+    );
+    this._loadWorkspaceCollections$(
+      this.select(
+        this.workspace$,
+        this.applications$,
+        (workspace, applications) => {
+          if (workspace === null) {
+            return [];
+          }
+
+          return workspace.applicationIds.reduce<string[]>(
+            (collectionIds, applicationId) => {
+              const application =
+                applications?.find(({ id }) => id === applicationId) ?? null;
+
+              if (application === null) {
+                return collectionIds;
+              }
+
+              return [
+                ...new Set([...collectionIds, ...application.collectionIds]),
+              ];
+            },
+            []
+          );
+        }
+      )
+    );
+    this._loadWorkspaceInstructions$(
+      this.select(
+        this.workspace$,
+        this.applications$,
+        (workspace, applications) => {
+          if (workspace === null) {
+            return [];
+          }
+
+          return workspace.applicationIds.reduce<string[]>(
+            (instructionIds, applicationId) => {
+              const application =
+                applications?.find(({ id }) => id === applicationId) ?? null;
+
+              if (application === null) {
+                return instructionIds;
+              }
+
+              return [
+                ...new Set([...instructionIds, ...application.instructionIds]),
+              ];
+            },
+            []
+          );
+        }
+      )
+    );
   }
 
   private _handleError(error: unknown) {

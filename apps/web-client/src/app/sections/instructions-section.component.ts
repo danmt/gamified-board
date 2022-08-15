@@ -1,16 +1,16 @@
-import { DIALOG_DATA } from '@angular/cdk/dialog';
 import { CdkDragStart, DragDropModule } from '@angular/cdk/drag-drop';
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { LetModule, PushModule } from '@ngrx/component';
-import { BehaviorSubject, combineLatest, map, Observable } from 'rxjs';
-import { PluginInterface } from '../plugins';
+import { BehaviorSubject } from 'rxjs';
+import { PluginsService } from '../plugins';
 import { InstructionApiService } from '../services';
+import { BoardStore } from '../stores';
 import { Option } from '../utils';
 
 @Component({
-  selector: 'pg-instructions',
+  selector: 'pg-instructions-section',
   template: `
     <div class="bg-gray-500 h-full flex flex-col gap-4">
       <h1 class="px-4 pt-4">Instructions</h1>
@@ -337,7 +337,7 @@ import { Option } from '../utils';
           *ngIf="
             instruction !== null &&
             instruction.applicationId !== null &&
-            instruction.applicationId === (applicationId$ | ngrxPush)
+            instruction.applicationId === (currentApplicationId$ | ngrxPush)
           "
           class="rounded-full bg-slate-400 w-8 h-8"
           (click)="
@@ -352,7 +352,7 @@ import { Option } from '../utils';
           *ngIf="
             instruction !== null &&
             instruction.workspaceId === (workspaceId$ | ngrxPush) &&
-            instruction.applicationId !== (applicationId$ | ngrxPush)
+            instruction.applicationId !== (currentApplicationId$ | ngrxPush)
           "
           [routerLink]="[
             '/board',
@@ -368,20 +368,11 @@ import { Option } from '../utils';
   standalone: true,
   imports: [DragDropModule, CommonModule, PushModule, LetModule, RouterModule],
 })
-export class InstructionsComponent {
+export class InstructionsSectionComponent {
+  private readonly _pluginsService = inject(PluginsService);
+  private readonly _boardStore = inject(BoardStore);
   private readonly _instructionApiService = inject(InstructionApiService);
-  private readonly _data = inject<{
-    plugins: PluginInterface[];
-    workspaceId$: Observable<Option<string>>;
-    applicationId$: Observable<Option<string>>;
-    applications$: Observable<
-      {
-        id: string;
-        name: string;
-        instructions: { id: string; name: string; thumbnailUrl: string }[];
-      }[]
-    >;
-  }>(DIALOG_DATA);
+
   private readonly _selectedInstruction = new BehaviorSubject<
     Option<{
       id: string;
@@ -396,33 +387,11 @@ export class InstructionsComponent {
   private readonly _isDragging = new BehaviorSubject<Option<string>>(null);
   readonly isDragging$ = this._isDragging.asObservable();
   readonly selectedInstruction$ = this._selectedInstruction.asObservable();
-  readonly plugins = this._data.plugins;
-  readonly workspaceId$ = this._data.workspaceId$;
-  readonly applicationId$ = this._data.applicationId$;
-  readonly currentApplication$ = combineLatest([
-    this._data.applications$,
-    this._data.applicationId$,
-  ]).pipe(
-    map(([applications, applicationId]) => {
-      if (applicationId === null) {
-        return null;
-      }
-
-      return applications.find(({ id }) => id === applicationId) ?? null;
-    })
-  );
-  readonly otherApplications$ = combineLatest([
-    this._data.applications$,
-    this._data.applicationId$,
-  ]).pipe(
-    map(([applications, applicationId]) => {
-      if (applicationId === null) {
-        return [];
-      }
-
-      return applications.filter(({ id }) => id !== applicationId) ?? null;
-    })
-  );
+  readonly plugins = this._pluginsService.plugins;
+  readonly workspaceId$ = this._boardStore.workspaceId$;
+  readonly currentApplicationId$ = this._boardStore.currentApplicationId$;
+  readonly currentApplication$ = this._boardStore.currentApplication$;
+  readonly otherApplications$ = this._boardStore.otherApplications$;
 
   onSelectInternalInstruction(
     workspaceId: string,

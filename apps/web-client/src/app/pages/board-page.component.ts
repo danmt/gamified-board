@@ -12,6 +12,7 @@ import {
   HostListener,
   inject,
   OnInit,
+  ViewContainerRef,
 } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { PushModule } from '@ngrx/component';
@@ -19,23 +20,24 @@ import { provideComponentStore } from '@ngrx/component-store';
 import { map } from 'rxjs';
 import {
   BoardComponent,
-  CollectionsComponent,
   HotKey,
-  InstructionsComponent,
   MainDockComponent,
-  NavigationWrapperComponent,
   RowComponent,
   SelectedDocumentDockComponent,
   SelectedTaskDockComponent,
 } from '../components';
 import { BoardItemDropListsPipe } from '../pipes';
-import { PluginsService } from '../plugins';
+import {
+  CollectionsSectionComponent,
+  InstructionsSectionComponent,
+} from '../sections';
 import {
   CollectionApiService,
   DocumentApiService,
   InstructionApiService,
   TaskApiService,
 } from '../services';
+import { BoardStore } from '../stores';
 import {
   ActiveItem,
   BoardInstruction,
@@ -48,12 +50,10 @@ import {
   SelectedBoardDocument,
   SelectedBoardTask,
 } from '../utils';
-import { BoardStore } from './board.store';
 
 @Component({
   selector: 'pg-board-page',
   template: `
-    <pg-navigation-wrapper zPosition="z-30"></pg-navigation-wrapper>
     <pg-main-dock
       *ngIf="selectedTask === null && selectedDocument === null"
       class="fixed bottom-0 z-10 -translate-x-1/2 left-1/2"
@@ -142,7 +142,6 @@ import { BoardStore } from './board.store';
     SelectedDocumentDockComponent,
     BoardComponent,
     RowComponent,
-    NavigationWrapperComponent,
     PushModule,
     BoardItemDropListsPipe,
   ],
@@ -150,7 +149,6 @@ import { BoardStore } from './board.store';
   providers: [provideComponentStore(BoardStore)],
 })
 export class BoardPageComponent implements OnInit {
-  private readonly _pluginsService = inject(PluginsService);
   private readonly _dialog = inject(Dialog);
   private readonly _activatedRoute = inject(ActivatedRoute);
   private readonly _taskApiService = inject(TaskApiService);
@@ -158,6 +156,7 @@ export class BoardPageComponent implements OnInit {
   private readonly _collectionApiService = inject(CollectionApiService);
   private readonly _instructionApiService = inject(InstructionApiService);
   private readonly _boardStore = inject(BoardStore);
+  private readonly _viewContainerRef = inject(ViewContainerRef);
 
   readonly workspaceId$ = this._activatedRoute.paramMap.pipe(
     map((paramMap) => paramMap.get('workspaceId'))
@@ -172,7 +171,6 @@ export class BoardPageComponent implements OnInit {
   active: Option<ActiveItem> = null;
   selectedTask: Option<SelectedBoardTask> = null;
   selectedDocument: Option<SelectedBoardDocument> = null;
-  plugins = this._pluginsService.plugins;
   slots: MainDockSlots = [
     null,
     null,
@@ -238,11 +236,11 @@ export class BoardPageComponent implements OnInit {
     },
   ];
 
-  collectionsDialogRef: Option<
-    DialogRef<CollectionsComponent, CollectionsComponent>
+  collectionsSectionDialogRef: Option<
+    DialogRef<CollectionsSectionComponent, CollectionsSectionComponent>
   > = null;
-  instructionsDialogRef: Option<
-    DialogRef<InstructionsComponent, InstructionsComponent>
+  instructionsSectionDialogRef: Option<
+    DialogRef<InstructionsSectionComponent, InstructionsSectionComponent>
   > = null;
   @HostBinding('class') class = 'block';
   @HostListener('document:keydown', ['$event'])
@@ -270,13 +268,13 @@ export class BoardPageComponent implements OnInit {
       }
       case 'Escape': {
         if (
-          this.collectionsDialogRef !== null ||
-          this.instructionsDialogRef !== null
+          this.collectionsSectionDialogRef !== null ||
+          this.instructionsSectionDialogRef !== null
         ) {
-          this.collectionsDialogRef?.close();
-          this.collectionsDialogRef = null;
-          this.instructionsDialogRef?.close();
-          this.instructionsDialogRef = null;
+          this.collectionsSectionDialogRef?.close();
+          this.collectionsSectionDialogRef = null;
+          this.instructionsSectionDialogRef?.close();
+          this.instructionsSectionDialogRef = null;
         } else if (this.active !== null) {
           this.active = null;
         } else if (this.selectedTask !== null) {
@@ -288,44 +286,36 @@ export class BoardPageComponent implements OnInit {
         break;
       }
       case '.': {
-        if (this.collectionsDialogRef === null) {
-          this.collectionsDialogRef = this._dialog.open(CollectionsComponent, {
-            data: {
-              plugins: this._pluginsService.plugins,
-              workspaceId$: this.workspaceId$,
-              applicationId$: this.applicationId$,
-              applications$: this.workspaceApplications$,
-            },
-            width: '300px',
-            height: '500px',
-            hasBackdrop: false,
-            scrollStrategy: new NoopScrollStrategy(),
-            positionStrategy: new GlobalPositionStrategy()
-              .right('0')
-              .centerVertically(),
-            disableClose: true,
-          });
-          this.collectionsDialogRef.closed.subscribe(() => {
-            this.collectionsDialogRef = null;
+        if (this.collectionsSectionDialogRef === null) {
+          this.collectionsSectionDialogRef = this._dialog.open(
+            CollectionsSectionComponent,
+            {
+              width: '300px',
+              height: '500px',
+              hasBackdrop: false,
+              scrollStrategy: new NoopScrollStrategy(),
+              positionStrategy: new GlobalPositionStrategy()
+                .right('0')
+                .centerVertically(),
+              disableClose: true,
+              viewContainerRef: this._viewContainerRef,
+            }
+          );
+          this.collectionsSectionDialogRef.closed.subscribe(() => {
+            this.collectionsSectionDialogRef = null;
           });
         } else {
-          this.collectionsDialogRef.close();
-          this.collectionsDialogRef = null;
+          this.collectionsSectionDialogRef.close();
+          this.collectionsSectionDialogRef = null;
         }
 
         break;
       }
       case ',': {
-        if (this.instructionsDialogRef === null) {
-          this.instructionsDialogRef = this._dialog.open(
-            InstructionsComponent,
+        if (this.instructionsSectionDialogRef === null) {
+          this.instructionsSectionDialogRef = this._dialog.open(
+            InstructionsSectionComponent,
             {
-              data: {
-                plugins: this._pluginsService.plugins,
-                workspaceId$: this.workspaceId$,
-                applicationId$: this.applicationId$,
-                applications$: this.workspaceApplications$,
-              },
               width: '300px',
               height: '500px',
               hasBackdrop: false,
@@ -334,14 +324,15 @@ export class BoardPageComponent implements OnInit {
                 .left('0')
                 .centerVertically(),
               disableClose: true,
+              viewContainerRef: this._viewContainerRef,
             }
           );
-          this.instructionsDialogRef.closed.subscribe(() => {
-            this.instructionsDialogRef = null;
+          this.instructionsSectionDialogRef.closed.subscribe(() => {
+            this.instructionsSectionDialogRef = null;
           });
         } else {
-          this.instructionsDialogRef.close();
-          this.instructionsDialogRef = null;
+          this.instructionsSectionDialogRef.close();
+          this.instructionsSectionDialogRef = null;
         }
 
         break;
@@ -352,8 +343,6 @@ export class BoardPageComponent implements OnInit {
   ngOnInit() {
     this._boardStore.setWorkspaceId(this.workspaceId$);
     this._boardStore.setCurrentApplicationId(this.applicationId$);
-
-    this._boardStore.state$.subscribe((a) => console.log(a));
   }
 
   onRemoveFromSlot(index: number) {

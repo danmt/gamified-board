@@ -1,16 +1,16 @@
-import { DIALOG_DATA } from '@angular/cdk/dialog';
 import { CdkDragStart, DragDropModule } from '@angular/cdk/drag-drop';
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { LetModule, PushModule } from '@ngrx/component';
-import { BehaviorSubject, combineLatest, map, Observable } from 'rxjs';
-import { PluginInterface } from '../plugins';
+import { BehaviorSubject } from 'rxjs';
+import { PluginsService } from '../plugins';
 import { CollectionApiService } from '../services';
+import { BoardStore } from '../stores';
 import { Option } from '../utils';
 
 @Component({
-  selector: 'pg-collections',
+  selector: 'pg-collections-section',
   template: `
     <div class="bg-gray-500 h-full flex flex-col gap-4">
       <h1 class="px-4 pt-4">Collections</h1>
@@ -323,7 +323,7 @@ import { Option } from '../utils';
           *ngIf="
             collection !== null &&
             collection.applicationId !== null &&
-            collection.applicationId === (applicationId$ | ngrxPush)
+            collection.applicationId === (currentApplicationId$ | ngrxPush)
           "
           class="rounded-full bg-slate-400 w-8 h-8"
           (click)="onDeleteCollection(collection.applicationId, collection.id)"
@@ -336,7 +336,7 @@ import { Option } from '../utils';
           *ngIf="
             collection !== null &&
             collection.workspaceId === (workspaceId$ | ngrxPush) &&
-            collection.applicationId !== (applicationId$ | ngrxPush)
+            collection.applicationId !== (currentApplicationId$ | ngrxPush)
           "
           [routerLink]="[
             '/board',
@@ -352,20 +352,11 @@ import { Option } from '../utils';
   standalone: true,
   imports: [DragDropModule, CommonModule, PushModule, LetModule, RouterModule],
 })
-export class CollectionsComponent {
+export class CollectionsSectionComponent {
+  private readonly _pluginsService = inject(PluginsService);
+  private readonly _boardStore = inject(BoardStore);
   private readonly _collectionApiService = inject(CollectionApiService);
-  private readonly _data = inject<{
-    plugins: PluginInterface[];
-    workspaceId$: Observable<Option<string>>;
-    applicationId$: Observable<Option<string>>;
-    applications$: Observable<
-      {
-        id: string;
-        name: string;
-        collections: { id: string; name: string; thumbnailUrl: string }[];
-      }[]
-    >;
-  }>(DIALOG_DATA);
+
   private readonly _isDragging = new BehaviorSubject<Option<string>>(null);
   private readonly _selectedCollection = new BehaviorSubject<
     Option<{
@@ -380,33 +371,11 @@ export class CollectionsComponent {
   >(null);
   readonly isDragging$ = this._isDragging.asObservable();
   readonly selectedCollection$ = this._selectedCollection.asObservable();
-  readonly plugins = this._data.plugins;
-  readonly workspaceId$ = this._data.workspaceId$;
-  readonly applicationId$ = this._data.applicationId$;
-  readonly currentApplication$ = combineLatest([
-    this._data.applications$,
-    this._data.applicationId$,
-  ]).pipe(
-    map(([applications, applicationId]) => {
-      if (applicationId === null) {
-        return null;
-      }
-
-      return applications.find(({ id }) => id === applicationId) ?? null;
-    })
-  );
-  readonly otherApplications$ = combineLatest([
-    this._data.applications$,
-    this._data.applicationId$,
-  ]).pipe(
-    map(([applications, applicationId]) => {
-      if (applicationId === null) {
-        return [];
-      }
-
-      return applications.filter(({ id }) => id !== applicationId) ?? null;
-    })
-  );
+  readonly plugins = this._pluginsService.plugins;
+  readonly workspaceId$ = this._boardStore.workspaceId$;
+  readonly currentApplicationId$ = this._boardStore.currentApplicationId$;
+  readonly currentApplication$ = this._boardStore.currentApplication$;
+  readonly otherApplications$ = this._boardStore.otherApplications$;
 
   onSelectInternalCollection(
     workspaceId: string,

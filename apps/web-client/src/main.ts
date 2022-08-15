@@ -33,23 +33,17 @@ bootstrapApplication(AppComponent, {
             {
               path: 'lobby',
               loadComponent: () =>
-                import('./app/pages/lobby.component').then(
-                  (m) => m.LobbyPageComponent
-                ),
+                import('./app/pages').then((m) => m.LobbyPageComponent),
             },
             {
               path: 'settings',
               loadComponent: () =>
-                import('./app/pages/settings.component').then(
-                  (m) => m.SettingsPageComponent
-                ),
+                import('./app/pages').then((m) => m.SettingsPageComponent),
             },
             {
               path: 'board/:workspaceId/:applicationId',
               loadComponent: () =>
-                import('./app/pages/board.component').then(
-                  (m) => m.BoardPageComponent
-                ),
+                import('./app/pages').then((m) => m.BoardPageComponent),
             },
             {
               path: '**',
