@@ -9,6 +9,7 @@ import {
   Pipe,
   PipeTransform,
 } from '@angular/core';
+import { EditCollectionModalDirective } from '../modals';
 import {
   ActiveItem,
   Collection,
@@ -304,7 +305,10 @@ export class SquareButtonComponent {
 
           <button
             class="rounded-full bg-slate-400 w-8 h-8"
-            (click)="onCreateCollection()"
+            pgEditCollectionModal
+            (createCollection)="
+              onCreateCollection($event.id, $event.name, $event.thumbnailUrl)
+            "
           >
             +
           </button>
@@ -534,6 +538,7 @@ export class SquareButtonComponent {
     DragDropModule,
     SquareButtonComponent,
     SlotHotkeyPipe,
+    EditCollectionModalDirective,
   ],
   styles: [
     `
@@ -568,7 +573,11 @@ export class MainDockComponent {
     data: Instruction | Collection;
   }>();
   @Output() createInstruction = new EventEmitter();
-  @Output() createCollection = new EventEmitter();
+  @Output() createCollection = new EventEmitter<{
+    id: string;
+    name: string;
+    thumbnailUrl: string;
+  }>();
   @HostListener('document:keydown', ['$event'])
   onKeydown(event: KeyboardEvent) {
     const hotkey = this.hotkeys.find((hotkey) => hotkey.key === event.key);
@@ -611,7 +620,11 @@ export class MainDockComponent {
     this.createInstruction.emit();
   }
 
-  onCreateCollection() {
-    this.createCollection.emit();
+  onCreateCollection(id: string, name: string, thumbnailUrl: string) {
+    this.createCollection.emit({
+      id,
+      name,
+      thumbnailUrl,
+    });
   }
 }

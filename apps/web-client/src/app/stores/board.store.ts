@@ -80,19 +80,19 @@ export class BoardStore
     this.currentApplicationId$,
     this.workspaceInstructions$,
     this.workspaceCollections$,
-    (applications, applicationId, instructions, collections) =>
+    (applications, currentApplicationId, instructions, collections) =>
       applications
-        ?.filter(({ id }) => id !== applicationId)
+        ?.filter(({ id }) => id !== currentApplicationId)
         .map((application) => ({
           id: application.id,
           name: application.name,
           instructions:
             instructions?.filter(
-              (instruction) => instruction.applicationId === applicationId
+              (instruction) => instruction.applicationId === application.id
             ) ?? [],
           collections:
             collections?.filter(
-              (collection) => collection.applicationId === applicationId
+              (collection) => collection.applicationId === application.id
             ) ?? [],
         })) ?? []
   );

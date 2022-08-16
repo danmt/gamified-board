@@ -3,7 +3,8 @@ import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { LetModule, PushModule } from '@ngrx/component';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, combineLatest, map, Observable } from 'rxjs';
+import { EditCollectionModalDirective } from '../modals';
 import { PluginsService } from '../plugins';
 import { CollectionApiService } from '../services';
 import { BoardStore } from '../stores';
@@ -74,7 +75,8 @@ import { Option } from '../utils';
                         workspaceId,
                         application.id,
                         collection.id,
-                        collection.name
+                        collection.name,
+                        collection.thumbnailUrl
                       )
                     "
                     (cdkDragStarted)="onDragStart($event)"
@@ -163,7 +165,8 @@ import { Option } from '../utils';
                         workspaceId,
                         application.id,
                         collection.id,
-                        collection.name
+                        collection.name,
+                        collection.thumbnailUrl
                       )
                     "
                     (cdkDragStarted)="onDragStart($event)"
@@ -325,6 +328,21 @@ import { Option } from '../utils';
             collection.applicationId !== null &&
             collection.applicationId === (currentApplicationId$ | ngrxPush)
           "
+          pgEditCollectionModal
+          [collection]="collection"
+          (updateCollection)="
+            onUpdateCollection(collection.id, $event.name, $event.thumbnailUrl)
+          "
+        >
+          edit
+        </button>
+
+        <button
+          *ngIf="
+            collection !== null &&
+            collection.applicationId !== null &&
+            collection.applicationId === (currentApplicationId$ | ngrxPush)
+          "
           class="rounded-full bg-slate-400 w-8 h-8"
           (click)="onDeleteCollection(collection.applicationId, collection.id)"
         >
@@ -350,7 +368,14 @@ import { Option } from '../utils';
     </div>
   `,
   standalone: true,
-  imports: [DragDropModule, CommonModule, PushModule, LetModule, RouterModule],
+  imports: [
+    DragDropModule,
+    CommonModule,
+    PushModule,
+    LetModule,
+    RouterModule,
+    EditCollectionModalDirective,
+  ],
 })
 export class CollectionsSectionComponent {
   private readonly _pluginsService = inject(PluginsService);
@@ -362,6 +387,7 @@ export class CollectionsSectionComponent {
     Option<{
       id: string;
       name: string;
+      thumbnailUrl: string;
       workspaceId: Option<string>;
       applicationId: Option<string>;
       namespace: Option<string>;
@@ -370,7 +396,67 @@ export class CollectionsSectionComponent {
     }>
   >(null);
   readonly isDragging$ = this._isDragging.asObservable();
-  readonly selectedCollection$ = this._selectedCollection.asObservable();
+  readonly selectedCollection$: Observable<
+    Option<{
+      id: string;
+      name: string;
+      thumbnailUrl: string;
+      workspaceId: Option<string>;
+      applicationId: Option<string>;
+    }>
+  > = combineLatest([
+    this._boardStore.workspaceCollections$,
+    this._selectedCollection.asObservable(),
+  ]).pipe(
+    map(([collections, selectedCollection]) => {
+      if (selectedCollection === null) {
+        return null;
+      }
+
+      if (selectedCollection.isInternal) {
+        const collection =
+          collections?.find(
+            (collection) => collection.id === selectedCollection.id
+          ) ?? null;
+
+        return collection
+          ? {
+              id: collection.id,
+              name: collection.name,
+              thumbnailUrl: collection.thumbnailUrl,
+              applicationId: collection.applicationId,
+              workspaceId: collection.workspaceId,
+            }
+          : null;
+      } else {
+        const plugin =
+          this.plugins.find(
+            (plugin) =>
+              plugin.namespace === selectedCollection.namespace &&
+              plugin.name === selectedCollection.plugin
+          ) ?? null;
+
+        if (plugin === null) {
+          return null;
+        }
+
+        const account =
+          plugin?.accounts.find(
+            (account) => account.name === selectedCollection.id
+          ) ?? null;
+
+        return account
+          ? {
+              id: account.name,
+              name: account.name,
+              thumbnailUrl: `assets/plugins/${plugin}`,
+              applicationId: null,
+              workspaceId: null,
+            }
+          : null;
+      }
+    })
+  );
   readonly plugins = this._pluginsService.plugins;
   readonly workspaceId$ = this._boardStore.workspaceId$;
   readonly currentApplicationId$ = this._boardStore.currentApplicationId$;
@@ -381,11 +467,13 @@ export class CollectionsSectionComponent {
     workspaceId: string,
     applicationId: string,
     collectionId: string,
-    collectionName: string
+    collectionName: string,
+    thumbnailUrl: string
   ) {
     this._selectedCollection.next({
       id: collectionId,
       name: collectionName,
+      thumbnailUrl,
       isInternal: true,
       workspaceId,
       applicationId,
@@ -407,7 +495,18 @@ export class CollectionsSectionComponent {
       applicationId: null,
       namespace,
       plugin,
+      thumbnailUrl: `assets/plugins/${namespace}/${plugin}/accounts/${account}.png`,
     });
+  }
+
+  onUpdateCollection(
+    collectionId: string,
+    collectionName: string,
+    thumbnailUrl: string
+  ) {
+    this._collectionApiService
+      .updateCollection(collectionId, collectionName, thumbnailUrl)
+      .subscribe();
   }
 
   onDeleteCollection(applicationId: string, collectionId: string) {

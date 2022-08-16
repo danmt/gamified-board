@@ -4,9 +4,9 @@ import {
   docData,
   Firestore,
   runTransaction,
+  updateDoc,
 } from '@angular/fire/firestore';
 import { combineLatest, defer, from, map, Observable, of } from 'rxjs';
-import { v4 as uuid } from 'uuid';
 import { Entity } from '../utils';
 
 export type CollectionDto = Entity<{
@@ -63,7 +63,13 @@ export class CollectionApiService {
     );
   }
 
-  createCollection(workspaceId: string, applicationId: string, name: string) {
+  createCollection(
+    workspaceId: string,
+    applicationId: string,
+    newCollectionId: string,
+    name: string,
+    thumbnailUrl: string
+  ) {
     return defer(() =>
       from(
         runTransaction(this._firestore, async (transaction) => {
@@ -75,7 +81,6 @@ export class CollectionApiService {
             this._firestore,
             `applications/${applicationId}`
           );
-          const newCollectionId = uuid();
           const newCollectionRef = doc(
             this._firestore,
             `collections/${newCollectionId}`
@@ -90,7 +95,7 @@ export class CollectionApiService {
             name,
             applicationRef,
             workspaceRef,
-            thumbnailUrl: `assets/workspaces/${workspaceId}/${applicationId}/${newCollectionId}.png`,
+            thumbnailUrl,
           });
 
           // push collection to application collections
@@ -99,6 +104,17 @@ export class CollectionApiService {
           });
 
           return {};
+        })
+      )
+    );
+  }
+
+  updateCollection(collectionId: string, name: string, thumbnailUrl: string) {
+    return defer(() =>
+      from(
+        updateDoc(doc(this._firestore, `collections/${collectionId}`), {
+          name,
+          thumbnailUrl,
         })
       )
     );

@@ -64,7 +64,9 @@ import {
       (removeFromSlot)="onRemoveFromSlot($event)"
       (activateSlot)="onSlotActivate($event)"
       (updateSlot)="onUpdateSlot($event.index, $event.data)"
-      (createCollection)="onCreateCollection()"
+      (createCollection)="
+        onCreateCollection($event.id, $event.name, $event.thumbnailUrl)
+      "
       (createInstruction)="onCreateInstruction()"
     ></pg-main-dock>
     <pg-selected-task-dock
@@ -552,7 +554,11 @@ export class BoardPageComponent implements OnInit {
       .subscribe();
   }
 
-  onCreateCollection() {
+  onCreateCollection(
+    collectionId: string,
+    collectionName: string,
+    thumbnailUrl: string
+  ) {
     const workspaceId =
       this._activatedRoute.snapshot.paramMap.get('workspaceId');
     const applicationId =
@@ -567,7 +573,13 @@ export class BoardPageComponent implements OnInit {
     }
 
     this._collectionApiService
-      .createCollection(workspaceId, applicationId, 'my name')
+      .createCollection(
+        workspaceId,
+        applicationId,
+        collectionId,
+        collectionName,
+        thumbnailUrl
+      )
       .subscribe();
   }
 
