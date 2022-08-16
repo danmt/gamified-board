@@ -3,7 +3,8 @@ import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { LetModule, PushModule } from '@ngrx/component';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, combineLatest, map, Observable } from 'rxjs';
+import { EditInstructionModalDirective } from '../modals';
 import { PluginsService } from '../plugins';
 import { InstructionApiService } from '../services';
 import { BoardStore } from '../stores';
@@ -339,6 +340,25 @@ import { Option } from '../utils';
             instruction.applicationId !== null &&
             instruction.applicationId === (currentApplicationId$ | ngrxPush)
           "
+          pgEditInstructionModal
+          [instruction]="instruction"
+          (updateInstruction)="
+            onUpdateInstruction(
+              instruction.id,
+              $event.name,
+              $event.thumbnailUrl
+            )
+          "
+        >
+          edit
+        </button>
+
+        <button
+          *ngIf="
+            instruction !== null &&
+            instruction.applicationId !== null &&
+            instruction.applicationId === (currentApplicationId$ | ngrxPush)
+          "
           class="rounded-full bg-slate-400 w-8 h-8"
           (click)="
             onDeleteInstruction(instruction.applicationId, instruction.id)
@@ -366,7 +386,14 @@ import { Option } from '../utils';
     </div>
   `,
   standalone: true,
-  imports: [DragDropModule, CommonModule, PushModule, LetModule, RouterModule],
+  imports: [
+    DragDropModule,
+    CommonModule,
+    PushModule,
+    LetModule,
+    RouterModule,
+    EditInstructionModalDirective,
+  ],
 })
 export class InstructionsSectionComponent {
   private readonly _pluginsService = inject(PluginsService);
@@ -386,7 +413,67 @@ export class InstructionsSectionComponent {
   >(null);
   private readonly _isDragging = new BehaviorSubject<Option<string>>(null);
   readonly isDragging$ = this._isDragging.asObservable();
-  readonly selectedInstruction$ = this._selectedInstruction.asObservable();
+  readonly selectedInstruction$: Observable<
+    Option<{
+      id: string;
+      name: string;
+      thumbnailUrl: string;
+      workspaceId: Option<string>;
+      applicationId: Option<string>;
+    }>
+  > = combineLatest([
+    this._boardStore.workspaceInstructions$,
+    this._selectedInstruction.asObservable(),
+  ]).pipe(
+    map(([instructions, selectedInstruction]) => {
+      if (selectedInstruction === null) {
+        return null;
+      }
+
+      if (selectedInstruction.isInternal) {
+        const instruction =
+          instructions?.find(
+            (instruction) => instruction.id === selectedInstruction.id
+          ) ?? null;
+
+        return instruction
+          ? {
+              id: instruction.id,
+              name: instruction.name,
+              thumbnailUrl: instruction.thumbnailUrl,
+              applicationId: instruction.applicationId,
+              workspaceId: instruction.workspaceId,
+            }
+          : null;
+      } else {
+        const plugin =
+          this.plugins.find(
+            (plugin) =>
+              plugin.namespace === selectedInstruction.namespace &&
+              plugin.name === selectedInstruction.plugin
+          ) ?? null;
+
+        if (plugin === null) {
+          return null;
+        }
+
+        const instruction =
+          plugin?.instructions.find(
+            (instruction) => instruction.name === selectedInstruction.id
+          ) ?? null;
+
+        return instruction
+          ? {
+              id: instruction.name,
+              name: instruction.name,
+              thumbnailUrl: `assets/plugins/${plugin.namespace}/${plugin.name}/instructions/${instruction.name}.png`,
+              applicationId: null,
+              workspaceId: null,
+            }
+          : null;
+      }
+    })
+  );
   readonly plugins = this._pluginsService.plugins;
   readonly workspaceId$ = this._boardStore.workspaceId$;
   readonly currentApplicationId$ = this._boardStore.currentApplicationId$;
@@ -424,6 +511,16 @@ export class InstructionsSectionComponent {
       namespace,
       plugin,
     });
+  }
+
+  onUpdateInstruction(
+    instructionId: string,
+    instructionName: string,
+    thumbnailUrl: string
+  ) {
+    this._instructionApiService
+      .updateInstruction(instructionId, instructionName, thumbnailUrl)
+      .subscribe();
   }
 
   onDeleteInstruction(applicationId: string, instructionId: string) {

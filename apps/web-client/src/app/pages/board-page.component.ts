@@ -67,7 +67,9 @@ import {
       (createCollection)="
         onCreateCollection($event.id, $event.name, $event.thumbnailUrl)
       "
-      (createInstruction)="onCreateInstruction()"
+      (createInstruction)="
+        onCreateInstruction($event.id, $event.name, $event.thumbnailUrl)
+      "
     ></pg-main-dock>
     <pg-selected-task-dock
       *ngIf="selectedTask !== null"
@@ -130,7 +132,7 @@ import {
           )
         "
       >
-        <p>row {{ instruction.id }}</p>
+        <p>Instruction: {{ instruction.name }}</p>
       </pg-row>
     </pg-board>
   `,
@@ -535,7 +537,11 @@ export class BoardPageComponent implements OnInit {
       .subscribe();
   }
 
-  onCreateInstruction() {
+  onCreateInstruction(
+    instructionId: string,
+    instructionName: string,
+    thumbnailUrl: string
+  ) {
     const workspaceId =
       this._activatedRoute.snapshot.paramMap.get('workspaceId');
     const applicationId =
@@ -550,7 +556,13 @@ export class BoardPageComponent implements OnInit {
     }
 
     this._instructionApiService
-      .createInstruction(workspaceId, applicationId, 'my name')
+      .createInstruction(
+        workspaceId,
+        applicationId,
+        instructionId,
+        instructionName,
+        thumbnailUrl
+      )
       .subscribe();
   }
 

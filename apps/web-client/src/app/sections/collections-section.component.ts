@@ -75,8 +75,7 @@ import { Option } from '../utils';
                         workspaceId,
                         application.id,
                         collection.id,
-                        collection.name,
-                        collection.thumbnailUrl
+                        collection.name
                       )
                     "
                     (cdkDragStarted)="onDragStart($event)"
@@ -165,8 +164,7 @@ import { Option } from '../utils';
                         workspaceId,
                         application.id,
                         collection.id,
-                        collection.name,
-                        collection.thumbnailUrl
+                        collection.name
                       )
                     "
                     (cdkDragStarted)="onDragStart($event)"
@@ -387,7 +385,6 @@ export class CollectionsSectionComponent {
     Option<{
       id: string;
       name: string;
-      thumbnailUrl: string;
       workspaceId: Option<string>;
       applicationId: Option<string>;
       namespace: Option<string>;
@@ -449,7 +446,7 @@ export class CollectionsSectionComponent {
           ? {
               id: account.name,
               name: account.name,
-              thumbnailUrl: `assets/plugins/${plugin}`,
+              thumbnailUrl: `assets/plugins/${plugin.namespace}/${plugin.name}/accounts/${account.name}.png`,
               applicationId: null,
               workspaceId: null,
             }
@@ -467,13 +464,11 @@ export class CollectionsSectionComponent {
     workspaceId: string,
     applicationId: string,
     collectionId: string,
-    collectionName: string,
-    thumbnailUrl: string
+    collectionName: string
   ) {
     this._selectedCollection.next({
       id: collectionId,
       name: collectionName,
-      thumbnailUrl,
       isInternal: true,
       workspaceId,
       applicationId,
@@ -495,7 +490,6 @@ export class CollectionsSectionComponent {
       applicationId: null,
       namespace,
       plugin,
-      thumbnailUrl: `assets/plugins/${namespace}/${plugin}/accounts/${account}.png`,
     });
   }
 

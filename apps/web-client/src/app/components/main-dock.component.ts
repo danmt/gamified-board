@@ -9,7 +9,10 @@ import {
   Pipe,
   PipeTransform,
 } from '@angular/core';
-import { EditCollectionModalDirective } from '../modals';
+import {
+  EditCollectionModalDirective,
+  EditInstructionModalDirective,
+} from '../modals';
 import {
   ActiveItem,
   Collection,
@@ -103,7 +106,10 @@ export class SquareButtonComponent {
 
           <button
             class="rounded-full bg-slate-400 w-8 h-8"
-            (click)="onCreateInstruction()"
+            pgEditInstructionModal
+            (createInstruction)="
+              onCreateInstruction($event.id, $event.name, $event.thumbnailUrl)
+            "
           >
             +
           </button>
@@ -539,6 +545,7 @@ export class SquareButtonComponent {
     SquareButtonComponent,
     SlotHotkeyPipe,
     EditCollectionModalDirective,
+    EditInstructionModalDirective,
   ],
   styles: [
     `
@@ -572,7 +579,11 @@ export class MainDockComponent {
     index: number;
     data: Instruction | Collection;
   }>();
-  @Output() createInstruction = new EventEmitter();
+  @Output() createInstruction = new EventEmitter<{
+    id: string;
+    name: string;
+    thumbnailUrl: string;
+  }>();
   @Output() createCollection = new EventEmitter<{
     id: string;
     name: string;
@@ -616,12 +627,16 @@ export class MainDockComponent {
     }
   }
 
-  onCreateInstruction() {
-    this.createInstruction.emit();
-  }
-
   onCreateCollection(id: string, name: string, thumbnailUrl: string) {
     this.createCollection.emit({
+      id,
+      name,
+      thumbnailUrl,
+    });
+  }
+
+  onCreateInstruction(id: string, name: string, thumbnailUrl: string) {
+    this.createInstruction.emit({
       id,
       name,
       thumbnailUrl,

@@ -24,7 +24,6 @@ import {
   of,
   switchMap,
 } from 'rxjs';
-import { v4 as uuid } from 'uuid';
 import { PluginsService } from '../plugins';
 import { Entity, Option } from '../utils';
 
@@ -382,7 +381,13 @@ export class InstructionApiService {
     );
   }
 
-  createInstruction(workspaceId: string, applicationId: string, name: string) {
+  createInstruction(
+    workspaceId: string,
+    applicationId: string,
+    newInstructionId: string,
+    name: string,
+    thumbnailUrl: string
+  ) {
     return defer(() =>
       from(
         runTransaction(this._firestore, async (transaction) => {
@@ -394,7 +399,6 @@ export class InstructionApiService {
             this._firestore,
             `applications/${applicationId}`
           );
-          const newInstructionId = uuid();
           const newInstructionRef = doc(
             this._firestore,
             `instructions/${newInstructionId}`
@@ -409,7 +413,7 @@ export class InstructionApiService {
             name,
             applicationRef,
             workspaceRef,
-            thumbnailUrl: `assets/workspaces/${workspaceId}/${applicationId}/${newInstructionId}.png`,
+            thumbnailUrl,
             tasksOrder: [],
             documentsOrder: [],
           });
@@ -420,6 +424,17 @@ export class InstructionApiService {
           });
 
           return {};
+        })
+      )
+    );
+  }
+
+  updateInstruction(instructionId: string, name: string, thumbnailUrl: string) {
+    return defer(() =>
+      from(
+        updateDoc(doc(this._firestore, `instructions/${instructionId}`), {
+          name,
+          thumbnailUrl,
         })
       )
     );
