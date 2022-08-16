@@ -30,7 +30,9 @@ import { Option } from '../utils';
           <button
             class="border border-blue-500"
             pgEditWorkspaceModal
-            (createWorkspace)="onCreateWorkspace(userId, $event.name)"
+            (createWorkspace)="
+              onCreateWorkspace(userId, $event.id, $event.name)
+            "
           >
             New workspace
           </button>
@@ -81,7 +83,7 @@ import { Option } from '../utils';
             class="border border-blue-500"
             pgEditApplicationModal
             (createApplication)="
-              onCreateApplication(selectedWorkspace.id, $event.name)
+              onCreateApplication(selectedWorkspace.id, $event.id, $event.name)
             "
           >
             New application
@@ -188,9 +190,13 @@ export class LobbyPageComponent implements OnInit {
     );
   }
 
-  onCreateWorkspace(userId: string, workspaceName: string) {
+  onCreateWorkspace(
+    userId: string,
+    workspaceId: string,
+    workspaceName: string
+  ) {
     this._workspaceApiService
-      .createWorkspace(userId, workspaceName)
+      .createWorkspace(userId, workspaceId, workspaceName)
       .subscribe();
   }
 
@@ -210,9 +216,13 @@ export class LobbyPageComponent implements OnInit {
       .subscribe();
   }
 
-  onCreateApplication(workspaceId: string, applicationName: string) {
+  onCreateApplication(
+    workspaceId: string,
+    applicationId: string,
+    applicationName: string
+  ) {
     this._applicationApiService
-      .createApplication(workspaceId, applicationName)
+      .createApplication(workspaceId, applicationId, applicationName)
       .subscribe();
   }
 

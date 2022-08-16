@@ -1,4 +1,5 @@
 import { Dialog, DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
+import { CommonModule } from '@angular/common';
 import {
   Component,
   EventEmitter,
@@ -10,9 +11,11 @@ import {
 
 import { Directive } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { v4 as uuid } from 'uuid';
 import { Option } from '../utils';
 
 export interface EditWorkspaceData {
+  id: string;
   name: string;
 }
 
@@ -61,6 +64,27 @@ export class EditWorkspaceModalDirective {
 
       <form [formGroup]="form" (ngSubmit)="onSubmit()">
         <div>
+          <label class="block" for="workspace-id-input">Workspace ID</label>
+          <input
+            class="block border-b-2 border-black"
+            id="workspace-id-input"
+            type="text"
+            formControlName="id"
+            [readonly]="workspace !== null"
+          />
+          <p *ngIf="workspace === null">
+            Hint: The ID cannot be changed afterwards.
+          </p>
+          <button
+            *ngIf="workspace === null"
+            type="button"
+            (click)="onGenerateId()"
+          >
+            Generate
+          </button>
+        </div>
+
+        <div>
           <label class="block" for="workspace-name-input">Workspace name</label>
           <input
             class="block border-b-2 border-black"
@@ -79,7 +103,7 @@ export class EditWorkspaceModalDirective {
     </div>
   `,
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule],
 })
 export class EditWorkspaceModalComponent {
   private readonly _dialogRef =
@@ -90,20 +114,30 @@ export class EditWorkspaceModalComponent {
 
   readonly workspace = inject<Option<EditWorkspaceData>>(DIALOG_DATA);
   readonly form = this._formBuilder.group({
-    name: this._formBuilder.control<string>(this.workspace?.name ?? '', [
-      Validators.required,
-    ]),
+    id: this._formBuilder.control<string>(this.workspace?.id ?? '', {
+      validators: [Validators.required],
+      nonNullable: true,
+    }),
+    name: this._formBuilder.control<string>(this.workspace?.name ?? '', {
+      validators: [Validators.required],
+      nonNullable: true,
+    }),
   });
 
   onSubmit() {
     if (this.form.valid) {
-      const { name } = this.form.value;
+      const { id, name } = this.form.value;
 
-      if (name === null || name === undefined) {
+      if (id === undefined) {
+        throw new Error('ID is not properly defined.');
+      }
+
+      if (name === undefined) {
         throw new Error('Name is not properly defined.');
       }
 
       this._dialogRef.close({
+        id,
         name,
       });
     }
@@ -111,5 +145,9 @@ export class EditWorkspaceModalComponent {
 
   onClose() {
     this._dialogRef.close();
+  }
+
+  onGenerateId() {
+    this.form.get('id')?.setValue(uuid());
   }
 }

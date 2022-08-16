@@ -17,7 +17,6 @@ import {
   updateDoc,
 } from '@angular/fire/firestore';
 import { defer, from, map, Observable } from 'rxjs';
-import { v4 as uuid } from 'uuid';
 import { Entity } from '../utils';
 
 export type WorkspaceDto = Entity<{ name: string }>;
@@ -83,11 +82,10 @@ export class WorkspaceApiService {
     );
   }
 
-  createWorkspace(userId: string, name: string) {
+  createWorkspace(userId: string, newWorkspaceId: string, name: string) {
     return defer(() =>
       from(
         runTransaction(this._firestore, async (transaction) => {
-          const newWorkspaceId = uuid();
           const newWorkspaceRef = doc(
             this._firestore,
             `workspaces/${newWorkspaceId}`

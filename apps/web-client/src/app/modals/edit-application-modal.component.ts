@@ -1,4 +1,5 @@
 import { Dialog, DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
+import { CommonModule } from '@angular/common';
 import {
   Component,
   Directive,
@@ -9,9 +10,11 @@ import {
   Output,
 } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { v4 as uuid } from 'uuid';
 import { Option } from '../utils';
 
 export interface EditApplicationData {
+  id: string;
   name: string;
 }
 
@@ -60,9 +63,30 @@ export class EditApplicationModalDirective {
 
       <form [formGroup]="form" (ngSubmit)="onSubmit()">
         <div>
-          <label class="block" for="application-name-input"
-            >Application name</label
+          <label class="block" for="application-id-input">Application ID</label>
+          <input
+            class="block border-b-2 border-black"
+            id="application-id-input"
+            type="text"
+            formControlName="id"
+            [readonly]="application !== null"
+          />
+          <p *ngIf="application === null">
+            Hint: The ID cannot be changed afterwards.
+          </p>
+          <button
+            *ngIf="application === null"
+            type="button"
+            (click)="onGenerateId()"
           >
+            Generate
+          </button>
+        </div>
+
+        <div>
+          <label class="block" for="application-name-input">
+            Application name
+          </label>
           <input
             class="block border-b-2 border-black"
             id="application-name-input"
@@ -80,7 +104,7 @@ export class EditApplicationModalDirective {
     </div>
   `,
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule],
 })
 export class EditApplicationModalComponent {
   private readonly _dialogRef =
@@ -91,20 +115,30 @@ export class EditApplicationModalComponent {
 
   readonly application = inject<Option<EditApplicationData>>(DIALOG_DATA);
   readonly form = this._formBuilder.group({
-    name: this._formBuilder.control<string>(this.application?.name ?? '', [
-      Validators.required,
-    ]),
+    id: this._formBuilder.control<string>(this.application?.id ?? '', {
+      validators: [Validators.required],
+      nonNullable: true,
+    }),
+    name: this._formBuilder.control<string>(this.application?.name ?? '', {
+      validators: [Validators.required],
+      nonNullable: true,
+    }),
   });
 
   onSubmit() {
     if (this.form.valid) {
-      const { name } = this.form.value;
+      const { id, name } = this.form.value;
 
-      if (name === null || name === undefined) {
+      if (id === undefined) {
+        throw new Error('ID is not properly defined.');
+      }
+
+      if (name === undefined) {
         throw new Error('Name is not properly defined.');
       }
 
       this._dialogRef.close({
+        id,
         name,
       });
     }
@@ -112,5 +146,9 @@ export class EditApplicationModalComponent {
 
   onClose() {
     this._dialogRef.close();
+  }
+
+  onGenerateId() {
+    this.form.get('id')?.setValue(uuid());
   }
 }
