@@ -13,6 +13,7 @@ import {
   query,
   runTransaction,
   startAt,
+  updateDoc,
 } from '@angular/fire/firestore';
 import { defer, from, map, Observable } from 'rxjs';
 import { v4 as uuid } from 'uuid';
@@ -119,6 +120,16 @@ export class ApplicationApiService {
           });
 
           return {};
+        })
+      )
+    );
+  }
+
+  updateApplication(applicationId: string, name: string) {
+    return defer(() =>
+      from(
+        updateDoc(doc(this._firestore, `applications/${applicationId}`), {
+          name,
         })
       )
     );

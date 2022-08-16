@@ -11,7 +11,10 @@ import { RouterModule } from '@angular/router';
 import { LetModule, PushModule } from '@ngrx/component';
 import { provideComponentStore } from '@ngrx/component-store';
 import { startWith } from 'rxjs';
-import { EditWorkspaceModalDirective } from '../modals';
+import {
+  EditApplicationModalDirective,
+  EditWorkspaceModalDirective,
+} from '../modals';
 import { ApplicationApiService, WorkspaceApiService } from '../services';
 import { LobbyStore } from '../stores';
 import { Option } from '../utils';
@@ -76,9 +79,23 @@ import { Option } from '../utils';
           <button
             *ngIf="selectedWorkspace$ | ngrxPush as selectedWorkspace"
             class="border border-blue-500"
-            (click)="onCreateApplication(selectedWorkspace.id)"
+            pgEditApplicationModal
+            (createApplication)="
+              onCreateApplication(selectedWorkspace.id, $event.name)
+            "
           >
             New application
+          </button>
+          <button
+            *ngIf="selectedApplication$ | ngrxPush as selectedApplication"
+            class="border border-blue-500"
+            pgEditApplicationModal
+            (updateApplication)="
+              onUpdateApplication(selectedApplication.id, $event.name)
+            "
+            [application]="selectedApplication"
+          >
+            Update application
           </button>
           <button
             *ngIf="selectedApplication$ | ngrxPush as selectedApplication"
@@ -133,6 +150,7 @@ import { Option } from '../utils';
     LetModule,
     PushModule,
     EditWorkspaceModalDirective,
+    EditApplicationModalDirective,
   ],
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -192,9 +210,15 @@ export class LobbyPageComponent implements OnInit {
       .subscribe();
   }
 
-  onCreateApplication(workspaceId: string) {
+  onCreateApplication(workspaceId: string, applicationName: string) {
     this._applicationApiService
-      .createApplication(workspaceId, 'my application')
+      .createApplication(workspaceId, applicationName)
+      .subscribe();
+  }
+
+  onUpdateApplication(applicationId: string, applicationName: string) {
+    this._applicationApiService
+      .updateApplication(applicationId, applicationName)
       .subscribe();
   }
 
