@@ -1,3 +1,4 @@
+import { DialogModule } from '@angular/cdk/dialog';
 import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
@@ -10,6 +11,7 @@ import { RouterModule } from '@angular/router';
 import { LetModule, PushModule } from '@ngrx/component';
 import { provideComponentStore } from '@ngrx/component-store';
 import { startWith } from 'rxjs';
+import { EditWorkspaceModalDirective } from '../modals';
 import { ApplicationApiService, WorkspaceApiService } from '../services';
 import { LobbyStore } from '../stores';
 import { Option } from '../utils';
@@ -24,9 +26,21 @@ import { Option } from '../utils';
         <div>
           <button
             class="border border-blue-500"
-            (click)="onCreateWorkspace(userId)"
+            pgEditWorkspaceModal
+            (createWorkspace)="onCreateWorkspace(userId, $event.name)"
           >
             New workspace
+          </button>
+          <button
+            *ngIf="selectedWorkspace$ | ngrxPush as selectedWorkspace"
+            class="border border-blue-500"
+            pgEditWorkspaceModal
+            (updateWorkspace)="
+              onUpdateWorkspace(selectedWorkspace.id, $event.name)
+            "
+            [workspace]="selectedWorkspace"
+          >
+            Update workspace
           </button>
           <button
             *ngIf="selectedWorkspace$ | ngrxPush as selectedWorkspace"
@@ -114,9 +128,11 @@ import { Option } from '../utils';
   imports: [
     CommonModule,
     RouterModule,
+    DialogModule,
     ReactiveFormsModule,
     LetModule,
     PushModule,
+    EditWorkspaceModalDirective,
   ],
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -154,9 +170,15 @@ export class LobbyPageComponent implements OnInit {
     );
   }
 
-  onCreateWorkspace(userId: string) {
+  onCreateWorkspace(userId: string, workspaceName: string) {
     this._workspaceApiService
-      .createWorkspace(userId, 'my workspace')
+      .createWorkspace(userId, workspaceName)
+      .subscribe();
+  }
+
+  onUpdateWorkspace(workspaceId: string, workspaceName: string) {
+    this._workspaceApiService
+      .updateWorkspace(workspaceId, workspaceName)
       .subscribe();
   }
 

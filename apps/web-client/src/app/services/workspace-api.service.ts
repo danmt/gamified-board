@@ -14,6 +14,7 @@ import {
   query,
   runTransaction,
   startAt,
+  updateDoc,
 } from '@angular/fire/firestore';
 import { defer, from, map, Observable } from 'rxjs';
 import { v4 as uuid } from 'uuid';
@@ -112,6 +113,14 @@ export class WorkspaceApiService {
     );
   }
 
+  updateWorkspace(workspaceId: string, name: string) {
+    return defer(() =>
+      from(
+        updateDoc(doc(this._firestore, `workspaces/${workspaceId}`), { name })
+      )
+    );
+  }
+
   deleteWorkspace(workspaceId: string, userId: string) {
     return defer(() =>
       from(
@@ -138,10 +147,6 @@ export class WorkspaceApiService {
   }
 
   removeWorkspaceFromFavorites(workspaceId: string, userId: string) {
-    deleteDoc(
-      doc(this._firestore, `users/${userId}/favorite-workspaces/${workspaceId}`)
-    );
-
     return defer(() =>
       from(
         deleteDoc(
