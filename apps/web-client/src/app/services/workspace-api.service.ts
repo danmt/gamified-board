@@ -2,6 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import {
   collectionData,
   collectionGroup,
+  deleteDoc,
   doc,
   docData,
   DocumentData,
@@ -11,9 +12,11 @@ import {
   Firestore,
   orderBy,
   query,
+  runTransaction,
   startAt,
 } from '@angular/fire/firestore';
-import { map, Observable } from 'rxjs';
+import { defer, from, map, Observable } from 'rxjs';
+import { v4 as uuid } from 'uuid';
 import { Entity } from '../utils';
 
 export type WorkspaceDto = Entity<{ name: string }>;
@@ -75,6 +78,78 @@ export class WorkspaceApiService {
     ).pipe(
       map((applicationsRefs) =>
         applicationsRefs.map((applicationRef) => applicationRef.id)
+      )
+    );
+  }
+
+  createWorkspace(userId: string, name: string) {
+    return defer(() =>
+      from(
+        runTransaction(this._firestore, async (transaction) => {
+          const newWorkspaceId = uuid();
+          const newWorkspaceRef = doc(
+            this._firestore,
+            `workspaces/${newWorkspaceId}`
+          );
+          const newFavoriteWorkspaceRef = doc(
+            this._firestore,
+            `users/${userId}/favorite-workspaces/${newWorkspaceId}`
+          );
+
+          // create the new workspace
+          transaction.set(newWorkspaceRef, {
+            name,
+          });
+
+          // push workspace to user favorite workspaces
+          transaction.set(newFavoriteWorkspaceRef, {
+            workspaceRef: newWorkspaceRef,
+          });
+
+          return {};
+        })
+      )
+    );
+  }
+
+  deleteWorkspace(workspaceId: string, userId: string) {
+    return defer(() =>
+      from(
+        runTransaction(this._firestore, async (transaction) => {
+          const workspaceRef = doc(
+            this._firestore,
+            `workspaces/${workspaceId}`
+          );
+          const favoriteWorkspaceRef = doc(
+            this._firestore,
+            `users/${userId}/favorite-workspaces/${workspaceId}`
+          );
+
+          // delete workspace
+          transaction.delete(workspaceRef);
+
+          // remove workspace from user favorite workspaces
+          transaction.delete(favoriteWorkspaceRef);
+
+          return {};
+        })
+      )
+    );
+  }
+
+  removeWorkspaceFromFavorites(workspaceId: string, userId: string) {
+    deleteDoc(
+      doc(this._firestore, `users/${userId}/favorite-workspaces/${workspaceId}`)
+    );
+
+    return defer(() =>
+      from(
+        deleteDoc(
+          doc(
+            this._firestore,
+            `users/${userId}/favorite-workspaces/${workspaceId}`
+          )
+        )
       )
     );
   }

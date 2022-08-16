@@ -14,15 +14,21 @@ import {
 import { Option } from '../utils';
 
 interface ViewModel {
+  userId: Option<string>;
+  selectedWorkspaceId: Option<string>;
+  selectedApplicationId: Option<string>;
   favoriteWorkspaceIds: Option<string[]>;
-  favoriteWorkspaces: Option<(WorkspaceDto & { applicationIds: string[] })[]>;
-  applications: Option<ApplicationDto[]>;
+  favoriteWorkspaces: (WorkspaceDto & { applicationIds: string[] })[];
+  applications: ApplicationDto[];
 }
 
 const initialState: ViewModel = {
+  userId: null,
+  selectedWorkspaceId: null,
+  selectedApplicationId: null,
   favoriteWorkspaceIds: null,
-  favoriteWorkspaces: null,
-  applications: null,
+  favoriteWorkspaces: [],
+  applications: [],
 };
 
 @Injectable()
@@ -33,13 +39,75 @@ export class LobbyStore
   private readonly _workspaceApiService = inject(WorkspaceApiService);
   private readonly _applicationApiService = inject(ApplicationApiService);
 
-  readonly favoriteWorkspaceIds$ = this.select(
-    ({ favoriteWorkspaceIds }) => favoriteWorkspaceIds
-  );
   readonly favoriteWorkspaces$ = this.select(
     ({ favoriteWorkspaces }) => favoriteWorkspaces
   );
   readonly applications$ = this.select(({ applications }) => applications);
+  readonly selectedWorkspaceApplications$ = this.select(
+    this.applications$,
+    this.select(({ selectedWorkspaceId }) => selectedWorkspaceId),
+    (applications, selectedWorkspace) => {
+      if (applications === null || selectedWorkspace === null) {
+        return [];
+      }
+
+      return applications.filter(
+        ({ workspaceId }) => workspaceId === selectedWorkspace
+      );
+    }
+  );
+  readonly selectedWorkspace$ = this.select(
+    this.favoriteWorkspaces$,
+    this.select(({ selectedWorkspaceId }) => selectedWorkspaceId),
+    (favoriteWorkspaces, selectedWorkspaceId) => {
+      if (favoriteWorkspaces.length === 0 || selectedWorkspaceId === null) {
+        return null;
+      }
+
+      return (
+        favoriteWorkspaces.find(
+          (workspace) => workspace.id === selectedWorkspaceId
+        ) ?? null
+      );
+    }
+  );
+  readonly selectedApplication$ = this.select(
+    this.selectedWorkspaceApplications$,
+    this.select(({ selectedApplicationId }) => selectedApplicationId),
+    (selectedWorkspaceApplications, selectedApplicationId) => {
+      if (
+        selectedWorkspaceApplications.length === 0 ||
+        selectedApplicationId === null
+      ) {
+        return null;
+      }
+
+      return (
+        selectedWorkspaceApplications.find(
+          (application) => application.id === selectedApplicationId
+        ) ?? null
+      );
+    }
+  );
+
+  readonly setUserId = this.updater<Option<string>>((state, userId) => ({
+    ...state,
+    userId,
+  }));
+
+  readonly setSelectedWorkspaceId = this.updater<Option<string>>(
+    (state, selectedWorkspaceId) => ({
+      ...state,
+      selectedWorkspaceId,
+    })
+  );
+
+  readonly setSelectedApplicationId = this.updater<Option<string>>(
+    (state, selectedApplicationId) => ({
+      ...state,
+      selectedApplicationId,
+    })
+  );
 
   private readonly _loadFavoriteWorkspaceIds$ = this.effect<Option<string>>(
     switchMap((userId) => {
@@ -119,7 +187,7 @@ export class LobbyStore
   }
 
   ngrxOnStoreInit() {
-    this._loadFavoriteWorkspaceIds$('p7xARjRPxv8cvbBOR59C');
+    this._loadFavoriteWorkspaceIds$(this.select(({ userId }) => userId));
     this._loadFavoriteWorkspaces$(
       this.select(({ favoriteWorkspaceIds }) => favoriteWorkspaceIds)
     );

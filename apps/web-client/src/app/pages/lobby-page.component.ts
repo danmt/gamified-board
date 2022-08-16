@@ -1,10 +1,16 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  OnInit,
+} from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { LetModule } from '@ngrx/component';
+import { LetModule, PushModule } from '@ngrx/component';
 import { provideComponentStore } from '@ngrx/component-store';
-import { combineLatest, map, startWith } from 'rxjs';
+import { startWith } from 'rxjs';
+import { ApplicationApiService, WorkspaceApiService } from '../services';
 import { LobbyStore } from '../stores';
 import { Option } from '../utils';
 
@@ -14,74 +20,165 @@ import { Option } from '../utils';
     <div>
       <h1>Lobby</h1>
 
-      <select [formControl]="selectedWorkspaceControl">
-        <option [value]="null">Select a workspace</option>
-        <option
-          *ngFor="let favoriteWorkspace of favoriteWorkspaces$ | async"
-          [value]="favoriteWorkspace.id"
-        >
-          {{ favoriteWorkspace.id }} - {{ favoriteWorkspace.name }}
-        </option>
-      </select>
-
-      <select [formControl]="selectedApplicationControl">
-        <option [value]="null">Select a application</option>
-        <option
-          *ngFor="let application of selectedWorkspaceApplications$ | async"
-          [value]="application.id"
-        >
-          {{ application.id }} - {{ application.name }}
-        </option>
-      </select>
-
-      <ng-container *ngrxLet="selectedWorkspace$; let selectedWorkspace">
-        <div *ngrxLet="selectedApplication$; let selectedApplication">
-          <a
-            *ngIf="selectedApplication !== null; else noApplicationSelected"
-            [routerLink]="['/board', selectedWorkspace, selectedApplication]"
+      <div>
+        <div>
+          <button
+            class="border border-blue-500"
+            (click)="onCreateWorkspace(userId)"
           >
-            Go to board
-          </a>
-
-          <ng-template #noApplicationSelected>
-            <p class="text-red-500">Select application to start</p>
-          </ng-template>
+            New workspace
+          </button>
+          <button
+            *ngIf="selectedWorkspace$ | ngrxPush as selectedWorkspace"
+            class="border border-blue-500"
+            (click)="onDeleteWorkspace(selectedWorkspace.id, userId)"
+          >
+            Delete workspace
+          </button>
+          <button
+            *ngIf="selectedWorkspace$ | ngrxPush as selectedWorkspace"
+            class="border border-blue-500"
+            (click)="
+              onRemoveWorkspaceFromFavorites(selectedWorkspace.id, userId)
+            "
+          >
+            Remove workspace from favorites
+          </button>
         </div>
-      </ng-container>
+
+        <select [formControl]="selectedWorkspaceIdControl">
+          <option [ngValue]="null">Select a workspace</option>
+          <option
+            *ngFor="let favoriteWorkspace of favoriteWorkspaces$ | ngrxPush"
+            [ngValue]="favoriteWorkspace.id"
+          >
+            {{ favoriteWorkspace.id }} - {{ favoriteWorkspace.name }}
+          </option>
+        </select>
+      </div>
+
+      <div>
+        <div>
+          <button
+            *ngIf="selectedWorkspace$ | ngrxPush as selectedWorkspace"
+            class="border border-blue-500"
+            (click)="onCreateApplication(selectedWorkspace.id)"
+          >
+            New application
+          </button>
+          <button
+            *ngIf="selectedApplication$ | ngrxPush as selectedApplication"
+            class="border border-blue-500"
+            (click)="
+              onDeleteApplication(
+                selectedApplication.id,
+                selectedApplication.workspaceId
+              )
+            "
+          >
+            Delete application
+          </button>
+        </div>
+
+        <select [formControl]="selectedApplicationIdControl">
+          <option [ngValue]="null">Select a application</option>
+          <option
+            *ngFor="
+              let application of selectedWorkspaceApplications$ | ngrxPush
+            "
+            [ngValue]="application.id"
+          >
+            {{ application.id }} - {{ application.name }}
+          </option>
+        </select>
+      </div>
+
+      <div *ngrxLet="selectedApplication$; let selectedApplication">
+        <a
+          *ngIf="selectedApplication !== null; else noApplicationSelected"
+          [routerLink]="[
+            '/board',
+            selectedApplication.workspaceId,
+            selectedApplication.id
+          ]"
+        >
+          Go to board
+        </a>
+
+        <ng-template #noApplicationSelected>
+          <p class="text-red-500">Select application to start</p>
+        </ng-template>
+      </div>
     </div>
   `,
-  imports: [CommonModule, RouterModule, ReactiveFormsModule, LetModule],
+  imports: [
+    CommonModule,
+    RouterModule,
+    ReactiveFormsModule,
+    LetModule,
+    PushModule,
+  ],
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [provideComponentStore(LobbyStore)],
 })
-export class LobbyPageComponent {
+export class LobbyPageComponent implements OnInit {
   private readonly _formBuilder = inject(FormBuilder);
   private readonly _lobbyStore = inject(LobbyStore);
+  private readonly _workspaceApiService = inject(WorkspaceApiService);
+  private readonly _applicationApiService = inject(ApplicationApiService);
 
-  readonly selectedWorkspaceControl =
+  readonly userId = 'p7xARjRPxv8cvbBOR59C';
+  readonly selectedWorkspaceIdControl =
     this._formBuilder.control<Option<string>>(null);
-  readonly selectedWorkspace$ = this.selectedWorkspaceControl.valueChanges.pipe(
-    startWith(null)
-  );
-  readonly selectedApplicationControl =
+  readonly selectedApplicationIdControl =
     this._formBuilder.control<Option<string>>(null);
-  readonly selectedApplication$ =
-    this.selectedApplicationControl.valueChanges.pipe(startWith(null));
 
   readonly favoriteWorkspaces$ = this._lobbyStore.favoriteWorkspaces$;
-  readonly selectedWorkspaceApplications$ = combineLatest([
-    this._lobbyStore.applications$,
-    this.selectedWorkspace$,
-  ]).pipe(
-    map(([applications, selectedWorkspace]) => {
-      if (applications === null || selectedWorkspace === null) {
-        return [];
-      }
+  readonly selectedWorkspaceApplications$ =
+    this._lobbyStore.selectedWorkspaceApplications$;
+  readonly selectedWorkspace$ = this._lobbyStore.selectedWorkspace$;
+  readonly selectedApplication$ = this._lobbyStore.selectedApplication$;
 
-      return applications.filter(
-        ({ workspaceId }) => workspaceId === selectedWorkspace
-      );
-    })
-  );
+  ngOnInit() {
+    this._lobbyStore.setUserId(this.userId);
+    this._lobbyStore.setSelectedWorkspaceId(
+      this.selectedWorkspaceIdControl.valueChanges.pipe(
+        startWith<Option<string>>(null)
+      )
+    );
+    this._lobbyStore.setSelectedApplicationId(
+      this.selectedApplicationIdControl.valueChanges.pipe(
+        startWith<Option<string>>(null)
+      )
+    );
+  }
+
+  onCreateWorkspace(userId: string) {
+    this._workspaceApiService
+      .createWorkspace(userId, 'my workspace')
+      .subscribe();
+  }
+
+  onDeleteWorkspace(workspaceId: string, userId: string) {
+    this._workspaceApiService.deleteWorkspace(workspaceId, userId).subscribe();
+  }
+
+  onRemoveWorkspaceFromFavorites(workspaceId: string, userId: string) {
+    this._workspaceApiService
+      .removeWorkspaceFromFavorites(workspaceId, userId)
+      .subscribe();
+  }
+
+  onCreateApplication(workspaceId: string) {
+    this._applicationApiService
+      .createApplication(workspaceId, 'my application')
+      .subscribe();
+  }
+
+  onDeleteApplication(applicationId: string, workspaceId: string) {
+    this._applicationApiService
+      .deleteApplication(applicationId, workspaceId)
+      .subscribe();
+  }
 }

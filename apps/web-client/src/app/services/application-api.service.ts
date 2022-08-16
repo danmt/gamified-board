@@ -11,9 +11,11 @@ import {
   Firestore,
   orderBy,
   query,
+  runTransaction,
   startAt,
 } from '@angular/fire/firestore';
-import { map, Observable } from 'rxjs';
+import { defer, from, map, Observable } from 'rxjs';
+import { v4 as uuid } from 'uuid';
 import { Entity } from '../utils';
 
 export type ApplicationDto = Entity<{ name: string; workspaceId: string }>;
@@ -83,6 +85,66 @@ export class ApplicationApiService {
     ).pipe(
       map((collectionsRefs) =>
         collectionsRefs.map((collectionRef) => collectionRef.id)
+      )
+    );
+  }
+
+  createApplication(workspaceId: string, name: string) {
+    return defer(() =>
+      from(
+        runTransaction(this._firestore, async (transaction) => {
+          const workspaceRef = doc(
+            this._firestore,
+            `workspaces/${workspaceId}`
+          );
+          const newApplicationId = uuid();
+          const newApplicationRef = doc(
+            this._firestore,
+            `applications/${newApplicationId}`
+          );
+          const newWorkspaceApplicationRef = doc(
+            this._firestore,
+            `workspaces/${workspaceId}/applications/${newApplicationId}`
+          );
+
+          // create the new application
+          transaction.set(newApplicationRef, {
+            name,
+            workspaceRef,
+          });
+
+          // push application to workspace applications
+          transaction.set(newWorkspaceApplicationRef, {
+            applicationRef: newApplicationRef,
+          });
+
+          return {};
+        })
+      )
+    );
+  }
+
+  deleteApplication(applicationId: string, workspaceId: string) {
+    return defer(() =>
+      from(
+        runTransaction(this._firestore, async (transaction) => {
+          const applicationRef = doc(
+            this._firestore,
+            `applications/${applicationId}`
+          );
+          const workspaceApplicationRef = doc(
+            this._firestore,
+            `workspaces/${workspaceId}/applications/${applicationId}`
+          );
+
+          // delete application
+          transaction.delete(applicationRef);
+
+          // remove application from workspace applications
+          transaction.delete(workspaceApplicationRef);
+
+          return {};
+        })
       )
     );
   }
