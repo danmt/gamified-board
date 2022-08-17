@@ -12,7 +12,6 @@ import {
   ActiveItem,
   BoardDocument,
   BoardInstruction,
-  BoardItemKind,
   BoardTask,
   Collection,
   Instruction,
@@ -54,7 +53,7 @@ import {
           >
             <button
               class="w-full h-full"
-              (click)="onSelectItem(document.id, 'document')"
+              (click)="onSelectDocument(document.id)"
             >
               <img
                 class="w-full h-full"
@@ -118,10 +117,7 @@ import {
             class="bg-gray-800 relative w-11 h-11"
             style="padding: 0.12rem"
           >
-            <button
-              class="w-full h-full"
-              (click)="onSelectItem(task.id, 'task')"
-            >
+            <button class="w-full h-full" (click)="onSelectTask(task.id)">
               <img
                 class="w-full h-full"
                 [src]="task.instruction.thumbnailUrl"
@@ -170,10 +166,9 @@ export class RowComponent {
   @Input() tasksDropLists: string[] = [];
   @Output() createDocument = new EventEmitter<Collection>();
   @Output() createTask = new EventEmitter<Instruction>();
-  @Output() selectItem = new EventEmitter<{
-    itemId: string;
-    kind: BoardItemKind;
-  }>();
+  @Output() selectTask = new EventEmitter<string>();
+  @Output() selectDocument = new EventEmitter<string>();
+
   @Output() moveDocument = new EventEmitter<{
     previousIndex: number;
     newIndex: number;
@@ -214,8 +209,12 @@ export class RowComponent {
     }
   }
 
-  onSelectItem(itemId: string, kind: BoardItemKind) {
-    this.selectItem.emit({ itemId, kind });
+  onSelectTask(taskId: string) {
+    this.selectTask.emit(taskId);
+  }
+
+  onSelectDocument(documentId: string) {
+    this.selectDocument.emit(documentId);
   }
 
   trackBy(index: number): number {

@@ -1,6 +1,11 @@
 import { transferArrayItem } from '@angular/cdk/drag-drop';
 import { inject, Injectable } from '@angular/core';
-import { doc, Firestore, runTransaction } from '@angular/fire/firestore';
+import {
+  doc,
+  Firestore,
+  runTransaction,
+  updateDoc,
+} from '@angular/fire/firestore';
 
 import { defer, from } from 'rxjs';
 import { Collection } from '../utils';
@@ -144,6 +149,7 @@ export class DocumentApiService {
           // create the new document
           transaction.set(newDocumentRef, {
             name,
+            instructionRef: instructionRef,
             isInternal: documentCollection.isInternal,
             collectionRef: documentCollection.isInternal
               ? doc(this._firestore, `collections/${documentCollection.id}`)
@@ -162,6 +168,22 @@ export class DocumentApiService {
 
           return {};
         })
+      )
+    );
+  }
+
+  updateDocument(instructionId: string, documentId: string, name: string) {
+    return defer(() =>
+      from(
+        updateDoc(
+          doc(
+            this._firestore,
+            `instructions/${instructionId}/documents/${documentId}`
+          ),
+          {
+            name,
+          }
+        )
       )
     );
   }

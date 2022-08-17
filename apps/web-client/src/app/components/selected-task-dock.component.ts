@@ -1,6 +1,14 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input } from '@angular/core';
-import { BoardTask, Option } from '../utils';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { KeyboardListenerDirective } from '../directives';
+import { Option } from '../utils';
+
+interface SelectedTask {
+  name: string;
+  instruction: {
+    thumbnailUrl: string;
+  };
+}
 
 @Component({
   selector: 'pg-selected-task-dock',
@@ -11,11 +19,18 @@ import { BoardTask, Option } from '../utils';
       <img [src]="selected?.instruction?.thumbnailUrl" />
 
       {{ selected?.name }}
+
+      <button (click)="onUpdateTask()">edit</button>
     </div>
   `,
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, KeyboardListenerDirective],
 })
 export class SelectedTaskDockComponent {
-  @Input() selected: Option<BoardTask> = null;
+  @Input() selected: Option<SelectedTask> = null;
+  @Output() updateTask = new EventEmitter();
+
+  onUpdateTask() {
+    this.updateTask.emit();
+  }
 }

@@ -38,6 +38,7 @@ export type InstructionDto = Entity<{
 
 export type TaskDto = Entity<{
   name: string;
+  owner: string;
   instruction: Entity<{
     name: string;
     isInternal: boolean;
@@ -52,6 +53,7 @@ export type TaskDto = Entity<{
 
 export type DocumentDto = Entity<{
   name: string;
+  owner: string;
   collection: Entity<{
     name: string;
     isInternal: boolean;
@@ -94,10 +96,7 @@ export class InstructionApiService {
   }
 
   getInstructionTasks(instructionId: string): Observable<TaskDto[]> {
-    const instructionRef = doc(
-      this._firestore,
-      `instructions/${instructionId}`
-    );
+    const ownerRef = doc(this._firestore, `instructions/${instructionId}`);
 
     return collectionData(
       query(
@@ -105,6 +104,7 @@ export class InstructionApiService {
           id: string;
           name: string;
           isInternal: boolean;
+          ownerRef: Option<DocumentReference<DocumentData>>;
           instructionRef: Option<DocumentReference<DocumentData>>;
           namespace: Option<string>;
           plugin: Option<string>;
@@ -114,6 +114,9 @@ export class InstructionApiService {
             id: snapshot.id,
             name: snapshot.data()['name'] as string,
             isInternal: snapshot.data()['isInternal'] as boolean,
+            ownerRef:
+              snapshot.data()['ownerRef'] ??
+              (null as Option<DocumentReference<DocumentData>>),
             instructionRef:
               snapshot.data()['instructionRef'] ??
               (null as Option<DocumentReference<DocumentData>>),
@@ -126,6 +129,7 @@ export class InstructionApiService {
             id: string;
             name: string;
             isInternal: boolean;
+            ownerRef: Option<DocumentReference<DocumentData>>;
             instructionRef: Option<DocumentReference<DocumentData>>;
             namespace: Option<string>;
             plugin: Option<string>;
@@ -133,8 +137,8 @@ export class InstructionApiService {
           }) => it,
         }),
         orderBy(documentId()),
-        startAt(instructionRef.path),
-        endAt(instructionRef.path + '\uf8ff')
+        startAt(ownerRef.path),
+        endAt(ownerRef.path + '\uf8ff')
       )
     ).pipe(
       switchMap((tasks) => {
@@ -157,6 +161,7 @@ export class InstructionApiService {
                 map((instruction) => ({
                   id: task.id,
                   name: task.name,
+                  owner: ownerRef.id,
                   instruction: {
                     id: instructionRef.id,
                     name: instruction['name'] as string,
@@ -198,8 +203,9 @@ export class InstructionApiService {
               return of({
                 id: task.id,
                 name: task.name,
+                owner: ownerRef.id,
                 instruction: {
-                  id: instruction.name,
+                  id: `${task.namespace}/${task.plugin}/${task.instruction}`,
                   name: instruction.name,
                   isInternal: false,
                   namespace: task.namespace,
@@ -218,16 +224,14 @@ export class InstructionApiService {
   }
 
   getInstructionDocuments(instructionId: string): Observable<DocumentDto[]> {
-    const instructionRef = doc(
-      this._firestore,
-      `instructions/${instructionId}`
-    );
+    const ownerRef = doc(this._firestore, `instructions/${instructionId}`);
 
     return collectionData(
       query(
         collectionGroup(this._firestore, 'documents').withConverter<{
           id: string;
           name: string;
+          ownerRef: Option<DocumentReference<DocumentData>>;
           collectionRef: Option<DocumentReference<DocumentData>>;
           isInternal: boolean;
           namespace: Option<string>;
@@ -244,10 +248,14 @@ export class InstructionApiService {
             namespace: snapshot.data()['namespace'] ?? (null as Option<string>),
             plugin: snapshot.data()['plugin'] ?? (null as Option<string>),
             account: snapshot.data()['account'] ?? (null as Option<string>),
+            ownerRef:
+              snapshot.data()['ownerRef'] ??
+              (null as Option<DocumentReference<DocumentData>>),
           }),
           toFirestore: (it: {
             id: string;
             name: string;
+            ownerRef: Option<DocumentReference<DocumentData>>;
             collectionRef: Option<DocumentReference<DocumentData>>;
             isInternal: boolean;
             namespace: Option<string>;
@@ -256,8 +264,8 @@ export class InstructionApiService {
           }) => it,
         }),
         orderBy(documentId()),
-        startAt(instructionRef.path),
-        endAt(instructionRef.path + '\uf8ff')
+        startAt(ownerRef.path),
+        endAt(ownerRef.path + '\uf8ff')
       )
     ).pipe(
       switchMap((documents) => {
@@ -280,6 +288,7 @@ export class InstructionApiService {
                 map((collection) => ({
                   id: document.id,
                   name: document.name,
+                  owner: ownerRef.id,
                   collection: {
                     id: collectionRef.id,
                     name: collection['name'] as string,
@@ -320,8 +329,9 @@ export class InstructionApiService {
               return of({
                 id: document.id,
                 name: document.name,
+                owner: ownerRef.id,
                 collection: {
-                  id: account.name,
+                  id: `${document.namespace}/${document.plugin}/${document.account}`,
                   name: account.name,
                   isInternal: false,
                   namespace: document.namespace,

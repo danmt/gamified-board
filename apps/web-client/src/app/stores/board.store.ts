@@ -10,12 +10,21 @@ import {
   ApplicationDto,
   CollectionApiService,
   CollectionDto,
+  DocumentDto,
   InstructionApiService,
   InstructionDto,
+  TaskDto,
   WorkspaceApiService,
   WorkspaceDto,
 } from '../services';
-import { BoardDocument, BoardInstruction, BoardTask, Option } from '../utils';
+import { ActiveItem, Option } from '../utils';
+
+export interface BoardInstruction {
+  id: string;
+  name: string;
+  tasks: TaskDto[];
+  documents: DocumentDto[];
+}
 
 interface ViewModel {
   workspaceId: Option<string>;
@@ -27,6 +36,9 @@ interface ViewModel {
   currentApplicationInstructions: Option<BoardInstruction[]>;
   workspaceInstructions: Option<InstructionDto[]>;
   workspaceCollections: Option<CollectionDto[]>;
+  selectedDocumentId: Option<string>;
+  selectedTaskId: Option<string>;
+  activeItem: Option<ActiveItem>;
 }
 
 const initialState: ViewModel = {
@@ -37,6 +49,9 @@ const initialState: ViewModel = {
   currentApplicationInstructions: null,
   workspaceInstructions: null,
   workspaceCollections: null,
+  selectedDocumentId: null,
+  selectedTaskId: null,
+  activeItem: null,
 };
 
 @Injectable()
@@ -130,6 +145,43 @@ export class BoardStore
   readonly currentApplicationInstructions$ = this.select(
     ({ currentApplicationInstructions }) => currentApplicationInstructions
   );
+  readonly selectedDocument$ = this.select(
+    this.currentApplicationInstructions$,
+    this.select(({ selectedDocumentId }) => selectedDocumentId),
+    (currentApplicationInstructions, selectedDocumentId) => {
+      if (
+        currentApplicationInstructions === null ||
+        selectedDocumentId === null
+      ) {
+        return null;
+      }
+
+      return (
+        currentApplicationInstructions
+          .find(({ documents }) =>
+            documents.some((document) => document.id === selectedDocumentId)
+          )
+          ?.documents.find((document) => document.id === selectedDocumentId) ??
+        null
+      );
+    }
+  );
+  readonly selectedTask$ = this.select(
+    this.currentApplicationInstructions$,
+    this.select(({ selectedTaskId }) => selectedTaskId),
+    (currentApplicationInstructions, selectedTaskId) => {
+      if (currentApplicationInstructions === null || selectedTaskId === null) {
+        return null;
+      }
+
+      return (
+        currentApplicationInstructions
+          .find(({ tasks }) => tasks.some((task) => task.id === selectedTaskId))
+          ?.tasks.find((task) => task.id === selectedTaskId) ?? null
+      );
+    }
+  );
+  readonly activeItem$ = this.select(({ activeItem }) => activeItem);
 
   readonly setWorkspaceId = this.updater<Option<string>>(
     (state, workspaceId) => ({
@@ -142,6 +194,29 @@ export class BoardStore
     (state, currentApplicationId) => ({
       ...state,
       currentApplicationId,
+    })
+  );
+
+  readonly setSelectedTaskId = this.updater<Option<string>>(
+    (state, selectedTaskId) => ({
+      ...state,
+      selectedTaskId,
+      selectedDocumentId: null,
+    })
+  );
+
+  readonly setSelectedDocumentId = this.updater<Option<string>>(
+    (state, selectedDocumentId) => ({
+      ...state,
+      selectedDocumentId,
+      selectedTaskId: null,
+    })
+  );
+
+  readonly setActiveItem = this.updater<Option<ActiveItem>>(
+    (state, activeItem) => ({
+      ...state,
+      activeItem,
     })
   );
 
@@ -226,7 +301,7 @@ export class BoardStore
               id: instruction.id,
               name: instruction.name,
               documents: instruction.documentsOrder.reduce(
-                (orderedDocuments: BoardDocument[], documentId: string) => {
+                (orderedDocuments: DocumentDto[], documentId: string) => {
                   const documentFound =
                     documents.find((document) => document.id === documentId) ??
                     null;
@@ -240,7 +315,7 @@ export class BoardStore
                 []
               ),
               tasks: instruction.tasksOrder.reduce(
-                (orderedTasks: BoardTask[], taskId: string) => {
+                (orderedTasks: TaskDto[], taskId: string) => {
                   const taskFound =
                     tasks.find((task) => task.id === taskId) ?? null;
 

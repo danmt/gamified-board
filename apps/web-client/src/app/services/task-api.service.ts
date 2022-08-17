@@ -1,6 +1,11 @@
 import { transferArrayItem } from '@angular/cdk/drag-drop';
 import { inject, Injectable } from '@angular/core';
-import { doc, Firestore, runTransaction } from '@angular/fire/firestore';
+import {
+  doc,
+  Firestore,
+  runTransaction,
+  updateDoc,
+} from '@angular/fire/firestore';
 import { defer, from } from 'rxjs';
 import { Instruction } from '../utils';
 
@@ -160,6 +165,19 @@ export class TaskApiService {
 
           return {};
         })
+      )
+    );
+  }
+
+  updateTask(instructionId: string, taskId: string, name: string) {
+    return defer(() =>
+      from(
+        updateDoc(
+          doc(this._firestore, `instructions/${instructionId}/tasks/${taskId}`),
+          {
+            name,
+          }
+        )
       )
     );
   }
