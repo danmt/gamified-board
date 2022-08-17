@@ -17,7 +17,7 @@ import {
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { PushModule } from '@ngrx/component';
 import { provideComponentStore } from '@ngrx/component-store';
-import { map } from 'rxjs';
+import { concatMap, EMPTY, map } from 'rxjs';
 import {
   BoardComponent,
   HotKey,
@@ -26,6 +26,12 @@ import {
   SelectedDocumentDockComponent,
   SelectedTaskDockComponent,
 } from '../components';
+import {
+  EditDocumentData,
+  EditDocumentModalComponent,
+  EditTaskData,
+  EditTaskModalComponent,
+} from '../modals';
 import { BoardItemDropListsPipe } from '../pipes';
 import {
   CollectionsSectionComponent,
@@ -90,8 +96,8 @@ import {
         [instruction]="instruction"
         [documentsDropLists]="instructions | pgBoardItemDropLists: 'document'"
         [tasksDropLists]="instructions | pgBoardItemDropLists: 'task'"
-        (useCollection)="onUseCollection(instruction.id, $event)"
-        (useInstruction)="onUseInstruction(instruction.id, $event)"
+        (createDocument)="onCreateDocument(instruction.id, $event)"
+        (createTask)="onCreateTask(instruction.id, $event)"
         (selectItem)="
           onSelectItem(instructions, instruction.id, $event.itemId, $event.kind)
         "
@@ -374,18 +380,6 @@ export class BoardPageComponent implements OnInit {
     this.slots[index] = data;
   }
 
-  onUseCollection(instructionId: string, collection: Collection) {
-    this.active = null;
-    this._documentApiService
-      .createDocument(instructionId, collection)
-      .subscribe();
-  }
-
-  onUseInstruction(instructionId: string, instruction: Instruction) {
-    this.active = null;
-    this._taskApiService.createTask(instructionId, instruction).subscribe();
-  }
-
   onSelectItem(
     instructions: BoardInstruction[],
     instructionId: string,
@@ -591,6 +585,56 @@ export class BoardPageComponent implements OnInit {
         collectionId,
         collectionName,
         thumbnailUrl
+      )
+      .subscribe();
+  }
+
+  onCreateDocument(instructionId: string, collection: Collection) {
+    this._dialog
+      .open<
+        EditDocumentData,
+        Option<EditDocumentData>,
+        EditDocumentModalComponent
+      >(EditDocumentModalComponent)
+      .closed.pipe(
+        concatMap((documentData) => {
+          if (documentData === undefined) {
+            return EMPTY;
+          }
+
+          this.active = null;
+
+          return this._documentApiService.createDocument(
+            instructionId,
+            documentData.id,
+            documentData.name,
+            collection
+          );
+        })
+      )
+      .subscribe();
+  }
+
+  onCreateTask(instructionId: string, instruction: Instruction) {
+    this._dialog
+      .open<EditTaskData, Option<EditTaskData>, EditTaskModalComponent>(
+        EditTaskModalComponent
+      )
+      .closed.pipe(
+        concatMap((taskData) => {
+          if (taskData === undefined) {
+            return EMPTY;
+          }
+
+          this.active = null;
+
+          return this._taskApiService.createTask(
+            instructionId,
+            taskData.id,
+            taskData.name,
+            instruction
+          );
+        })
       )
       .subscribe();
   }

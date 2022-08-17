@@ -3,7 +3,6 @@ import { inject, Injectable } from '@angular/core';
 import { doc, Firestore, runTransaction } from '@angular/fire/firestore';
 
 import { defer, from } from 'rxjs';
-import { v4 as uuid } from 'uuid';
 import { Collection } from '../utils';
 
 @Injectable({ providedIn: 'root' })
@@ -122,7 +121,12 @@ export class DocumentApiService {
     );
   }
 
-  createDocument(instructionId: string, documentCollection: Collection) {
+  createDocument(
+    instructionId: string,
+    newDocumentId: string,
+    name: string,
+    documentCollection: Collection
+  ) {
     return defer(() =>
       from(
         runTransaction(this._firestore, async (transaction) => {
@@ -130,7 +134,6 @@ export class DocumentApiService {
             this._firestore,
             `instructions/${instructionId}`
           );
-          const newDocumentId = uuid();
           const newDocumentRef = doc(
             this._firestore,
             `instructions/${instructionId}/documents/${newDocumentId}`
@@ -140,7 +143,7 @@ export class DocumentApiService {
 
           // create the new document
           transaction.set(newDocumentRef, {
-            name: 'sample #1',
+            name,
             isInternal: documentCollection.isInternal,
             collectionRef: documentCollection.isInternal
               ? doc(this._firestore, `collections/${documentCollection.id}`)

@@ -25,13 +25,15 @@ import {
     <div
       *ngIf="instruction !== null"
       class="text-2xl text-white uppercase relative h-full flex gap-4"
-      (mouseenter)="isHovered = true"
-      (mouseleave)="isHovered = false"
-      (click)="onUseItem(active)"
     >
       <ng-content></ng-content>
 
-      <div class="flex flex-col">
+      <div
+        class="flex flex-col"
+        (mouseenter)="isDocumentsHovered = true"
+        (mouseleave)="isDocumentsHovered = false"
+        (click)="onCreateDocument()"
+      >
         <p>Documents</p>
 
         <div
@@ -79,7 +81,11 @@ import {
           </div>
 
           <div
-            *ngIf="isHovered && active !== null && active.kind === 'collection'"
+            *ngIf="
+              isDocumentsHovered &&
+              active !== null &&
+              active.kind === 'collection'
+            "
             class="bg-gray-800 relative w-11 h-11"
             style="padding: 0.12rem"
           >
@@ -88,7 +94,12 @@ import {
         </div>
       </div>
 
-      <div class="flex flex-col">
+      <div
+        class="flex flex-col"
+        (mouseenter)="isTasksHovered = true"
+        (mouseleave)="isTasksHovered = false"
+        (click)="onCreateTask()"
+      >
         <p>Tasks</p>
 
         <div
@@ -137,7 +148,7 @@ import {
 
           <div
             *ngIf="
-              isHovered && active !== null && active.kind === 'instruction'
+              isTasksHovered && active !== null && active.kind === 'instruction'
             "
             class="bg-gray-800 relative w-11 h-11"
             style="padding: 0.12rem"
@@ -157,9 +168,8 @@ export class RowComponent {
   @Input() instruction: Option<BoardInstruction> = null;
   @Input() documentsDropLists: string[] = [];
   @Input() tasksDropLists: string[] = [];
-  @Output() useItem = new EventEmitter<ActiveItem>();
-  @Output() useCollection = new EventEmitter<Collection>();
-  @Output() useInstruction = new EventEmitter<Instruction>();
+  @Output() createDocument = new EventEmitter<Collection>();
+  @Output() createTask = new EventEmitter<Instruction>();
   @Output() selectItem = new EventEmitter<{
     itemId: string;
     kind: BoardItemKind;
@@ -186,17 +196,21 @@ export class RowComponent {
     previousIndex: number;
     newIndex: number;
   }>();
-  isHovered = false;
+  isDocumentsHovered = false;
+  isTasksHovered = false;
+
   @HostBinding('class') class =
     'block w-full h-64 bg-blue-300 border border-blue-500 bg-bp-bricks ';
 
-  onUseItem(active: Option<ActiveItem>) {
-    if (active !== null) {
-      if (active.kind === 'collection') {
-        this.useCollection.emit(active.data);
-      } else {
-        this.useInstruction.emit(active.data);
-      }
+  onCreateDocument() {
+    if (this.active !== null) {
+      this.createDocument.emit(this.active.data);
+    }
+  }
+
+  onCreateTask() {
+    if (this.active !== null) {
+      this.createTask.emit(this.active.data);
     }
   }
 

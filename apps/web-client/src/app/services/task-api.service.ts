@@ -2,14 +2,18 @@ import { transferArrayItem } from '@angular/cdk/drag-drop';
 import { inject, Injectable } from '@angular/core';
 import { doc, Firestore, runTransaction } from '@angular/fire/firestore';
 import { defer, from } from 'rxjs';
-import { v4 as uuid } from 'uuid';
 import { Instruction } from '../utils';
 
 @Injectable({ providedIn: 'root' })
 export class TaskApiService {
   private readonly _firestore = inject(Firestore);
 
-  createTask(instructionId: string, taskInstruction: Instruction) {
+  createTask(
+    instructionId: string,
+    newTaskId: string,
+    name: string,
+    taskInstruction: Instruction
+  ) {
     return defer(() =>
       from(
         runTransaction(this._firestore, async (transaction) => {
@@ -17,7 +21,6 @@ export class TaskApiService {
             this._firestore,
             `instructions/${instructionId}`
           );
-          const newTaskId = uuid();
           const newTaskRef = doc(
             this._firestore,
             `instructions/${instructionId}/tasks/${newTaskId}`
@@ -27,7 +30,7 @@ export class TaskApiService {
 
           // create the new task
           transaction.set(newTaskRef, {
-            name: 'sample #1',
+            name,
             isInternal: taskInstruction.isInternal,
             instructionRef: doc(
               this._firestore,

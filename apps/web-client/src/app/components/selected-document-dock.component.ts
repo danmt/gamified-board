@@ -9,6 +9,8 @@ import { BoardDocument, Option } from '../utils';
       class="w-auto mx-auto p-4 bg-gray-700 flex gap-4 justify-center items-start"
     >
       <img [src]="selected?.collection?.thumbnailUrl" />
+
+      {{ selected?.name }}
     </div>
   `,
   standalone: true,
