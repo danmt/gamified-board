@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { LetModule, PushModule } from '@ngrx/component';
-import { BehaviorSubject, combineLatest, map, Observable } from 'rxjs';
+import { provideComponentStore } from '@ngrx/component-store';
+import { BehaviorSubject } from 'rxjs';
 import { EditInstructionModalDirective } from '../modals';
 import { PluginsService } from '../plugins';
 import { InstructionApiService } from '../services';
-import { BoardStore } from '../stores';
+import { BoardInstructionsStore, BoardStore } from '../stores';
 import { Option } from '../utils';
 
 @Component({
@@ -26,12 +27,12 @@ import { Option } from '../utils';
                 [id]="workspaceId + '-' + application.id + '-instructions'"
                 cdkDropList
                 [cdkDropListConnectedTo]="[
-                  'slot-0',
-                  'slot-1',
-                  'slot-2',
-                  'slot-3',
-                  'slot-4',
-                  'slot-5'
+                  'instruction-slot-0',
+                  'instruction-slot-1',
+                  'instruction-slot-2',
+                  'instruction-slot-3',
+                  'instruction-slot-4',
+                  'instruction-slot-5'
                 ]"
                 [cdkDropListData]="application.instructions"
                 cdkDropListSortingDisabled
@@ -60,24 +61,8 @@ import { Option } from '../utils';
 
                   <div
                     cdkDrag
-                    [cdkDragData]="{
-                      workspaceId,
-                      applicationId: application.id,
-                      id: instruction.id,
-                      name: instruction.name,
-                      thumbnailUrl: instruction.thumbnailUrl,
-                      isInternal: true,
-                      namespace: null,
-                      plugin: null
-                    }"
-                    (click)="
-                      onSelectInternalInstruction(
-                        workspaceId,
-                        application.id,
-                        instruction.id,
-                        instruction.name
-                      )
-                    "
+                    [cdkDragData]="instruction.id"
+                    (click)="onSelectInternalInstruction(instruction.id)"
                     (cdkDragStarted)="onDragStart($event)"
                     (cdkDragEnded)="onDragEnd()"
                   >
@@ -94,15 +79,7 @@ import { Option } from '../utils';
                     >
                       <img
                         class="w-full h-full object-cover"
-                        [src]="
-                          'assets/workspaces/' +
-                          workspaceId +
-                          '/' +
-                          application.id +
-                          '/instructions/' +
-                          instruction.id +
-                          '.png'
-                        "
+                        [src]="instruction.thumbnailUrl"
                       />
                     </div>
 
@@ -121,12 +98,12 @@ import { Option } from '../utils';
                 [id]="workspaceId + '-' + application.id + '-instructions'"
                 cdkDropList
                 [cdkDropListConnectedTo]="[
-                  'slot-0',
-                  'slot-1',
-                  'slot-2',
-                  'slot-3',
-                  'slot-4',
-                  'slot-5'
+                  'instruction-slot-0',
+                  'instruction-slot-1',
+                  'instruction-slot-2',
+                  'instruction-slot-3',
+                  'instruction-slot-4',
+                  'instruction-slot-5'
                 ]"
                 [cdkDropListData]="application.instructions"
                 cdkDropListSortingDisabled
@@ -155,24 +132,8 @@ import { Option } from '../utils';
 
                   <div
                     cdkDrag
-                    [cdkDragData]="{
-                      workspaceId,
-                      applicationId: application.id,
-                      id: instruction.id,
-                      name: instruction.name,
-                      thumbnailUrl: instruction.thumbnailUrl,
-                      isInternal: true,
-                      namespace: null,
-                      plugin: null
-                    }"
-                    (click)="
-                      onSelectInternalInstruction(
-                        workspaceId,
-                        application.id,
-                        instruction.id,
-                        instruction.name
-                      )
-                    "
+                    [cdkDragData]="instruction.id"
+                    (click)="onSelectInternalInstruction(instruction.id)"
                     (cdkDragStarted)="onDragStart($event)"
                     (cdkDragEnded)="onDragEnd()"
                   >
@@ -209,12 +170,12 @@ import { Option } from '../utils';
               [id]="plugin.name + '-instructions'"
               cdkDropList
               [cdkDropListConnectedTo]="[
-                'slot-0',
-                'slot-1',
-                'slot-2',
-                'slot-3',
-                'slot-4',
-                'slot-5'
+                'instruction-slot-0',
+                'instruction-slot-1',
+                'instruction-slot-2',
+                'instruction-slot-3',
+                'instruction-slot-4',
+                'instruction-slot-5'
               ]"
               [cdkDropListData]="plugin.instructions"
               cdkDropListSortingDisabled
@@ -257,26 +218,14 @@ import { Option } from '../utils';
                 </ng-container>
 
                 <div
-                  [id]="plugin.name + '/' + instruction.name"
                   cdkDrag
-                  [cdkDragData]="{
-                    namespace: plugin.namespace,
-                    plugin: plugin.name,
-                    id: instruction.name,
-                    name: instruction.name,
-                    instruction: instruction.name,
-                    thumbnailUrl:
-                      'assets/plugins/' +
-                      plugin.namespace +
-                      '/' +
-                      plugin.name +
-                      '/instructions/' +
-                      instruction.name +
-                      '.png',
-                    isInternal: false,
-                    workspaceId: null,
-                    applicationId: null
-                  }"
+                  [cdkDragData]="
+                    plugin.namespace +
+                    '/' +
+                    plugin.name +
+                    '/' +
+                    instruction.name
+                  "
                   (click)="
                     onSelectExternalInstruction(
                       plugin.namespace,
@@ -394,107 +343,26 @@ import { Option } from '../utils';
     RouterModule,
     EditInstructionModalDirective,
   ],
+  providers: [provideComponentStore(BoardInstructionsStore)],
 })
 export class InstructionsSectionComponent {
   private readonly _pluginsService = inject(PluginsService);
   private readonly _boardStore = inject(BoardStore);
+  private readonly _boardInstructionsStore = inject(BoardInstructionsStore);
   private readonly _instructionApiService = inject(InstructionApiService);
 
-  private readonly _selectedInstruction = new BehaviorSubject<
-    Option<{
-      id: string;
-      name: string;
-      workspaceId: Option<string>;
-      applicationId: Option<string>;
-      namespace: Option<string>;
-      plugin: Option<string>;
-      isInternal: boolean;
-    }>
-  >(null);
   private readonly _isDragging = new BehaviorSubject<Option<string>>(null);
   readonly isDragging$ = this._isDragging.asObservable();
-  readonly selectedInstruction$: Observable<
-    Option<{
-      id: string;
-      name: string;
-      thumbnailUrl: string;
-      workspaceId: Option<string>;
-      applicationId: Option<string>;
-    }>
-  > = combineLatest([
-    this._boardStore.workspaceInstructions$,
-    this._selectedInstruction.asObservable(),
-  ]).pipe(
-    map(([instructions, selectedInstruction]) => {
-      if (selectedInstruction === null) {
-        return null;
-      }
-
-      if (selectedInstruction.isInternal) {
-        const instruction =
-          instructions?.find(
-            (instruction) => instruction.id === selectedInstruction.id
-          ) ?? null;
-
-        return instruction
-          ? {
-              id: instruction.id,
-              name: instruction.name,
-              thumbnailUrl: instruction.thumbnailUrl,
-              applicationId: instruction.applicationId,
-              workspaceId: instruction.workspaceId,
-            }
-          : null;
-      } else {
-        const plugin =
-          this.plugins.find(
-            (plugin) =>
-              plugin.namespace === selectedInstruction.namespace &&
-              plugin.name === selectedInstruction.plugin
-          ) ?? null;
-
-        if (plugin === null) {
-          return null;
-        }
-
-        const instruction =
-          plugin?.instructions.find(
-            (instruction) => instruction.name === selectedInstruction.id
-          ) ?? null;
-
-        return instruction
-          ? {
-              id: instruction.name,
-              name: instruction.name,
-              thumbnailUrl: `assets/plugins/${plugin.namespace}/${plugin.name}/instructions/${instruction.name}.png`,
-              applicationId: null,
-              workspaceId: null,
-            }
-          : null;
-      }
-    })
-  );
+  readonly selectedInstruction$ =
+    this._boardInstructionsStore.selectedInstruction$;
   readonly plugins = this._pluginsService.plugins;
   readonly workspaceId$ = this._boardStore.workspaceId$;
   readonly currentApplicationId$ = this._boardStore.currentApplicationId$;
   readonly currentApplication$ = this._boardStore.currentApplication$;
   readonly otherApplications$ = this._boardStore.otherApplications$;
 
-  onSelectInternalInstruction(
-    workspaceId: string,
-    applicationId: string,
-    instructionId: string,
-    instructionName: string
-  ) {
-    this._selectedInstruction.next({
-      id: instructionId,
-      name: instructionName,
-      isInternal: true,
-      workspaceId,
-      applicationId,
-      namespace: null,
-      plugin: null,
-    });
+  onSelectInternalInstruction(instructionId: string) {
+    this._boardInstructionsStore.setSelectedInstructionId(instructionId);
   }
 
   onSelectExternalInstruction(
@@ -502,15 +370,9 @@ export class InstructionsSectionComponent {
     plugin: string,
     account: string
   ) {
-    this._selectedInstruction.next({
-      id: account,
-      name: account,
-      isInternal: false,
-      workspaceId: null,
-      applicationId: null,
-      namespace,
-      plugin,
-    });
+    this._boardInstructionsStore.setSelectedInstructionId(
+      `${namespace}/${plugin}/${account}`
+    );
   }
 
   onUpdateInstruction(
@@ -526,15 +388,13 @@ export class InstructionsSectionComponent {
   onDeleteInstruction(applicationId: string, instructionId: string) {
     this._instructionApiService
       .deleteInstruction(applicationId, instructionId)
-      .subscribe(() => this._selectedInstruction.next(null));
+      .subscribe(() =>
+        this._boardInstructionsStore.setSelectedInstructionId(null)
+      );
   }
 
   onDragStart(event: CdkDragStart) {
-    this._isDragging.next(
-      event.source.data.isInternal
-        ? event.source.data.id
-        : `${event.source.data.namespace}/${event.source.data.plugin}/${event.source.data.instruction}`
-    );
+    this._isDragging.next(event.source.data);
   }
 
   onDragEnd() {

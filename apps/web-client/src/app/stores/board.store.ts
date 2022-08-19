@@ -4,20 +4,23 @@ import {
   OnStoreInit,
   tapResponse,
 } from '@ngrx/component-store';
-import { combineLatest, EMPTY, map, switchMap } from 'rxjs';
+import { combineLatest, EMPTY, map, Observable, switchMap } from 'rxjs';
+import { PluginsService } from '../plugins';
 import {
   ApplicationApiService,
   ApplicationDto,
   CollectionApiService,
   CollectionDto,
+  DocumentCollection,
   DocumentDto,
   InstructionApiService,
   InstructionDto,
   TaskDto,
+  TaskInstruction,
   WorkspaceApiService,
   WorkspaceDto,
 } from '../services';
-import { ActiveItem, Option } from '../utils';
+import { Option } from '../utils';
 
 export interface BoardInstruction {
   id: string;
@@ -38,7 +41,10 @@ interface ViewModel {
   workspaceCollections: Option<CollectionDto[]>;
   selectedDocumentId: Option<string>;
   selectedTaskId: Option<string>;
-  activeItem: Option<ActiveItem>;
+  activeCollectionId: Option<string>;
+  activeInstructionId: Option<string>;
+  instructionSlotIds: Option<string>[];
+  collectionSlotIds: Option<string>[];
 }
 
 const initialState: ViewModel = {
@@ -51,7 +57,10 @@ const initialState: ViewModel = {
   workspaceCollections: null,
   selectedDocumentId: null,
   selectedTaskId: null,
-  activeItem: null,
+  activeCollectionId: null,
+  activeInstructionId: null,
+  instructionSlotIds: [null, null, null, null, null, null],
+  collectionSlotIds: [null, null, null, null, null, null],
 };
 
 @Injectable()
@@ -59,6 +68,7 @@ export class BoardStore
   extends ComponentStore<ViewModel>
   implements OnStoreInit
 {
+  private readonly _pluginsService = inject(PluginsService);
   private readonly _workspaceApiService = inject(WorkspaceApiService);
   private readonly _applicationApiService = inject(ApplicationApiService);
   private readonly _instructionApiService = inject(InstructionApiService);
@@ -181,7 +191,265 @@ export class BoardStore
       );
     }
   );
-  readonly activeItem$ = this.select(({ activeItem }) => activeItem);
+  readonly activeCollectionId$ = this.select(
+    ({ activeCollectionId }) => activeCollectionId
+  );
+  readonly activeInstructionId$ = this.select(
+    ({ activeInstructionId }) => activeInstructionId
+  );
+  readonly activeCollection$: Observable<Option<DocumentCollection>> =
+    this.select(
+      this.workspaceCollections$,
+      this.activeCollectionId$,
+      (workspaceCollections, activeCollectionId) => {
+        if (workspaceCollections === null || activeCollectionId === null) {
+          return null;
+        }
+
+        const collection =
+          workspaceCollections?.find(
+            (collection) => collection.id === activeCollectionId
+          ) ?? null;
+
+        if (collection !== null) {
+          return {
+            id: collection.id,
+            name: collection.name,
+            thumbnailUrl: collection.thumbnailUrl,
+            applicationId: collection.applicationId,
+            workspaceId: collection.workspaceId,
+            isInternal: true,
+            namespace: null,
+            plugin: null,
+            account: null,
+          };
+        }
+
+        const [namespace, pluginName, accountName] =
+          activeCollectionId.split('/');
+
+        const plugin =
+          this._pluginsService.plugins.find(
+            (plugin) =>
+              plugin.namespace === namespace && plugin.name === pluginName
+          ) ?? null;
+
+        if (plugin === null) {
+          return null;
+        }
+
+        const pluginAccount =
+          plugin?.accounts.find((account) => account.name === accountName) ??
+          null;
+
+        if (pluginAccount === null) {
+          return null;
+        }
+
+        return {
+          id: activeCollectionId,
+          name: pluginAccount.name,
+          thumbnailUrl: `assets/plugins/${plugin.namespace}/${plugin.name}/accounts/${pluginAccount.name}.png`,
+          applicationId: null,
+          workspaceId: null,
+          isInternal: false,
+          namespace,
+          plugin: pluginName,
+          account: accountName,
+        };
+      }
+    );
+  readonly activeInstruction$: Observable<Option<TaskInstruction>> =
+    this.select(
+      this.workspaceInstructions$,
+      this.activeInstructionId$,
+      (workspaceInstructions, activeInstructionId) => {
+        if (workspaceInstructions === null || activeInstructionId === null) {
+          return null;
+        }
+
+        const instruction =
+          workspaceInstructions?.find(
+            (instruction) => instruction.id === activeInstructionId
+          ) ?? null;
+
+        if (instruction !== null) {
+          return {
+            id: instruction.id,
+            name: instruction.name,
+            thumbnailUrl: instruction.thumbnailUrl,
+            applicationId: instruction.applicationId,
+            workspaceId: instruction.workspaceId,
+            isInternal: true,
+            namespace: null,
+            plugin: null,
+            instruction: null,
+          };
+        }
+
+        const [namespace, pluginName, instructionName] =
+          activeInstructionId.split('/');
+
+        const plugin =
+          this._pluginsService.plugins.find(
+            (plugin) =>
+              plugin.namespace === namespace && plugin.name === pluginName
+          ) ?? null;
+
+        if (plugin === null) {
+          return null;
+        }
+
+        const pluginInstruction =
+          plugin?.instructions.find(
+            (instruction) => instruction.name === instructionName
+          ) ?? null;
+
+        if (pluginInstruction === null) {
+          return null;
+        }
+
+        return {
+          id: activeInstructionId,
+          name: pluginInstruction.name,
+          thumbnailUrl: `assets/plugins/${plugin.namespace}/${plugin.name}/instructions/${pluginInstruction.name}.png`,
+          applicationId: null,
+          workspaceId: null,
+          isInternal: false,
+          namespace,
+          plugin: pluginName,
+          instruction: instructionName,
+        };
+      }
+    );
+  readonly instructionSlots$: Observable<Option<TaskInstruction>[]> =
+    this.select(
+      this.workspaceInstructions$,
+      this.select(({ instructionSlotIds }) => instructionSlotIds),
+      (workspaceInstructions, instructionSlotIds) =>
+        instructionSlotIds.map((instructionId) => {
+          if (instructionId === null) {
+            return null;
+          }
+
+          const instruction =
+            workspaceInstructions?.find(
+              (instruction) => instruction.id === instructionId
+            ) ?? null;
+
+          if (instruction !== null) {
+            return {
+              id: instruction.id,
+              name: instruction.name,
+              thumbnailUrl: instruction.thumbnailUrl,
+              applicationId: instruction.applicationId,
+              workspaceId: instruction.workspaceId,
+              isInternal: true,
+              namespace: null,
+              plugin: null,
+              instruction: null,
+            };
+          }
+
+          const [namespace, pluginName, instructionName] =
+            instructionId.split('/');
+
+          const plugin =
+            this._pluginsService.plugins.find(
+              (plugin) =>
+                plugin.namespace === namespace && plugin.name === pluginName
+            ) ?? null;
+
+          if (plugin === null) {
+            return null;
+          }
+
+          const pluginInstruction =
+            plugin?.instructions.find(
+              (instruction) => instruction.name === instructionName
+            ) ?? null;
+
+          if (pluginInstruction === null) {
+            return null;
+          }
+
+          return {
+            id: instructionId,
+            name: pluginInstruction.name,
+            thumbnailUrl: `assets/plugins/${plugin.namespace}/${plugin.name}/instructions/${pluginInstruction.name}.png`,
+            applicationId: null,
+            workspaceId: null,
+            isInternal: false,
+            namespace,
+            plugin: pluginName,
+            instruction: instructionName,
+          };
+        })
+    );
+  readonly collectionSlots$: Observable<Option<DocumentCollection>[]> =
+    this.select(
+      this.workspaceCollections$,
+      this.select(({ collectionSlotIds }) => collectionSlotIds),
+      (workspaceCollections, collectionSlotIds) =>
+        collectionSlotIds.map((collectionId) => {
+          if (collectionId === null) {
+            return null;
+          }
+
+          const collection =
+            workspaceCollections?.find(
+              (collection) => collection.id === collectionId
+            ) ?? null;
+
+          if (collection !== null) {
+            return {
+              id: collection.id,
+              name: collection.name,
+              thumbnailUrl: collection.thumbnailUrl,
+              applicationId: collection.applicationId,
+              workspaceId: collection.workspaceId,
+              isInternal: true,
+              namespace: null,
+              plugin: null,
+              account: null,
+            };
+          }
+
+          const [namespace, pluginName, collectionName] =
+            collectionId.split('/');
+
+          const plugin =
+            this._pluginsService.plugins.find(
+              (plugin) =>
+                plugin.namespace === namespace && plugin.name === pluginName
+            ) ?? null;
+
+          if (plugin === null) {
+            return null;
+          }
+
+          const pluginAccount =
+            plugin?.accounts.find(
+              (account) => account.name === collectionName
+            ) ?? null;
+
+          if (pluginAccount === null) {
+            return null;
+          }
+
+          return {
+            id: collectionId,
+            name: pluginAccount.name,
+            thumbnailUrl: `assets/plugins/${plugin.namespace}/${plugin.name}/accounts/${pluginAccount.name}.png`,
+            applicationId: null,
+            workspaceId: null,
+            isInternal: false,
+            namespace,
+            plugin: pluginName,
+            account: collectionName,
+          };
+        })
+    );
 
   readonly setWorkspaceId = this.updater<Option<string>>(
     (state, workspaceId) => ({
@@ -213,12 +481,75 @@ export class BoardStore
     })
   );
 
-  readonly setActiveItem = this.updater<Option<ActiveItem>>(
-    (state, activeItem) => ({
+  readonly setActiveCollectionId = this.updater<Option<string>>(
+    (state, activeCollectionId) => ({
       ...state,
-      activeItem,
+      activeCollectionId,
+      activeInstructionId: null,
     })
   );
+
+  readonly setCollectionSlotId = this.updater<{
+    index: number;
+    collectionId: Option<string>;
+  }>((state, { index, collectionId }) => {
+    return {
+      ...state,
+      collectionSlotIds: state.collectionSlotIds.map((id, i) =>
+        i === index ? collectionId : id
+      ),
+    };
+  });
+
+  readonly swapCollectionSlotIds = this.updater<{
+    previousIndex: number;
+    newIndex: number;
+  }>((state, { previousIndex, newIndex }) => {
+    const collectionSlotIds = [...state.collectionSlotIds];
+    const temp = collectionSlotIds[newIndex];
+    collectionSlotIds[newIndex] = collectionSlotIds[previousIndex];
+    collectionSlotIds[previousIndex] = temp;
+
+    return {
+      ...state,
+      collectionSlotIds,
+    };
+  });
+
+  readonly setActiveInstructionId = this.updater<Option<string>>(
+    (state, activeInstructionId) => ({
+      ...state,
+      activeInstructionId,
+      activeCollectionId: null,
+    })
+  );
+
+  readonly setInstructionSlotId = this.updater<{
+    index: number;
+    instructionId: Option<string>;
+  }>((state, { index, instructionId }) => {
+    return {
+      ...state,
+      instructionSlotIds: state.instructionSlotIds.map((id, i) =>
+        i === index ? instructionId : id
+      ),
+    };
+  });
+
+  readonly swapInstructionSlotIds = this.updater<{
+    previousIndex: number;
+    newIndex: number;
+  }>((state, { previousIndex, newIndex }) => {
+    const instructionSlotIds = [...state.instructionSlotIds];
+    const temp = instructionSlotIds[newIndex];
+    instructionSlotIds[newIndex] = instructionSlotIds[previousIndex];
+    instructionSlotIds[previousIndex] = temp;
+
+    return {
+      ...state,
+      instructionSlotIds,
+    };
+  });
 
   private readonly _loadWorkspace$ = this.effect<Option<string>>(
     switchMap((workspaceId) => {

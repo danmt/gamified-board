@@ -26,6 +26,8 @@ import {
 } from 'rxjs';
 import { PluginsService } from '../plugins';
 import { Entity, Option } from '../utils';
+import { DocumentDto } from './document-api.service';
+import { TaskDto } from './task-api.service';
 
 export type InstructionDto = Entity<{
   name: string;
@@ -34,36 +36,6 @@ export type InstructionDto = Entity<{
   workspaceId: string;
   documentsOrder: string[];
   tasksOrder: string[];
-}>;
-
-export type TaskDto = Entity<{
-  name: string;
-  owner: string;
-  instruction: Entity<{
-    name: string;
-    isInternal: boolean;
-    thumbnailUrl: string;
-    workspaceId: Option<string>;
-    applicationId: Option<string>;
-    namespace: Option<string>;
-    plugin: Option<string>;
-    instruction: Option<string>;
-  }>;
-}>;
-
-export type DocumentDto = Entity<{
-  name: string;
-  owner: string;
-  collection: Entity<{
-    name: string;
-    isInternal: boolean;
-    thumbnailUrl: string;
-    workspaceId: Option<string>;
-    applicationId: Option<string>;
-    namespace: Option<string>;
-    plugin: Option<string>;
-    account: Option<string>;
-  }>;
 }>;
 
 @Injectable({ providedIn: 'root' })

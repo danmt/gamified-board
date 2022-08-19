@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { LetModule, PushModule } from '@ngrx/component';
-import { BehaviorSubject, combineLatest, map, Observable } from 'rxjs';
+import { provideComponentStore } from '@ngrx/component-store';
+import { BehaviorSubject } from 'rxjs';
 import { EditCollectionModalDirective } from '../modals';
 import { PluginsService } from '../plugins';
 import { CollectionApiService } from '../services';
-import { BoardStore } from '../stores';
+import { BoardCollectionsStore, BoardStore } from '../stores';
 import { Option } from '../utils';
 
 @Component({
@@ -26,12 +27,12 @@ import { Option } from '../utils';
                 [id]="workspaceId + '-' + application.id + '-collections'"
                 cdkDropList
                 [cdkDropListConnectedTo]="[
-                  'slot-6',
-                  'slot-7',
-                  'slot-8',
-                  'slot-9',
-                  'slot-10',
-                  'slot-11'
+                  'collection-slot-0',
+                  'collection-slot-1',
+                  'collection-slot-2',
+                  'collection-slot-3',
+                  'collection-slot-4',
+                  'collection-slot-5'
                 ]"
                 [cdkDropListData]="application.collections"
                 cdkDropListSortingDisabled
@@ -60,24 +61,8 @@ import { Option } from '../utils';
 
                   <div
                     cdkDrag
-                    [cdkDragData]="{
-                        workspaceId,
-                        applicationId: application.id,
-                        id: collection.id,
-                        name: collection.name,
-                        thumbnailUrl: collection.thumbnailUrl,
-                        isInternal: true,
-                        namespace: null,
-                        plugin: null
-                      }"
-                    (click)="
-                      onSelectInternalCollection(
-                        workspaceId,
-                        application.id,
-                        collection.id,
-                        collection.name
-                      )
-                    "
+                    [cdkDragData]="collection.id"
+                    (click)="onSelectInternalCollection(collection.id)"
                     (cdkDragStarted)="onDragStart($event)"
                     (cdkDragEnded)="onDragEnd()"
                   >
@@ -115,12 +100,12 @@ import { Option } from '../utils';
                 [id]="workspaceId + '-' + application.id + '-collections'"
                 cdkDropList
                 [cdkDropListConnectedTo]="[
-                  'slot-6',
-                  'slot-7',
-                  'slot-8',
-                  'slot-9',
-                  'slot-10',
-                  'slot-11'
+                  'collection-slot-0',
+                  'collection-slot-1',
+                  'collection-slot-2',
+                  'collection-slot-3',
+                  'collection-slot-4',
+                  'collection-slot-5'
                 ]"
                 [cdkDropListData]="application.collections"
                 cdkDropListSortingDisabled
@@ -149,24 +134,8 @@ import { Option } from '../utils';
 
                   <div
                     cdkDrag
-                    [cdkDragData]="{
-                        workspaceId,
-                        applicationId: application.id,
-                        id: collection.id,
-                        name: collection.name,
-                        thumbnailUrl: collection.thumbnailUrl,
-                        isInternal: true,
-                        namespace: null,
-                        plugin: null
-                      }"
-                    (click)="
-                      onSelectInternalCollection(
-                        workspaceId,
-                        application.id,
-                        collection.id,
-                        collection.name
-                      )
-                    "
+                    [cdkDragData]="collection.id"
+                    (click)="onSelectInternalCollection(collection.id)"
                     (cdkDragStarted)="onDragStart($event)"
                     (cdkDragEnded)="onDragEnd()"
                   >
@@ -203,12 +172,12 @@ import { Option } from '../utils';
               [id]="plugin.name + '-collections'"
               cdkDropList
               [cdkDropListConnectedTo]="[
-                'slot-6',
-                'slot-7',
-                'slot-8',
-                'slot-9',
-                'slot-10',
-                'slot-11'
+                'collection-slot-0',
+                'collection-slot-1',
+                'collection-slot-2',
+                'collection-slot-3',
+                'collection-slot-4',
+                'collection-slot-5'
               ]"
               [cdkDropListData]="plugin.accounts"
               cdkDropListSortingDisabled
@@ -245,24 +214,9 @@ import { Option } from '../utils';
 
                 <div
                   cdkDrag
-                  [cdkDragData]="{
-                    namespace: plugin.namespace,
-                    plugin: plugin.name,
-                    id: account.name,
-                    name: account.name,
-                    account: account.name,
-                    thumbnailUrl:
-                      'assets/plugins/' +
-                      plugin.namespace +
-                      '/' +
-                      plugin.name +
-                      '/accounts/' +
-                      account.name +
-                      '.png',
-                    isInternal: false,
-                    workspaceId: null,
-                    applicationId: null
-                  }"
+                  [cdkDragData]="
+                    plugin.namespace + '/' + plugin.name + '/' + account.name
+                  "
                   (click)="
                     onSelectExternalCollection(
                       plugin.namespace,
@@ -374,107 +328,26 @@ import { Option } from '../utils';
     RouterModule,
     EditCollectionModalDirective,
   ],
+  providers: [provideComponentStore(BoardCollectionsStore)],
 })
 export class CollectionsSectionComponent {
   private readonly _pluginsService = inject(PluginsService);
   private readonly _boardStore = inject(BoardStore);
+  private readonly _boardCollectionsStore = inject(BoardCollectionsStore);
   private readonly _collectionApiService = inject(CollectionApiService);
 
   private readonly _isDragging = new BehaviorSubject<Option<string>>(null);
-  private readonly _selectedCollection = new BehaviorSubject<
-    Option<{
-      id: string;
-      name: string;
-      workspaceId: Option<string>;
-      applicationId: Option<string>;
-      namespace: Option<string>;
-      plugin: Option<string>;
-      isInternal: boolean;
-    }>
-  >(null);
   readonly isDragging$ = this._isDragging.asObservable();
-  readonly selectedCollection$: Observable<
-    Option<{
-      id: string;
-      name: string;
-      thumbnailUrl: string;
-      workspaceId: Option<string>;
-      applicationId: Option<string>;
-    }>
-  > = combineLatest([
-    this._boardStore.workspaceCollections$,
-    this._selectedCollection.asObservable(),
-  ]).pipe(
-    map(([collections, selectedCollection]) => {
-      if (selectedCollection === null) {
-        return null;
-      }
-
-      if (selectedCollection.isInternal) {
-        const collection =
-          collections?.find(
-            (collection) => collection.id === selectedCollection.id
-          ) ?? null;
-
-        return collection
-          ? {
-              id: collection.id,
-              name: collection.name,
-              thumbnailUrl: collection.thumbnailUrl,
-              applicationId: collection.applicationId,
-              workspaceId: collection.workspaceId,
-            }
-          : null;
-      } else {
-        const plugin =
-          this.plugins.find(
-            (plugin) =>
-              plugin.namespace === selectedCollection.namespace &&
-              plugin.name === selectedCollection.plugin
-          ) ?? null;
-
-        if (plugin === null) {
-          return null;
-        }
-
-        const account =
-          plugin?.accounts.find(
-            (account) => account.name === selectedCollection.id
-          ) ?? null;
-
-        return account
-          ? {
-              id: account.name,
-              name: account.name,
-              thumbnailUrl: `assets/plugins/${plugin.namespace}/${plugin.name}/accounts/${account.name}.png`,
-              applicationId: null,
-              workspaceId: null,
-            }
-          : null;
-      }
-    })
-  );
+  readonly selectedCollection$ =
+    this._boardCollectionsStore.selectedCollection$;
   readonly plugins = this._pluginsService.plugins;
   readonly workspaceId$ = this._boardStore.workspaceId$;
   readonly currentApplicationId$ = this._boardStore.currentApplicationId$;
   readonly currentApplication$ = this._boardStore.currentApplication$;
   readonly otherApplications$ = this._boardStore.otherApplications$;
 
-  onSelectInternalCollection(
-    workspaceId: string,
-    applicationId: string,
-    collectionId: string,
-    collectionName: string
-  ) {
-    this._selectedCollection.next({
-      id: collectionId,
-      name: collectionName,
-      isInternal: true,
-      workspaceId,
-      applicationId,
-      namespace: null,
-      plugin: null,
-    });
+  onSelectInternalCollection(collectionId: string) {
+    this._boardCollectionsStore.setSelectedCollectionId(collectionId);
   }
 
   onSelectExternalCollection(
@@ -482,15 +355,9 @@ export class CollectionsSectionComponent {
     plugin: string,
     account: string
   ) {
-    this._selectedCollection.next({
-      id: account,
-      name: account,
-      isInternal: false,
-      workspaceId: null,
-      applicationId: null,
-      namespace,
-      plugin,
-    });
+    this._boardCollectionsStore.setSelectedCollectionId(
+      `${namespace}/${plugin}/${account}`
+    );
   }
 
   onUpdateCollection(
@@ -506,15 +373,13 @@ export class CollectionsSectionComponent {
   onDeleteCollection(applicationId: string, collectionId: string) {
     this._collectionApiService
       .deleteCollection(applicationId, collectionId)
-      .subscribe(() => this._selectedCollection.next(null));
+      .subscribe(() =>
+        this._boardCollectionsStore.setSelectedCollectionId(null)
+      );
   }
 
   onDragStart(event: CdkDragStart) {
-    this._isDragging.next(
-      event.source.data.isInternal
-        ? event.source.data.id
-        : `${event.source.data.namespace}/${event.source.data.plugin}/${event.source.data.account}`
-    );
+    this._isDragging.next(event.source.data);
   }
 
   onDragEnd() {

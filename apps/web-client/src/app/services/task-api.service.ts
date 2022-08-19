@@ -7,7 +7,24 @@ import {
   updateDoc,
 } from '@angular/fire/firestore';
 import { defer, from } from 'rxjs';
-import { Instruction } from '../utils';
+import { Entity, Option } from '../utils';
+
+export type TaskInstruction = Entity<{
+  name: string;
+  isInternal: boolean;
+  thumbnailUrl: string;
+  workspaceId: Option<string>;
+  applicationId: Option<string>;
+  namespace: Option<string>;
+  plugin: Option<string>;
+  instruction: Option<string>;
+}>;
+
+export type TaskDto = Entity<{
+  name: string;
+  owner: string;
+  instruction: TaskInstruction;
+}>;
 
 @Injectable({ providedIn: 'root' })
 export class TaskApiService {
@@ -17,7 +34,7 @@ export class TaskApiService {
     instructionId: string,
     newTaskId: string,
     name: string,
-    taskInstruction: Instruction
+    taskInstruction: TaskInstruction
   ) {
     return defer(() =>
       from(

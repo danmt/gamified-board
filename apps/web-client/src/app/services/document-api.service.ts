@@ -6,9 +6,25 @@ import {
   runTransaction,
   updateDoc,
 } from '@angular/fire/firestore';
-
 import { defer, from } from 'rxjs';
-import { Collection } from '../utils';
+import { Entity, Option } from '../utils';
+
+export type DocumentCollection = Entity<{
+  name: string;
+  isInternal: boolean;
+  thumbnailUrl: string;
+  workspaceId: Option<string>;
+  applicationId: Option<string>;
+  namespace: Option<string>;
+  plugin: Option<string>;
+  account: Option<string>;
+}>;
+
+export type DocumentDto = Entity<{
+  name: string;
+  owner: string;
+  collection: DocumentCollection;
+}>;
 
 @Injectable({ providedIn: 'root' })
 export class DocumentApiService {
@@ -130,7 +146,7 @@ export class DocumentApiService {
     instructionId: string,
     newDocumentId: string,
     name: string,
-    documentCollection: Collection
+    documentCollection: DocumentCollection
   ) {
     return defer(() =>
       from(

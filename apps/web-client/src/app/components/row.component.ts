@@ -8,15 +8,37 @@ import {
   Input,
   Output,
 } from '@angular/core';
-import {
-  ActiveItem,
-  BoardDocument,
-  BoardInstruction,
-  BoardTask,
-  Collection,
-  Instruction,
-  Option,
-} from '../utils';
+import { Option } from '../utils';
+
+interface RowTask {
+  id: string;
+  instruction: {
+    thumbnailUrl: string;
+  };
+}
+
+interface RowDocument {
+  id: string;
+  collection: {
+    thumbnailUrl: string;
+  };
+}
+
+interface ActiveCollection {
+  id: string;
+  thumbnailUrl: string;
+}
+
+interface ActiveInstruction {
+  id: string;
+  thumbnailUrl: string;
+}
+
+interface RowInstruction {
+  id: string;
+  documents: RowDocument[];
+  tasks: RowTask[];
+}
 
 @Component({
   selector: 'pg-row',
@@ -80,15 +102,11 @@ import {
           </div>
 
           <div
-            *ngIf="
-              isDocumentsHovered &&
-              active !== null &&
-              active.kind === 'collection'
-            "
+            *ngIf="isDocumentsHovered && activeCollection !== null"
             class="bg-gray-800 relative w-11 h-11"
             style="padding: 0.12rem"
           >
-            <img class="w-full h-full" [src]="active.data.thumbnailUrl" />
+            <img class="w-full h-full" [src]="activeCollection.thumbnailUrl" />
           </div>
         </div>
       </div>
@@ -143,13 +161,11 @@ import {
           </div>
 
           <div
-            *ngIf="
-              isTasksHovered && active !== null && active.kind === 'instruction'
-            "
+            *ngIf="isTasksHovered && activeInstruction !== null"
             class="bg-gray-800 relative w-11 h-11"
             style="padding: 0.12rem"
           >
-            <img class="w-full h-full" [src]="active.data.thumbnailUrl" />
+            <img class="w-full h-full" [src]="activeInstruction.thumbnailUrl" />
           </div>
         </div>
       </div>
@@ -160,12 +176,13 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RowComponent {
-  @Input() active: Option<ActiveItem> = null;
-  @Input() instruction: Option<BoardInstruction> = null;
+  @Input() activeCollection: Option<ActiveCollection> = null;
+  @Input() activeInstruction: Option<ActiveInstruction> = null;
+  @Input() instruction: Option<RowInstruction> = null;
   @Input() documentsDropLists: string[] = [];
   @Input() tasksDropLists: string[] = [];
-  @Output() createDocument = new EventEmitter<Collection>();
-  @Output() createTask = new EventEmitter<Instruction>();
+  @Output() createDocument = new EventEmitter();
+  @Output() createTask = new EventEmitter();
   @Output() selectTask = new EventEmitter<string>();
   @Output() selectDocument = new EventEmitter<string>();
 
@@ -195,18 +212,14 @@ export class RowComponent {
   isTasksHovered = false;
 
   @HostBinding('class') class =
-    'block w-full h-64 bg-blue-300 border border-blue-500 bg-bp-bricks ';
+    'block w-full h-64 bg-blue-300 border border-blue-500 bg-bp-bricks';
 
   onCreateDocument() {
-    if (this.active !== null) {
-      this.createDocument.emit(this.active.data);
-    }
+    this.createDocument.emit();
   }
 
   onCreateTask() {
-    if (this.active !== null) {
-      this.createTask.emit(this.active.data);
-    }
+    this.createTask.emit();
   }
 
   onSelectTask(taskId: string) {
@@ -221,9 +234,7 @@ export class RowComponent {
     return index;
   }
 
-  onCollectionDropped(
-    event: CdkDragDrop<BoardDocument[], unknown, BoardDocument>
-  ) {
+  onCollectionDropped(event: CdkDragDrop<RowDocument[], unknown, RowDocument>) {
     if (event.container.id === event.previousContainer.id) {
       this.moveDocument.emit({
         previousIndex: event.previousIndex,
@@ -244,7 +255,7 @@ export class RowComponent {
     }
   }
 
-  onInstructionDropped(event: CdkDragDrop<BoardTask[], unknown, BoardTask>) {
+  onInstructionDropped(event: CdkDragDrop<RowTask[], unknown, RowTask>) {
     if (event.container.id === event.previousContainer.id) {
       this.moveTask.emit({
         previousIndex: event.previousIndex,
