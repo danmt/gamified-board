@@ -4,9 +4,7 @@ import {
   collectionGroup,
   doc,
   docData,
-  DocumentData,
   documentId,
-  DocumentReference,
   endAt,
   Firestore,
   orderBy,
@@ -15,17 +13,8 @@ import {
   startAt,
   updateDoc,
 } from '@angular/fire/firestore';
-import {
-  combineLatest,
-  defer,
-  from,
-  map,
-  Observable,
-  of,
-  switchMap,
-} from 'rxjs';
-import { PluginsService } from '../plugins';
-import { Entity, Option } from '../utils';
+import { combineLatest, defer, from, map, Observable, of } from 'rxjs';
+import { Entity } from '../utils';
 import { DocumentDto } from './document-api.service';
 import { TaskDto } from './task-api.service';
 
@@ -38,10 +27,17 @@ export type InstructionDto = Entity<{
   tasksOrder: string[];
 }>;
 
+export type GenericInstruction = Entity<{
+  name: string;
+  thumbnailUrl: string;
+  applicationId: string;
+  workspaceId: string;
+  isInternal: boolean;
+}>;
+
 @Injectable({ providedIn: 'root' })
 export class InstructionApiService {
   private readonly _firestore = inject(Firestore);
-  private readonly _pluginsService = inject(PluginsService);
 
   getInstruction(instructionId: string): Observable<InstructionDto> {
     return docData(doc(this._firestore, `instructions/${instructionId}`)).pipe(
@@ -72,126 +68,28 @@ export class InstructionApiService {
 
     return collectionData(
       query(
-        collectionGroup(this._firestore, 'tasks').withConverter<{
-          id: string;
-          name: string;
-          isInternal: boolean;
-          ownerRef: Option<DocumentReference<DocumentData>>;
-          instructionRef: Option<DocumentReference<DocumentData>>;
-          namespace: Option<string>;
-          plugin: Option<string>;
-          instruction: Option<string>;
-        }>({
+        collectionGroup(this._firestore, 'tasks').withConverter({
           fromFirestore: (snapshot) => ({
             id: snapshot.id,
-            name: snapshot.data()['name'] as string,
-            isInternal: snapshot.data()['isInternal'] as boolean,
-            ownerRef:
-              snapshot.data()['ownerRef'] ??
-              (null as Option<DocumentReference<DocumentData>>),
-            instructionRef:
-              snapshot.data()['instructionRef'] ??
-              (null as Option<DocumentReference<DocumentData>>),
-            namespace: snapshot.data()['namespace'] ?? (null as Option<string>),
-            plugin: snapshot.data()['plugin'] ?? (null as Option<string>),
-            instruction:
-              snapshot.data()['instruction'] ?? (null as Option<string>),
+            name: snapshot.data()['name'],
+            owner: snapshot.data()['owner'],
+            instruction: snapshot.data()['instruction'],
           }),
-          toFirestore: (it: {
-            id: string;
-            name: string;
-            isInternal: boolean;
-            ownerRef: Option<DocumentReference<DocumentData>>;
-            instructionRef: Option<DocumentReference<DocumentData>>;
-            namespace: Option<string>;
-            plugin: Option<string>;
-            instruction: Option<string>;
-          }) => it,
+          toFirestore: (it) => it,
         }),
         orderBy(documentId()),
         startAt(ownerRef.path),
         endAt(ownerRef.path + '\uf8ff')
       )
     ).pipe(
-      switchMap((tasks) => {
-        if (tasks.length === 0) {
-          return of([]);
-        }
-
-        return combineLatest(
-          tasks.map((task) => {
-            const { isInternal, instructionRef } = task;
-
-            if (isInternal) {
-              if (instructionRef === null) {
-                throw new Error(
-                  'InstructionRef is missing from internal task.'
-                );
-              }
-
-              return docData(instructionRef).pipe(
-                map((instruction) => ({
-                  id: task.id,
-                  name: task.name,
-                  owner: ownerRef.id,
-                  instruction: {
-                    id: instructionRef.id,
-                    name: instruction['name'] as string,
-                    isInternal: true,
-                    thumbnailUrl: instruction['thumbnailUrl'] as string,
-                    workspaceId:
-                      instruction['workspaceRef'].id ??
-                      (null as Option<string>),
-                    applicationId:
-                      instruction['applicationRef'].id ??
-                      (null as Option<string>),
-                    namespace: null,
-                    plugin: null,
-                    instruction: null,
-                  },
-                }))
-              );
-            } else {
-              const plugin =
-                this._pluginsService.plugins.find(
-                  (plugin) =>
-                    plugin.namespace === task.namespace &&
-                    plugin.name === task.plugin
-                ) ?? null;
-
-              if (plugin === null) {
-                throw new Error('Plugin not found');
-              }
-
-              const instruction =
-                plugin.instructions.find(
-                  (instruction) => instruction.name === task.instruction
-                ) ?? null;
-
-              if (instruction === null) {
-                throw new Error('Account not found');
-              }
-
-              return of({
-                id: task.id,
-                name: task.name,
-                owner: ownerRef.id,
-                instruction: {
-                  id: `${task.namespace}/${task.plugin}/${task.instruction}`,
-                  name: instruction.name,
-                  isInternal: false,
-                  namespace: task.namespace,
-                  plugin: task.plugin,
-                  instruction: task.instruction,
-                  thumbnailUrl: `assets/plugins/${task.namespace}/${task.plugin}/instructions/${task.instruction}.png`,
-                  workspaceId: null,
-                  applicationId: null,
-                },
-              });
-            }
-          })
-        );
-      })
+      map((tasks) =>
+        tasks.map((task) => ({
+          id: task['id'],
+          name: task['name'],
+          owner: task['owner'],
+          instruction: task['instruction'],
+        }))
+      )
     );
   }
 
@@ -200,124 +98,28 @@ export class InstructionApiService {
 
     return collectionData(
       query(
-        collectionGroup(this._firestore, 'documents').withConverter<{
-          id: string;
-          name: string;
-          ownerRef: Option<DocumentReference<DocumentData>>;
-          collectionRef: Option<DocumentReference<DocumentData>>;
-          isInternal: boolean;
-          namespace: Option<string>;
-          plugin: Option<string>;
-          account: Option<string>;
-        }>({
+        collectionGroup(this._firestore, 'documents').withConverter({
           fromFirestore: (snapshot) => ({
             id: snapshot.id,
-            name: snapshot.data()['name'] as string,
-            isInternal: snapshot.data()['isInternal'] as boolean,
-            collectionRef:
-              snapshot.data()['collectionRef'] ??
-              (null as Option<DocumentReference<DocumentData>>),
-            namespace: snapshot.data()['namespace'] ?? (null as Option<string>),
-            plugin: snapshot.data()['plugin'] ?? (null as Option<string>),
-            account: snapshot.data()['account'] ?? (null as Option<string>),
-            ownerRef:
-              snapshot.data()['ownerRef'] ??
-              (null as Option<DocumentReference<DocumentData>>),
+            name: snapshot.data()['name'],
+            owner: snapshot.data()['owner'],
+            collection: snapshot.data()['collection'],
           }),
-          toFirestore: (it: {
-            id: string;
-            name: string;
-            ownerRef: Option<DocumentReference<DocumentData>>;
-            collectionRef: Option<DocumentReference<DocumentData>>;
-            isInternal: boolean;
-            namespace: Option<string>;
-            plugin: Option<string>;
-            account: Option<string>;
-          }) => it,
+          toFirestore: (it) => it,
         }),
         orderBy(documentId()),
         startAt(ownerRef.path),
         endAt(ownerRef.path + '\uf8ff')
       )
     ).pipe(
-      switchMap((documents) => {
-        if (documents.length === 0) {
-          return of([]);
-        }
-
-        return combineLatest(
-          documents.map((document) => {
-            const { isInternal, collectionRef } = document;
-
-            if (isInternal) {
-              if (collectionRef === null) {
-                throw new Error(
-                  'CollectionRef is missing from internal document.'
-                );
-              }
-
-              return docData(collectionRef).pipe(
-                map((collection) => ({
-                  id: document.id,
-                  name: document.name,
-                  owner: ownerRef.id,
-                  collection: {
-                    id: collectionRef.id,
-                    name: collection['name'] as string,
-                    isInternal: true,
-                    thumbnailUrl: collection['thumbnailUrl'] as string,
-                    workspaceId:
-                      collection['workspaceRef'].id ?? (null as Option<string>),
-                    applicationId:
-                      collection['applicationRef'].id ??
-                      (null as Option<string>),
-                    namespace: null,
-                    plugin: null,
-                    account: null,
-                  },
-                }))
-              );
-            } else {
-              const plugin =
-                this._pluginsService.plugins.find(
-                  (plugin) =>
-                    plugin.namespace === document.namespace &&
-                    plugin.name === document.plugin
-                ) ?? null;
-
-              if (plugin === null) {
-                throw new Error('Plugin not found');
-              }
-
-              const account =
-                plugin.accounts.find(
-                  (account) => account.name === document.account
-                ) ?? null;
-
-              if (account === null) {
-                throw new Error('Account not found');
-              }
-
-              return of({
-                id: document.id,
-                name: document.name,
-                owner: ownerRef.id,
-                collection: {
-                  id: `${document.namespace}/${document.plugin}/${document.account}`,
-                  name: account.name,
-                  isInternal: false,
-                  namespace: document.namespace,
-                  plugin: document.plugin,
-                  account: document.account,
-                  thumbnailUrl: `assets/plugins/${document.namespace}/${document.plugin}/accounts/${document.account}.png`,
-                  workspaceId: null,
-                  applicationId: null,
-                },
-              });
-            }
-          })
-        );
-      })
+      map((tasks) =>
+        tasks.map((task) => ({
+          id: task['id'],
+          name: task['name'],
+          owner: task['owner'],
+          collection: task['collection'],
+        }))
+      )
     );
   }
 

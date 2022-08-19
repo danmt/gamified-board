@@ -7,23 +7,13 @@ import {
   updateDoc,
 } from '@angular/fire/firestore';
 import { defer, from } from 'rxjs';
-import { Entity, Option } from '../utils';
-
-export type DocumentCollection = Entity<{
-  name: string;
-  isInternal: boolean;
-  thumbnailUrl: string;
-  workspaceId: Option<string>;
-  applicationId: Option<string>;
-  namespace: Option<string>;
-  plugin: Option<string>;
-  account: Option<string>;
-}>;
+import { Entity } from '../utils';
+import { GenericCollection } from './collection-api.service';
 
 export type DocumentDto = Entity<{
   name: string;
   owner: string;
-  collection: DocumentCollection;
+  collection: GenericCollection;
 }>;
 
 @Injectable({ providedIn: 'root' })
@@ -146,7 +136,7 @@ export class DocumentApiService {
     instructionId: string,
     newDocumentId: string,
     name: string,
-    documentCollection: DocumentCollection
+    parentCollection: GenericCollection
   ) {
     return defer(() =>
       from(
@@ -165,14 +155,8 @@ export class DocumentApiService {
           // create the new document
           transaction.set(newDocumentRef, {
             name,
-            instructionRef: instructionRef,
-            isInternal: documentCollection.isInternal,
-            collectionRef: documentCollection.isInternal
-              ? doc(this._firestore, `collections/${documentCollection.id}`)
-              : null,
-            namespace: documentCollection.namespace ?? null,
-            plugin: documentCollection.plugin ?? null,
-            account: documentCollection.account ?? null,
+            owner: instructionId,
+            collection: parentCollection,
           });
           // push document id to the documentsOrder
           transaction.update(instructionRef, {

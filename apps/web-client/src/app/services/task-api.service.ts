@@ -7,23 +7,13 @@ import {
   updateDoc,
 } from '@angular/fire/firestore';
 import { defer, from } from 'rxjs';
-import { Entity, Option } from '../utils';
-
-export type TaskInstruction = Entity<{
-  name: string;
-  isInternal: boolean;
-  thumbnailUrl: string;
-  workspaceId: Option<string>;
-  applicationId: Option<string>;
-  namespace: Option<string>;
-  plugin: Option<string>;
-  instruction: Option<string>;
-}>;
+import { Entity } from '../utils';
+import { GenericInstruction } from './instruction-api.service';
 
 export type TaskDto = Entity<{
   name: string;
   owner: string;
-  instruction: TaskInstruction;
+  instruction: GenericInstruction;
 }>;
 
 @Injectable({ providedIn: 'root' })
@@ -34,7 +24,7 @@ export class TaskApiService {
     instructionId: string,
     newTaskId: string,
     name: string,
-    taskInstruction: TaskInstruction
+    taskInstruction: GenericInstruction
   ) {
     return defer(() =>
       from(
@@ -53,14 +43,8 @@ export class TaskApiService {
           // create the new task
           transaction.set(newTaskRef, {
             name,
-            isInternal: taskInstruction.isInternal,
-            instructionRef: doc(
-              this._firestore,
-              `instructions/${taskInstruction.id}`
-            ),
-            namespace: taskInstruction.namespace ?? null,
-            plugin: taskInstruction.plugin ?? null,
-            instruction: taskInstruction.name ?? null,
+            owner: instructionId,
+            instruction: taskInstruction,
           });
           // push task id to the tasksOrder
           transaction.update(instructionRef, {

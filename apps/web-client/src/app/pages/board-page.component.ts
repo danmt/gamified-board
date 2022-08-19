@@ -40,12 +40,12 @@ import {
 import {
   CollectionApiService,
   DocumentApiService,
-  DocumentCollection,
   DocumentDto,
+  GenericCollection,
+  GenericInstruction,
   InstructionApiService,
   TaskApiService,
   TaskDto,
-  TaskInstruction,
 } from '../services';
 import { BoardInstruction, BoardStore } from '../stores';
 import { Entity, Option } from '../utils';
@@ -92,8 +92,8 @@ import { Entity, Option } from '../utils';
                 (updateInstructionSlot)="
                   onUpdateInstructionSlot($event.index, $event.data)
                 "
-                (createCollection)="
-                  onCreateCollection(
+                (createInstruction)="
+                  onCreateInstruction(
                     $event.id,
                     $event.name,
                     $event.thumbnailUrl
@@ -508,7 +508,7 @@ export class BoardPageComponent implements OnInit {
 
   onCreateDocument(
     instructionId: string,
-    documentCollection: Option<DocumentCollection>
+    documentCollection: Option<GenericCollection>
   ) {
     if (documentCollection !== null) {
       this._dialog
@@ -574,7 +574,7 @@ export class BoardPageComponent implements OnInit {
 
   onCreateTask(
     instructionId: string,
-    taskInstruction: Option<TaskInstruction>
+    taskInstruction: Option<GenericInstruction>
   ) {
     if (taskInstruction !== null) {
       this._dialog

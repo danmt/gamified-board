@@ -16,6 +16,14 @@ export type CollectionDto = Entity<{
   workspaceId: string;
 }>;
 
+export type GenericCollection = Entity<{
+  name: string;
+  thumbnailUrl: string;
+  applicationId: string;
+  workspaceId: string;
+  isInternal: boolean;
+}>;
+
 @Injectable({ providedIn: 'root' })
 export class CollectionApiService {
   private readonly _firestore = inject(Firestore);

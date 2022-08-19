@@ -11,12 +11,12 @@ import {
   ApplicationDto,
   CollectionApiService,
   CollectionDto,
-  DocumentCollection,
   DocumentDto,
+  GenericCollection,
+  GenericInstruction,
   InstructionApiService,
   InstructionDto,
   TaskDto,
-  TaskInstruction,
   WorkspaceApiService,
   WorkspaceDto,
 } from '../services';
@@ -41,6 +41,8 @@ interface ViewModel {
   workspaceCollections: Option<CollectionDto[]>;
   selectedDocumentId: Option<string>;
   selectedTaskId: Option<string>;
+  selectedCollectionId: Option<string>;
+  selectedInstructionId: Option<string>;
   activeCollectionId: Option<string>;
   activeInstructionId: Option<string>;
   instructionSlotIds: Option<string>[];
@@ -57,6 +59,8 @@ const initialState: ViewModel = {
   workspaceCollections: null,
   selectedDocumentId: null,
   selectedTaskId: null,
+  selectedCollectionId: null,
+  selectedInstructionId: null,
   activeCollectionId: null,
   activeInstructionId: null,
   instructionSlotIds: [null, null, null, null, null, null],
@@ -197,258 +201,180 @@ export class BoardStore
   readonly activeInstructionId$ = this.select(
     ({ activeInstructionId }) => activeInstructionId
   );
-  readonly activeCollection$: Observable<Option<DocumentCollection>> =
-    this.select(
-      this.workspaceCollections$,
-      this.activeCollectionId$,
-      (workspaceCollections, activeCollectionId) => {
-        if (workspaceCollections === null || activeCollectionId === null) {
-          return null;
-        }
-
-        const collection =
-          workspaceCollections?.find(
-            (collection) => collection.id === activeCollectionId
-          ) ?? null;
-
-        if (collection !== null) {
-          return {
-            id: collection.id,
-            name: collection.name,
-            thumbnailUrl: collection.thumbnailUrl,
-            applicationId: collection.applicationId,
-            workspaceId: collection.workspaceId,
-            isInternal: true,
-            namespace: null,
-            plugin: null,
-            account: null,
-          };
-        }
-
-        const [namespace, pluginName, accountName] =
-          activeCollectionId.split('/');
-
-        const plugin =
-          this._pluginsService.plugins.find(
-            (plugin) =>
-              plugin.namespace === namespace && plugin.name === pluginName
-          ) ?? null;
-
-        if (plugin === null) {
-          return null;
-        }
-
-        const pluginAccount =
-          plugin?.accounts.find((account) => account.name === accountName) ??
-          null;
-
-        if (pluginAccount === null) {
-          return null;
-        }
-
-        return {
-          id: activeCollectionId,
-          name: pluginAccount.name,
-          thumbnailUrl: `assets/plugins/${plugin.namespace}/${plugin.name}/accounts/${pluginAccount.name}.png`,
-          applicationId: null,
-          workspaceId: null,
-          isInternal: false,
-          namespace,
-          plugin: pluginName,
-          account: accountName,
-        };
+  readonly collections$ = this.select(
+    this.workspaceCollections$,
+    (workspaceCollections) => {
+      if (workspaceCollections === null) {
+        return null;
       }
-    );
-  readonly activeInstruction$: Observable<Option<TaskInstruction>> =
+
+      return [
+        ...workspaceCollections.map<GenericCollection>((collection) => ({
+          id: collection.id,
+          name: collection.name,
+          thumbnailUrl: collection.thumbnailUrl,
+          applicationId: collection.applicationId,
+          workspaceId: collection.workspaceId,
+          isInternal: true,
+        })),
+        ...this._pluginsService.plugins.reduce<GenericCollection[]>(
+          (collections, plugin) => [
+            ...collections,
+            ...plugin.accounts.reduce<GenericCollection[]>(
+              (innerCollections, account) => [
+                ...innerCollections,
+                {
+                  id: `${plugin.namespace}/${plugin.name}/${account.name}`,
+                  name: account.name,
+                  thumbnailUrl: `assets/plugins/${plugin.namespace}/${plugin.name}/accounts/${account.name}.png`,
+                  applicationId: plugin.name,
+                  workspaceId: plugin.namespace,
+                  isInternal: false,
+                },
+              ],
+              []
+            ),
+          ],
+          []
+        ),
+      ];
+    }
+  );
+  readonly instructions$ = this.select(
+    this.workspaceInstructions$,
+    (workspaceInstructions) => {
+      if (workspaceInstructions === null) {
+        return null;
+      }
+
+      return [
+        ...workspaceInstructions.map<GenericInstruction>((instruction) => ({
+          id: instruction.id,
+          name: instruction.name,
+          thumbnailUrl: instruction.thumbnailUrl,
+          applicationId: instruction.applicationId,
+          workspaceId: instruction.workspaceId,
+          isInternal: true,
+        })),
+        ...this._pluginsService.plugins.reduce<GenericInstruction[]>(
+          (instructions, plugin) => [
+            ...instructions,
+            ...plugin.instructions.reduce<GenericInstruction[]>(
+              (innerInstructions, instruction) => [
+                ...innerInstructions,
+                {
+                  id: `${plugin.namespace}/${plugin.name}/${instruction.name}`,
+                  name: instruction.name,
+                  thumbnailUrl: `assets/plugins/${plugin.namespace}/${plugin.name}/instructions/${instruction.name}.png`,
+                  applicationId: plugin.name,
+                  workspaceId: plugin.namespace,
+                  isInternal: false,
+                },
+              ],
+              []
+            ),
+          ],
+          []
+        ),
+      ];
+    }
+  );
+  readonly activeInstruction$: Observable<Option<GenericInstruction>> =
     this.select(
-      this.workspaceInstructions$,
-      this.activeInstructionId$,
-      (workspaceInstructions, activeInstructionId) => {
-        if (workspaceInstructions === null || activeInstructionId === null) {
+      this.instructions$,
+      this.select(({ activeInstructionId }) => activeInstructionId),
+      (instructions, activeInstructionId) => {
+        if (instructions === null || activeInstructionId === null) {
           return null;
         }
 
-        const instruction =
-          workspaceInstructions?.find(
+        return (
+          instructions?.find(
             (instruction) => instruction.id === activeInstructionId
-          ) ?? null;
-
-        if (instruction !== null) {
-          return {
-            id: instruction.id,
-            name: instruction.name,
-            thumbnailUrl: instruction.thumbnailUrl,
-            applicationId: instruction.applicationId,
-            workspaceId: instruction.workspaceId,
-            isInternal: true,
-            namespace: null,
-            plugin: null,
-            instruction: null,
-          };
-        }
-
-        const [namespace, pluginName, instructionName] =
-          activeInstructionId.split('/');
-
-        const plugin =
-          this._pluginsService.plugins.find(
-            (plugin) =>
-              plugin.namespace === namespace && plugin.name === pluginName
-          ) ?? null;
-
-        if (plugin === null) {
-          return null;
-        }
-
-        const pluginInstruction =
-          plugin?.instructions.find(
-            (instruction) => instruction.name === instructionName
-          ) ?? null;
-
-        if (pluginInstruction === null) {
-          return null;
-        }
-
-        return {
-          id: activeInstructionId,
-          name: pluginInstruction.name,
-          thumbnailUrl: `assets/plugins/${plugin.namespace}/${plugin.name}/instructions/${pluginInstruction.name}.png`,
-          applicationId: null,
-          workspaceId: null,
-          isInternal: false,
-          namespace,
-          plugin: pluginName,
-          instruction: instructionName,
-        };
+          ) ?? null
+        );
       }
     );
-  readonly instructionSlots$: Observable<Option<TaskInstruction>[]> =
+  readonly activeCollection$: Observable<Option<GenericCollection>> =
     this.select(
-      this.workspaceInstructions$,
+      this.collections$,
+      this.select(({ activeCollectionId }) => activeCollectionId),
+      (collections, activeCollectionId) => {
+        if (collections === null || activeCollectionId === null) {
+          return null;
+        }
+
+        return (
+          collections?.find(
+            (collection) => collection.id === activeCollectionId
+          ) ?? null
+        );
+      }
+    );
+  readonly instructionSlots$: Observable<Option<GenericInstruction>[]> =
+    this.select(
+      this.instructions$,
       this.select(({ instructionSlotIds }) => instructionSlotIds),
-      (workspaceInstructions, instructionSlotIds) =>
+      (instructions, instructionSlotIds) =>
         instructionSlotIds.map((instructionId) => {
           if (instructionId === null) {
             return null;
           }
 
-          const instruction =
-            workspaceInstructions?.find(
+          return (
+            instructions?.find(
               (instruction) => instruction.id === instructionId
-            ) ?? null;
-
-          if (instruction !== null) {
-            return {
-              id: instruction.id,
-              name: instruction.name,
-              thumbnailUrl: instruction.thumbnailUrl,
-              applicationId: instruction.applicationId,
-              workspaceId: instruction.workspaceId,
-              isInternal: true,
-              namespace: null,
-              plugin: null,
-              instruction: null,
-            };
-          }
-
-          const [namespace, pluginName, instructionName] =
-            instructionId.split('/');
-
-          const plugin =
-            this._pluginsService.plugins.find(
-              (plugin) =>
-                plugin.namespace === namespace && plugin.name === pluginName
-            ) ?? null;
-
-          if (plugin === null) {
-            return null;
-          }
-
-          const pluginInstruction =
-            plugin?.instructions.find(
-              (instruction) => instruction.name === instructionName
-            ) ?? null;
-
-          if (pluginInstruction === null) {
-            return null;
-          }
-
-          return {
-            id: instructionId,
-            name: pluginInstruction.name,
-            thumbnailUrl: `assets/plugins/${plugin.namespace}/${plugin.name}/instructions/${pluginInstruction.name}.png`,
-            applicationId: null,
-            workspaceId: null,
-            isInternal: false,
-            namespace,
-            plugin: pluginName,
-            instruction: instructionName,
-          };
+            ) ?? null
+          );
         })
     );
-  readonly collectionSlots$: Observable<Option<DocumentCollection>[]> =
+  readonly collectionSlots$: Observable<Option<GenericCollection>[]> =
     this.select(
-      this.workspaceCollections$,
+      this.collections$,
       this.select(({ collectionSlotIds }) => collectionSlotIds),
-      (workspaceCollections, collectionSlotIds) =>
+      (collections, collectionSlotIds) =>
         collectionSlotIds.map((collectionId) => {
           if (collectionId === null) {
             return null;
           }
 
-          const collection =
-            workspaceCollections?.find(
-              (collection) => collection.id === collectionId
-            ) ?? null;
-
-          if (collection !== null) {
-            return {
-              id: collection.id,
-              name: collection.name,
-              thumbnailUrl: collection.thumbnailUrl,
-              applicationId: collection.applicationId,
-              workspaceId: collection.workspaceId,
-              isInternal: true,
-              namespace: null,
-              plugin: null,
-              account: null,
-            };
-          }
-
-          const [namespace, pluginName, collectionName] =
-            collectionId.split('/');
-
-          const plugin =
-            this._pluginsService.plugins.find(
-              (plugin) =>
-                plugin.namespace === namespace && plugin.name === pluginName
-            ) ?? null;
-
-          if (plugin === null) {
-            return null;
-          }
-
-          const pluginAccount =
-            plugin?.accounts.find(
-              (account) => account.name === collectionName
-            ) ?? null;
-
-          if (pluginAccount === null) {
-            return null;
-          }
-
-          return {
-            id: collectionId,
-            name: pluginAccount.name,
-            thumbnailUrl: `assets/plugins/${plugin.namespace}/${plugin.name}/accounts/${pluginAccount.name}.png`,
-            applicationId: null,
-            workspaceId: null,
-            isInternal: false,
-            namespace,
-            plugin: pluginName,
-            account: collectionName,
-          };
+          return (
+            collections?.find((collection) => collection.id === collectionId) ??
+            null
+          );
         })
+    );
+  readonly selectedInstruction$: Observable<Option<GenericInstruction>> =
+    this.select(
+      this.instructions$,
+      this.select(({ selectedInstructionId }) => selectedInstructionId),
+      (instructions, selectedInstructionId) => {
+        if (instructions === null || selectedInstructionId === null) {
+          return null;
+        }
+
+        return (
+          instructions?.find(
+            (instruction) => instruction.id === selectedInstructionId
+          ) ?? null
+        );
+      }
+    );
+  readonly selectedCollection$: Observable<Option<GenericCollection>> =
+    this.select(
+      this.collections$,
+      this.select(({ selectedCollectionId }) => selectedCollectionId),
+      (collections, selectedCollectionId) => {
+        if (collections === null || selectedCollectionId === null) {
+          return null;
+        }
+
+        return (
+          collections?.find(
+            (collection) => collection.id === selectedCollectionId
+          ) ?? null
+        );
+      }
     );
 
   readonly setWorkspaceId = this.updater<Option<string>>(
@@ -478,6 +404,20 @@ export class BoardStore
       ...state,
       selectedDocumentId,
       selectedTaskId: null,
+    })
+  );
+
+  readonly setSelectedCollectionId = this.updater<Option<string>>(
+    (state, selectedCollectionId) => ({
+      ...state,
+      selectedCollectionId,
+    })
+  );
+
+  readonly setSelectedInstructionId = this.updater<Option<string>>(
+    (state, selectedInstructionId) => ({
+      ...state,
+      selectedInstructionId,
     })
   );
 
