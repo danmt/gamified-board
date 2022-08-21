@@ -5,7 +5,7 @@ import {
   tapResponse,
 } from '@ngrx/component-store';
 import { combineLatest, EMPTY, map, Observable, switchMap } from 'rxjs';
-import { PluginsService } from '../plugins';
+import { IdlStructField, PluginsService } from '../plugins';
 import {
   ApplicationApiService,
   ApplicationDto,
@@ -216,22 +216,75 @@ export class BoardStore
           applicationId: collection.applicationId,
           workspaceId: collection.workspaceId,
           isInternal: true,
+          attributes: collection.attributes,
         })),
         ...this._pluginsService.plugins.reduce<GenericCollection[]>(
           (collections, plugin) => [
             ...collections,
             ...plugin.accounts.reduce<GenericCollection[]>(
-              (innerCollections, account) => [
-                ...innerCollections,
-                {
-                  id: `${plugin.namespace}/${plugin.name}/${account.name}`,
-                  name: account.name,
-                  thumbnailUrl: `assets/plugins/${plugin.namespace}/${plugin.name}/accounts/${account.name}.png`,
-                  applicationId: plugin.name,
-                  workspaceId: plugin.namespace,
-                  isInternal: false,
-                },
-              ],
+              (innerCollections, account) => {
+                const fields: IdlStructField[] =
+                  typeof account.type === 'string'
+                    ? []
+                    : 'kind' in account.type
+                    ? account.type.fields
+                    : [];
+
+                return [
+                  ...innerCollections,
+                  {
+                    id: `${plugin.namespace}/${plugin.name}/${account.name}`,
+                    name: account.name,
+                    thumbnailUrl: `assets/plugins/${plugin.namespace}/${plugin.name}/accounts/${account.name}.png`,
+                    applicationId: plugin.name,
+                    workspaceId: plugin.namespace,
+                    isInternal: false,
+                    attributes: fields.map((field) => {
+                      if (typeof field.type === 'string') {
+                        return {
+                          name: field.name,
+                          type: field.type,
+                          isOption: false,
+                          isCOption: false,
+                          isDefined: false,
+                        };
+                      } else if ('option' in field.type) {
+                        return {
+                          name: field.name,
+                          type: field.type.option,
+                          isOption: true,
+                          isCOption: false,
+                          isDefined: false,
+                        };
+                      } else if ('coption' in field.type) {
+                        return {
+                          name: field.name,
+                          type: field.type.coption,
+                          isOption: false,
+                          isCOption: true,
+                          isDefined: false,
+                        };
+                      } else if ('defined' in field.type) {
+                        return {
+                          name: field.name,
+                          type: field.type.defined,
+                          isOption: false,
+                          isCOption: false,
+                          isDefined: true,
+                        };
+                      } else {
+                        return {
+                          name: field.name,
+                          type: JSON.stringify(field.type),
+                          isOption: false,
+                          isCOption: false,
+                          isDefined: false,
+                        };
+                      }
+                    }),
+                  },
+                ];
+              },
               []
             ),
           ],
@@ -255,22 +308,70 @@ export class BoardStore
           applicationId: instruction.applicationId,
           workspaceId: instruction.workspaceId,
           isInternal: true,
+          arguments: instruction.arguments,
         })),
         ...this._pluginsService.plugins.reduce<GenericInstruction[]>(
           (instructions, plugin) => [
             ...instructions,
             ...plugin.instructions.reduce<GenericInstruction[]>(
-              (innerInstructions, instruction) => [
-                ...innerInstructions,
-                {
-                  id: `${plugin.namespace}/${plugin.name}/${instruction.name}`,
-                  name: instruction.name,
-                  thumbnailUrl: `assets/plugins/${plugin.namespace}/${plugin.name}/instructions/${instruction.name}.png`,
-                  applicationId: plugin.name,
-                  workspaceId: plugin.namespace,
-                  isInternal: false,
-                },
-              ],
+              (innerInstructions, instruction) => {
+                const args = instruction.args;
+
+                return [
+                  ...innerInstructions,
+                  {
+                    id: `${plugin.namespace}/${plugin.name}/${instruction.name}`,
+                    name: instruction.name,
+                    thumbnailUrl: `assets/plugins/${plugin.namespace}/${plugin.name}/instructions/${instruction.name}.png`,
+                    applicationId: plugin.name,
+                    workspaceId: plugin.namespace,
+                    isInternal: false,
+                    arguments: args.map((arg) => {
+                      if (typeof arg.type === 'string') {
+                        return {
+                          name: arg.name,
+                          type: arg.type,
+                          isOption: false,
+                          isCOption: false,
+                          isDefined: false,
+                        };
+                      } else if ('option' in arg.type) {
+                        return {
+                          name: arg.name,
+                          type: arg.type.option,
+                          isOption: true,
+                          isCOption: false,
+                          isDefined: false,
+                        };
+                      } else if ('coption' in arg.type) {
+                        return {
+                          name: arg.name,
+                          type: arg.type.coption,
+                          isOption: false,
+                          isCOption: true,
+                          isDefined: false,
+                        };
+                      } else if ('defined' in arg.type) {
+                        return {
+                          name: arg.name,
+                          type: arg.type.defined,
+                          isOption: false,
+                          isCOption: false,
+                          isDefined: true,
+                        };
+                      } else {
+                        return {
+                          name: arg.name,
+                          type: JSON.stringify(arg.type),
+                          isOption: false,
+                          isCOption: false,
+                          isDefined: false,
+                        };
+                      }
+                    }),
+                  },
+                ];
+              },
               []
             ),
           ],

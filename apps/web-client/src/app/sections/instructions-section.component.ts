@@ -76,10 +76,22 @@ import { Option } from '../utils';
       </div>
 
       <div
-        class="w-full h-24 p-4 bg-black bg-opacity-25"
+        class="w-full h-32 p-4 bg-black bg-opacity-25 overflow-auto"
         *ngrxLet="selectedInstruction$; let instruction"
       >
         {{ instruction?.name }}
+
+        <div>
+          <p>Instruction arguments</p>
+          <div class="flex gap-2 flex-wrap">
+            <div
+              *ngFor="let arg of instruction?.arguments"
+              class="border-2 border-black p-1 text-xs"
+            >
+              {{ arg.name }} - {{ arg.type }}
+            </div>
+          </div>
+        </div>
 
         <button
           *ngIf="
@@ -93,7 +105,8 @@ import { Option } from '../utils';
             onUpdateInstruction(
               instruction.id,
               $event.name,
-              $event.thumbnailUrl
+              $event.thumbnailUrl,
+              $event.arguments
             )
           "
         >
@@ -160,10 +173,11 @@ export class InstructionsSectionComponent {
   onUpdateInstruction(
     instructionId: string,
     instructionName: string,
-    thumbnailUrl: string
+    thumbnailUrl: string,
+    args: { name: string; type: string; isOption: boolean }[]
   ) {
     this._instructionApiService
-      .updateInstruction(instructionId, instructionName, thumbnailUrl)
+      .updateInstruction(instructionId, instructionName, thumbnailUrl, args)
       .subscribe();
   }
 

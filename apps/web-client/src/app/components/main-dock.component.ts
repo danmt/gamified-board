@@ -107,7 +107,12 @@ export class SquareButtonComponent {
             class="rounded-full bg-slate-400 w-8 h-8"
             pgEditInstructionModal
             (createInstruction)="
-              onCreateInstruction($event.id, $event.name, $event.thumbnailUrl)
+              onCreateInstruction(
+                $event.id,
+                $event.name,
+                $event.thumbnailUrl,
+                $event.arguments
+              )
             "
           >
             +
@@ -157,7 +162,12 @@ export class SquareButtonComponent {
             class="rounded-full bg-slate-400 w-8 h-8"
             pgEditCollectionModal
             (createCollection)="
-              onCreateCollection($event.id, $event.name, $event.thumbnailUrl)
+              onCreateCollection(
+                $event.id,
+                $event.name,
+                $event.thumbnailUrl,
+                $event.attributes
+              )
             "
           >
             +
@@ -253,6 +263,7 @@ export class MainDockComponent {
     id: string;
     name: string;
     thumbnailUrl: string;
+    arguments: { name: string; type: string; isOption: boolean }[];
   }>();
   @Output() swapCollectionSlots = new EventEmitter<[number, number]>();
   @Output() removeFromCollectionSlot = new EventEmitter<number>();
@@ -265,6 +276,7 @@ export class MainDockComponent {
     id: string;
     name: string;
     thumbnailUrl: string;
+    attributes: { name: string; type: string; isOption: boolean }[];
   }>();
   @HostListener('document:keydown', ['$event'])
   onKeydown(event: KeyboardEvent) {
@@ -329,11 +341,17 @@ export class MainDockComponent {
     }
   }
 
-  onCreateInstruction(id: string, name: string, thumbnailUrl: string) {
+  onCreateInstruction(
+    id: string,
+    name: string,
+    thumbnailUrl: string,
+    args: { name: string; type: string; isOption: boolean }[]
+  ) {
     this.createInstruction.emit({
       id,
       name,
       thumbnailUrl,
+      arguments: args,
     });
   }
 
@@ -369,11 +387,17 @@ export class MainDockComponent {
     }
   }
 
-  onCreateCollection(id: string, name: string, thumbnailUrl: string) {
+  onCreateCollection(
+    id: string,
+    name: string,
+    thumbnailUrl: string,
+    attributes: { name: string; type: string; isOption: boolean }[]
+  ) {
     this.createCollection.emit({
       id,
       name,
       thumbnailUrl,
+      attributes,
     });
   }
 }

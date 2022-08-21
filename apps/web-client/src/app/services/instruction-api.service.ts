@@ -18,6 +18,12 @@ import { Entity } from '../utils';
 import { DocumentDto } from './document-api.service';
 import { TaskDto } from './task-api.service';
 
+export interface InstructionArgument {
+  name: string;
+  type: string;
+  isOption: boolean;
+}
+
 export type InstructionDto = Entity<{
   name: string;
   thumbnailUrl: string;
@@ -25,6 +31,7 @@ export type InstructionDto = Entity<{
   workspaceId: string;
   documentsOrder: string[];
   tasksOrder: string[];
+  arguments: InstructionArgument[];
 }>;
 
 export type GenericInstruction = Entity<{
@@ -33,6 +40,7 @@ export type GenericInstruction = Entity<{
   applicationId: string;
   workspaceId: string;
   isInternal: boolean;
+  arguments: InstructionArgument[];
 }>;
 
 @Injectable({ providedIn: 'root' })
@@ -49,6 +57,7 @@ export class InstructionApiService {
         applicationId: instruction['applicationRef'].id as string,
         documentsOrder: instruction['documentsOrder'] as string[],
         tasksOrder: instruction['tasksOrder'] as string[],
+        arguments: instruction['arguments'] ?? [],
       }))
     );
   }
@@ -170,7 +179,8 @@ export class InstructionApiService {
     applicationId: string,
     newInstructionId: string,
     name: string,
-    thumbnailUrl: string
+    thumbnailUrl: string,
+    args: InstructionArgument[]
   ) {
     return defer(() =>
       from(
@@ -200,6 +210,7 @@ export class InstructionApiService {
             thumbnailUrl,
             tasksOrder: [],
             documentsOrder: [],
+            arguments: args,
           });
 
           // push instruction to application instructions
@@ -213,12 +224,18 @@ export class InstructionApiService {
     );
   }
 
-  updateInstruction(instructionId: string, name: string, thumbnailUrl: string) {
+  updateInstruction(
+    instructionId: string,
+    name: string,
+    thumbnailUrl: string,
+    args: InstructionArgument[]
+  ) {
     return defer(() =>
       from(
         updateDoc(doc(this._firestore, `instructions/${instructionId}`), {
           name,
           thumbnailUrl,
+          arguments: args,
         })
       )
     );

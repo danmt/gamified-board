@@ -96,7 +96,8 @@ import { Entity, Option } from '../utils';
                   onCreateInstruction(
                     $event.id,
                     $event.name,
-                    $event.thumbnailUrl
+                    $event.thumbnailUrl,
+                    $event.arguments
                   )
                 "
                 (swapCollectionSlots)="
@@ -111,7 +112,8 @@ import { Entity, Option } from '../utils';
                   onCreateCollection(
                     $event.id,
                     $event.name,
-                    $event.thumbnailUrl
+                    $event.thumbnailUrl,
+                    $event.attributes
                   )
                 "
               ></pg-main-dock>
@@ -447,7 +449,8 @@ export class BoardPageComponent implements OnInit {
   onCreateInstruction(
     instructionId: string,
     instructionName: string,
-    thumbnailUrl: string
+    thumbnailUrl: string,
+    args: { name: string; type: string; isOption: boolean }[]
   ) {
     const workspaceId =
       this._activatedRoute.snapshot.paramMap.get('workspaceId');
@@ -468,7 +471,8 @@ export class BoardPageComponent implements OnInit {
         applicationId,
         instructionId,
         instructionName,
-        thumbnailUrl
+        thumbnailUrl,
+        args
       )
       .subscribe();
   }
@@ -476,7 +480,8 @@ export class BoardPageComponent implements OnInit {
   onCreateCollection(
     collectionId: string,
     collectionName: string,
-    thumbnailUrl: string
+    thumbnailUrl: string,
+    attributes: { name: string; type: string; isOption: boolean }[]
   ) {
     const workspaceId =
       this._activatedRoute.snapshot.paramMap.get('workspaceId');
@@ -497,7 +502,8 @@ export class BoardPageComponent implements OnInit {
         applicationId,
         collectionId,
         collectionName,
-        thumbnailUrl
+        thumbnailUrl,
+        attributes
       )
       .subscribe();
   }

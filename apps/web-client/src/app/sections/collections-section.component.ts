@@ -76,10 +76,22 @@ import { Option } from '../utils';
       </div>
 
       <div
-        class="w-full h-24 p-4 bg-black bg-opacity-25"
+        class="w-full h-32 p-4 bg-black bg-opacity-25 overflow-auto"
         *ngrxLet="selectedCollection$; let collection"
       >
         {{ collection?.name }}
+
+        <div>
+          <p>Collection attributes</p>
+          <div class="flex gap-2 flex-wrap">
+            <div
+              *ngFor="let attribute of collection?.attributes"
+              class="border-2 border-black p-1 text-xs"
+            >
+              {{ attribute.name }} - {{ attribute.type }}
+            </div>
+          </div>
+        </div>
 
         <button
           *ngIf="
@@ -90,7 +102,12 @@ import { Option } from '../utils';
           pgEditCollectionModal
           [collection]="collection"
           (updateCollection)="
-            onUpdateCollection(collection.id, $event.name, $event.thumbnailUrl)
+            onUpdateCollection(
+              collection.id,
+              $event.name,
+              $event.thumbnailUrl,
+              $event.attributes
+            )
           "
         >
           edit
@@ -154,10 +171,11 @@ export class CollectionsSectionComponent {
   onUpdateCollection(
     collectionId: string,
     collectionName: string,
-    thumbnailUrl: string
+    thumbnailUrl: string,
+    attributes: { name: string; type: string; isOption: boolean }[]
   ) {
     this._collectionApiService
-      .updateCollection(collectionId, collectionName, thumbnailUrl)
+      .updateCollection(collectionId, collectionName, thumbnailUrl, attributes)
       .subscribe();
   }
 

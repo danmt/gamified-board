@@ -9,11 +9,18 @@ import {
 import { combineLatest, defer, from, map, Observable, of } from 'rxjs';
 import { Entity } from '../utils';
 
+export interface CollectionAttribute {
+  name: string;
+  type: string;
+  isOption: boolean;
+}
+
 export type CollectionDto = Entity<{
   name: string;
   thumbnailUrl: string;
   applicationId: string;
   workspaceId: string;
+  attributes: CollectionAttribute[];
 }>;
 
 export type GenericCollection = Entity<{
@@ -22,6 +29,7 @@ export type GenericCollection = Entity<{
   applicationId: string;
   workspaceId: string;
   isInternal: boolean;
+  attributes: CollectionAttribute[];
 }>;
 
 @Injectable({ providedIn: 'root' })
@@ -36,6 +44,7 @@ export class CollectionApiService {
         thumbnailUrl: collection['thumbnailUrl'],
         applicationId: collection['applicationRef'].id,
         workspaceId: collection['workspaceRef'].id,
+        attributes: collection['attributes'] ?? [],
       }))
     );
   }
@@ -76,7 +85,8 @@ export class CollectionApiService {
     applicationId: string,
     newCollectionId: string,
     name: string,
-    thumbnailUrl: string
+    thumbnailUrl: string,
+    attributes: CollectionAttribute[]
   ) {
     return defer(() =>
       from(
@@ -104,6 +114,7 @@ export class CollectionApiService {
             applicationRef,
             workspaceRef,
             thumbnailUrl,
+            attributes,
           });
 
           // push collection to application collections
@@ -117,12 +128,18 @@ export class CollectionApiService {
     );
   }
 
-  updateCollection(collectionId: string, name: string, thumbnailUrl: string) {
+  updateCollection(
+    collectionId: string,
+    name: string,
+    thumbnailUrl: string,
+    attributes: CollectionAttribute[]
+  ) {
     return defer(() =>
       from(
         updateDoc(doc(this._firestore, `collections/${collectionId}`), {
           name,
           thumbnailUrl,
+          attributes,
         })
       )
     );

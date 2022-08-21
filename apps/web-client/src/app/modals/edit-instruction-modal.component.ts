@@ -9,7 +9,14 @@ import {
   Input,
   Output,
 } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  FormArray,
+  FormBuilder,
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { v4 as uuid } from 'uuid';
 import { Option } from '../utils';
 
@@ -17,6 +24,7 @@ export interface EditInstructionData {
   id: string;
   name: string;
   thumbnailUrl: string;
+  arguments: { name: string; type: string; isOption: boolean }[];
 }
 
 @Directive({ selector: '[pgEditInstructionModal]', standalone: true })
@@ -62,7 +70,11 @@ export class EditInstructionModalDirective {
         {{ instruction === null ? 'Create' : 'Update' }} instruction
       </h1>
 
-      <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <form
+        [formGroup]="form"
+        (ngSubmit)="onSubmit()"
+        class="max-h-96 overflow-y-auto"
+      >
         <div>
           <label class="block" for="instruction-id-input">Instruction ID</label>
           <input
@@ -108,6 +120,74 @@ export class EditInstructionModalDirective {
           />
         </div>
 
+        <div formArrayName="arguments">
+          <p>
+            <span>Instruction arguments</span>
+            <button (click)="onAddAttribute()" type="button">+</button>
+          </p>
+
+          <div class="flex flex-col gap-2">
+            <div
+              *ngFor="
+                let argumentForm of argumentsControl.controls;
+                let i = index
+              "
+              class="border-black border-2 p-2"
+            >
+              <div [formGroup]="argumentForm">
+                <div>
+                  <label
+                    class="block"
+                    [for]="'instruction-arguments-' + i + '-name'"
+                  >
+                    Attribute name
+                  </label>
+                  <input
+                    [id]="'instruction-arguments-' + i + '-name'"
+                    formControlName="name"
+                    class="block border-b-2 border-black"
+                    type="text"
+                  />
+                </div>
+                <div>
+                  <label
+                    class="block"
+                    [for]="'instruction-arguments-' + i + '-type'"
+                  >
+                    Attribute type
+                  </label>
+
+                  <select
+                    class="block"
+                    formControlName="type"
+                    [id]="'instruction-arguments-' + i + '-type'"
+                  >
+                    <option value="u8">u8</option>
+                    <option value="u16">u16</option>
+                    <option value="u32">u32</option>
+                    <option value="u64">u64</option>
+                    <option value="String">String</option>
+                    <option value="Pubkey">Public Key</option>
+                  </select>
+                </div>
+
+                <div>
+                  <input
+                    formControlName="isOption"
+                    type="checkbox"
+                    [id]="'instruction-arguments-' + i + '-is-option'"
+                  />
+                  <label for="'instruction-arguments-' + i + '-is-option'"
+                    >Is Optional</label
+                  >
+                </div>
+
+                <button (click)="onRemoveAttribute(i)" type="button">x</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="flex justify-center items-center mt-4">
           <button type="submit" class="px-4 py-2 border-blue-500 border">
             {{ instruction === null ? 'Send' : 'Save' }}
@@ -143,28 +223,95 @@ export class EditInstructionModalComponent {
         nonNullable: true,
       }
     ),
+    arguments: this.instruction?.arguments
+      ? this._formBuilder.array(
+          this.instruction.arguments.map((argument) =>
+            this._formBuilder.group({
+              name: this._formBuilder.control<string>(argument.name, {
+                validators: [Validators.required],
+                nonNullable: true,
+              }),
+              type: this._formBuilder.control<string>(argument.type, {
+                validators: [Validators.required],
+                nonNullable: true,
+              }),
+              isOption: this._formBuilder.control<boolean>(argument.isOption, {
+                nonNullable: true,
+              }),
+            })
+          )
+        )
+      : this._formBuilder.array([]),
   });
+
+  get idControl() {
+    return this.form.get('id') as FormControl<string>;
+  }
+
+  get nameControl() {
+    return this.form.get('name') as FormControl<string>;
+  }
+
+  get thumbnailUrlControl() {
+    return this.form.get('thumbnailUrl') as FormControl<string>;
+  }
+
+  get argumentsControl() {
+    return this.form.get('arguments') as FormArray<
+      FormGroup<{
+        name: FormControl<string>;
+        type: FormControl<string>;
+        isOption: FormControl<boolean>;
+      }>
+    >;
+  }
+
+  onAddAttribute() {
+    const argumentForm = this._formBuilder.group({
+      name: this._formBuilder.control<string>('', {
+        validators: [Validators.required],
+        nonNullable: true,
+      }),
+      type: this._formBuilder.control<string>('', {
+        validators: [Validators.required],
+        nonNullable: true,
+      }),
+      isOption: this._formBuilder.control<boolean>(false, {
+        nonNullable: true,
+      }),
+    });
+
+    this.argumentsControl.push(argumentForm);
+  }
+
+  onRemoveAttribute(index: number) {
+    this.argumentsControl.removeAt(index);
+  }
 
   onSubmit() {
     if (this.form.valid) {
-      const { id, name, thumbnailUrl } = this.form.value;
+      const id = this.idControl.value;
+      const name = this.nameControl.value;
+      const thumbnailUrl = this.thumbnailUrlControl.value;
+      const args = this.argumentsControl.controls.map((argumentForm) => {
+        const nameControl = argumentForm.get('name') as FormControl<string>;
+        const typeControl = argumentForm.get('type') as FormControl<string>;
+        const isOptionControl = argumentForm.get(
+          'isOption'
+        ) as FormControl<boolean>;
 
-      if (id === undefined) {
-        throw new Error('ID is not properly defined.');
-      }
-
-      if (name === undefined) {
-        throw new Error('Name is not properly defined.');
-      }
-
-      if (thumbnailUrl === undefined) {
-        throw new Error('Thumbnail URL is not properly defined.');
-      }
+        return {
+          name: nameControl.value,
+          type: typeControl.value,
+          isOption: isOptionControl.value,
+        };
+      });
 
       this._dialogRef.close({
         id,
         name,
         thumbnailUrl,
+        arguments: args,
       });
     }
   }
