@@ -18,7 +18,7 @@ import { Entity } from '../utils';
 import { DocumentDto } from './document-api.service';
 import { TaskDto } from './task-api.service';
 
-export interface InstructionArgument {
+export interface InstructionArgumentDto {
   name: string;
   type: string;
   isOption: boolean;
@@ -31,16 +31,7 @@ export type InstructionDto = Entity<{
   workspaceId: string;
   documentsOrder: string[];
   tasksOrder: string[];
-  arguments: InstructionArgument[];
-}>;
-
-export type GenericInstruction = Entity<{
-  name: string;
-  thumbnailUrl: string;
-  applicationId: string;
-  workspaceId: string;
-  isInternal: boolean;
-  arguments: InstructionArgument[];
+  arguments: InstructionArgumentDto[];
 }>;
 
 @Injectable({ providedIn: 'root' })
@@ -81,23 +72,14 @@ export class InstructionApiService {
           fromFirestore: (snapshot) => ({
             id: snapshot.id,
             name: snapshot.data()['name'],
-            owner: snapshot.data()['owner'],
-            instruction: snapshot.data()['instruction'],
+            ownerId: snapshot.data()['ownerId'],
+            instructionId: snapshot.data()['instructionId'],
           }),
           toFirestore: (it) => it,
         }),
         orderBy(documentId()),
         startAt(ownerRef.path),
         endAt(ownerRef.path + '\uf8ff')
-      )
-    ).pipe(
-      map((tasks) =>
-        tasks.map((task) => ({
-          id: task['id'],
-          name: task['name'],
-          owner: task['owner'],
-          instruction: task['instruction'],
-        }))
       )
     );
   }
@@ -111,23 +93,15 @@ export class InstructionApiService {
           fromFirestore: (snapshot) => ({
             id: snapshot.id,
             name: snapshot.data()['name'],
-            owner: snapshot.data()['owner'],
-            collection: snapshot.data()['collection'],
+            method: snapshot.data()['method'],
+            ownerId: snapshot.data()['ownerId'],
+            collectionId: snapshot.data()['collectionId'],
           }),
           toFirestore: (it) => it,
         }),
         orderBy(documentId()),
         startAt(ownerRef.path),
         endAt(ownerRef.path + '\uf8ff')
-      )
-    ).pipe(
-      map((tasks) =>
-        tasks.map((task) => ({
-          id: task['id'],
-          name: task['name'],
-          owner: task['owner'],
-          collection: task['collection'],
-        }))
       )
     );
   }
@@ -180,7 +154,7 @@ export class InstructionApiService {
     newInstructionId: string,
     name: string,
     thumbnailUrl: string,
-    args: InstructionArgument[]
+    args: InstructionArgumentDto[]
   ) {
     return defer(() =>
       from(
@@ -228,7 +202,7 @@ export class InstructionApiService {
     instructionId: string,
     name: string,
     thumbnailUrl: string,
-    args: InstructionArgument[]
+    args: InstructionArgumentDto[]
   ) {
     return defer(() =>
       from(

@@ -8,12 +8,12 @@ import {
 } from '@angular/fire/firestore';
 import { defer, from } from 'rxjs';
 import { Entity } from '../utils';
-import { GenericCollection } from './collection-api.service';
 
 export type DocumentDto = Entity<{
   name: string;
-  owner: string;
-  collection: GenericCollection;
+  method: string;
+  ownerId: string;
+  collectionId: string;
 }>;
 
 @Injectable({ providedIn: 'root' })
@@ -133,21 +133,22 @@ export class DocumentApiService {
   }
 
   createDocument(
-    instructionId: string,
+    ownerId: string,
     newDocumentId: string,
     name: string,
-    parentCollection: GenericCollection
+    method: string,
+    collectionId: string
   ) {
     return defer(() =>
       from(
         runTransaction(this._firestore, async (transaction) => {
           const instructionRef = doc(
             this._firestore,
-            `instructions/${instructionId}`
+            `instructions/${ownerId}`
           );
           const newDocumentRef = doc(
             this._firestore,
-            `instructions/${instructionId}/documents/${newDocumentId}`
+            `instructions/${ownerId}/documents/${newDocumentId}`
           );
           const instruction = await transaction.get(instructionRef);
           const instructionData = instruction.data();
@@ -155,8 +156,9 @@ export class DocumentApiService {
           // create the new document
           transaction.set(newDocumentRef, {
             name,
-            owner: instructionId,
-            collection: parentCollection,
+            method,
+            ownerId,
+            collectionId,
           });
           // push document id to the documentsOrder
           transaction.update(instructionRef, {
@@ -172,7 +174,12 @@ export class DocumentApiService {
     );
   }
 
-  updateDocument(instructionId: string, documentId: string, name: string) {
+  updateDocument(
+    instructionId: string,
+    documentId: string,
+    name: string,
+    method: string
+  ) {
     return defer(() =>
       from(
         updateDoc(
@@ -182,6 +189,7 @@ export class DocumentApiService {
           ),
           {
             name,
+            method,
           }
         )
       )

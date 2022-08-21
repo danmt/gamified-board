@@ -9,6 +9,7 @@ export class TokenPlugin implements PluginInterface {
   readonly name = this.program.idl.name;
   readonly instructions = this.program.idl.instructions;
   readonly accounts = this.program.idl.accounts;
+  readonly isAnchor = false;
 
   getInstruction(instructionName: string): IdlInstruction | null {
     return (

@@ -29,6 +29,7 @@ import { KeyboardListenerDirective } from '../directives';
 import {
   EditDocumentData,
   EditDocumentModalComponent,
+  EditDocumentSubmitPayload,
   EditTaskData,
   EditTaskModalComponent,
 } from '../modals';
@@ -40,14 +41,17 @@ import {
 import {
   CollectionApiService,
   DocumentApiService,
-  DocumentDto,
-  GenericCollection,
-  GenericInstruction,
   InstructionApiService,
   TaskApiService,
-  TaskDto,
 } from '../services';
-import { BoardInstruction, BoardStore } from '../stores';
+import {
+  BoardCollection,
+  BoardDocument,
+  BoardEntry,
+  BoardInstruction,
+  BoardStore,
+  BoardTask,
+} from '../stores';
 import { Entity, Option } from '../utils';
 
 @Component({
@@ -123,7 +127,7 @@ import { Entity, Option } from '../utils';
                 class="fixed bottom-0 z-10 -translate-x-1/2 left-1/2"
                 (updateTask)="
                   onUpdateTask(
-                    selectedTask.owner,
+                    selectedTask.ownerId,
                     selectedTask.id,
                     selectedTask
                   )
@@ -136,7 +140,7 @@ import { Entity, Option } from '../utils';
                 class="fixed bottom-0 z-10 -translate-x-1/2 left-1/2"
                 (updateDocument)="
                   onUpdateDocument(
-                    selectedDocument.owner,
+                    selectedDocument.ownerId,
                     selectedDocument.id,
                     selectedDocument
                   )
@@ -257,7 +261,7 @@ export class BoardPageComponent implements OnInit {
   );
   readonly workspaceApplications$ = this._boardStore.workspaceApplications$;
   readonly currentApplicationInstructions$ =
-    this._boardStore.currentApplicationInstructions$;
+    this._boardStore.boardInstructions$;
   readonly selectedTask$ = this._boardStore.selectedTask$;
   readonly selectedDocument$ = this._boardStore.selectedDocument$;
   readonly activeCollectionId$ = this._boardStore.activeCollectionId$;
@@ -359,12 +363,12 @@ export class BoardPageComponent implements OnInit {
   }
 
   onMoveDocument(
-    instructions: BoardInstruction[],
+    entries: BoardEntry[],
     instructionId: string,
     previousIndex: number,
     newIndex: number
   ) {
-    const instructionIndex = instructions.findIndex(
+    const instructionIndex = entries.findIndex(
       ({ id }) => id === instructionId
     );
 
@@ -372,7 +376,7 @@ export class BoardPageComponent implements OnInit {
       throw new Error('Invalid instruction.');
     }
 
-    const documentsOrder = instructions[instructionIndex].documents.map(
+    const documentsOrder = entries[instructionIndex].documents.map(
       ({ id }) => id
     );
 
@@ -384,7 +388,7 @@ export class BoardPageComponent implements OnInit {
   }
 
   onTransferDocument(
-    instructions: BoardInstruction[],
+    entries: BoardEntry[],
     previousInstructionId: string,
     newInstructionId: string,
     documentId: string,
@@ -393,7 +397,7 @@ export class BoardPageComponent implements OnInit {
   ) {
     this._documentApiService
       .transferDocument(
-        instructions,
+        entries,
         previousInstructionId,
         newInstructionId,
         documentId,
@@ -404,12 +408,12 @@ export class BoardPageComponent implements OnInit {
   }
 
   onMoveTask(
-    instructions: BoardInstruction[],
+    entries: BoardEntry[],
     instructionId: string,
     previousIndex: number,
     newIndex: number
   ) {
-    const instructionIndex = instructions.findIndex(
+    const instructionIndex = entries.findIndex(
       ({ id }) => id === instructionId
     );
 
@@ -417,7 +421,7 @@ export class BoardPageComponent implements OnInit {
       throw new Error('Invalid instruction.');
     }
 
-    const tasksOrder = instructions[instructionIndex].tasks.map(({ id }) => id);
+    const tasksOrder = entries[instructionIndex].tasks.map(({ id }) => id);
 
     moveItemInArray(tasksOrder, previousIndex, newIndex);
 
@@ -427,7 +431,7 @@ export class BoardPageComponent implements OnInit {
   }
 
   onTransferTask(
-    instructions: BoardInstruction[],
+    entries: BoardEntry[],
     previousInstructionId: string,
     newInstructionId: string,
     taskId: string,
@@ -436,7 +440,7 @@ export class BoardPageComponent implements OnInit {
   ) {
     this._taskApiService
       .transferTask(
-        instructions,
+        entries,
         previousInstructionId,
         newInstructionId,
         taskId,
@@ -514,15 +518,17 @@ export class BoardPageComponent implements OnInit {
 
   onCreateDocument(
     instructionId: string,
-    documentCollection: Option<GenericCollection>
+    documentCollection: Option<BoardCollection>
   ) {
     if (documentCollection !== null) {
       this._dialog
         .open<
+          EditDocumentSubmitPayload,
           EditDocumentData,
-          Option<EditDocumentData>,
           EditDocumentModalComponent
-        >(EditDocumentModalComponent)
+        >(EditDocumentModalComponent, {
+          data: { collection: documentCollection, document: null },
+        })
         .closed.pipe(
           concatMap((documentData) => {
             if (documentData === undefined) {
@@ -536,7 +542,8 @@ export class BoardPageComponent implements OnInit {
               instructionId,
               documentData.id,
               documentData.name,
-              documentCollection
+              documentData.method,
+              documentCollection.id
             );
           })
         )
@@ -547,14 +554,16 @@ export class BoardPageComponent implements OnInit {
   onUpdateDocument(
     instructionId: string,
     documentId: string,
-    document: DocumentDto
+    document: BoardDocument
   ) {
     this._dialog
       .open<
+        EditDocumentSubmitPayload,
         EditDocumentData,
-        Option<EditDocumentData>,
         EditDocumentModalComponent
-      >(EditDocumentModalComponent, { data: document })
+      >(EditDocumentModalComponent, {
+        data: { document, collection: document.collection },
+      })
       .closed.pipe(
         concatMap((documentData) => {
           if (documentData === undefined) {
@@ -567,7 +576,8 @@ export class BoardPageComponent implements OnInit {
           return this._documentApiService.updateDocument(
             instructionId,
             documentId,
-            documentData.name
+            documentData.name,
+            documentData.method
           );
         })
       )
@@ -580,7 +590,7 @@ export class BoardPageComponent implements OnInit {
 
   onCreateTask(
     instructionId: string,
-    taskInstruction: Option<GenericInstruction>
+    taskInstruction: Option<BoardInstruction>
   ) {
     if (taskInstruction !== null) {
       this._dialog
@@ -600,7 +610,7 @@ export class BoardPageComponent implements OnInit {
               instructionId,
               taskData.id,
               taskData.name,
-              taskInstruction
+              taskInstruction.id
             );
           })
         )
@@ -608,7 +618,7 @@ export class BoardPageComponent implements OnInit {
     }
   }
 
-  onUpdateTask(instructionId: string, taskId: string, task: TaskDto) {
+  onUpdateTask(instructionId: string, taskId: string, task: BoardTask) {
     this._dialog
       .open<EditTaskData, Option<EditTaskData>, EditTaskModalComponent>(
         EditTaskModalComponent,
@@ -678,8 +688,8 @@ export class BoardPageComponent implements OnInit {
   onEscapePressed(
     activeInstructionId: Option<string>,
     activeCollectionId: Option<string>,
-    selectedTask: Option<TaskDto>,
-    selectedDocument: Option<DocumentDto>
+    selectedTask: Option<BoardTask>,
+    selectedDocument: Option<BoardDocument>
   ) {
     const instructionsSectionRef = this._dialog.getDialogById(
       'instructions-section'
@@ -706,19 +716,19 @@ export class BoardPageComponent implements OnInit {
   }
 
   onDeletePressed(
-    selectedTask: Option<TaskDto>,
-    selectedDocument: Option<DocumentDto>
+    selectedTask: Option<BoardTask>,
+    selectedDocument: Option<BoardDocument>
   ) {
     if (selectedTask !== null) {
       if (confirm('Are you sure? This action cannot be reverted.')) {
         this._taskApiService
-          .deleteTask(selectedTask.owner, selectedTask.id)
+          .deleteTask(selectedTask.ownerId, selectedTask.id)
           .subscribe(() => (selectedTask = null));
       }
     } else if (selectedDocument !== null) {
       if (confirm('Are you sure? This action cannot be reverted.')) {
         this._documentApiService
-          .deleteDocument(selectedDocument.owner, selectedDocument.id)
+          .deleteDocument(selectedDocument.ownerId, selectedDocument.id)
           .subscribe(() => (selectedDocument = null));
       }
     }

@@ -37,6 +37,7 @@ export interface PluginInterface {
   name: string;
   instructions: IdlInstruction[];
   accounts: IdlAccount[];
+  isAnchor: boolean;
 
   getInstruction(instructionName: string): IdlInstruction | null;
   getTransactionInstruction(

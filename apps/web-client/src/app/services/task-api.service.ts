@@ -8,12 +8,11 @@ import {
 } from '@angular/fire/firestore';
 import { defer, from } from 'rxjs';
 import { Entity } from '../utils';
-import { GenericInstruction } from './instruction-api.service';
 
 export type TaskDto = Entity<{
   name: string;
-  owner: string;
-  instruction: GenericInstruction;
+  ownerId: string;
+  instructionId: string;
 }>;
 
 @Injectable({ providedIn: 'root' })
@@ -21,21 +20,21 @@ export class TaskApiService {
   private readonly _firestore = inject(Firestore);
 
   createTask(
-    instructionId: string,
+    ownerId: string,
     newTaskId: string,
     name: string,
-    taskInstruction: GenericInstruction
+    instructionId: string
   ) {
     return defer(() =>
       from(
         runTransaction(this._firestore, async (transaction) => {
           const instructionRef = doc(
             this._firestore,
-            `instructions/${instructionId}`
+            `instructions/${ownerId}`
           );
           const newTaskRef = doc(
             this._firestore,
-            `instructions/${instructionId}/tasks/${newTaskId}`
+            `instructions/${ownerId}/tasks/${newTaskId}`
           );
           const instruction = await transaction.get(instructionRef);
           const instructionData = instruction.data();
@@ -43,8 +42,8 @@ export class TaskApiService {
           // create the new task
           transaction.set(newTaskRef, {
             name,
-            owner: instructionId,
-            instruction: taskInstruction,
+            ownerId,
+            instructionId,
           });
           // push task id to the tasksOrder
           transaction.update(instructionRef, {

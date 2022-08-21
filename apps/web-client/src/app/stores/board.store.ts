@@ -4,29 +4,61 @@ import {
   OnStoreInit,
   tapResponse,
 } from '@ngrx/component-store';
-import { combineLatest, EMPTY, map, Observable, switchMap } from 'rxjs';
+import { combineLatest, EMPTY, map, Observable, switchMap, tap } from 'rxjs';
 import { IdlStructField, PluginsService } from '../plugins';
 import {
   ApplicationApiService,
   ApplicationDto,
   CollectionApiService,
+  CollectionAttributeDto,
   CollectionDto,
   DocumentDto,
-  GenericCollection,
-  GenericInstruction,
   InstructionApiService,
+  InstructionArgumentDto,
   InstructionDto,
   TaskDto,
   WorkspaceApiService,
   WorkspaceDto,
 } from '../services';
-import { Option } from '../utils';
+import { Entity, Option } from '../utils';
 
-export interface BoardInstruction {
+export type BoardCollection = Entity<{
+  name: string;
+  thumbnailUrl: string;
+  applicationId: string;
+  workspaceId: string;
+  isInternal: boolean;
+  isAnchor: boolean;
+  attributes: CollectionAttributeDto[];
+}>;
+
+export type BoardDocument = Entity<{
+  name: string;
+  method: string;
+  ownerId: string;
+  collection: BoardCollection;
+}>;
+
+export type BoardInstruction = Entity<{
+  name: string;
+  thumbnailUrl: string;
+  applicationId: string;
+  workspaceId: string;
+  isInternal: boolean;
+  arguments: InstructionArgumentDto[];
+}>;
+
+export type BoardTask = Entity<{
+  name: string;
+  ownerId: string;
+  instruction: BoardInstruction;
+}>;
+
+export interface BoardEntry {
   id: string;
   name: string;
-  tasks: TaskDto[];
-  documents: DocumentDto[];
+  tasks: BoardTask[];
+  documents: BoardDocument[];
 }
 
 interface ViewModel {
@@ -36,7 +68,14 @@ interface ViewModel {
   applications: Option<
     (ApplicationDto & { collectionIds: string[]; instructionIds: string[] })[]
   >;
-  currentApplicationInstructions: Option<BoardInstruction[]>;
+  currentApplicationInstructions: Option<
+    {
+      id: string;
+      name: string;
+      tasks: TaskDto[];
+      documents: DocumentDto[];
+    }[]
+  >;
   workspaceInstructions: Option<InstructionDto[]>;
   workspaceCollections: Option<CollectionDto[]>;
   selectedDocumentId: Option<string>;
@@ -159,42 +198,7 @@ export class BoardStore
   readonly currentApplicationInstructions$ = this.select(
     ({ currentApplicationInstructions }) => currentApplicationInstructions
   );
-  readonly selectedDocument$ = this.select(
-    this.currentApplicationInstructions$,
-    this.select(({ selectedDocumentId }) => selectedDocumentId),
-    (currentApplicationInstructions, selectedDocumentId) => {
-      if (
-        currentApplicationInstructions === null ||
-        selectedDocumentId === null
-      ) {
-        return null;
-      }
 
-      return (
-        currentApplicationInstructions
-          .find(({ documents }) =>
-            documents.some((document) => document.id === selectedDocumentId)
-          )
-          ?.documents.find((document) => document.id === selectedDocumentId) ??
-        null
-      );
-    }
-  );
-  readonly selectedTask$ = this.select(
-    this.currentApplicationInstructions$,
-    this.select(({ selectedTaskId }) => selectedTaskId),
-    (currentApplicationInstructions, selectedTaskId) => {
-      if (currentApplicationInstructions === null || selectedTaskId === null) {
-        return null;
-      }
-
-      return (
-        currentApplicationInstructions
-          .find(({ tasks }) => tasks.some((task) => task.id === selectedTaskId))
-          ?.tasks.find((task) => task.id === selectedTaskId) ?? null
-      );
-    }
-  );
   readonly activeCollectionId$ = this.select(
     ({ activeCollectionId }) => activeCollectionId
   );
@@ -209,19 +213,20 @@ export class BoardStore
       }
 
       return [
-        ...workspaceCollections.map<GenericCollection>((collection) => ({
+        ...workspaceCollections.map<BoardCollection>((collection) => ({
           id: collection.id,
           name: collection.name,
           thumbnailUrl: collection.thumbnailUrl,
           applicationId: collection.applicationId,
           workspaceId: collection.workspaceId,
           isInternal: true,
+          isAnchor: false,
           attributes: collection.attributes,
         })),
-        ...this._pluginsService.plugins.reduce<GenericCollection[]>(
+        ...this._pluginsService.plugins.reduce<BoardCollection[]>(
           (collections, plugin) => [
             ...collections,
-            ...plugin.accounts.reduce<GenericCollection[]>(
+            ...plugin.accounts.reduce<BoardCollection[]>(
               (innerCollections, account) => {
                 const fields: IdlStructField[] =
                   typeof account.type === 'string'
@@ -239,6 +244,7 @@ export class BoardStore
                     applicationId: plugin.name,
                     workspaceId: plugin.namespace,
                     isInternal: false,
+                    isAnchor: plugin.isAnchor,
                     attributes: fields.map((field) => {
                       if (typeof field.type === 'string') {
                         return {
@@ -292,7 +298,7 @@ export class BoardStore
         ),
       ];
     }
-  );
+  ).pipe(tap((a) => console.log(a)));
   readonly instructions$ = this.select(
     this.workspaceInstructions$,
     (workspaceInstructions) => {
@@ -301,7 +307,7 @@ export class BoardStore
       }
 
       return [
-        ...workspaceInstructions.map<GenericInstruction>((instruction) => ({
+        ...workspaceInstructions.map<BoardInstruction>((instruction) => ({
           id: instruction.id,
           name: instruction.name,
           thumbnailUrl: instruction.thumbnailUrl,
@@ -310,10 +316,10 @@ export class BoardStore
           isInternal: true,
           arguments: instruction.arguments,
         })),
-        ...this._pluginsService.plugins.reduce<GenericInstruction[]>(
+        ...this._pluginsService.plugins.reduce<BoardInstruction[]>(
           (instructions, plugin) => [
             ...instructions,
-            ...plugin.instructions.reduce<GenericInstruction[]>(
+            ...plugin.instructions.reduce<BoardInstruction[]>(
               (innerInstructions, instruction) => {
                 const args = instruction.args;
 
@@ -380,7 +386,7 @@ export class BoardStore
       ];
     }
   );
-  readonly activeInstruction$: Observable<Option<GenericInstruction>> =
+  readonly activeInstruction$: Observable<Option<BoardInstruction>> =
     this.select(
       this.instructions$,
       this.select(({ activeInstructionId }) => activeInstructionId),
@@ -396,23 +402,22 @@ export class BoardStore
         );
       }
     );
-  readonly activeCollection$: Observable<Option<GenericCollection>> =
-    this.select(
-      this.collections$,
-      this.select(({ activeCollectionId }) => activeCollectionId),
-      (collections, activeCollectionId) => {
-        if (collections === null || activeCollectionId === null) {
-          return null;
-        }
-
-        return (
-          collections?.find(
-            (collection) => collection.id === activeCollectionId
-          ) ?? null
-        );
+  readonly activeCollection$: Observable<Option<BoardCollection>> = this.select(
+    this.collections$,
+    this.select(({ activeCollectionId }) => activeCollectionId),
+    (collections, activeCollectionId) => {
+      if (collections === null || activeCollectionId === null) {
+        return null;
       }
-    );
-  readonly instructionSlots$: Observable<Option<GenericInstruction>[]> =
+
+      return (
+        collections?.find(
+          (collection) => collection.id === activeCollectionId
+        ) ?? null
+      );
+    }
+  );
+  readonly instructionSlots$: Observable<Option<BoardInstruction>[]> =
     this.select(
       this.instructions$,
       this.select(({ instructionSlotIds }) => instructionSlotIds),
@@ -429,7 +434,7 @@ export class BoardStore
           );
         })
     );
-  readonly collectionSlots$: Observable<Option<GenericCollection>[]> =
+  readonly collectionSlots$: Observable<Option<BoardCollection>[]> =
     this.select(
       this.collections$,
       this.select(({ collectionSlotIds }) => collectionSlotIds),
@@ -445,7 +450,7 @@ export class BoardStore
           );
         })
     );
-  readonly selectedInstruction$: Observable<Option<GenericInstruction>> =
+  readonly selectedInstruction$: Observable<Option<BoardInstruction>> =
     this.select(
       this.instructions$,
       this.select(({ selectedInstructionId }) => selectedInstructionId),
@@ -461,7 +466,7 @@ export class BoardStore
         );
       }
     );
-  readonly selectedCollection$: Observable<Option<GenericCollection>> =
+  readonly selectedCollection$: Observable<Option<BoardCollection>> =
     this.select(
       this.collections$,
       this.select(({ selectedCollectionId }) => selectedCollectionId),
@@ -477,6 +482,94 @@ export class BoardStore
         );
       }
     );
+
+  readonly boardInstructions$ = this.select(
+    this.currentApplicationInstructions$,
+    this.instructions$,
+    this.collections$,
+    (currentApplicationInstructions, instructions, collections) => {
+      if (
+        currentApplicationInstructions === null ||
+        instructions === null ||
+        collections === null
+      ) {
+        return null;
+      }
+
+      return currentApplicationInstructions.map((instruction) => ({
+        id: instruction.id,
+        name: instruction.name,
+        documents: instruction.documents.map((document) => {
+          const collection =
+            collections.find(
+              (collection) => collection.id === document.collectionId
+            ) ?? null;
+
+          if (collection === null) {
+            throw Error(`Document ${document.id} collectionId is invalid.`);
+          }
+
+          return {
+            id: document.id,
+            name: document.name,
+            method: document.method,
+            ownerId: document.ownerId,
+            collection,
+          };
+        }),
+        tasks: instruction.tasks.map((task) => {
+          const taskInstruction =
+            instructions.find(
+              (instruction) => instruction.id === task.instructionId
+            ) ?? null;
+
+          if (taskInstruction === null) {
+            throw Error(`Task ${task.id} instructionId is invalid.`);
+          }
+
+          return {
+            id: task.id,
+            name: task.name,
+            ownerId: task.ownerId,
+            instruction: taskInstruction,
+          };
+        }),
+      }));
+    }
+  );
+  readonly selectedTask$ = this.select(
+    this.boardInstructions$,
+    this.select(({ selectedTaskId }) => selectedTaskId),
+    (boardInstructions, selectedTaskId) => {
+      if (boardInstructions === null || selectedTaskId === null) {
+        return null;
+      }
+
+      return (
+        boardInstructions
+          .find(({ tasks }) => tasks.some((task) => task.id === selectedTaskId))
+          ?.tasks.find((task) => task.id === selectedTaskId) ?? null
+      );
+    }
+  );
+  readonly selectedDocument$ = this.select(
+    this.boardInstructions$,
+    this.select(({ selectedDocumentId }) => selectedDocumentId),
+    (boardInstructions, selectedDocumentId) => {
+      if (boardInstructions === null || selectedDocumentId === null) {
+        return null;
+      }
+
+      return (
+        boardInstructions
+          .find(({ documents }) =>
+            documents.some((document) => document.id === selectedDocumentId)
+          )
+          ?.documents.find((document) => document.id === selectedDocumentId) ??
+        null
+      );
+    }
+  );
 
   readonly setWorkspaceId = this.updater<Option<string>>(
     (state, workspaceId) => ({

@@ -9,7 +9,7 @@ import {
 import { combineLatest, defer, from, map, Observable, of } from 'rxjs';
 import { Entity } from '../utils';
 
-export interface CollectionAttribute {
+export interface CollectionAttributeDto {
   name: string;
   type: string;
   isOption: boolean;
@@ -20,16 +20,7 @@ export type CollectionDto = Entity<{
   thumbnailUrl: string;
   applicationId: string;
   workspaceId: string;
-  attributes: CollectionAttribute[];
-}>;
-
-export type GenericCollection = Entity<{
-  name: string;
-  thumbnailUrl: string;
-  applicationId: string;
-  workspaceId: string;
-  isInternal: boolean;
-  attributes: CollectionAttribute[];
+  attributes: CollectionAttributeDto[];
 }>;
 
 @Injectable({ providedIn: 'root' })
@@ -86,7 +77,7 @@ export class CollectionApiService {
     newCollectionId: string,
     name: string,
     thumbnailUrl: string,
-    attributes: CollectionAttribute[]
+    attributes: CollectionAttributeDto[]
   ) {
     return defer(() =>
       from(
@@ -132,7 +123,7 @@ export class CollectionApiService {
     collectionId: string,
     name: string,
     thumbnailUrl: string,
-    attributes: CollectionAttribute[]
+    attributes: CollectionAttributeDto[]
   ) {
     return defer(() =>
       from(
