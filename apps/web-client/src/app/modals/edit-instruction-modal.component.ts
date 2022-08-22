@@ -1,4 +1,9 @@
 import { Dialog, DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
+import {
+  CdkDragDrop,
+  DragDropModule,
+  moveItemInArray,
+} from '@angular/cdk/drag-drop';
 import { CommonModule } from '@angular/common';
 import {
   Component,
@@ -123,24 +128,40 @@ export class EditInstructionModalDirective {
         <div formArrayName="arguments">
           <p>
             <span>Instruction arguments</span>
-            <button (click)="onAddAttribute()" type="button">+</button>
+            <button (click)="onAddArgument()" type="button">+</button>
           </p>
 
-          <div class="flex flex-col gap-2">
+          <div
+            class="flex flex-col gap-2"
+            cdkDropList
+            [cdkDropListData]="argumentsControl.value"
+            (cdkDropListDropped)="onArgumentDropped($event)"
+          >
             <div
               *ngFor="
                 let argumentForm of argumentsControl.controls;
                 let i = index
               "
-              class="border-black border-2 p-2"
+              class="border-black border-2 p-2 bg-white relative"
+              cdkDrag
+              [cdkDragData]="argumentForm.value"
             >
+              <div class="absolute right-2 top-2" cdkDragHandle>
+                <svg width="24px" fill="currentColor" viewBox="0 0 24 24">
+                  <path
+                    d="M10 9h4V6h3l-5-5-5 5h3v3zm-1 1H6V7l-5 5 5 5v-3h3v-4zm14 2l-5-5v3h-3v4h3v3l5-5zm-9 3h-4v3H7l5 5 5-5h-3v-3z"
+                  ></path>
+                  <path d="M0 0h24v24H0z" fill="none"></path>
+                </svg>
+              </div>
+
               <div [formGroup]="argumentForm">
                 <div>
                   <label
                     class="block"
                     [for]="'instruction-arguments-' + i + '-name'"
                   >
-                    Attribute name
+                    Argument name
                   </label>
                   <input
                     [id]="'instruction-arguments-' + i + '-name'"
@@ -154,7 +175,7 @@ export class EditInstructionModalDirective {
                     class="block"
                     [for]="'instruction-arguments-' + i + '-type'"
                   >
-                    Attribute type
+                    Argument type
                   </label>
 
                   <select
@@ -182,7 +203,7 @@ export class EditInstructionModalDirective {
                   >
                 </div>
 
-                <button (click)="onRemoveAttribute(i)" type="button">x</button>
+                <button (click)="onRemoveArgument(i)" type="button">x</button>
               </div>
             </div>
           </div>
@@ -197,7 +218,7 @@ export class EditInstructionModalDirective {
     </div>
   `,
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, DragDropModule],
 })
 export class EditInstructionModalComponent {
   private readonly _dialogRef =
@@ -266,7 +287,7 @@ export class EditInstructionModalComponent {
     >;
   }
 
-  onAddAttribute() {
+  onAddArgument() {
     const argumentForm = this._formBuilder.group({
       name: this._formBuilder.control<string>('', {
         validators: [Validators.required],
@@ -284,8 +305,38 @@ export class EditInstructionModalComponent {
     this.argumentsControl.push(argumentForm);
   }
 
-  onRemoveAttribute(index: number) {
+  onRemoveArgument(index: number) {
     this.argumentsControl.removeAt(index);
+  }
+
+  onArgumentDropped(
+    event: CdkDragDrop<
+      Partial<{
+        name: string;
+        type: string;
+        isOption: boolean;
+      }>[],
+      unknown,
+      Partial<{
+        name: string;
+        type: string;
+        isOption: boolean;
+      }>
+    >
+  ) {
+    moveItemInArray(
+      event.container.data,
+      event.previousIndex,
+      event.currentIndex
+    );
+
+    this.argumentsControl.setValue(
+      event.container.data.map((argumentData) => ({
+        name: argumentData.name ?? '',
+        type: argumentData.type ?? '',
+        isOption: !!argumentData.isOption,
+      }))
+    );
   }
 
   onSubmit() {

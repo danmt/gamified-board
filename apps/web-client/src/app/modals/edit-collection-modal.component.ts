@@ -1,4 +1,9 @@
 import { Dialog, DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
+import {
+  CdkDragDrop,
+  DragDropModule,
+  moveItemInArray,
+} from '@angular/cdk/drag-drop';
 import { CommonModule } from '@angular/common';
 import {
   Component,
@@ -126,14 +131,30 @@ export class EditCollectionModalDirective {
             <button (click)="onAddAttribute()" type="button">+</button>
           </p>
 
-          <div class="flex flex-col gap-2">
+          <div
+            class="flex flex-col gap-2"
+            cdkDropList
+            [cdkDropListData]="attributesControl.value"
+            (cdkDropListDropped)="onAttributeDropped($event)"
+          >
             <div
               *ngFor="
                 let attributeForm of attributesControl.controls;
                 let i = index
               "
-              class="border-black border-2 p-2"
+              class="border-black border-2 p-2 bg-white relative"
+              cdkDrag
+              [cdkDragData]="attributeForm.value"
             >
+              <div class="absolute right-2 top-2" cdkDragHandle>
+                <svg width="24px" fill="currentColor" viewBox="0 0 24 24">
+                  <path
+                    d="M10 9h4V6h3l-5-5-5 5h3v3zm-1 1H6V7l-5 5 5 5v-3h3v-4zm14 2l-5-5v3h-3v4h3v3l5-5zm-9 3h-4v3H7l5 5 5-5h-3v-3z"
+                  ></path>
+                  <path d="M0 0h24v24H0z" fill="none"></path>
+                </svg>
+              </div>
+
               <div [formGroup]="attributeForm">
                 <div>
                   <label
@@ -197,7 +218,7 @@ export class EditCollectionModalDirective {
     </div>
   `,
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, DragDropModule],
 })
 export class EditCollectionModalComponent {
   private readonly _dialogRef =
@@ -286,6 +307,36 @@ export class EditCollectionModalComponent {
 
   onRemoveAttribute(index: number) {
     this.attributesControl.removeAt(index);
+  }
+
+  onAttributeDropped(
+    event: CdkDragDrop<
+      Partial<{
+        name: string;
+        type: string;
+        isOption: boolean;
+      }>[],
+      unknown,
+      Partial<{
+        name: string;
+        type: string;
+        isOption: boolean;
+      }>
+    >
+  ) {
+    moveItemInArray(
+      event.container.data,
+      event.previousIndex,
+      event.currentIndex
+    );
+
+    this.attributesControl.setValue(
+      event.container.data.map((attributeData) => ({
+        name: attributeData.name ?? '',
+        type: attributeData.type ?? '',
+        isOption: !!attributeData.isOption,
+      }))
+    );
   }
 
   onSubmit() {

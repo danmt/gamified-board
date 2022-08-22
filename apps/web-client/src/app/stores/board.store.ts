@@ -4,7 +4,7 @@ import {
   OnStoreInit,
   tapResponse,
 } from '@ngrx/component-store';
-import { combineLatest, EMPTY, map, Observable, switchMap, tap } from 'rxjs';
+import { combineLatest, EMPTY, map, Observable, switchMap } from 'rxjs';
 import { IdlStructField, PluginsService } from '../plugins';
 import {
   ApplicationApiService,
@@ -298,7 +298,7 @@ export class BoardStore
         ),
       ];
     }
-  ).pipe(tap((a) => console.log(a)));
+  );
   readonly instructions$ = this.select(
     this.workspaceInstructions$,
     (workspaceInstructions) => {
