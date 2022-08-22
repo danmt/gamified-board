@@ -183,6 +183,7 @@ export class InstructionApiService {
             workspaceRef,
             thumbnailUrl,
             tasksOrder: [],
+            documents: [],
             documentsOrder: [],
             arguments: args,
           });

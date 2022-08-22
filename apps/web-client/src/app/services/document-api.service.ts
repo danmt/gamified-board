@@ -134,7 +134,6 @@ export class DocumentApiService {
 
   createDocument(
     ownerId: string,
-    newDocumentId: string,
     name: string,
     method: string,
     collectionId: string
@@ -146,25 +145,19 @@ export class DocumentApiService {
             this._firestore,
             `instructions/${ownerId}`
           );
-          const newDocumentRef = doc(
-            this._firestore,
-            `instructions/${ownerId}/documents/${newDocumentId}`
-          );
           const instruction = await transaction.get(instructionRef);
           const instructionData = instruction.data();
 
-          // create the new document
-          transaction.set(newDocumentRef, {
-            name,
-            method,
-            ownerId,
-            collectionId,
-          });
-          // push document id to the documentsOrder
+          // push document to the instruction's documents list
           transaction.update(instructionRef, {
-            documentsOrder: [
-              ...(instructionData ? instructionData['documentsOrder'] : []),
-              newDocumentId,
+            documents: [
+              ...(instructionData ? instructionData['documents'] : []),
+              {
+                name,
+                method,
+                ownerId,
+                collectionId,
+              },
             ],
           });
 
