@@ -1,11 +1,5 @@
-import { transferArrayItem } from '@angular/cdk/drag-drop';
 import { inject, Injectable } from '@angular/core';
-import {
-  doc,
-  Firestore,
-  runTransaction,
-  updateDoc,
-} from '@angular/fire/firestore';
+import { doc, Firestore, runTransaction } from '@angular/fire/firestore';
 import { defer, from } from 'rxjs';
 import { Entity } from '../utils';
 
@@ -21,78 +15,55 @@ export class DocumentApiService {
   private readonly _firestore = inject(Firestore);
 
   transferDocument(
-    instructions: { id: string; documents: { id: string }[] }[],
     previousInstructionId: string,
     newInstructionId: string,
     documentId: string,
-    previousIndex: number,
     newIndex: number
   ) {
+    const previousInstructionRef = doc(
+      this._firestore,
+      `instructions/${previousInstructionId}`
+    );
+
+    const newInstructionRef = doc(
+      this._firestore,
+      `instructions/${newInstructionId}`
+    );
+
     return defer(() =>
       from(
         runTransaction(this._firestore, async (transaction) => {
-          const previousInstructionIndex = instructions.findIndex(
-            ({ id }) => id === previousInstructionId
+          const previousInstruction = await transaction.get(
+            previousInstructionRef
           );
+          const newInstruction = await transaction.get(newInstructionRef);
 
-          if (previousInstructionIndex === -1) {
-            throw new Error('Invalid previous instruction.');
+          const previousInstructionDocuments = (previousInstruction.data()?.[
+            'documents'
+          ] ?? []) as DocumentDto[];
+          const newInstructionDocuments = (newInstruction.data()?.[
+            'documents'
+          ] ?? []) as DocumentDto[];
+          const document =
+            previousInstructionDocuments.find(
+              (document) => document.id === documentId
+            ) ?? null;
+
+          if (document === null) {
+            throw new Error('Document not found');
           }
 
-          const previousInstructionRef = doc(
-            this._firestore,
-            `instructions/${previousInstructionId}`
-          );
-
-          const newInstructionIndex = instructions.findIndex(
-            ({ id }) => id === newInstructionId
-          );
-
-          if (newInstructionIndex === -1) {
-            throw new Error('Invalid new instruction.');
-          }
-
-          const newInstructionRef = doc(
-            this._firestore,
-            `instructions/${newInstructionId}`
-          );
-
-          const previousInstructionDocuments = instructions[
-            previousInstructionIndex
-          ].documents.map(({ id }) => id);
-          const newInstructionDocuments = instructions[
-            newInstructionIndex
-          ].documents.map(({ id }) => id);
-
-          transferArrayItem(
-            previousInstructionDocuments,
-            newInstructionDocuments,
-            previousIndex,
-            newIndex
-          );
-
-          const currentDocumentRef = doc(
-            this._firestore,
-            `instructions/${previousInstructionId}/documents/${documentId}`
-          );
-          const newDocumentRef = doc(
-            this._firestore,
-            `instructions/${newInstructionId}/documents/${documentId}`
-          );
-
-          const document = await transaction.get(currentDocumentRef);
-          // remove from previous instruction documents
           transaction.update(previousInstructionRef, {
-            documentsOrder: previousInstructionDocuments,
+            documents: previousInstructionDocuments.filter(
+              (document: DocumentDto) => document.id !== documentId
+            ),
           });
-          // remove from previous instruction documentsOrder
-          transaction.delete(currentDocumentRef);
-
-          // add it to new instruction documents
-          transaction.set(newDocumentRef, document.data());
-          // update new instruction documents order
           transaction.update(newInstructionRef, {
-            documentsOrder: newInstructionDocuments,
+            documents: [
+              ...newInstructionDocuments.slice(0, newIndex),
+              document,
+              ...newInstructionDocuments.slice(newIndex + 1),
+            ],
           });
 
           return {};
@@ -112,19 +83,56 @@ export class DocumentApiService {
 
           const instruction = await transaction.get(instructionRef);
 
-          const documentsOrder = instruction
-            .data()
-            ?.['documentsOrder'].filter(
-              (document: string) => document !== documentId
-            );
+          transaction.update(instructionRef, {
+            documents: instruction
+              .data()
+              ?.['documents'].filter(
+                (document: DocumentDto) => document.id !== documentId
+              ),
+          });
 
-          transaction.update(instructionRef, { documentsOrder });
-          transaction.delete(
-            doc(
-              this._firestore,
-              `instructions/${instructionId}/documents/${documentId}`
-            )
+          return {};
+        })
+      )
+    );
+  }
+
+  updateDocument(
+    instructionId: string,
+    documentId: string,
+    name: string,
+    method: string
+  ) {
+    return defer(() =>
+      from(
+        runTransaction(this._firestore, async (transaction) => {
+          const instructionRef = doc(
+            this._firestore,
+            `instructions/${instructionId}`
           );
+
+          const instruction = await transaction.get(instructionRef);
+          const documents = (instruction.data()?.['documents'] ??
+            []) as DocumentDto[];
+          const documentIndex = documents.findIndex(
+            (document) => document.id === documentId
+          );
+
+          if (documentIndex === -1) {
+            throw new Error('Document not found');
+          }
+
+          transaction.update(instructionRef, {
+            documents: [
+              ...documents.slice(0, documentIndex),
+              {
+                ...documents[documentIndex],
+                name,
+                method,
+              },
+              ...documents.slice(documentIndex + 1),
+            ],
+          });
 
           return {};
         })
@@ -134,6 +142,7 @@ export class DocumentApiService {
 
   createDocument(
     ownerId: string,
+    newDocumentId: string,
     name: string,
     method: string,
     collectionId: string
@@ -151,8 +160,11 @@ export class DocumentApiService {
           // push document to the instruction's documents list
           transaction.update(instructionRef, {
             documents: [
-              ...(instructionData ? instructionData['documents'] : []),
+              ...(instructionData && instructionData['documents']
+                ? instructionData['documents']
+                : []),
               {
+                id: newDocumentId,
                 name,
                 method,
                 ownerId,
@@ -167,24 +179,31 @@ export class DocumentApiService {
     );
   }
 
-  updateDocument(
-    instructionId: string,
-    documentId: string,
-    name: string,
-    method: string
-  ) {
+  updateDocumentsOrder(ownerId: string, documentsOrder: string[]) {
     return defer(() =>
       from(
-        updateDoc(
-          doc(
+        runTransaction(this._firestore, async (transaction) => {
+          const instructionRef = doc(
             this._firestore,
-            `instructions/${instructionId}/documents/${documentId}`
-          ),
-          {
-            name,
-            method,
-          }
-        )
+            `instructions/${ownerId}`
+          );
+
+          const instruction = await transaction.get(instructionRef);
+          const documents = (instruction.data()?.['documents'] ??
+            []) as DocumentDto[];
+
+          transaction.update(instructionRef, {
+            documents: documentsOrder.map((documentId) => {
+              const documentIndex = documents.findIndex(
+                (document) => document.id === documentId
+              );
+
+              return documents[documentIndex];
+            }),
+          });
+
+          return {};
+        })
       )
     );
   }

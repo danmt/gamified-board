@@ -187,11 +187,9 @@ import { Entity, Option } from '../utils';
                       "
                       (transferDocument)="
                         onTransferDocument(
-                          instructions,
                           $event.previousInstructionId,
                           $event.newInstructionId,
                           $event.documentId,
-                          $event.previousIndex,
                           $event.newIndex
                         )
                       "
@@ -382,26 +380,22 @@ export class BoardPageComponent implements OnInit {
 
     moveItemInArray(documentsOrder, previousIndex, newIndex);
 
-    this._instructionApiService
-      .updateInstructionDocumentsOrder(instructionId, documentsOrder)
+    this._documentApiService
+      .updateDocumentsOrder(instructionId, documentsOrder)
       .subscribe();
   }
 
   onTransferDocument(
-    entries: BoardEntry[],
     previousInstructionId: string,
     newInstructionId: string,
     documentId: string,
-    previousIndex: number,
     newIndex: number
   ) {
     this._documentApiService
       .transferDocument(
-        entries,
         previousInstructionId,
         newInstructionId,
         documentId,
-        previousIndex,
         newIndex
       )
       .subscribe();
@@ -540,7 +534,7 @@ export class BoardPageComponent implements OnInit {
 
             return this._documentApiService.createDocument(
               instructionId,
-              documentData.id,
+              documentCollection.id,
               documentData.name,
               documentData.method,
               documentCollection.id

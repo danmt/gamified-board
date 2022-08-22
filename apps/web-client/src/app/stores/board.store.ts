@@ -758,27 +758,11 @@ export class BoardStore
 
       return combineLatest(
         instructions.map((instruction) =>
-          combineLatest([
-            this._instructionApiService.getInstructionDocuments(instruction.id),
-            this._instructionApiService.getInstructionTasks(instruction.id),
-          ]).pipe(
-            map(([documents, tasks]) => ({
+          this._instructionApiService.getInstructionTasks(instruction.id).pipe(
+            map((tasks) => ({
               id: instruction.id,
               name: instruction.name,
-              documents: instruction.documentsOrder.reduce(
-                (orderedDocuments: DocumentDto[], documentId: string) => {
-                  const documentFound =
-                    documents.find((document) => document.id === documentId) ??
-                    null;
-
-                  if (documentFound === null) {
-                    return orderedDocuments;
-                  }
-
-                  return [...orderedDocuments, documentFound];
-                },
-                []
-              ),
+              documents: instruction.documents,
               tasks: instruction.tasksOrder.reduce(
                 (orderedTasks: TaskDto[], taskId: string) => {
                   const taskFound =

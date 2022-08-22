@@ -29,7 +29,7 @@ export type InstructionDto = Entity<{
   thumbnailUrl: string;
   applicationId: string;
   workspaceId: string;
-  documentsOrder: string[];
+  documents: DocumentDto[];
   tasksOrder: string[];
   arguments: InstructionArgumentDto[];
 }>;
@@ -42,12 +42,12 @@ export class InstructionApiService {
     return docData(doc(this._firestore, `instructions/${instructionId}`)).pipe(
       map((instruction) => ({
         id: instructionId,
-        name: instruction['name'] as string,
-        thumbnailUrl: instruction['thumbnailUrl'] as string,
-        workspaceId: instruction['workspaceRef'].id as string,
-        applicationId: instruction['applicationRef'].id as string,
-        documentsOrder: instruction['documentsOrder'] as string[],
-        tasksOrder: instruction['tasksOrder'] as string[],
+        name: instruction['name'],
+        thumbnailUrl: instruction['thumbnailUrl'],
+        workspaceId: instruction['workspaceRef'].id,
+        applicationId: instruction['applicationRef'].id,
+        documents: instruction['documents'] ?? [],
+        tasksOrder: instruction['tasksOrder'],
         arguments: instruction['arguments'] ?? [],
       }))
     );
@@ -82,40 +82,6 @@ export class InstructionApiService {
         endAt(ownerRef.path + '\uf8ff')
       )
     );
-  }
-
-  getInstructionDocuments(instructionId: string): Observable<DocumentDto[]> {
-    const ownerRef = doc(this._firestore, `instructions/${instructionId}`);
-
-    return collectionData(
-      query(
-        collectionGroup(this._firestore, 'documents').withConverter({
-          fromFirestore: (snapshot) => ({
-            id: snapshot.id,
-            name: snapshot.data()['name'],
-            method: snapshot.data()['method'],
-            ownerId: snapshot.data()['ownerId'],
-            collectionId: snapshot.data()['collectionId'],
-          }),
-          toFirestore: (it) => it,
-        }),
-        orderBy(documentId()),
-        startAt(ownerRef.path),
-        endAt(ownerRef.path + '\uf8ff')
-      )
-    );
-  }
-
-  updateInstructionDocumentsOrder(
-    instructionId: string,
-    documentsOrder: string[]
-  ) {
-    const instructionRef = doc(
-      this._firestore,
-      `instructions/${instructionId}`
-    );
-
-    return defer(() => from(updateDoc(instructionRef, { documentsOrder })));
   }
 
   updateInstructionTasksOrder(instructionId: string, tasksOrder: string[]) {
@@ -184,7 +150,6 @@ export class InstructionApiService {
             thumbnailUrl,
             tasksOrder: [],
             documents: [],
-            documentsOrder: [],
             arguments: args,
           });
 

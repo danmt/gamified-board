@@ -194,7 +194,6 @@ export class RowComponent {
     previousInstructionId: string;
     newInstructionId: string;
     documentId: string;
-    previousIndex: number;
     newIndex: number;
   }>();
   @Output() moveTask = new EventEmitter<{
@@ -249,7 +248,6 @@ export class RowComponent {
         previousInstructionId,
         newInstructionId,
         documentId: event.item.data.id,
-        previousIndex: event.previousIndex,
         newIndex: event.currentIndex,
       });
     }
