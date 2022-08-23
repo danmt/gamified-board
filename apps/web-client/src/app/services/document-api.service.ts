@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { doc, Firestore, runTransaction } from '@angular/fire/firestore';
 import { defer, from } from 'rxjs';
-import { Entity } from '../utils';
+import { Entity, Option } from '../utils';
 
 export type ArgumentSeed = {
   kind: 'argument';
@@ -30,6 +30,7 @@ export type DocumentDto = Entity<{
   ownerId: string;
   collectionId: string;
   seeds: SeedTypes[];
+  bump: Option<ReferenceSeed>;
 }>;
 
 @Injectable({ providedIn: 'root' })
@@ -124,7 +125,8 @@ export class DocumentApiService {
     documentId: string,
     name: string,
     method: string,
-    seeds: SeedTypes[]
+    seeds: SeedTypes[],
+    bump: Option<ReferenceSeed>
   ) {
     return defer(() =>
       from(
@@ -153,6 +155,7 @@ export class DocumentApiService {
                 name,
                 method,
                 seeds,
+                bump,
               },
               ...documents.slice(documentIndex + 1),
             ],
@@ -170,7 +173,8 @@ export class DocumentApiService {
     name: string,
     method: string,
     collectionId: string,
-    seeds: SeedTypes[]
+    seeds: SeedTypes[],
+    bump: Option<ReferenceSeed>
   ) {
     return defer(() =>
       from(
@@ -195,6 +199,7 @@ export class DocumentApiService {
                 ownerId,
                 collectionId,
                 seeds,
+                bump,
               },
             ],
           });

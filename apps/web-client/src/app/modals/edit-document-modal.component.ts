@@ -17,60 +17,47 @@ import {
 import { combineLatest, map, of } from 'rxjs';
 import { v4 as uuid } from 'uuid';
 import { BoardStore } from '../stores';
-import { Option } from '../utils';
+import { isNotNull, Option } from '../utils';
 
-type ArgumentSeed = {
+interface ArgumentSeed {
   kind: 'argument';
-  argument: Option<{
+  argument: {
     id: string;
     name: string;
-  }>;
-};
+    type: string;
+  };
+}
 
-type AttributeSeed = {
+interface AttributeSeed {
   kind: 'attribute';
-  attribute: Option<{
+  attribute: {
     id: string;
     name: string;
-  }>;
-  document: Option<{
+    type: string;
+  };
+  document: {
     id: string;
     name: string;
-  }>;
-};
+  };
+}
 
 type ReferenceSeed = ArgumentSeed | AttributeSeed;
 
-type ValueSeed = {
+interface ValueSeed {
   kind: null;
   value: string;
   type: string;
-};
+}
 
 type SeedTypes = ReferenceSeed | ValueSeed;
-
-type AttributeReference = {
-  kind: 'attribute';
-  attributeId: string;
-  attributeName: string;
-  documentId: string;
-  documentName: string;
-};
-
-type ArgumentReference = {
-  kind: 'argument';
-  argumentId: string;
-  argumentName: string;
-};
-
-type SeedReference = AttributeReference | ArgumentReference;
 
 export interface EditDocumentData {
   document: Option<{
     id: string;
     name: string;
     method: string;
-    seeds: SeedTypes[];
+    seeds: Option<SeedTypes>[];
+    bump: Option<ReferenceSeed>;
   }>;
   collection: {
     name: string;
@@ -79,15 +66,21 @@ export interface EditDocumentData {
   };
   instructionId: string;
 }
+
+type SeedOutput =
+  | { kind: 'attribute'; documentId: string; attributeId: string }
+  | { kind: 'argument'; argumentId: string }
+  | { kind: null; value: string; type: string };
+
 export interface EditDocumentSubmitPayload {
   id: string;
   name: string;
   method: string;
-  seeds: (
+  bump: Option<
     | { kind: 'attribute'; documentId: string; attributeId: string }
     | { kind: 'argument'; argumentId: string }
-    | { kind: null; value: string; type: string }
-  )[];
+  >;
+  seeds: SeedOutput[];
 }
 
 @Component({
@@ -188,13 +181,34 @@ export interface EditDocumentSubmitPayload {
         <div formArrayName="seeds">
           <p>
             <span>Document seeds</span>
-            <button (click)="onAddSeed()" type="button">+</button>
+
+            <button
+              (click)="onAddAttributeSeed()"
+              type="button"
+              class="px-4 py-2 border-blue-500 border"
+            >
+              Attribute +
+            </button>
+            <button
+              (click)="onAddArgumentSeed()"
+              type="button"
+              class="px-4 py-2 border-blue-500 border"
+            >
+              Argument +
+            </button>
+            <button
+              (click)="onAddValueSeed()"
+              type="button"
+              class="px-4 py-2 border-blue-500 border"
+            >
+              Value +
+            </button>
           </p>
 
           <div
             class="flex flex-col gap-2"
             cdkDropList
-            [cdkDropListData]="seedsControl.value"
+            [cdkDropListData]="seedsControl"
             (cdkDropListDropped)="onSeedDropped($event)"
           >
             <div
@@ -212,75 +226,135 @@ export interface EditDocumentSubmitPayload {
                 </svg>
               </div>
 
+              <p *ngIf="seedForm.value === null">Invalid seed.</p>
+
               <div [formGroup]="seedForm">
-                <div>
-                  <input
-                    type="checkbox"
-                    id="document-seeds-is-reference"
-                    formControlName="isReference"
-                  />
-                  <label for="document-seeds-is-reference">
-                    Is Reference
-                  </label>
-                </div>
+                <div [ngSwitch]="seedForm.value.kind">
+                  <div *ngSwitchCase="'argument'">
+                    <div>
+                      <label
+                        class="block"
+                        [for]="'document-seeds-' + i + '-argument'"
+                      >
+                        Search argument
+                      </label>
 
-                <div *ngIf="seedForm.get('isReference')?.value === true">
-                  <label class="block" for="document-seeds-search">
-                    Search reference
-                  </label>
+                      <select
+                        [id]="'document-seeds-' + i + '-argument'"
+                        formControlName="reference"
+                        [compareWith]="compareArgumentsFn"
+                      >
+                        <option
+                          *ngFor="
+                            let argumentReference of argumentReferences$ | async
+                          "
+                          [ngValue]="argumentReference"
+                        >
+                          Argument {{ argumentReference.argument.name }}
+                        </option>
+                      </select>
+                    </div>
+                  </div>
 
-                  <select
-                    id="document-seeds-search"
-                    formControlName="reference"
-                  >
-                    <option
-                      *ngFor="let reference of seedReferences$ | async"
-                      [value]="reference"
-                    >
-                      <ng-container *ngIf="reference.kind === 'argument'">
-                        Argument {{ reference.argumentName }}
-                      </ng-container>
-                      <ng-container *ngIf="reference.kind === 'attribute'">
-                        Attribute {{ reference.documentName }}.{{
-                          reference.attributeName
-                        }}
-                      </ng-container>
-                    </option>
-                  </select>
-                </div>
+                  <div *ngSwitchCase="'attribute'">
+                    <div>
+                      <label
+                        class="block"
+                        [for]="'document-seeds-' + i + '-attribute'"
+                      >
+                        Search attribute
+                      </label>
 
-                <div *ngIf="seedForm.get('isReference')?.value === false">
-                  <label class="block" for="document-seeds-value">
-                    Value
-                  </label>
-                  <input
-                    class="block border-b-2 border-black"
-                    type="text"
-                    id="document-seeds-value"
-                    formControlName="value"
-                  />
-                </div>
+                      <select
+                        [id]="'document-seeds-' + i + '-attribute'"
+                        formControlName="reference"
+                        [compareWith]="compareAttributesFn"
+                      >
+                        <option
+                          *ngFor="
+                            let attributeReference of attributeReferences$
+                              | async
+                          "
+                          [ngValue]="attributeReference"
+                        >
+                          Attribute {{ attributeReference.document.name }}.{{
+                            attributeReference.attribute.name
+                          }}
+                        </option>
+                      </select>
+                    </div>
+                  </div>
 
-                <div *ngIf="seedForm.get('isReference')?.value === false">
-                  <label class="block" for="document-seeds-type"> Type </label>
-                  <select
-                    class="block"
-                    id="document-seeds-type"
-                    formControlName="type"
-                  >
-                    <option ngValue="u8">u8</option>
-                    <option ngValue="u16">u16</option>
-                    <option ngValue="u32">u32</option>
-                    <option ngValue="u64">u64</option>
-                    <option ngValue="String">String</option>
-                    <option ngValue="Pubkey">Public Key</option>
-                  </select>
+                  <div *ngSwitchCase="'invalid'">Invalid seed</div>
+
+                  <div *ngSwitchDefault>
+                    <div>
+                      <label
+                        class="block"
+                        [for]="'document-seeds-' + i + '-value'"
+                      >
+                        Value
+                      </label>
+                      <input
+                        class="block border-b-2 border-black"
+                        type="text"
+                        [id]="'document-seeds-' + i + '-value'"
+                        formControlName="value"
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        class="block"
+                        [for]="'document-seeds-' + i + '-type'"
+                      >
+                        Type
+                      </label>
+                      <select
+                        class="block"
+                        [id]="'document-seeds-' + i + '-type'"
+                        formControlName="type"
+                      >
+                        <option ngValue="u8">u8</option>
+                        <option ngValue="u16">u16</option>
+                        <option ngValue="u32">u32</option>
+                        <option ngValue="u64">u64</option>
+                        <option ngValue="String">String</option>
+                        <option ngValue="Pubkey">Public Key</option>
+                      </select>
+                    </div>
+                  </div>
                 </div>
 
                 <button (click)="onRemoveSeed(i)" type="button">x</button>
               </div>
             </div>
           </div>
+        </div>
+
+        <div>
+          <label for="document-bump">Document bump</label>
+
+          <select
+            formControlName="bump"
+            id="document-bump"
+            [compareWith]="compareBump"
+          >
+            <option [ngValue]="null">Not selected</option>
+            <option
+              *ngFor="let reference of bumpReferences$ | async"
+              [ngValue]="reference"
+            >
+              <ng-container *ngIf="reference.kind === 'attribute'">
+                Attribute {{ reference.document.name }}.{{
+                  reference.attribute.name
+                }}
+              </ng-container>
+              <ng-container *ngIf="reference.kind === 'argument'">
+                Argument {{ reference.argument.name }}
+              </ng-container>
+            </option>
+          </select>
         </div>
 
         <div class="flex justify-center items-center mt-4">
@@ -322,48 +396,76 @@ export class EditDocumentModalComponent {
     seeds: this.document?.seeds
       ? this._formBuilder.array(
           this.document.seeds.map((seed) => {
-            const reference: Option<SeedReference> =
-              seed.kind === 'argument'
-                ? seed.argument !== null
-                  ? {
-                      kind: 'argument',
-                      argumentId: seed.argument.id,
-                      argumentName: seed.argument.name,
-                    }
-                  : null
-                : seed.kind === 'attribute'
-                ? seed.attribute !== null && seed.document !== null
-                  ? {
-                      kind: 'attribute',
-                      attributeId: seed.attribute.id,
-                      attributeName: seed.attribute.name,
-                      documentId: seed.document.id,
-                      documentName: seed.document.name,
-                    }
-                  : null
-                : null;
-
-            return this._formBuilder.group({
-              isReference: this._formBuilder.control<boolean>(
-                seed.kind !== null,
-                {
-                  validators: [Validators.required],
+            if (seed === null) {
+              return this._formBuilder.group({
+                kind: this._formBuilder.control<'invalid'>('invalid'),
+              });
+            } else if (seed.kind === 'argument') {
+              return this._formBuilder.group({
+                kind: this._formBuilder.control<'argument'>(seed.kind),
+                reference: this._formBuilder.control<
+                  Option<{
+                    argument: {
+                      id: string;
+                      name: string;
+                    };
+                  }>
+                >({ argument: seed.argument }),
+              });
+            } else if (seed.kind === 'attribute') {
+              return this._formBuilder.group({
+                kind: this._formBuilder.control<'attribute'>(seed.kind),
+                reference: this._formBuilder.control<
+                  Option<{
+                    document: {
+                      id: string;
+                      name: string;
+                    };
+                    attribute: {
+                      id: string;
+                      name: string;
+                    };
+                  }>
+                >({ document: seed.document, attribute: seed.attribute }),
+              });
+            } else {
+              return this._formBuilder.group({
+                kind: this._formBuilder.control<null>(seed.kind),
+                value: this._formBuilder.control<string>(seed.value, {
                   nonNullable: true,
-                }
-              ),
-              reference: this._formBuilder.control(reference),
-              value: this._formBuilder.control<Option<string | number>>(
-                seed.kind === null ? seed.value : null
-              ),
-              type: this._formBuilder.control<Option<string>>(
-                seed.kind === null ? seed.type : null
-              ),
-            });
+                }),
+                type: this._formBuilder.control<string>(seed.type, {
+                  nonNullable: true,
+                }),
+              });
+            }
           })
         )
       : this._formBuilder.array([]),
+    bump: this._formBuilder.control<
+      Option<
+        | {
+            kind: 'attribute';
+            document: {
+              id: string;
+              name: string;
+            };
+            attribute: {
+              id: string;
+              name: string;
+            };
+          }
+        | {
+            kind: 'argument';
+            argument: {
+              id: string;
+              name: string;
+            };
+          }
+      >
+    >(this.document?.bump ?? null),
   });
-  seedReferences$ = combineLatest([
+  readonly argumentReferences$ = combineLatest([
     this._boardStore.boardInstructions$,
     of(this._data.instructionId),
   ]).pipe(
@@ -375,27 +477,49 @@ export class EditDocumentModalComponent {
         return null;
       }
 
-      return [
-        ...instruction.arguments.map((argument) => ({
-          kind: 'argument' as const,
-          argumentId: argument.id,
-          argumentName: argument.name,
-        })),
-        ...instruction.documents.reduce<AttributeReference[]>(
-          (attributes, document) => [
-            ...attributes,
-            ...document.collection.attributes.map((attribute) => ({
-              kind: 'attribute' as const,
-              attributeId: attribute.id,
-              attributeName: attribute.name,
-              documentId: document.id,
-              documentName: document.name,
-            })),
-          ],
-          []
-        ),
-      ];
+      return instruction.arguments.map((argument) => ({
+        kind: 'argument' as const,
+        argument,
+      }));
     })
+  );
+  readonly attributeReferences$ = combineLatest([
+    this._boardStore.boardInstructions$,
+    of(this._data.instructionId),
+  ]).pipe(
+    map(([boardInstructions, instructionId]) => {
+      const instruction =
+        boardInstructions?.find(({ id }) => id === instructionId) ?? null;
+
+      if (instruction === null) {
+        return null;
+      }
+
+      return instruction.documents.reduce<AttributeSeed[]>(
+        (attributes, document) => [
+          ...attributes,
+          ...document.collection.attributes.map((attribute) => ({
+            kind: 'attribute' as const,
+            attribute,
+            document,
+          })),
+        ],
+        []
+      );
+    })
+  );
+  readonly bumpReferences$ = combineLatest([
+    this.argumentReferences$,
+    this.attributeReferences$,
+  ]).pipe(
+    map(([argumentReferences, attributeReferences]) => [
+      ...(argumentReferences?.filter(
+        (argumentReference) => argumentReference.argument.type === 'u8'
+      ) ?? []),
+      ...(attributeReferences?.filter(
+        (attributeReference) => attributeReference.attribute.type === 'u8'
+      ) ?? []),
+    ])
   );
 
   get idControl() {
@@ -412,12 +536,65 @@ export class EditDocumentModalComponent {
 
   get seedsControl() {
     return this.form.get('seeds') as FormArray<
-      FormGroup<{
-        isReference: FormControl<boolean>;
-        reference: FormControl<Option<SeedReference>>;
-        value: FormControl<Option<string | number>>;
-        type: FormControl<Option<string>>;
-      }>
+      | FormGroup<{
+          kind: FormControl<'attribute'>;
+          reference: FormControl<
+            Option<{
+              document: {
+                id: string;
+                name: string;
+              };
+              attribute: {
+                id: string;
+                name: string;
+              };
+            }>
+          >;
+        }>
+      | FormGroup<{
+          kind: FormControl<'argument'>;
+          reference: FormControl<
+            Option<{
+              argument: {
+                id: string;
+                name: string;
+              };
+            }>
+          >;
+        }>
+      | FormGroup<{
+          kind: FormControl<null>;
+          value: FormControl<string>;
+          type: FormControl<string>;
+        }>
+      | FormGroup<{
+          kind: FormControl<'invalid'>;
+        }>
+    >;
+  }
+
+  get bumpControl() {
+    return this.form.get('bump') as FormControl<
+      Option<
+        | {
+            kind: 'argument';
+            argument: {
+              id: string;
+              name: string;
+            };
+          }
+        | {
+            kind: 'attribute';
+            document: {
+              id: string;
+              name: string;
+            };
+            attribute: {
+              id: string;
+              name: string;
+            };
+          }
+      >
     >;
   }
 
@@ -426,51 +603,47 @@ export class EditDocumentModalComponent {
       const id = this.idControl.value;
       const name = this.nameControl.value;
       const method = this.methodControl.value;
-      const seeds = this.seedsControl.controls.map((seedForm) => {
-        const isReferenceControl = seedForm.get(
-          'isReference'
-        ) as FormControl<boolean>;
-        const referenceControl = seedForm.get('reference') as FormControl<
-          Option<SeedReference>
-        >;
-        const valueControl = seedForm.get('value') as FormControl<
-          Option<string>
-        >;
-        const typeControl = seedForm.get('type') as FormControl<Option<string>>;
-
-        if (isReferenceControl.value) {
-          if (referenceControl.value?.kind === 'argument') {
+      const bump = this.bumpControl.value;
+      const seeds = this.seedsControl.value
+        .map((seed) => {
+          if (seed.kind === 'argument' && seed.reference) {
             return {
-              kind: 'argument' as const,
-              argumentId: referenceControl.value.argumentId,
+              kind: seed.kind,
+              argumentId: seed.reference.argument.id,
             };
-          } else if (referenceControl.value?.kind === 'attribute') {
+          } else if (seed.kind === 'attribute' && seed.reference) {
             return {
-              kind: 'attribute' as const,
-              documentId: referenceControl.value.documentId,
-              attributeId: referenceControl.value.attributeId,
+              kind: seed.kind,
+              documentId: seed.reference.document.id,
+              attributeId: seed.reference.attribute.id,
+            };
+          } else if (seed.kind === null && seed.value && seed.type) {
+            return {
+              kind: null,
+              value: seed.value,
+              type: seed.type,
             };
           } else {
-            throw new Error('Invalid reference kind');
+            return null;
           }
-        } else {
-          if (valueControl.value === null || typeControl.value === null) {
-            throw new Error('Invalid value');
-          }
-
-          return {
-            kind: null,
-            value: valueControl.value,
-            type: typeControl.value,
-          };
-        }
-      });
+        })
+        .filter(isNotNull);
 
       this._dialogRef.close({
         id,
         name,
         method,
         seeds,
+        bump:
+          bump?.kind === 'argument'
+            ? { kind: 'argument', argumentId: bump.argument.id }
+            : bump?.kind === 'attribute'
+            ? {
+                kind: 'attribute',
+                attributeId: bump.attribute.id,
+                documentId: bump.document.id,
+              }
+            : null,
       });
     }
   }
@@ -479,27 +652,63 @@ export class EditDocumentModalComponent {
     this._dialogRef.close();
   }
 
-  displayFn(reference: Option<SeedReference>): string {
+  displayFn(reference: Option<ReferenceSeed>): string {
     if (reference === null) {
       return '';
     }
 
     if (reference.kind === 'argument') {
-      return `Argument: ${reference.argumentName}`;
+      return `Argument: ${reference.argument.name}`;
     } else {
-      return `Attribute: ${reference.documentName}.${reference.attributeName}`;
+      return `Attribute: ${reference.document.name}.${reference.attribute.name}`;
     }
   }
 
-  onAddSeed() {
+  onAddAttributeSeed() {
     const seedForm = this._formBuilder.group({
-      isReference: this._formBuilder.control<boolean>(true, {
-        validators: [Validators.required],
+      kind: this._formBuilder.control<'attribute'>('attribute', {
         nonNullable: true,
       }),
-      reference: this._formBuilder.control<Option<SeedReference>>(null),
-      value: this._formBuilder.control<Option<string | number>>(null),
-      type: this._formBuilder.control<Option<string>>(null),
+      reference: this._formBuilder.control<
+        Option<{
+          document: {
+            id: string;
+            name: string;
+          };
+          attribute: {
+            id: string;
+            name: string;
+          };
+        }>
+      >(null),
+    });
+
+    this.seedsControl.push(seedForm);
+  }
+
+  onAddArgumentSeed() {
+    const seedForm = this._formBuilder.group({
+      kind: this._formBuilder.control<'argument'>('argument', {
+        nonNullable: true,
+      }),
+      reference: this._formBuilder.control<
+        Option<{
+          argument: {
+            id: string;
+            name: string;
+          };
+        }>
+      >(null),
+    });
+
+    this.seedsControl.push(seedForm);
+  }
+
+  onAddValueSeed() {
+    const seedForm = this._formBuilder.group({
+      kind: this._formBuilder.control<null>(null),
+      value: this._formBuilder.control<string>('', { nonNullable: true }),
+      type: this._formBuilder.control<string>('', { nonNullable: true }),
     });
 
     this.seedsControl.push(seedForm);
@@ -511,34 +720,115 @@ export class EditDocumentModalComponent {
 
   onSeedDropped(
     event: CdkDragDrop<
-      Partial<{
-        isReference: boolean;
-        reference: Option<SeedReference>;
-        value: Option<string | number>;
-        type: Option<string>;
-      }>[],
+      FormArray<
+        | FormGroup<{
+            kind: FormControl<'attribute'>;
+            reference: FormControl<
+              Option<{
+                document: {
+                  id: string;
+                  name: string;
+                };
+                attribute: {
+                  id: string;
+                  name: string;
+                };
+              }>
+            >;
+          }>
+        | FormGroup<{
+            kind: FormControl<'argument'>;
+            reference: FormControl<
+              Option<{
+                argument: {
+                  id: string;
+                  name: string;
+                };
+              }>
+            >;
+          }>
+        | FormGroup<{
+            kind: FormControl<null>;
+            value: FormControl<string>;
+            type: FormControl<string>;
+          }>
+        | FormGroup<{
+            kind: FormControl<'invalid'>;
+          }>
+      >,
       unknown,
-      {
-        isReference: boolean;
-        reference: Option<SeedReference>;
-        value: Option<string | number>;
-        type: Option<string>;
-      }
+      unknown
     >
   ) {
-    moveItemInArray(
-      event.container.data,
-      event.previousIndex,
-      event.currentIndex
-    );
+    const controls = [...event.container.data.controls];
 
-    this.seedsControl.setValue(
-      event.container.data.map((seedData) => ({
-        isReference: seedData.isReference ?? true,
-        reference: seedData.reference ?? null,
-        value: seedData.value ?? null,
-        type: seedData.type ?? null,
-      }))
+    moveItemInArray(controls, event.previousIndex, event.currentIndex);
+
+    controls.forEach((control, index) =>
+      event.container.data.setControl(index, control)
+    );
+  }
+
+  compareAttributesFn(
+    attribute1: {
+      document: { id: string };
+      attribute: { id: string };
+    },
+    attribute2: {
+      document: { id: string };
+      attribute: { id: string };
+    }
+  ) {
+    return (
+      attribute1.document.id === attribute2.document.id &&
+      attribute1.attribute.id === attribute2.attribute.id
+    );
+  }
+
+  compareArgumentsFn(
+    argument1: {
+      argument: { id: string };
+    },
+    argument2: {
+      argument: { id: string };
+    }
+  ) {
+    return argument1.argument.id === argument2.argument.id;
+  }
+
+  compareBump(
+    bump1: Option<
+      | {
+          kind: 'argument';
+          argument: { id: string };
+        }
+      | {
+          kind: 'attribute';
+          document: { id: string };
+          attribute: { id: string };
+        }
+    >,
+    bump2: Option<
+      | {
+          kind: 'argument';
+          argument: { id: string };
+        }
+      | {
+          kind: 'attribute';
+          document: { id: string };
+          attribute: { id: string };
+        }
+    >
+  ) {
+    return (
+      (bump1 === null && bump2 === null) ||
+      (bump1?.kind === 'argument' &&
+        bump2?.kind === 'argument' &&
+        bump1.argument.id === bump2.argument.id) ||
+      (bump1?.kind === 'attribute' &&
+        bump2?.kind === 'attribute' &&
+        bump1.document.id === bump2.document.id &&
+        bump1.attribute.id === bump2.attribute.id)
     );
   }
 

@@ -537,7 +537,8 @@ export class BoardPageComponent implements OnInit {
               documentData.name,
               documentData.method,
               documentCollection.id,
-              documentData.seeds
+              documentData.seeds,
+              documentData.bump
             );
           })
         )
@@ -573,7 +574,8 @@ export class BoardPageComponent implements OnInit {
             documentId,
             documentData.name,
             documentData.method,
-            documentData.seeds
+            documentData.seeds,
+            documentData.bump
           );
         })
       )

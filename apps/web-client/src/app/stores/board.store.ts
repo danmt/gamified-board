@@ -24,14 +24,13 @@ import { Entity, Option } from '../utils';
 
 export type BoardArgumentSeed = {
   kind: 'argument';
-  argument: Option<InstructionArgumentDto>;
+  argument: InstructionArgumentDto;
 };
 
 export type BoardAttributeSeed = {
   kind: 'attribute';
-  document: Option<DocumentDto>;
-  collection: Option<CollectionDto>;
-  attribute: Option<CollectionAttributeDto>;
+  document: DocumentDto;
+  attribute: CollectionAttributeDto;
 };
 
 export type BoardReferenceSeed = BoardArgumentSeed | BoardAttributeSeed;
@@ -59,7 +58,8 @@ export type BoardDocument = Entity<{
   method: string;
   ownerId: string;
   collection: BoardCollection;
-  seeds: BoardSeedTypes[];
+  seeds: Option<BoardSeedTypes>[];
+  bump: Option<BoardReferenceSeed>;
 }>;
 
 export type BoardInstruction = Entity<{
@@ -541,6 +541,44 @@ export class BoardStore
               (collection) => collection.id === document.collectionId
             ) ?? null;
 
+          let bump = null;
+
+          if (document.bump?.kind === 'attribute') {
+            const documentId = document.bump.documentId;
+            const attributeId = document.bump.attributeId;
+
+            const bumpDocument =
+              instruction.documents.find(({ id }) => id === documentId) ?? null;
+            const collection =
+              collections.find(({ id }) => id === bumpDocument?.collectionId) ??
+              null;
+            const attribute =
+              collection?.attributes.find(({ id }) => id === attributeId) ??
+              null;
+
+            bump =
+              bumpDocument !== null && attribute !== null
+                ? {
+                    kind: 'attribute' as const,
+                    document: bumpDocument,
+                    attribute,
+                  }
+                : null;
+          } else if (document.bump?.kind === 'argument') {
+            const argumentId = document.bump.argumentId;
+            const argument =
+              instruction?.arguments.find(({ id }) => id === argumentId) ??
+              null;
+
+            bump =
+              argument !== null
+                ? {
+                    kind: 'argument' as const,
+                    argument,
+                  }
+                : null;
+          }
+
           if (collection === null) {
             throw Error(`Document ${document.id} collectionId is invalid.`);
           }
@@ -551,16 +589,20 @@ export class BoardStore
             method: document.method,
             ownerId: document.ownerId,
             seeds:
-              document.seeds?.map<BoardSeedTypes>((seed) => {
+              document.seeds?.map<Option<BoardSeedTypes>>((seed) => {
                 switch (seed.kind) {
                   case 'argument': {
-                    return {
-                      kind: seed.kind,
-                      argument:
-                        instruction.arguments.find(
-                          ({ id }) => id === seed.argumentId
-                        ) ?? null,
-                    };
+                    const arg =
+                      instruction.arguments.find(
+                        ({ id }) => id === seed.argumentId
+                      ) ?? null;
+
+                    return arg !== null
+                      ? {
+                          kind: seed.kind,
+                          argument: arg,
+                        }
+                      : null;
                   }
                   case 'attribute': {
                     const document =
@@ -576,12 +618,13 @@ export class BoardStore
                         ({ id }) => id === seed.attributeId
                       ) ?? null;
 
-                    return {
-                      kind: seed.kind,
-                      document,
-                      attribute,
-                      collection,
-                    };
+                    return document !== null && attribute !== null
+                      ? {
+                          kind: seed.kind,
+                          document,
+                          attribute,
+                        }
+                      : null;
                   }
                   default: {
                     return {
@@ -592,6 +635,7 @@ export class BoardStore
                   }
                 }
               }) ?? [],
+            bump,
             collection,
           };
         }),
