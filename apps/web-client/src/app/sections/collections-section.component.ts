@@ -172,7 +172,7 @@ export class CollectionsSectionComponent {
     collectionId: string,
     collectionName: string,
     thumbnailUrl: string,
-    attributes: { name: string; type: string; isOption: boolean }[]
+    attributes: { id: string; name: string; type: string; isOption: boolean }[]
   ) {
     this._collectionApiService
       .updateCollection(collectionId, collectionName, thumbnailUrl, attributes)

@@ -29,7 +29,7 @@ export interface EditCollectionData {
   id: string;
   name: string;
   thumbnailUrl: string;
-  attributes: { name: string; type: string; isOption: boolean }[];
+  attributes: { id: string; name: string; type: string; isOption: boolean }[];
 }
 
 @Directive({ selector: '[pgEditCollectionModal]', standalone: true })
@@ -159,6 +159,32 @@ export class EditCollectionModalDirective {
                 <div>
                   <label
                     class="block"
+                    [for]="'collection-attributes-' + i + '-id'"
+                  >
+                    Attribute ID
+                  </label>
+                  <input
+                    [id]="'collection-attributes-' + i + '-id'"
+                    formControlName="id"
+                    class="block border-b-2 border-black"
+                    type="text"
+                    [readonly]="collection !== null"
+                  />
+                  <p *ngIf="collection !== null">
+                    Hint: The ID cannot be changed afterwards.
+                  </p>
+                  <button
+                    *ngIf="collection !== null"
+                    type="button"
+                    (click)="attributeForm.get('id')?.setValue(onGenerateId())"
+                  >
+                    Generate
+                  </button>
+                </div>
+
+                <div>
+                  <label
+                    class="block"
                     [for]="'collection-attributes-' + i + '-name'"
                   >
                     Attribute name
@@ -198,9 +224,9 @@ export class EditCollectionModalDirective {
                     type="checkbox"
                     [id]="'collection-attributes-' + i + '-is-option'"
                   />
-                  <label for="'collection-attributes-' + i + '-is-option'"
-                    >Is Optional</label
-                  >
+                  <label [for]="'collection-attributes-' + i + '-is-option'">
+                    Is Optional
+                  </label>
                 </div>
 
                 <button (click)="onRemoveAttribute(i)" type="button">x</button>
@@ -248,6 +274,10 @@ export class EditCollectionModalComponent {
       ? this._formBuilder.array(
           this.collection.attributes.map((attribute) =>
             this._formBuilder.group({
+              id: this._formBuilder.control<string>(attribute.id, {
+                validators: [Validators.required],
+                nonNullable: true,
+              }),
               name: this._formBuilder.control<string>(attribute.name, {
                 validators: [Validators.required],
                 nonNullable: true,
@@ -280,6 +310,7 @@ export class EditCollectionModalComponent {
   get attributesControl() {
     return this.form.get('attributes') as FormArray<
       FormGroup<{
+        id: FormControl<string>;
         name: FormControl<string>;
         type: FormControl<string>;
         isOption: FormControl<boolean>;
@@ -289,6 +320,10 @@ export class EditCollectionModalComponent {
 
   onAddAttribute() {
     const attributeForm = this._formBuilder.group({
+      id: this._formBuilder.control<string>('', {
+        validators: [Validators.required],
+        nonNullable: true,
+      }),
       name: this._formBuilder.control<string>('', {
         validators: [Validators.required],
         nonNullable: true,
@@ -312,12 +347,14 @@ export class EditCollectionModalComponent {
   onAttributeDropped(
     event: CdkDragDrop<
       Partial<{
+        id: string;
         name: string;
         type: string;
         isOption: boolean;
       }>[],
       unknown,
       Partial<{
+        id: string;
         name: string;
         type: string;
         isOption: boolean;
@@ -332,6 +369,7 @@ export class EditCollectionModalComponent {
 
     this.attributesControl.setValue(
       event.container.data.map((attributeData) => ({
+        id: attributeData.id ?? '',
         name: attributeData.name ?? '',
         type: attributeData.type ?? '',
         isOption: !!attributeData.isOption,
@@ -346,6 +384,7 @@ export class EditCollectionModalComponent {
       const thumbnailUrl = this.thumbnailUrlControl.value;
       const attributes = this.attributesControl.controls.map(
         (attributeForm) => {
+          const idControl = attributeForm.get('id') as FormControl<string>;
           const nameControl = attributeForm.get('name') as FormControl<string>;
           const typeControl = attributeForm.get('type') as FormControl<string>;
           const isOptionControl = attributeForm.get(
@@ -353,6 +392,7 @@ export class EditCollectionModalComponent {
           ) as FormControl<boolean>;
 
           return {
+            id: idControl.value,
             name: nameControl.value,
             type: typeControl.value,
             isOption: isOptionControl.value,
@@ -374,6 +414,6 @@ export class EditCollectionModalComponent {
   }
 
   onGenerateId() {
-    this.form.get('id')?.setValue(uuid());
+    return uuid();
   }
 }

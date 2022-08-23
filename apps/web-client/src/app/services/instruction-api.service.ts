@@ -18,11 +18,11 @@ import { Entity } from '../utils';
 import { DocumentDto } from './document-api.service';
 import { TaskDto } from './task-api.service';
 
-export interface InstructionArgumentDto {
+export type InstructionArgumentDto = Entity<{
   name: string;
   type: string;
   isOption: boolean;
-}
+}>;
 
 export type InstructionDto = Entity<{
   name: string;

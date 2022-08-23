@@ -174,7 +174,7 @@ export class InstructionsSectionComponent {
     instructionId: string,
     instructionName: string,
     thumbnailUrl: string,
-    args: { name: string; type: string; isOption: boolean }[]
+    args: { id: string; name: string; type: string; isOption: boolean }[]
   ) {
     this._instructionApiService
       .updateInstruction(instructionId, instructionName, thumbnailUrl, args)

@@ -59,102 +59,98 @@ import { Entity, Option } from '../utils';
   template: `
     <ng-container *ngrxLet="selectedTask$; let selectedTask">
       <ng-container *ngrxLet="selectedDocument$; let selectedDocument">
-        <ng-container *ngrxLet="activeCollectionId$; let activeCollectionId">
-          <ng-container
-            *ngrxLet="activeInstructionId$; let activeInstructionId"
-          >
+        <ng-container *ngrxLet="activeCollection$; let activeCollection">
+          <ng-container *ngrxLet="activeInstruction$; let activeInstruction">
             <ng-container
               pgKeyboardListener
               (pressComma)="onCommaPressed()"
               (pressDot)="onDotPressed()"
               (pressEscape)="
                 onEscapePressed(
-                  activeInstructionId,
-                  activeCollectionId,
+                  activeInstruction?.id ?? null,
+                  activeCollection?.id ?? null,
                   selectedTask,
                   selectedDocument
                 )
               "
               (pressDelete)="onDeletePressed(selectedTask, selectedDocument)"
             >
-              <pg-main-dock
-                *ngIf="selectedTask === null && selectedDocument === null"
-                class="fixed bottom-0 z-10 -translate-x-1/2 left-1/2"
-                [instructionSlots]="(instructionSlots$ | ngrxPush) ?? null"
-                [instructionHotkeys]="instructionHotkeys"
-                [activeInstructionId]="activeInstructionId"
-                [collectionSlots]="(collectionSlots$ | ngrxPush) ?? null"
-                [collectionHotkeys]="collectionHotkeys"
-                [activeCollectionId]="activeCollectionId"
-                (swapInstructionSlots)="
-                  onSwapInstructionSlots($event[0], $event[1])
-                "
-                (removeFromInstructionSlot)="
-                  onRemoveFromInstructionSlot($event)
-                "
-                (activateInstructionSlot)="onActivateInstructionSlot($event)"
-                (updateInstructionSlot)="
-                  onUpdateInstructionSlot($event.index, $event.data)
-                "
-                (createInstruction)="
-                  onCreateInstruction(
-                    $event.id,
-                    $event.name,
-                    $event.thumbnailUrl,
-                    $event.arguments
-                  )
-                "
-                (swapCollectionSlots)="
-                  onSwapCollectionSlots($event[0], $event[1])
-                "
-                (removeFromCollectionSlot)="onRemoveFromCollectionSlot($event)"
-                (activateCollectionSlot)="onActivateCollectionSlot($event)"
-                (updateCollectionSlot)="
-                  onUpdateCollectionSlot($event.index, $event.data)
-                "
-                (createCollection)="
-                  onCreateCollection(
-                    $event.id,
-                    $event.name,
-                    $event.thumbnailUrl,
-                    $event.attributes
-                  )
-                "
-              ></pg-main-dock>
-              <pg-selected-task-dock
-                *ngIf="selectedTask$ | ngrxPush as selectedTask"
-                [selected]="selectedTask"
-                class="fixed bottom-0 z-10 -translate-x-1/2 left-1/2"
-                (updateTask)="
-                  onUpdateTask(
-                    selectedTask.ownerId,
-                    selectedTask.id,
-                    selectedTask
-                  )
-                "
-                (clearSelectedTask)="onSelectTask(null)"
-              ></pg-selected-task-dock>
-              <pg-selected-document-dock
-                *ngIf="selectedDocument$ | ngrxPush as selectedDocument"
-                [selected]="selectedDocument"
-                class="fixed bottom-0 z-10 -translate-x-1/2 left-1/2"
-                (updateDocument)="
-                  onUpdateDocument(
-                    selectedDocument.ownerId,
-                    selectedDocument.id,
-                    selectedDocument
-                  )
-                "
-                (clearSelectedDocument)="onSelectDocument(null)"
-              ></pg-selected-document-dock>
-              <pg-board
-                *ngIf="
-                  currentApplicationInstructions$ | ngrxPush as instructions
-                "
+              <ng-container
+                *ngrxLet="currentApplicationInstructions$; let instructions"
               >
-                <ng-container
-                  *ngrxLet="activeInstruction$; let activeInstruction"
-                >
+                <pg-main-dock
+                  *ngIf="selectedTask === null && selectedDocument === null"
+                  class="fixed bottom-0 z-10 -translate-x-1/2 left-1/2"
+                  [instructionSlots]="(instructionSlots$ | ngrxPush) ?? null"
+                  [instructionHotkeys]="instructionHotkeys"
+                  [activeInstructionId]="activeInstruction?.id ?? null"
+                  [collectionSlots]="(collectionSlots$ | ngrxPush) ?? null"
+                  [collectionHotkeys]="collectionHotkeys"
+                  [activeCollectionId]="activeCollection?.id ?? null"
+                  (swapInstructionSlots)="
+                    onSwapInstructionSlots($event[0], $event[1])
+                  "
+                  (removeFromInstructionSlot)="
+                    onRemoveFromInstructionSlot($event)
+                  "
+                  (activateInstructionSlot)="onActivateInstructionSlot($event)"
+                  (updateInstructionSlot)="
+                    onUpdateInstructionSlot($event.index, $event.data)
+                  "
+                  (createInstruction)="
+                    onCreateInstruction(
+                      $event.id,
+                      $event.name,
+                      $event.thumbnailUrl,
+                      $event.arguments
+                    )
+                  "
+                  (swapCollectionSlots)="
+                    onSwapCollectionSlots($event[0], $event[1])
+                  "
+                  (removeFromCollectionSlot)="
+                    onRemoveFromCollectionSlot($event)
+                  "
+                  (activateCollectionSlot)="onActivateCollectionSlot($event)"
+                  (updateCollectionSlot)="
+                    onUpdateCollectionSlot($event.index, $event.data)
+                  "
+                  (createCollection)="
+                    onCreateCollection(
+                      $event.id,
+                      $event.name,
+                      $event.thumbnailUrl,
+                      $event.attributes
+                    )
+                  "
+                ></pg-main-dock>
+                <pg-selected-task-dock
+                  *ngIf="selectedTask$ | ngrxPush as selectedTask"
+                  [selected]="selectedTask"
+                  class="fixed bottom-0 z-10 -translate-x-1/2 left-1/2"
+                  (updateTask)="
+                    onUpdateTask(
+                      selectedTask.ownerId,
+                      selectedTask.id,
+                      selectedTask
+                    )
+                  "
+                  (clearSelectedTask)="onSelectTask(null)"
+                ></pg-selected-task-dock>
+                <pg-selected-document-dock
+                  *ngIf="selectedDocument$ | ngrxPush as selectedDocument"
+                  [selected]="selectedDocument"
+                  class="fixed bottom-0 z-10 -translate-x-1/2 left-1/2"
+                  (updateDocument)="
+                    onUpdateDocument(
+                      selectedDocument.ownerId,
+                      selectedDocument.id,
+                      selectedDocument
+                    )
+                  "
+                  (clearSelectedDocument)="onSelectDocument(null)"
+                ></pg-selected-document-dock>
+                <pg-board *ngIf="instructions !== null">
                   <ng-container
                     *ngrxLet="activeCollection$; let activeCollection"
                   >
@@ -215,8 +211,8 @@ import { Entity, Option } from '../utils';
                       <p>Instruction: {{ instruction.name }}</p>
                     </pg-row>
                   </ng-container>
-                </ng-container>
-              </pg-board>
+                </pg-board>
+              </ng-container>
             </ng-container>
           </ng-container>
         </ng-container>
@@ -262,8 +258,6 @@ export class BoardPageComponent implements OnInit {
     this._boardStore.boardInstructions$;
   readonly selectedTask$ = this._boardStore.selectedTask$;
   readonly selectedDocument$ = this._boardStore.selectedDocument$;
-  readonly activeCollectionId$ = this._boardStore.activeCollectionId$;
-  readonly activeInstructionId$ = this._boardStore.activeInstructionId$;
   readonly activeCollection$ = this._boardStore.activeCollection$;
   readonly activeInstruction$ = this._boardStore.activeInstruction$;
   readonly instructionSlots$ = this._boardStore.instructionSlots$;
@@ -448,7 +442,7 @@ export class BoardPageComponent implements OnInit {
     instructionId: string,
     instructionName: string,
     thumbnailUrl: string,
-    args: { name: string; type: string; isOption: boolean }[]
+    args: { id: string; name: string; type: string; isOption: boolean }[]
   ) {
     const workspaceId =
       this._activatedRoute.snapshot.paramMap.get('workspaceId');
@@ -479,7 +473,7 @@ export class BoardPageComponent implements OnInit {
     collectionId: string,
     collectionName: string,
     thumbnailUrl: string,
-    attributes: { name: string; type: string; isOption: boolean }[]
+    attributes: { id: string; name: string; type: string; isOption: boolean }[]
   ) {
     const workspaceId =
       this._activatedRoute.snapshot.paramMap.get('workspaceId');
@@ -521,7 +515,12 @@ export class BoardPageComponent implements OnInit {
           EditDocumentData,
           EditDocumentModalComponent
         >(EditDocumentModalComponent, {
-          data: { collection: documentCollection, document: null },
+          data: {
+            collection: documentCollection,
+            document: null,
+            instructionId,
+          },
+          viewContainerRef: this._viewContainerRef,
         })
         .closed.pipe(
           concatMap((documentData) => {
@@ -534,10 +533,11 @@ export class BoardPageComponent implements OnInit {
 
             return this._documentApiService.createDocument(
               instructionId,
-              documentCollection.id,
+              documentData.id,
               documentData.name,
               documentData.method,
-              documentCollection.id
+              documentCollection.id,
+              documentData.seeds
             );
           })
         )
@@ -556,7 +556,8 @@ export class BoardPageComponent implements OnInit {
         EditDocumentData,
         EditDocumentModalComponent
       >(EditDocumentModalComponent, {
-        data: { document, collection: document.collection },
+        data: { document, collection: document.collection, instructionId },
+        viewContainerRef: this._viewContainerRef,
       })
       .closed.pipe(
         concatMap((documentData) => {
@@ -571,7 +572,8 @@ export class BoardPageComponent implements OnInit {
             instructionId,
             documentId,
             documentData.name,
-            documentData.method
+            documentData.method,
+            documentData.seeds
           );
         })
       )

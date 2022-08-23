@@ -29,7 +29,7 @@ export interface EditInstructionData {
   id: string;
   name: string;
   thumbnailUrl: string;
-  arguments: { name: string; type: string; isOption: boolean }[];
+  arguments: { id: string; name: string; type: string; isOption: boolean }[];
 }
 
 @Directive({ selector: '[pgEditInstructionModal]', standalone: true })
@@ -159,6 +159,32 @@ export class EditInstructionModalDirective {
                 <div>
                   <label
                     class="block"
+                    [for]="'instruction-arguments-' + i + '-id'"
+                  >
+                    Argument ID
+                  </label>
+                  <input
+                    [id]="'instruction-arguments-' + i + '-id'"
+                    formControlName="id"
+                    class="block border-b-2 border-black"
+                    type="text"
+                    [readonly]="instruction !== null"
+                  />
+                  <p *ngIf="instruction !== null">
+                    Hint: The ID cannot be changed afterwards.
+                  </p>
+                  <button
+                    *ngIf="instruction !== null"
+                    type="button"
+                    (click)="argumentForm.get('id')?.setValue(onGenerateId())"
+                  >
+                    Generate
+                  </button>
+                </div>
+
+                <div>
+                  <label
+                    class="block"
                     [for]="'instruction-arguments-' + i + '-name'"
                   >
                     Argument name
@@ -170,6 +196,7 @@ export class EditInstructionModalDirective {
                     type="text"
                   />
                 </div>
+
                 <div>
                   <label
                     class="block"
@@ -248,6 +275,10 @@ export class EditInstructionModalComponent {
       ? this._formBuilder.array(
           this.instruction.arguments.map((argument) =>
             this._formBuilder.group({
+              id: this._formBuilder.control<string>(argument.id, {
+                validators: [Validators.required],
+                nonNullable: true,
+              }),
               name: this._formBuilder.control<string>(argument.name, {
                 validators: [Validators.required],
                 nonNullable: true,
@@ -280,6 +311,7 @@ export class EditInstructionModalComponent {
   get argumentsControl() {
     return this.form.get('arguments') as FormArray<
       FormGroup<{
+        id: FormControl<string>;
         name: FormControl<string>;
         type: FormControl<string>;
         isOption: FormControl<boolean>;
@@ -289,6 +321,10 @@ export class EditInstructionModalComponent {
 
   onAddArgument() {
     const argumentForm = this._formBuilder.group({
+      id: this._formBuilder.control<string>('', {
+        validators: [Validators.required],
+        nonNullable: true,
+      }),
       name: this._formBuilder.control<string>('', {
         validators: [Validators.required],
         nonNullable: true,
@@ -312,12 +348,14 @@ export class EditInstructionModalComponent {
   onArgumentDropped(
     event: CdkDragDrop<
       Partial<{
+        id: string;
         name: string;
         type: string;
         isOption: boolean;
       }>[],
       unknown,
       Partial<{
+        id: string;
         name: string;
         type: string;
         isOption: boolean;
@@ -332,6 +370,7 @@ export class EditInstructionModalComponent {
 
     this.argumentsControl.setValue(
       event.container.data.map((argumentData) => ({
+        id: argumentData.id ?? '',
         name: argumentData.name ?? '',
         type: argumentData.type ?? '',
         isOption: !!argumentData.isOption,
@@ -345,6 +384,7 @@ export class EditInstructionModalComponent {
       const name = this.nameControl.value;
       const thumbnailUrl = this.thumbnailUrlControl.value;
       const args = this.argumentsControl.controls.map((argumentForm) => {
+        const idControl = argumentForm.get('id') as FormControl<string>;
         const nameControl = argumentForm.get('name') as FormControl<string>;
         const typeControl = argumentForm.get('type') as FormControl<string>;
         const isOptionControl = argumentForm.get(
@@ -352,6 +392,7 @@ export class EditInstructionModalComponent {
         ) as FormControl<boolean>;
 
         return {
+          id: idControl.value,
           name: nameControl.value,
           type: typeControl.value,
           isOption: isOptionControl.value,
@@ -372,6 +413,6 @@ export class EditInstructionModalComponent {
   }
 
   onGenerateId() {
-    this.form.get('id')?.setValue(uuid());
+    return uuid();
   }
 }

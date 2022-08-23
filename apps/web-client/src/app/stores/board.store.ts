@@ -22,6 +22,28 @@ import {
 } from '../services';
 import { Entity, Option } from '../utils';
 
+export type BoardArgumentSeed = {
+  kind: 'argument';
+  argument: Option<InstructionArgumentDto>;
+};
+
+export type BoardAttributeSeed = {
+  kind: 'attribute';
+  document: Option<DocumentDto>;
+  collection: Option<CollectionDto>;
+  attribute: Option<CollectionAttributeDto>;
+};
+
+export type BoardReferenceSeed = BoardArgumentSeed | BoardAttributeSeed;
+
+export type BoardValueSeed = {
+  kind: null;
+  type: string;
+  value: string;
+};
+
+export type BoardSeedTypes = BoardReferenceSeed | BoardValueSeed;
+
 export type BoardCollection = Entity<{
   name: string;
   thumbnailUrl: string;
@@ -37,6 +59,7 @@ export type BoardDocument = Entity<{
   method: string;
   ownerId: string;
   collection: BoardCollection;
+  seeds: BoardSeedTypes[];
 }>;
 
 export type BoardInstruction = Entity<{
@@ -59,6 +82,7 @@ export interface BoardEntry {
   name: string;
   tasks: BoardTask[];
   documents: BoardDocument[];
+  arguments: InstructionArgumentDto[];
 }
 
 interface ViewModel {
@@ -72,6 +96,7 @@ interface ViewModel {
     {
       id: string;
       name: string;
+      arguments: InstructionArgumentDto[];
       tasks: TaskDto[];
       documents: DocumentDto[];
     }[]
@@ -248,6 +273,7 @@ export class BoardStore
                     attributes: fields.map((field) => {
                       if (typeof field.type === 'string') {
                         return {
+                          id: field.name,
                           name: field.name,
                           type: field.type,
                           isOption: false,
@@ -256,6 +282,7 @@ export class BoardStore
                         };
                       } else if ('option' in field.type) {
                         return {
+                          id: field.name,
                           name: field.name,
                           type: field.type.option,
                           isOption: true,
@@ -264,6 +291,7 @@ export class BoardStore
                         };
                       } else if ('coption' in field.type) {
                         return {
+                          id: field.name,
                           name: field.name,
                           type: field.type.coption,
                           isOption: false,
@@ -272,6 +300,7 @@ export class BoardStore
                         };
                       } else if ('defined' in field.type) {
                         return {
+                          id: field.name,
                           name: field.name,
                           type: field.type.defined,
                           isOption: false,
@@ -280,6 +309,7 @@ export class BoardStore
                         };
                       } else {
                         return {
+                          id: field.name,
                           name: field.name,
                           type: JSON.stringify(field.type),
                           isOption: false,
@@ -335,6 +365,7 @@ export class BoardStore
                     arguments: args.map((arg) => {
                       if (typeof arg.type === 'string') {
                         return {
+                          id: `${instruction.name}/${arg.name}`,
                           name: arg.name,
                           type: arg.type,
                           isOption: false,
@@ -343,6 +374,7 @@ export class BoardStore
                         };
                       } else if ('option' in arg.type) {
                         return {
+                          id: `${instruction.name}/${arg.name}`,
                           name: arg.name,
                           type: arg.type.option,
                           isOption: true,
@@ -351,6 +383,7 @@ export class BoardStore
                         };
                       } else if ('coption' in arg.type) {
                         return {
+                          id: `${instruction.name}/${arg.name}`,
                           name: arg.name,
                           type: arg.type.coption,
                           isOption: false,
@@ -359,6 +392,7 @@ export class BoardStore
                         };
                       } else if ('defined' in arg.type) {
                         return {
+                          id: `${instruction.name}/${arg.name}`,
                           name: arg.name,
                           type: arg.type.defined,
                           isOption: false,
@@ -367,6 +401,7 @@ export class BoardStore
                         };
                       } else {
                         return {
+                          id: `${instruction.name}/${arg.name}`,
                           name: arg.name,
                           type: JSON.stringify(arg.type),
                           isOption: false,
@@ -483,7 +518,7 @@ export class BoardStore
       }
     );
 
-  readonly boardInstructions$ = this.select(
+  readonly boardInstructions$: Observable<Option<BoardEntry[]>> = this.select(
     this.currentApplicationInstructions$,
     this.instructions$,
     this.collections$,
@@ -499,6 +534,7 @@ export class BoardStore
       return currentApplicationInstructions.map((instruction) => ({
         id: instruction.id,
         name: instruction.name,
+        arguments: instruction.arguments,
         documents: instruction.documents.map((document) => {
           const collection =
             collections.find(
@@ -514,6 +550,48 @@ export class BoardStore
             name: document.name,
             method: document.method,
             ownerId: document.ownerId,
+            seeds:
+              document.seeds?.map<BoardSeedTypes>((seed) => {
+                switch (seed.kind) {
+                  case 'argument': {
+                    return {
+                      kind: seed.kind,
+                      argument:
+                        instruction.arguments.find(
+                          ({ id }) => id === seed.argumentId
+                        ) ?? null,
+                    };
+                  }
+                  case 'attribute': {
+                    const document =
+                      instruction.documents.find(
+                        ({ id }) => id === seed.documentId
+                      ) ?? null;
+                    const collection =
+                      collections.find(
+                        ({ id }) => id === document?.collectionId
+                      ) ?? null;
+                    const attribute =
+                      collection?.attributes.find(
+                        ({ id }) => id === seed.attributeId
+                      ) ?? null;
+
+                    return {
+                      kind: seed.kind,
+                      document,
+                      attribute,
+                      collection,
+                    };
+                  }
+                  default: {
+                    return {
+                      kind: null,
+                      value: seed.value,
+                      type: seed.type,
+                    };
+                  }
+                }
+              }) ?? [],
             collection,
           };
         }),
@@ -763,6 +841,7 @@ export class BoardStore
               id: instruction.id,
               name: instruction.name,
               documents: instruction.documents,
+              arguments: instruction.arguments,
               tasks: instruction.tasksOrder.reduce(
                 (orderedTasks: TaskDto[], taskId: string) => {
                   const taskFound =
