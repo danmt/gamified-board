@@ -332,7 +332,7 @@ export interface EditDocumentSubmitPayload {
           </div>
         </div>
 
-        <div>
+        <div *ngIf="seedsControl.controls.length > 0">
           <label for="document-bump">Document bump</label>
 
           <select
@@ -716,6 +716,10 @@ export class EditDocumentModalComponent {
 
   onRemoveSeed(index: number) {
     this.seedsControl.removeAt(index);
+
+    if (this.seedsControl.controls.length === 0) {
+      this.bumpControl.setValue(null);
+    }
   }
 
   onSeedDropped(
@@ -770,30 +774,34 @@ export class EditDocumentModalComponent {
   }
 
   compareAttributesFn(
-    attribute1: {
+    attribute1: Option<{
       document: { id: string };
       attribute: { id: string };
-    },
-    attribute2: {
+    }>,
+    attribute2: Option<{
       document: { id: string };
       attribute: { id: string };
-    }
+    }>
   ) {
     return (
-      attribute1.document.id === attribute2.document.id &&
-      attribute1.attribute.id === attribute2.attribute.id
+      (attribute1 === null && attribute2 === null) ||
+      (attribute1?.document.id === attribute2?.document.id &&
+        attribute1?.attribute.id === attribute2?.attribute.id)
     );
   }
 
   compareArgumentsFn(
-    argument1: {
+    argument1: Option<{
       argument: { id: string };
-    },
-    argument2: {
+    }>,
+    argument2: Option<{
       argument: { id: string };
-    }
+    }>
   ) {
-    return argument1.argument.id === argument2.argument.id;
+    return (
+      (argument1 === null && argument2 === null) ||
+      argument1?.argument.id === argument2?.argument.id
+    );
   }
 
   compareBump(
