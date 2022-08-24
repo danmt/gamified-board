@@ -95,7 +95,7 @@ export class EditInstructionModalDirective {
           <button
             *ngIf="instruction === null"
             type="button"
-            (click)="onGenerateId()"
+            (click)="idControl.setValue(onGenerateId())"
           >
             Generate
           </button>

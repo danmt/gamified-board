@@ -20,28 +20,25 @@ import {
   WorkspaceApiService,
   WorkspaceDto,
 } from '../services';
-import { Entity, Option } from '../utils';
+import { Entity, isNotNull, Option } from '../utils';
 
-export type BoardArgumentSeed = {
+export type BoardArgumentReference = {
   kind: 'argument';
   argument: InstructionArgumentDto;
 };
 
-export type BoardAttributeSeed = {
-  kind: 'attribute';
+export type BoardDocumentReference = {
+  kind: 'document';
   document: DocumentDto;
   attribute: CollectionAttributeDto;
 };
 
-export type BoardReferenceSeed = BoardArgumentSeed | BoardAttributeSeed;
+export type BoardReference = BoardArgumentReference | BoardDocumentReference;
 
-export type BoardValueSeed = {
-  kind: null;
+export type BoardValue = {
   type: string;
   value: string;
 };
-
-export type BoardSeedTypes = BoardReferenceSeed | BoardValueSeed;
 
 export type BoardCollection = Entity<{
   name: string;
@@ -58,8 +55,9 @@ export type BoardDocument = Entity<{
   method: string;
   ownerId: string;
   collection: BoardCollection;
-  seeds: Option<BoardSeedTypes>[];
-  bump: Option<BoardReferenceSeed>;
+  seeds: Option<BoardReference | BoardValue>[];
+  bump: Option<BoardReference>;
+  payer: Option<BoardDocumentReference>;
 }>;
 
 export type BoardInstruction = Entity<{
@@ -541,9 +539,9 @@ export class BoardStore
               (collection) => collection.id === document.collectionId
             ) ?? null;
 
-          let bump = null;
+          let bump: Option<BoardReference> = null;
 
-          if (document.bump?.kind === 'attribute') {
+          if (document.bump?.kind === 'document') {
             const documentId = document.bump.documentId;
             const attributeId = document.bump.attributeId;
 
@@ -559,7 +557,7 @@ export class BoardStore
             bump =
               bumpDocument !== null && attribute !== null
                 ? {
-                    kind: 'attribute' as const,
+                    kind: 'document' as const,
                     document: bumpDocument,
                     attribute,
                   }
@@ -579,6 +577,32 @@ export class BoardStore
                 : null;
           }
 
+          let payer: Option<BoardReference> = null;
+
+          if (document.payer !== null) {
+            const documentId = document.payer.documentId;
+            const attributeId = document.payer.attributeId;
+
+            const payerDocument =
+              instruction.documents.find(({ id }) => id === documentId) ?? null;
+            const collection =
+              collections.find(
+                ({ id }) => id === payerDocument?.collectionId
+              ) ?? null;
+            const attribute =
+              collection?.attributes.find(({ id }) => id === attributeId) ??
+              null;
+
+            payer =
+              payerDocument !== null && attribute !== null
+                ? {
+                    kind: 'document',
+                    document: payerDocument,
+                    attribute,
+                  }
+                : null;
+          }
+
           if (collection === null) {
             throw Error(`Document ${document.id} collectionId is invalid.`);
           }
@@ -588,53 +612,59 @@ export class BoardStore
             name: document.name,
             method: document.method,
             ownerId: document.ownerId,
+            payer,
             seeds:
-              document.seeds?.map<Option<BoardSeedTypes>>((seed) => {
-                switch (seed.kind) {
-                  case 'argument': {
-                    const arg =
-                      instruction.arguments.find(
-                        ({ id }) => id === seed.argumentId
-                      ) ?? null;
-
-                    return arg !== null
-                      ? {
-                          kind: seed.kind,
-                          argument: arg,
-                        }
-                      : null;
-                  }
-                  case 'attribute': {
-                    const document =
-                      instruction.documents.find(
-                        ({ id }) => id === seed.documentId
-                      ) ?? null;
-                    const collection =
-                      collections.find(
-                        ({ id }) => id === document?.collectionId
-                      ) ?? null;
-                    const attribute =
-                      collection?.attributes.find(
-                        ({ id }) => id === seed.attributeId
-                      ) ?? null;
-
-                    return document !== null && attribute !== null
-                      ? {
-                          kind: seed.kind,
-                          document,
-                          attribute,
-                        }
-                      : null;
-                  }
-                  default: {
+              document.seeds
+                ?.map<Option<BoardReference | BoardValue>>((seed) => {
+                  if (!('kind' in seed)) {
                     return {
-                      kind: null,
                       value: seed.value,
                       type: seed.type,
                     };
                   }
-                }
-              }) ?? [],
+
+                  switch (seed.kind) {
+                    case 'argument': {
+                      const arg =
+                        instruction.arguments.find(
+                          ({ id }) => id === seed.argumentId
+                        ) ?? null;
+
+                      return arg !== null
+                        ? {
+                            kind: seed.kind,
+                            argument: arg,
+                          }
+                        : null;
+                    }
+                    case 'document': {
+                      const document =
+                        instruction.documents.find(
+                          ({ id }) => id === seed.documentId
+                        ) ?? null;
+                      const collection =
+                        collections.find(
+                          ({ id }) => id === document?.collectionId
+                        ) ?? null;
+                      const attribute =
+                        collection?.attributes.find(
+                          ({ id }) => id === seed.attributeId
+                        ) ?? null;
+
+                      return document !== null && attribute !== null
+                        ? {
+                            kind: seed.kind,
+                            document,
+                            attribute,
+                          }
+                        : null;
+                    }
+                    default: {
+                      return null;
+                    }
+                  }
+                })
+                .filter(isNotNull) ?? [],
             bump,
             collection,
           };

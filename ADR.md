@@ -74,3 +74,13 @@ type SeedTypes = ArgumentSeed | AttributeSeed | ValueSeed;
 ```
 
 For the bump we have a select with all the u8-typed options.
+
+## 3. Document `create` method
+
+Originally, according to #1 the idea was to avoid the create method entirely for collections that are external. Users instead would have to create an Unchecked document and the necessary tasks to fullfil the instruction. Looking at it now, it seems like this is something that happens not only for external "non-anchor" programs, but rather with every program outside the current one. This makes the experience harder like 90% of the time, if not more.
+
+It seems better to let users have the `create` method for any collection and lift the responsibility up to the generator to tell how to deal with the creation. But then, how will we know which values to pass to the instruction handler? i.e. initializeMint takes a few arguments, where would those come from?
+
+This means that we can't rely on the "create" method to actually go through the whole process, it's more of a way to tell the program: "Hey, this account is not created yet, but will be at the end of this instruction.". The only feasible option seems be: allow any document to be of "create" method and if you're creating something that needs CPIs, you are responsible of doing so.
+
+Once this solution is settled in, we could introduce some sort of "model-checking" through rules. Basically each application comes with a set of rules or boolean functions that tell how "correct" a given instruction is. i.e. If you have a document of the "mint" collection but you don't have an initializeMint task, a rule would be broken and you'd know you have something missing.

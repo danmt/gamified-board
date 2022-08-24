@@ -538,7 +538,8 @@ export class BoardPageComponent implements OnInit {
               documentData.method,
               documentCollection.id,
               documentData.seeds,
-              documentData.bump
+              documentData.bump,
+              documentData.payer
             );
           })
         )
@@ -551,6 +552,8 @@ export class BoardPageComponent implements OnInit {
     documentId: string,
     document: BoardDocument
   ) {
+    console.log(document);
+
     this._dialog
       .open<
         EditDocumentSubmitPayload,
@@ -575,7 +578,8 @@ export class BoardPageComponent implements OnInit {
             documentData.name,
             documentData.method,
             documentData.seeds,
-            documentData.bump
+            documentData.bump,
+            documentData.payer
           );
         })
       )

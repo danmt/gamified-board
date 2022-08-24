@@ -10,7 +10,12 @@ import {
 } from '@angular/core';
 
 import { Directive } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  FormBuilder,
+  FormControl,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { v4 as uuid } from 'uuid';
 import { Option } from '../utils';
 
@@ -78,7 +83,7 @@ export class EditWorkspaceModalDirective {
           <button
             *ngIf="workspace === null"
             type="button"
-            (click)="onGenerateId()"
+            (click)="idControl.setValue(onGenerateId())"
           >
             Generate
           </button>
@@ -124,17 +129,18 @@ export class EditWorkspaceModalComponent {
     }),
   });
 
+  get idControl() {
+    return this.form.get('id') as FormControl<string>;
+  }
+
+  get nameControl() {
+    return this.form.get('name') as FormControl<string>;
+  }
+
   onSubmit() {
     if (this.form.valid) {
-      const { id, name } = this.form.value;
-
-      if (id === undefined) {
-        throw new Error('ID is not properly defined.');
-      }
-
-      if (name === undefined) {
-        throw new Error('Name is not properly defined.');
-      }
+      const id = this.idControl.value;
+      const name = this.nameControl.value;
 
       this._dialogRef.close({
         id,
@@ -148,6 +154,6 @@ export class EditWorkspaceModalComponent {
   }
 
   onGenerateId() {
-    this.form.get('id')?.setValue(uuid());
+    return uuid();
   }
 }

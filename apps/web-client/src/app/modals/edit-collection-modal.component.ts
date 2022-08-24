@@ -95,7 +95,7 @@ export class EditCollectionModalDirective {
           <button
             *ngIf="collection === null"
             type="button"
-            (click)="onGenerateId()"
+            (click)="idControl.setValue(onGenerateId())"
           >
             Generate
           </button>

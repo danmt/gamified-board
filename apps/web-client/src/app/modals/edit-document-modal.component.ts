@@ -19,7 +19,7 @@ import { v4 as uuid } from 'uuid';
 import { BoardStore } from '../stores';
 import { isNotNull, Option } from '../utils';
 
-interface ArgumentSeed {
+interface ArgumentReference {
   kind: 'argument';
   argument: {
     id: string;
@@ -28,8 +28,8 @@ interface ArgumentSeed {
   };
 }
 
-interface AttributeSeed {
-  kind: 'attribute';
+interface DocumentReference {
+  kind: 'document';
   attribute: {
     id: string;
     name: string;
@@ -41,46 +41,43 @@ interface AttributeSeed {
   };
 }
 
-type ReferenceSeed = ArgumentSeed | AttributeSeed;
+type Reference = ArgumentReference | DocumentReference;
 
-interface ValueSeed {
-  kind: null;
+interface Value {
   value: string;
   type: string;
 }
-
-type SeedTypes = ReferenceSeed | ValueSeed;
 
 export interface EditDocumentData {
   document: Option<{
     id: string;
     name: string;
     method: string;
-    seeds: Option<SeedTypes>[];
-    bump: Option<ReferenceSeed>;
+    seeds: Option<Reference | Value>[];
+    bump: Option<Reference>;
+    payer: Option<DocumentReference>;
   }>;
   collection: {
     name: string;
-    isInternal: boolean;
-    isAnchor: boolean;
   };
   instructionId: string;
 }
 
 type SeedOutput =
-  | { kind: 'attribute'; documentId: string; attributeId: string }
+  | { kind: 'document'; documentId: string; attributeId: string }
   | { kind: 'argument'; argumentId: string }
-  | { kind: null; value: string; type: string };
+  | { value: string; type: string };
 
 export interface EditDocumentSubmitPayload {
   id: string;
   name: string;
   method: string;
   bump: Option<
-    | { kind: 'attribute'; documentId: string; attributeId: string }
+    | { kind: 'document'; documentId: string; attributeId: string }
     | { kind: 'argument'; argumentId: string }
   >;
   seeds: SeedOutput[];
+  payer: Option<{ kind: 'document'; documentId: string; attributeId: string }>;
 }
 
 @Component({
@@ -118,7 +115,7 @@ export interface EditDocumentSubmitPayload {
           <button
             *ngIf="document === null"
             type="button"
-            (click)="onGenerateId()"
+            (click)="idControl.setValue(onGenerateId())"
           >
             Generate
           </button>
@@ -147,7 +144,7 @@ export interface EditDocumentSubmitPayload {
             <label for="document-method-read">Read</label>
           </div>
 
-          <div *ngIf="collection.isInternal || collection.isAnchor">
+          <div>
             <input
               type="radio"
               id="document-method-create"
@@ -178,26 +175,45 @@ export interface EditDocumentSubmitPayload {
           </div>
         </fieldset>
 
+        <div *ngIf="methodControl.value === 'create'">
+          <label class="block" for="document-payer"> Select payer </label>
+
+          <select
+            id="document-payer"
+            formControlName="payer"
+            [compareWith]="compareAttributesFn"
+          >
+            <option
+              *ngFor="let attributeReference of attributeReferences$ | async"
+              [ngValue]="attributeReference"
+            >
+              Attribute {{ attributeReference.document.name }}.{{
+                attributeReference.attribute.name
+              }}
+            </option>
+          </select>
+        </div>
+
         <div formArrayName="seeds">
           <p>
             <span>Document seeds</span>
 
             <button
-              (click)="onAddAttributeSeed()"
+              (click)="onAddDocumentReference()"
               type="button"
               class="px-4 py-2 border-blue-500 border"
             >
-              Attribute +
+              Document +
             </button>
             <button
-              (click)="onAddArgumentSeed()"
+              (click)="onAddArgumentReference()"
               type="button"
               class="px-4 py-2 border-blue-500 border"
             >
               Argument +
             </button>
             <button
-              (click)="onAddValueSeed()"
+              (click)="onAddValue()"
               type="button"
               class="px-4 py-2 border-blue-500 border"
             >
@@ -236,7 +252,7 @@ export interface EditDocumentSubmitPayload {
                         class="block"
                         [for]="'document-seeds-' + i + '-argument'"
                       >
-                        Search argument
+                        Select argument
                       </label>
 
                       <select
@@ -256,17 +272,17 @@ export interface EditDocumentSubmitPayload {
                     </div>
                   </div>
 
-                  <div *ngSwitchCase="'attribute'">
+                  <div *ngSwitchCase="'document'">
                     <div>
                       <label
                         class="block"
-                        [for]="'document-seeds-' + i + '-attribute'"
+                        [for]="'document-seeds-' + i + '-document'"
                       >
-                        Search attribute
+                        Select document
                       </label>
 
                       <select
-                        [id]="'document-seeds-' + i + '-attribute'"
+                        [id]="'document-seeds-' + i + '-document'"
                         formControlName="reference"
                         [compareWith]="compareAttributesFn"
                       >
@@ -345,7 +361,7 @@ export interface EditDocumentSubmitPayload {
               *ngFor="let reference of bumpReferences$ | async"
               [ngValue]="reference"
             >
-              <ng-container *ngIf="reference.kind === 'attribute'">
+              <ng-container *ngIf="reference.kind === 'document'">
                 Attribute {{ reference.document.name }}.{{
                   reference.attribute.name
                 }}
@@ -400,7 +416,21 @@ export class EditDocumentModalComponent {
               return this._formBuilder.group({
                 kind: this._formBuilder.control<'invalid'>('invalid'),
               });
-            } else if (seed.kind === 'argument') {
+            }
+
+            if (!('kind' in seed)) {
+              return this._formBuilder.group({
+                kind: this._formBuilder.control<null>(null),
+                value: this._formBuilder.control<string>(seed.value, {
+                  nonNullable: true,
+                }),
+                type: this._formBuilder.control<string>(seed.type, {
+                  nonNullable: true,
+                }),
+              });
+            }
+
+            if (seed.kind === 'argument') {
               return this._formBuilder.group({
                 kind: this._formBuilder.control<'argument'>(seed.kind),
                 reference: this._formBuilder.control<
@@ -412,9 +442,9 @@ export class EditDocumentModalComponent {
                   }>
                 >({ argument: seed.argument }),
               });
-            } else if (seed.kind === 'attribute') {
+            } else {
               return this._formBuilder.group({
-                kind: this._formBuilder.control<'attribute'>(seed.kind),
+                kind: this._formBuilder.control<'document'>(seed.kind),
                 reference: this._formBuilder.control<
                   Option<{
                     document: {
@@ -428,16 +458,6 @@ export class EditDocumentModalComponent {
                   }>
                 >({ document: seed.document, attribute: seed.attribute }),
               });
-            } else {
-              return this._formBuilder.group({
-                kind: this._formBuilder.control<null>(seed.kind),
-                value: this._formBuilder.control<string>(seed.value, {
-                  nonNullable: true,
-                }),
-                type: this._formBuilder.control<string>(seed.type, {
-                  nonNullable: true,
-                }),
-              });
             }
           })
         )
@@ -445,7 +465,7 @@ export class EditDocumentModalComponent {
     bump: this._formBuilder.control<
       Option<
         | {
-            kind: 'attribute';
+            kind: 'document';
             document: {
               id: string;
               name: string;
@@ -464,6 +484,18 @@ export class EditDocumentModalComponent {
           }
       >
     >(this.document?.bump ?? null),
+    payer: this._formBuilder.control<
+      Option<{
+        document: {
+          id: string;
+          name: string;
+        };
+        attribute: {
+          id: string;
+          name: string;
+        };
+      }>
+    >(this.document?.payer ?? null),
   });
   readonly argumentReferences$ = combineLatest([
     this._boardStore.boardInstructions$,
@@ -495,11 +527,11 @@ export class EditDocumentModalComponent {
         return null;
       }
 
-      return instruction.documents.reduce<AttributeSeed[]>(
+      return instruction.documents.reduce<DocumentReference[]>(
         (attributes, document) => [
           ...attributes,
           ...document.collection.attributes.map((attribute) => ({
-            kind: 'attribute' as const,
+            kind: 'document' as const,
             attribute,
             document,
           })),
@@ -537,7 +569,7 @@ export class EditDocumentModalComponent {
   get seedsControl() {
     return this.form.get('seeds') as FormArray<
       | FormGroup<{
-          kind: FormControl<'attribute'>;
+          kind: FormControl<'document'>;
           reference: FormControl<
             Option<{
               document: {
@@ -584,7 +616,7 @@ export class EditDocumentModalComponent {
             };
           }
         | {
-            kind: 'attribute';
+            kind: 'document';
             document: {
               id: string;
               name: string;
@@ -598,12 +630,26 @@ export class EditDocumentModalComponent {
     >;
   }
 
+  get payerControl() {
+    return this.form.get('payer') as FormControl<
+      Option<{
+        document: {
+          id: string;
+          name: string;
+        };
+        attribute: {
+          id: string;
+          name: string;
+        };
+      }>
+    >;
+  }
+
   onSubmit() {
     if (this.form.valid) {
       const id = this.idControl.value;
       const name = this.nameControl.value;
       const method = this.methodControl.value;
-      const bump = this.bumpControl.value;
       const seeds = this.seedsControl.value
         .map((seed) => {
           if (seed.kind === 'argument' && seed.reference) {
@@ -611,7 +657,7 @@ export class EditDocumentModalComponent {
               kind: seed.kind,
               argumentId: seed.reference.argument.id,
             };
-          } else if (seed.kind === 'attribute' && seed.reference) {
+          } else if (seed.kind === 'document' && seed.reference) {
             return {
               kind: seed.kind,
               documentId: seed.reference.document.id,
@@ -619,7 +665,6 @@ export class EditDocumentModalComponent {
             };
           } else if (seed.kind === null && seed.value && seed.type) {
             return {
-              kind: null,
               value: seed.value,
               type: seed.type,
             };
@@ -628,6 +673,8 @@ export class EditDocumentModalComponent {
           }
         })
         .filter(isNotNull);
+      const bump = this.bumpControl.value;
+      const payer = this.payerControl.value;
 
       this._dialogRef.close({
         id,
@@ -637,11 +684,19 @@ export class EditDocumentModalComponent {
         bump:
           bump?.kind === 'argument'
             ? { kind: 'argument', argumentId: bump.argument.id }
-            : bump?.kind === 'attribute'
+            : bump?.kind === 'document'
             ? {
-                kind: 'attribute',
+                kind: 'document',
                 attributeId: bump.attribute.id,
                 documentId: bump.document.id,
+              }
+            : null,
+        payer:
+          payer !== null
+            ? {
+                kind: 'document',
+                attributeId: payer.attribute.id,
+                documentId: payer.document.id,
               }
             : null,
       });
@@ -652,7 +707,7 @@ export class EditDocumentModalComponent {
     this._dialogRef.close();
   }
 
-  displayFn(reference: Option<ReferenceSeed>): string {
+  displayFn(reference: Option<Reference>): string {
     if (reference === null) {
       return '';
     }
@@ -664,9 +719,9 @@ export class EditDocumentModalComponent {
     }
   }
 
-  onAddAttributeSeed() {
+  onAddDocumentReference() {
     const seedForm = this._formBuilder.group({
-      kind: this._formBuilder.control<'attribute'>('attribute', {
+      kind: this._formBuilder.control<'document'>('document', {
         nonNullable: true,
       }),
       reference: this._formBuilder.control<
@@ -686,7 +741,7 @@ export class EditDocumentModalComponent {
     this.seedsControl.push(seedForm);
   }
 
-  onAddArgumentSeed() {
+  onAddArgumentReference() {
     const seedForm = this._formBuilder.group({
       kind: this._formBuilder.control<'argument'>('argument', {
         nonNullable: true,
@@ -704,7 +759,7 @@ export class EditDocumentModalComponent {
     this.seedsControl.push(seedForm);
   }
 
-  onAddValueSeed() {
+  onAddValue() {
     const seedForm = this._formBuilder.group({
       kind: this._formBuilder.control<null>(null),
       value: this._formBuilder.control<string>('', { nonNullable: true }),
@@ -726,7 +781,7 @@ export class EditDocumentModalComponent {
     event: CdkDragDrop<
       FormArray<
         | FormGroup<{
-            kind: FormControl<'attribute'>;
+            kind: FormControl<'document'>;
             reference: FormControl<
               Option<{
                 document: {
@@ -811,7 +866,7 @@ export class EditDocumentModalComponent {
           argument: { id: string };
         }
       | {
-          kind: 'attribute';
+          kind: 'document';
           document: { id: string };
           attribute: { id: string };
         }
@@ -822,7 +877,7 @@ export class EditDocumentModalComponent {
           argument: { id: string };
         }
       | {
-          kind: 'attribute';
+          kind: 'document';
           document: { id: string };
           attribute: { id: string };
         }
@@ -833,8 +888,8 @@ export class EditDocumentModalComponent {
       (bump1?.kind === 'argument' &&
         bump2?.kind === 'argument' &&
         bump1.argument.id === bump2.argument.id) ||
-      (bump1?.kind === 'attribute' &&
-        bump2?.kind === 'attribute' &&
+      (bump1?.kind === 'document' &&
+        bump2?.kind === 'document' &&
         bump1.document.id === bump2.document.id &&
         bump1.attribute.id === bump2.attribute.id)
     );
