@@ -52,6 +52,7 @@ import { Option } from '../utils';
               cdkDrag
               [cdkDragData]="instruction.id"
               (click)="onSelectInstruction(instruction.id)"
+              (dblclick)="onActivateInstruction(instruction.id)"
               (cdkDragStarted)="onDragStart($event)"
               (cdkDragEnded)="onDragEnd()"
             >
@@ -165,6 +166,10 @@ export class InstructionsSectionComponent {
   readonly workspaceId$ = this._boardStore.workspaceId$;
   readonly currentApplicationId$ = this._boardStore.currentApplicationId$;
   readonly instructions$ = this._boardStore.instructions$;
+
+  onActivateInstruction(instructionId: string) {
+    this._boardStore.setActiveInstructionId(instructionId);
+  }
 
   onSelectInstruction(instructionId: string) {
     this._boardStore.setSelectedInstructionId(instructionId);

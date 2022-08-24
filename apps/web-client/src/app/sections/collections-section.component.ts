@@ -52,6 +52,7 @@ import { Option } from '../utils';
               cdkDrag
               [cdkDragData]="collection.id"
               (click)="onSelectCollection(collection.id)"
+              (dblclick)="onActivateCollection(collection.id)"
               (cdkDragStarted)="onDragStart($event)"
               (cdkDragEnded)="onDragEnd()"
             >
@@ -163,6 +164,10 @@ export class CollectionsSectionComponent {
   readonly workspaceId$ = this._boardStore.workspaceId$;
   readonly currentApplicationId$ = this._boardStore.currentApplicationId$;
   readonly collections$ = this._boardStore.collections$;
+
+  onActivateCollection(collectionId: string) {
+    this._boardStore.setActiveCollectionId(collectionId);
+  }
 
   onSelectCollection(collectionId: string) {
     this._boardStore.setSelectedCollectionId(collectionId);
