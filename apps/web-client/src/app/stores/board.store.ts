@@ -4,19 +4,24 @@ import {
   OnStoreInit,
   tapResponse,
 } from '@ngrx/component-store';
-import { combineLatest, EMPTY, map, Observable, switchMap } from 'rxjs';
+import {
+  concatMap,
+  EMPTY,
+  Observable,
+  of,
+  switchMap,
+  withLatestFrom,
+} from 'rxjs';
 import { IdlStructField, PluginsService } from '../plugins';
 import {
-  ApplicationApiService,
   ApplicationDto,
-  CollectionApiService,
   CollectionAttributeDto,
   CollectionDto,
+  DocumentApiService,
   DocumentDto,
-  InstructionApiService,
   InstructionArgumentDto,
   InstructionDto,
-  TaskDto,
+  TaskApiService,
   WorkspaceApiService,
   WorkspaceDto,
 } from '../services';
@@ -40,13 +45,19 @@ export type BoardValue = {
   value: string;
 };
 
+export type BoardApplication = Entity<{
+  name: string;
+  thumbnailUrl: string;
+  workspaceId: string;
+  collections: BoardCollection[];
+  instructions: BoardInstruction[];
+}>;
+
 export type BoardCollection = Entity<{
   name: string;
   thumbnailUrl: string;
   applicationId: string;
   workspaceId: string;
-  isInternal: boolean;
-  isAnchor: boolean;
   attributes: CollectionAttributeDto[];
 }>;
 
@@ -65,8 +76,9 @@ export type BoardInstruction = Entity<{
   thumbnailUrl: string;
   applicationId: string;
   workspaceId: string;
-  isInternal: boolean;
   arguments: InstructionArgumentDto[];
+  documents: BoardDocument[];
+  tasks: BoardTask[];
 }>;
 
 export type BoardTask = Entity<{
@@ -86,27 +98,18 @@ export interface BoardEntry {
 interface ViewModel {
   workspaceId: Option<string>;
   currentApplicationId: Option<string>;
-  workspace: Option<WorkspaceDto & { applicationIds: string[] }>;
-  applications: Option<
-    (ApplicationDto & { collectionIds: string[]; instructionIds: string[] })[]
-  >;
-  currentApplicationInstructions: Option<
-    {
-      id: string;
-      name: string;
-      arguments: InstructionArgumentDto[];
-      tasks: TaskDto[];
-      documents: DocumentDto[];
-    }[]
-  >;
-  workspaceInstructions: Option<InstructionDto[]>;
-  workspaceCollections: Option<CollectionDto[]>;
+  workspace: Option<WorkspaceDto>;
+  applications: Option<ApplicationDto[]>;
+  collections: Option<CollectionDto[]>;
+  instructions: Option<InstructionDto[]>;
   selectedDocumentId: Option<string>;
   selectedTaskId: Option<string>;
   selectedCollectionId: Option<string>;
   selectedInstructionId: Option<string>;
+  selectedApplicationId: Option<string>;
   activeCollectionId: Option<string>;
   activeInstructionId: Option<string>;
+  activeApplicationId: Option<string>;
   instructionSlotIds: Option<string>[];
   collectionSlotIds: Option<string>[];
 }
@@ -116,13 +119,14 @@ const initialState: ViewModel = {
   workspace: null,
   currentApplicationId: null,
   applications: null,
-  currentApplicationInstructions: null,
-  workspaceInstructions: null,
-  workspaceCollections: null,
+  collections: null,
+  instructions: null,
   selectedDocumentId: null,
   selectedTaskId: null,
+  selectedApplicationId: null,
   selectedCollectionId: null,
   selectedInstructionId: null,
+  activeApplicationId: null,
   activeCollectionId: null,
   activeInstructionId: null,
   instructionSlotIds: [null, null, null, null, null, null],
@@ -136,120 +140,27 @@ export class BoardStore
 {
   private readonly _pluginsService = inject(PluginsService);
   private readonly _workspaceApiService = inject(WorkspaceApiService);
-  private readonly _applicationApiService = inject(ApplicationApiService);
-  private readonly _instructionApiService = inject(InstructionApiService);
-  private readonly _collectionApiService = inject(CollectionApiService);
+  private readonly _taskApiService = inject(TaskApiService);
+  private readonly _documentApiService = inject(DocumentApiService);
 
   readonly workspaceId$ = this.select(({ workspaceId }) => workspaceId);
   readonly workspace$ = this.select(({ workspace }) => workspace);
   readonly currentApplicationId$ = this.select(
     ({ currentApplicationId }) => currentApplicationId
   );
-  readonly applications$ = this.select(({ applications }) => applications);
-  readonly workspaceInstructions$ = this.select(
-    ({ workspaceInstructions }) => workspaceInstructions
-  );
-  readonly workspaceCollections$ = this.select(
-    ({ workspaceCollections }) => workspaceCollections
-  );
-  readonly workspaceApplications$ = this.select(
-    this.applications$,
-    this.workspaceInstructions$,
-    this.workspaceCollections$,
-    (applications, instructions, collections) =>
-      applications?.map((application) => ({
-        id: application.id,
-        name: application.name,
-        instructions:
-          instructions?.filter(({ applicationId }) => applicationId) ?? [],
-        collections:
-          collections?.filter(({ applicationId }) => applicationId) ?? [],
-      })) ?? []
-  );
-  readonly otherApplications$ = this.select(
-    this.applications$,
-    this.currentApplicationId$,
-    this.workspaceInstructions$,
-    this.workspaceCollections$,
-    (applications, currentApplicationId, instructions, collections) =>
-      applications
-        ?.filter(({ id }) => id !== currentApplicationId)
-        .map((application) => ({
-          id: application.id,
-          name: application.name,
-          instructions:
-            instructions?.filter(
-              (instruction) => instruction.applicationId === application.id
-            ) ?? [],
-          collections:
-            collections?.filter(
-              (collection) => collection.applicationId === application.id
-            ) ?? [],
-        })) ?? []
-  );
-  readonly currentApplication$ = this.select(
-    this.applications$,
-    this.currentApplicationId$,
-    this.workspaceInstructions$,
-    this.workspaceCollections$,
-    (applications, currentApplicationId, instructions, collections) => {
-      if (applications === null) {
-        return null;
-      }
 
-      const currentApplication =
-        applications.find(({ id }) => id === currentApplicationId) ?? null;
-
-      if (currentApplication === null) {
-        return null;
-      }
-
-      return {
-        id: currentApplication.id,
-        name: currentApplication.name,
-        instructions:
-          instructions?.filter(
-            (instruction) => instruction.applicationId === currentApplicationId
-          ) ?? [],
-        collections:
-          collections?.filter(
-            (collection) => collection.applicationId === currentApplicationId
-          ) ?? [],
-      };
-    }
-  );
-  readonly currentApplicationInstructions$ = this.select(
-    ({ currentApplicationInstructions }) => currentApplicationInstructions
-  );
-
-  readonly activeCollectionId$ = this.select(
-    ({ activeCollectionId }) => activeCollectionId
-  );
-  readonly activeInstructionId$ = this.select(
-    ({ activeInstructionId }) => activeInstructionId
-  );
-  readonly collections$ = this.select(
-    this.workspaceCollections$,
-    (workspaceCollections) => {
-      if (workspaceCollections === null) {
+  readonly collections$: Observable<Option<BoardCollection[]>> = this.select(
+    ({ collections }) => {
+      if (collections === null) {
         return null;
       }
 
       return [
-        ...workspaceCollections.map<BoardCollection>((collection) => ({
-          id: collection.id,
-          name: collection.name,
-          thumbnailUrl: collection.thumbnailUrl,
-          applicationId: collection.applicationId,
-          workspaceId: collection.workspaceId,
-          isInternal: true,
-          isAnchor: false,
-          attributes: collection.attributes,
-        })),
-        ...this._pluginsService.plugins.reduce<BoardCollection[]>(
+        ...collections,
+        ...this._pluginsService.plugins.reduce<CollectionDto[]>(
           (collections, plugin) => [
             ...collections,
-            ...plugin.accounts.reduce<BoardCollection[]>(
+            ...plugin.accounts.reduce<CollectionDto[]>(
               (innerCollections, account) => {
                 const fields: IdlStructField[] =
                   typeof account.type === 'string'
@@ -266,8 +177,6 @@ export class BoardStore
                     thumbnailUrl: `assets/plugins/${plugin.namespace}/${plugin.name}/accounts/${account.name}.png`,
                     applicationId: plugin.name,
                     workspaceId: plugin.namespace,
-                    isInternal: false,
-                    isAnchor: plugin.isAnchor,
                     attributes: fields.map((field) => {
                       if (typeof field.type === 'string') {
                         return {
@@ -327,39 +236,184 @@ export class BoardStore
       ];
     }
   );
-  readonly instructions$ = this.select(
-    this.workspaceInstructions$,
-    (workspaceInstructions) => {
-      if (workspaceInstructions === null) {
+  readonly instructions$: Observable<Option<BoardInstruction[]>> = this.select(
+    this.select(({ instructions }) => instructions),
+    this.collections$,
+    (instructions, collections) => {
+      if (instructions === null || collections === null) {
         return null;
       }
 
       return [
-        ...workspaceInstructions.map<BoardInstruction>((instruction) => ({
-          id: instruction.id,
-          name: instruction.name,
-          thumbnailUrl: instruction.thumbnailUrl,
-          applicationId: instruction.applicationId,
-          workspaceId: instruction.workspaceId,
-          isInternal: true,
-          arguments: instruction.arguments,
-        })),
+        ...instructions.map((instruction) => {
+          return {
+            id: instruction.id,
+            name: instruction.name,
+            thumbnailUrl: instruction.thumbnailUrl,
+            applicationId: instruction.applicationId,
+            workspaceId: instruction.workspaceId,
+            arguments: instruction.arguments,
+            documents: instruction.documents.map((document) => {
+              const collection =
+                collections.find(
+                  (collection) => collection.id === document.collectionId
+                ) ?? null;
+
+              if (collection === null) {
+                throw new Error(
+                  `Document ${document.id} has an reference to an unknown collection.`
+                );
+              }
+
+              let bump: Option<BoardReference> = null;
+
+              if (document.bump?.kind === 'document') {
+                const documentId = document.bump.documentId;
+                const attributeId = document.bump.attributeId;
+
+                const bumpDocument =
+                  instruction.documents.find(({ id }) => id === documentId) ??
+                  null;
+                const collection =
+                  collections.find(
+                    ({ id }) => id === bumpDocument?.collectionId
+                  ) ?? null;
+                const attribute =
+                  collection?.attributes.find(({ id }) => id === attributeId) ??
+                  null;
+
+                bump =
+                  bumpDocument !== null && attribute !== null
+                    ? {
+                        kind: 'document' as const,
+                        document: bumpDocument,
+                        attribute,
+                      }
+                    : null;
+              } else if (document.bump?.kind === 'argument') {
+                const argumentId = document.bump.argumentId;
+                const argument =
+                  instruction?.arguments.find(({ id }) => id === argumentId) ??
+                  null;
+
+                bump =
+                  argument !== null
+                    ? {
+                        kind: 'argument' as const,
+                        argument,
+                      }
+                    : null;
+              }
+
+              let payer: Option<BoardReference> = null;
+
+              if (document.payer !== null) {
+                const documentId = document.payer.documentId;
+                const attributeId = document.payer.attributeId;
+
+                const payerDocument =
+                  instruction.documents.find(({ id }) => id === documentId) ??
+                  null;
+                const collection =
+                  collections.find(
+                    ({ id }) => id === payerDocument?.collectionId
+                  ) ?? null;
+                const attribute =
+                  collection?.attributes.find(({ id }) => id === attributeId) ??
+                  null;
+
+                payer =
+                  payerDocument !== null && attribute !== null
+                    ? {
+                        kind: 'document',
+                        document: payerDocument,
+                        attribute,
+                      }
+                    : null;
+              }
+
+              return {
+                id: document.id,
+                name: document.name,
+                method: document.method,
+                ownerId: document.ownerId,
+                payer,
+                seeds:
+                  document.seeds
+                    ?.map<Option<BoardReference | BoardValue>>((seed) => {
+                      if (!('kind' in seed)) {
+                        return {
+                          value: seed.value,
+                          type: seed.type,
+                        };
+                      }
+
+                      switch (seed.kind) {
+                        case 'argument': {
+                          const arg =
+                            instruction.arguments.find(
+                              ({ id }) => id === seed.argumentId
+                            ) ?? null;
+
+                          return arg !== null
+                            ? {
+                                kind: seed.kind,
+                                argument: arg,
+                              }
+                            : null;
+                        }
+                        case 'document': {
+                          const document =
+                            instruction.documents.find(
+                              ({ id }) => id === seed.documentId
+                            ) ?? null;
+                          const collection =
+                            collections.find(
+                              ({ id }) => id === document?.collectionId
+                            ) ?? null;
+                          const attribute =
+                            collection?.attributes.find(
+                              ({ id }) => id === seed.attributeId
+                            ) ?? null;
+
+                          return document !== null && attribute !== null
+                            ? {
+                                kind: seed.kind,
+                                document,
+                                attribute,
+                              }
+                            : null;
+                        }
+                        default: {
+                          return null;
+                        }
+                      }
+                    })
+                    .filter(isNotNull) ?? [],
+                bump,
+                collection,
+              };
+            }),
+            tasks: [],
+          };
+        }),
         ...this._pluginsService.plugins.reduce<BoardInstruction[]>(
           (instructions, plugin) => [
             ...instructions,
             ...plugin.instructions.reduce<BoardInstruction[]>(
-              (innerInstructions, instruction) => {
+              (pluginInstructions, instruction) => {
                 const args = instruction.args;
 
                 return [
-                  ...innerInstructions,
+                  ...pluginInstructions,
                   {
                     id: `${plugin.namespace}/${plugin.name}/${instruction.name}`,
                     name: instruction.name,
                     thumbnailUrl: `assets/plugins/${plugin.namespace}/${plugin.name}/instructions/${instruction.name}.png`,
                     applicationId: plugin.name,
                     workspaceId: plugin.namespace,
-                    isInternal: false,
+                    documents: [],
+                    tasks: [],
                     arguments: args.map((arg) => {
                       if (typeof arg.type === 'string') {
                         return {
@@ -419,6 +473,81 @@ export class BoardStore
       ];
     }
   );
+  readonly applications$: Observable<Option<BoardApplication[]>> = this.select(
+    this.select(({ applications }) => applications),
+    this.instructions$,
+    this.collections$,
+    (applications, instructions, collections) => {
+      if (
+        applications === null ||
+        instructions === null ||
+        collections === null
+      ) {
+        return null;
+      }
+
+      return [
+        ...applications.map((application) => ({
+          ...application,
+          instructions: instructions.filter(
+            (instruction) => instruction.applicationId === application.id
+          ),
+          collections: collections.filter(
+            (collection) => collection.applicationId === application.id
+          ),
+        })),
+        ...this._pluginsService.plugins.map((plugin) => ({
+          id: plugin.name,
+          name: plugin.name,
+          workspaceId: plugin.namespace,
+          thumbnailUrl: `assets/plugins/${plugin.namespace}/${plugin.name}/thumbnail.png`,
+          instructions: instructions.filter(
+            (instruction) =>
+              instruction.applicationId === plugin.name &&
+              instruction.workspaceId === plugin.namespace
+          ),
+          collections: collections.filter(
+            (collection) =>
+              collection.applicationId === plugin.name &&
+              collection.workspaceId === plugin.namespace
+          ),
+        })),
+      ];
+    }
+  );
+  readonly currentApplication$ = this.select(
+    this.applications$,
+    this.currentApplicationId$,
+    (applications, currentApplicationId) => {
+      if (applications === null) {
+        return null;
+      }
+
+      return applications.find(({ id }) => id === currentApplicationId) ?? null;
+    }
+  );
+  readonly currentApplicationInstructions$ = this.select(
+    this.currentApplication$,
+    (currentApplication) => currentApplication?.instructions ?? []
+  );
+  readonly otherApplications$ = this.select(
+    this.applications$,
+    this.currentApplicationId$,
+    (applications, currentApplicationId) => {
+      if (applications === null) {
+        return null;
+      }
+
+      return applications.filter(({ id }) => id !== currentApplicationId);
+    }
+  );
+
+  readonly activeCollectionId$ = this.select(
+    ({ activeCollectionId }) => activeCollectionId
+  );
+  readonly activeInstructionId$ = this.select(
+    ({ activeInstructionId }) => activeInstructionId
+  );
   readonly activeInstruction$: Observable<Option<BoardInstruction>> =
     this.select(
       this.instructions$,
@@ -454,46 +583,57 @@ export class BoardStore
     this.select(
       this.instructions$,
       this.select(({ instructionSlotIds }) => instructionSlotIds),
-      (instructions, instructionSlotIds) =>
-        instructionSlotIds.map((instructionId) => {
+      (instructions, instructionSlotIds) => {
+        if (instructions === null || instructionSlotIds === null) {
+          return [];
+        }
+
+        return instructionSlotIds.map((instructionId) => {
           if (instructionId === null) {
             return null;
           }
 
           return (
-            instructions?.find(
+            instructions.find(
               (instruction) => instruction.id === instructionId
             ) ?? null
           );
-        })
+        });
+      }
     );
   readonly collectionSlots$: Observable<Option<BoardCollection>[]> =
     this.select(
-      this.collections$,
+      this.currentApplication$,
       this.select(({ collectionSlotIds }) => collectionSlotIds),
-      (collections, collectionSlotIds) =>
-        collectionSlotIds.map((collectionId) => {
+      (currentApplication, collectionSlotIds) => {
+        if (currentApplication === null || collectionSlotIds === null) {
+          return [];
+        }
+
+        return collectionSlotIds.map((collectionId) => {
           if (collectionId === null) {
             return null;
           }
 
           return (
-            collections?.find((collection) => collection.id === collectionId) ??
-            null
+            currentApplication.collections.find(
+              (collection) => collection.id === collectionId
+            ) ?? null
           );
-        })
+        });
+      }
     );
   readonly selectedInstruction$: Observable<Option<BoardInstruction>> =
     this.select(
-      this.instructions$,
+      this.currentApplication$,
       this.select(({ selectedInstructionId }) => selectedInstructionId),
-      (instructions, selectedInstructionId) => {
-        if (instructions === null || selectedInstructionId === null) {
+      (currentApplication, selectedInstructionId) => {
+        if (currentApplication === null || selectedInstructionId === null) {
           return null;
         }
 
         return (
-          instructions?.find(
+          currentApplication.instructions?.find(
             (instruction) => instruction.id === selectedInstructionId
           ) ?? null
         );
@@ -515,205 +655,64 @@ export class BoardStore
         );
       }
     );
-
-  readonly boardInstructions$: Observable<Option<BoardEntry[]>> = this.select(
-    this.currentApplicationInstructions$,
-    this.instructions$,
-    this.collections$,
-    (currentApplicationInstructions, instructions, collections) => {
-      if (
-        currentApplicationInstructions === null ||
-        instructions === null ||
-        collections === null
-      ) {
-        return null;
-      }
-
-      return currentApplicationInstructions.map((instruction) => ({
-        id: instruction.id,
-        name: instruction.name,
-        arguments: instruction.arguments,
-        documents: instruction.documents.map((document) => {
-          const collection =
-            collections.find(
-              (collection) => collection.id === document.collectionId
-            ) ?? null;
-
-          let bump: Option<BoardReference> = null;
-
-          if (document.bump?.kind === 'document') {
-            const documentId = document.bump.documentId;
-            const attributeId = document.bump.attributeId;
-
-            const bumpDocument =
-              instruction.documents.find(({ id }) => id === documentId) ?? null;
-            const collection =
-              collections.find(({ id }) => id === bumpDocument?.collectionId) ??
-              null;
-            const attribute =
-              collection?.attributes.find(({ id }) => id === attributeId) ??
-              null;
-
-            bump =
-              bumpDocument !== null && attribute !== null
-                ? {
-                    kind: 'document' as const,
-                    document: bumpDocument,
-                    attribute,
-                  }
-                : null;
-          } else if (document.bump?.kind === 'argument') {
-            const argumentId = document.bump.argumentId;
-            const argument =
-              instruction?.arguments.find(({ id }) => id === argumentId) ??
-              null;
-
-            bump =
-              argument !== null
-                ? {
-                    kind: 'argument' as const,
-                    argument,
-                  }
-                : null;
-          }
-
-          let payer: Option<BoardReference> = null;
-
-          if (document.payer !== null) {
-            const documentId = document.payer.documentId;
-            const attributeId = document.payer.attributeId;
-
-            const payerDocument =
-              instruction.documents.find(({ id }) => id === documentId) ?? null;
-            const collection =
-              collections.find(
-                ({ id }) => id === payerDocument?.collectionId
-              ) ?? null;
-            const attribute =
-              collection?.attributes.find(({ id }) => id === attributeId) ??
-              null;
-
-            payer =
-              payerDocument !== null && attribute !== null
-                ? {
-                    kind: 'document',
-                    document: payerDocument,
-                    attribute,
-                  }
-                : null;
-          }
-
-          if (collection === null) {
-            throw Error(`Document ${document.id} collectionId is invalid.`);
-          }
-
-          return {
-            id: document.id,
-            name: document.name,
-            method: document.method,
-            ownerId: document.ownerId,
-            payer,
-            seeds:
-              document.seeds
-                ?.map<Option<BoardReference | BoardValue>>((seed) => {
-                  if (!('kind' in seed)) {
-                    return {
-                      value: seed.value,
-                      type: seed.type,
-                    };
-                  }
-
-                  switch (seed.kind) {
-                    case 'argument': {
-                      const arg =
-                        instruction.arguments.find(
-                          ({ id }) => id === seed.argumentId
-                        ) ?? null;
-
-                      return arg !== null
-                        ? {
-                            kind: seed.kind,
-                            argument: arg,
-                          }
-                        : null;
-                    }
-                    case 'document': {
-                      const document =
-                        instruction.documents.find(
-                          ({ id }) => id === seed.documentId
-                        ) ?? null;
-                      const collection =
-                        collections.find(
-                          ({ id }) => id === document?.collectionId
-                        ) ?? null;
-                      const attribute =
-                        collection?.attributes.find(
-                          ({ id }) => id === seed.attributeId
-                        ) ?? null;
-
-                      return document !== null && attribute !== null
-                        ? {
-                            kind: seed.kind,
-                            document,
-                            attribute,
-                          }
-                        : null;
-                    }
-                    default: {
-                      return null;
-                    }
-                  }
-                })
-                .filter(isNotNull) ?? [],
-            bump,
-            collection,
-          };
-        }),
-        tasks: instruction.tasks.map((task) => {
-          const taskInstruction =
-            instructions.find(
-              (instruction) => instruction.id === task.instructionId
-            ) ?? null;
-
-          if (taskInstruction === null) {
-            throw Error(`Task ${task.id} instructionId is invalid.`);
-          }
-
-          return {
-            id: task.id,
-            name: task.name,
-            ownerId: task.ownerId,
-            instruction: taskInstruction,
-          };
-        }),
-      }));
-    }
-  );
-  readonly selectedTask$ = this.select(
-    this.boardInstructions$,
-    this.select(({ selectedTaskId }) => selectedTaskId),
-    (boardInstructions, selectedTaskId) => {
-      if (boardInstructions === null || selectedTaskId === null) {
+  readonly selectedApplication$ = this.select(
+    this.applications$,
+    this.select(({ selectedApplicationId }) => selectedApplicationId),
+    (applications, selectedApplicationId) => {
+      if (applications === null || selectedApplicationId === null) {
         return null;
       }
 
       return (
-        boardInstructions
+        applications?.find(
+          (application) => application.id === selectedApplicationId
+        ) ?? null
+      );
+    }
+  );
+  readonly activeApplication$ = this.select(
+    this.applications$,
+    this.select(({ activeApplicationId }) => activeApplicationId),
+    (applications, activeApplicationId) => {
+      if (applications === null || activeApplicationId === null) {
+        return null;
+      }
+
+      return (
+        applications?.find(
+          (application) => application.id === activeApplicationId
+        ) ?? null
+      );
+    }
+  );
+  readonly selectedTask$ = this.select(
+    this.currentApplicationInstructions$,
+    this.select(({ selectedTaskId }) => selectedTaskId),
+    (currentApplicationInstructions, selectedTaskId) => {
+      if (currentApplicationInstructions === null || selectedTaskId === null) {
+        return null;
+      }
+
+      return (
+        currentApplicationInstructions
           .find(({ tasks }) => tasks.some((task) => task.id === selectedTaskId))
           ?.tasks.find((task) => task.id === selectedTaskId) ?? null
       );
     }
   );
   readonly selectedDocument$ = this.select(
-    this.boardInstructions$,
+    this.currentApplicationInstructions$,
     this.select(({ selectedDocumentId }) => selectedDocumentId),
-    (boardInstructions, selectedDocumentId) => {
-      if (boardInstructions === null || selectedDocumentId === null) {
+    (currentApplicationInstructions, selectedDocumentId) => {
+      if (
+        currentApplicationInstructions === null ||
+        selectedDocumentId === null
+      ) {
         return null;
       }
 
       return (
-        boardInstructions
+        currentApplicationInstructions
           .find(({ documents }) =>
             documents.some((document) => document.id === selectedDocumentId)
           )
@@ -771,6 +770,7 @@ export class BoardStore
     (state, activeCollectionId) => ({
       ...state,
       activeCollectionId,
+      activeApplicationId: null,
       activeInstructionId: null,
     })
   );
@@ -806,6 +806,7 @@ export class BoardStore
     (state, activeInstructionId) => ({
       ...state,
       activeInstructionId,
+      activeApplicationId: null,
       activeCollectionId: null,
     })
   );
@@ -837,145 +838,149 @@ export class BoardStore
     };
   });
 
+  readonly setSelectedApplicationId = this.updater<Option<string>>(
+    (state, selectedApplicationId) => ({
+      ...state,
+      selectedApplicationId,
+    })
+  );
+
+  readonly setActiveApplicationId = this.updater<Option<string>>(
+    (state, activeApplicationId) => ({
+      ...state,
+      activeApplicationId,
+      activeInstructionId: null,
+      activeCollectionId: null,
+    })
+  );
+
+  readonly closeActiveOrSelected = this.updater<void>((state) => {
+    if (state.activeInstructionId !== null) {
+      return {
+        ...state,
+        activeInstructionId: null,
+      };
+    } else if (state.activeCollectionId !== null) {
+      return {
+        ...state,
+        activeCollectionId: null,
+      };
+    } else if (state.selectedDocumentId !== null) {
+      return {
+        ...state,
+        selectedDocumentId: null,
+      };
+    } else if (state.selectedTaskId !== null) {
+      return {
+        ...state,
+        selectedTaskId: null,
+      };
+    } else {
+      return state;
+    }
+  });
+
   private readonly _loadWorkspace$ = this.effect<Option<string>>(
     switchMap((workspaceId) => {
       if (workspaceId === null) {
         return EMPTY;
       }
 
-      return combineLatest([
-        this._workspaceApiService.getWorkspace(workspaceId),
-        this._workspaceApiService.getWorkspaceApplicationIds(workspaceId),
-      ]).pipe(
+      return this._workspaceApiService.getWorkspace(workspaceId).pipe(
         tapResponse(
-          ([workspace, applicationIds]) =>
-            this.patchState({
-              workspace: {
-                id: workspaceId,
-                name: workspace.name,
-                applicationIds,
-              },
-            }),
+          (workspace) => this.patchState({ workspace }),
           (error) => this._handleError(error)
         )
       );
     })
   );
 
-  private readonly _loadApplications$ = this.effect<Option<string[]>>(
-    switchMap((applicationIds) => {
-      if (applicationIds === null) {
+  private readonly _loadApplications$ = this.effect<Option<string>>(
+    switchMap((workspaceId) => {
+      if (workspaceId === null) {
         return EMPTY;
       }
 
-      return combineLatest(
-        applicationIds.map((applicationId) =>
-          combineLatest([
-            this._applicationApiService.getApplication(applicationId),
-            this._applicationApiService.getApplicationInstructionIds(
-              applicationId
-            ),
-            this._applicationApiService.getApplicationCollectionIds(
-              applicationId
-            ),
-          ]).pipe(
-            map(([application, instructionIds, collectionIds]) => ({
-              id: applicationId,
-              name: application.name,
-              workspaceId: application.workspaceId,
-              instructionIds,
-              collectionIds,
-            }))
+      return this._workspaceApiService
+        .getWorkspaceApplications(workspaceId)
+        .pipe(
+          tapResponse(
+            (applications) => this.patchState({ applications }),
+            (error) => this._handleError(error)
           )
-        )
-      ).pipe(
-        tapResponse(
-          (applications) =>
-            this.patchState({
-              applications,
-            }),
-          (error) => this._handleError(error)
-        )
-      );
+        );
     })
   );
 
-  private readonly _loadCurrentApplicationInstructions$ = this.effect<
-    Option<InstructionDto[]>
-  >(
-    switchMap((instructions) => {
-      if (instructions === null) {
+  private readonly _loadCollections$ = this.effect<Option<string>>(
+    switchMap((workspaceId) => {
+      if (workspaceId === null) {
         return EMPTY;
       }
 
-      return combineLatest(
-        instructions.map((instruction) =>
-          this._instructionApiService.getInstructionTasks(instruction.id).pipe(
-            map((tasks) => ({
-              id: instruction.id,
-              name: instruction.name,
-              documents: instruction.documents,
-              arguments: instruction.arguments,
-              tasks: instruction.tasksOrder.reduce(
-                (orderedTasks: TaskDto[], taskId: string) => {
-                  const taskFound =
-                    tasks.find((task) => task.id === taskId) ?? null;
-
-                  if (taskFound === null) {
-                    return orderedTasks;
-                  }
-
-                  return [...orderedTasks, taskFound];
-                },
-                []
-              ),
-            }))
+      return this._workspaceApiService
+        .getWorkspaceCollections(workspaceId)
+        .pipe(
+          tapResponse(
+            (collections) => this.patchState({ collections }),
+            (error) => this._handleError(error)
           )
-        )
-      ).pipe(
-        tapResponse(
-          (currentApplicationInstructions) =>
-            this.patchState({
-              currentApplicationInstructions,
-            }),
-          (error) => this._handleError(error)
-        )
-      );
+        );
     })
   );
 
-  private readonly _loadWorkspaceInstructions$ = this.effect<Option<string[]>>(
-    switchMap((instructionIds) => {
-      if (instructionIds === null) {
+  private readonly _loadInstructions$ = this.effect<Option<string>>(
+    switchMap((workspaceId) => {
+      if (workspaceId === null) {
         return EMPTY;
       }
 
-      return this._instructionApiService.getInstructions(instructionIds).pipe(
-        tapResponse(
-          (workspaceInstructions) =>
-            this.patchState({
-              workspaceInstructions,
-            }),
-          (error) => this._handleError(error)
-        )
-      );
+      return this._workspaceApiService
+        .getWorkspaceInstructions(workspaceId)
+        .pipe(
+          tapResponse(
+            (instructions) => this.patchState({ instructions }),
+            (error) => this._handleError(error)
+          )
+        );
     })
   );
 
-  private readonly _loadWorkspaceCollections$ = this.effect<Option<string[]>>(
-    switchMap((collectionIds) => {
-      if (collectionIds === null) {
-        return EMPTY;
-      }
-
-      return this._collectionApiService.getCollections(collectionIds).pipe(
-        tapResponse(
-          (workspaceCollections) =>
-            this.patchState({
-              workspaceCollections,
-            }),
-          (error) => this._handleError(error)
-        )
+  readonly deleteSelected = this.effect<void>(
+    switchMap(() => {
+      return of(null).pipe(
+        withLatestFrom(this.selectedTask$, this.selectedDocument$),
+        concatMap(([, selectedTask, selectedDocument]) => {
+          if (selectedTask !== null) {
+            if (confirm('Are you sure? This action cannot be reverted.')) {
+              return this._taskApiService
+                .deleteTask(selectedTask.ownerId, selectedTask.id)
+                .pipe(
+                  tapResponse(
+                    () => this.patchState({ selectedTaskId: null }),
+                    (error) => this._handleError(error)
+                  )
+                );
+            } else {
+              return EMPTY;
+            }
+          } else if (selectedDocument !== null) {
+            if (confirm('Are you sure? This action cannot be reverted.')) {
+              return this._documentApiService
+                .deleteDocument(selectedDocument.ownerId, selectedDocument.id)
+                .pipe(
+                  tapResponse(
+                    () => this.patchState({ selectedDocumentId: null }),
+                    (error) => this._handleError(error)
+                  )
+                );
+            } else {
+              return EMPTY;
+            }
+          } else {
+            return EMPTY;
+          }
+        })
       );
     })
   );
@@ -986,72 +991,9 @@ export class BoardStore
 
   ngrxOnStoreInit() {
     this._loadWorkspace$(this.workspaceId$);
-    this._loadApplications$(
-      this.select(
-        this.workspace$,
-        (workspace) => workspace?.applicationIds ?? null
-      )
-    );
-    this._loadCurrentApplicationInstructions$(
-      this.select(
-        this.currentApplication$,
-        (application) => application?.instructions ?? null
-      )
-    );
-    this._loadWorkspaceCollections$(
-      this.select(
-        this.workspace$,
-        this.applications$,
-        (workspace, applications) => {
-          if (workspace === null) {
-            return [];
-          }
-
-          return workspace.applicationIds.reduce<string[]>(
-            (collectionIds, applicationId) => {
-              const application =
-                applications?.find(({ id }) => id === applicationId) ?? null;
-
-              if (application === null) {
-                return collectionIds;
-              }
-
-              return [
-                ...new Set([...collectionIds, ...application.collectionIds]),
-              ];
-            },
-            []
-          );
-        }
-      )
-    );
-    this._loadWorkspaceInstructions$(
-      this.select(
-        this.workspace$,
-        this.applications$,
-        (workspace, applications) => {
-          if (workspace === null) {
-            return [];
-          }
-
-          return workspace.applicationIds.reduce<string[]>(
-            (instructionIds, applicationId) => {
-              const application =
-                applications?.find(({ id }) => id === applicationId) ?? null;
-
-              if (application === null) {
-                return instructionIds;
-              }
-
-              return [
-                ...new Set([...instructionIds, ...application.instructionIds]),
-              ];
-            },
-            []
-          );
-        }
-      )
-    );
+    this._loadApplications$(this.workspaceId$);
+    this._loadCollections$(this.workspaceId$);
+    this._loadInstructions$(this.workspaceId$);
   }
 
   private _handleError(error: unknown) {

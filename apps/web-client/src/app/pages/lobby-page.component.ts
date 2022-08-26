@@ -83,7 +83,12 @@ import { Option } from '../utils';
             class="border border-blue-500"
             pgEditApplicationModal
             (createApplication)="
-              onCreateApplication(selectedWorkspace.id, $event.id, $event.name)
+              onCreateApplication(
+                selectedWorkspace.id,
+                $event.id,
+                $event.name,
+                $event.thumbnailUrl
+              )
             "
           >
             New application
@@ -93,7 +98,11 @@ import { Option } from '../utils';
             class="border border-blue-500"
             pgEditApplicationModal
             (updateApplication)="
-              onUpdateApplication(selectedApplication.id, $event.name)
+              onUpdateApplication(
+                selectedApplication.id,
+                $event.name,
+                $event.thumbnailUrl
+              )
             "
             [application]="selectedApplication"
           >
@@ -219,16 +228,26 @@ export class LobbyPageComponent implements OnInit {
   onCreateApplication(
     workspaceId: string,
     applicationId: string,
-    applicationName: string
+    applicationName: string,
+    thumbnailUrl: string
   ) {
     this._applicationApiService
-      .createApplication(workspaceId, applicationId, applicationName)
+      .createApplication(
+        workspaceId,
+        applicationId,
+        applicationName,
+        thumbnailUrl
+      )
       .subscribe();
   }
 
-  onUpdateApplication(applicationId: string, applicationName: string) {
+  onUpdateApplication(
+    applicationId: string,
+    applicationName: string,
+    thumbnailUrl: string
+  ) {
     this._applicationApiService
-      .updateApplication(applicationId, applicationName)
+      .updateApplication(applicationId, applicationName, thumbnailUrl)
       .subscribe();
   }
 

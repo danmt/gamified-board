@@ -21,6 +21,7 @@ import { Option } from '../utils';
 export interface EditApplicationData {
   id: string;
   name: string;
+  thumbnailUrl: string;
 }
 
 @Directive({ selector: '[pgEditApplicationModal]', standalone: true })
@@ -100,6 +101,18 @@ export class EditApplicationModalDirective {
           />
         </div>
 
+        <div>
+          <label class="block" for="application-thumbnail-url-input">
+            Application thumbnail
+          </label>
+          <input
+            class="block border-b-2 border-black"
+            id="application-thumbnail-url-input"
+            type="text"
+            formControlName="thumbnailUrl"
+          />
+        </div>
+
         <div class="flex justify-center items-center mt-4">
           <button type="submit" class="px-4 py-2 border-blue-500 border">
             {{ application === null ? 'Send' : 'Save' }}
@@ -128,6 +141,13 @@ export class EditApplicationModalComponent {
       validators: [Validators.required],
       nonNullable: true,
     }),
+    thumbnailUrl: this._formBuilder.control<string>(
+      this.application?.thumbnailUrl ?? '',
+      {
+        validators: [Validators.required],
+        nonNullable: true,
+      }
+    ),
   });
 
   get idControl() {
@@ -138,14 +158,20 @@ export class EditApplicationModalComponent {
     return this.form.get('name') as FormControl<string>;
   }
 
+  get thumbnailUrlControl() {
+    return this.form.get('thumbnailUrl') as FormControl<string>;
+  }
+
   onSubmit() {
     if (this.form.valid) {
       const id = this.idControl.value;
       const name = this.nameControl.value;
+      const thumbnailUrl = this.thumbnailUrlControl.value;
 
       this._dialogRef.close({
         id,
         name,
+        thumbnailUrl,
       });
     }
   }

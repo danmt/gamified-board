@@ -18,7 +18,11 @@ import {
 import { defer, from, map, Observable } from 'rxjs';
 import { Entity } from '../utils';
 
-export type ApplicationDto = Entity<{ name: string; workspaceId: string }>;
+export type ApplicationDto = Entity<{
+  name: string;
+  workspaceId: string;
+  thumbnailUrl: string;
+}>;
 
 @Injectable({ providedIn: 'root' })
 export class ApplicationApiService {
@@ -35,6 +39,7 @@ export class ApplicationApiService {
         id: applicationId,
         name: application['name'],
         workspaceId: application['workspaceRef'].id,
+        thumbnailUrl: application['thumbnailUrl'],
       }))
     );
   }
@@ -92,7 +97,8 @@ export class ApplicationApiService {
   createApplication(
     workspaceId: string,
     newApplicationId: string,
-    name: string
+    name: string,
+    thumbnailUrl: string
   ) {
     return defer(() =>
       from(
@@ -113,6 +119,7 @@ export class ApplicationApiService {
           // create the new application
           transaction.set(newApplicationRef, {
             name,
+            thumbnailUrl,
             workspaceRef,
           });
 
@@ -127,11 +134,12 @@ export class ApplicationApiService {
     );
   }
 
-  updateApplication(applicationId: string, name: string) {
+  updateApplication(applicationId: string, name: string, thumbnailUrl: string) {
     return defer(() =>
       from(
         updateDoc(doc(this._firestore, `applications/${applicationId}`), {
           name,
+          thumbnailUrl,
         })
       )
     );

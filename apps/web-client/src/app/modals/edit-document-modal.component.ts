@@ -498,7 +498,7 @@ export class EditDocumentModalComponent {
     >(this.document?.payer ?? null),
   });
   readonly argumentReferences$ = combineLatest([
-    this._boardStore.boardInstructions$,
+    this._boardStore.currentApplicationInstructions$,
     of(this._data.instructionId),
   ]).pipe(
     map(([boardInstructions, instructionId]) => {
@@ -516,7 +516,7 @@ export class EditDocumentModalComponent {
     })
   );
   readonly attributeReferences$ = combineLatest([
-    this._boardStore.boardInstructions$,
+    this._boardStore.currentApplicationInstructions$,
     of(this._data.instructionId),
   ]).pipe(
     map(([boardInstructions, instructionId]) => {

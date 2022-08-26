@@ -18,8 +18,7 @@ interface ViewModel {
   selectedWorkspaceId: Option<string>;
   selectedApplicationId: Option<string>;
   favoriteWorkspaceIds: Option<string[]>;
-  favoriteWorkspaces: (WorkspaceDto & { applicationIds: string[] })[];
-  applications: ApplicationDto[];
+  favoriteWorkspaces: (WorkspaceDto & { applications: ApplicationDto[] })[];
 }
 
 const initialState: ViewModel = {
@@ -28,7 +27,6 @@ const initialState: ViewModel = {
   selectedApplicationId: null,
   favoriteWorkspaceIds: null,
   favoriteWorkspaces: [],
-  applications: [],
 };
 
 @Injectable()
@@ -41,20 +39,6 @@ export class LobbyStore
 
   readonly favoriteWorkspaces$ = this.select(
     ({ favoriteWorkspaces }) => favoriteWorkspaces
-  );
-  readonly applications$ = this.select(({ applications }) => applications);
-  readonly selectedWorkspaceApplications$ = this.select(
-    this.applications$,
-    this.select(({ selectedWorkspaceId }) => selectedWorkspaceId),
-    (applications, selectedWorkspace) => {
-      if (applications === null || selectedWorkspace === null) {
-        return [];
-      }
-
-      return applications.filter(
-        ({ workspaceId }) => workspaceId === selectedWorkspace
-      );
-    }
   );
   readonly selectedWorkspace$ = this.select(
     this.favoriteWorkspaces$,
@@ -71,6 +55,17 @@ export class LobbyStore
       );
     }
   );
+  readonly selectedWorkspaceApplications$ = this.select(
+    this.selectedWorkspace$,
+    (selectedWorkspace) => {
+      if (selectedWorkspace === null) {
+        return [];
+      }
+
+      return selectedWorkspace.applications;
+    }
+  );
+
   readonly selectedApplication$ = this.select(
     this.selectedWorkspaceApplications$,
     this.select(({ selectedApplicationId }) => selectedApplicationId),
@@ -137,14 +132,14 @@ export class LobbyStore
         favoriteWorkspaceIds.map((favoriteWorkspaceId) =>
           combineLatest([
             this._workspaceApiService.getWorkspace(favoriteWorkspaceId),
-            this._workspaceApiService.getWorkspaceApplicationIds(
+            this._workspaceApiService.getWorkspaceApplications(
               favoriteWorkspaceId
             ),
           ]).pipe(
-            map(([workspace, applicationIds]) => ({
+            map(([workspace, applications]) => ({
               id: workspace.id,
               name: workspace.name,
-              applicationIds,
+              applications,
             }))
           )
         )
@@ -160,28 +155,6 @@ export class LobbyStore
     })
   );
 
-  private readonly _loadApplications$ = this.effect<Option<string[]>>(
-    switchMap((applicationIds) => {
-      if (applicationIds === null) {
-        return of([]);
-      }
-
-      return combineLatest(
-        applicationIds.map((applicationId) =>
-          this._applicationApiService.getApplication(applicationId)
-        )
-      ).pipe(
-        tapResponse(
-          (applications) =>
-            this.patchState({
-              applications,
-            }),
-          (error) => this._handleError(error)
-        )
-      );
-    })
-  );
-
   constructor() {
     super(initialState);
   }
@@ -190,25 +163,6 @@ export class LobbyStore
     this._loadFavoriteWorkspaceIds$(this.select(({ userId }) => userId));
     this._loadFavoriteWorkspaces$(
       this.select(({ favoriteWorkspaceIds }) => favoriteWorkspaceIds)
-    );
-    this._loadApplications$(
-      this.select(this.favoriteWorkspaces$, (favoriteWorkspaces) => {
-        if (favoriteWorkspaces === null) {
-          return [];
-        }
-
-        return favoriteWorkspaces.reduce<string[]>(
-          (applicationIds, favoriteWorkspace) => {
-            return [
-              ...new Set([
-                ...applicationIds,
-                ...favoriteWorkspace.applicationIds,
-              ]),
-            ];
-          },
-          []
-        );
-      })
     );
   }
 

@@ -35,6 +35,7 @@ import {
 } from '../modals';
 import { BoardItemDropListsPipe } from '../pipes';
 import {
+  ApplicationsSectionComponent,
   CollectionsSectionComponent,
   InstructionsSectionComponent,
 } from '../sections';
@@ -61,20 +62,7 @@ import { Entity, Option } from '../utils';
       <ng-container *ngrxLet="selectedDocument$; let selectedDocument">
         <ng-container *ngrxLet="activeCollection$; let activeCollection">
           <ng-container *ngrxLet="activeInstruction$; let activeInstruction">
-            <ng-container
-              pgKeyboardListener
-              (pressComma)="onCommaPressed()"
-              (pressDot)="onDotPressed()"
-              (pressEscape)="
-                onEscapePressed(
-                  activeInstruction?.id ?? null,
-                  activeCollection?.id ?? null,
-                  selectedTask,
-                  selectedDocument
-                )
-              "
-              (pressDelete)="onDeletePressed(selectedTask, selectedDocument)"
-            >
+            <ng-container pgKeyboardListener (pgKeyDown)="onKeyDown($event)">
               <ng-container
                 *ngrxLet="currentApplicationInstructions$; let instructions"
               >
@@ -253,9 +241,8 @@ export class BoardPageComponent implements OnInit {
   readonly applicationId$ = this._activatedRoute.paramMap.pipe(
     map((paramMap) => paramMap.get('applicationId'))
   );
-  readonly workspaceApplications$ = this._boardStore.workspaceApplications$;
   readonly currentApplicationInstructions$ =
-    this._boardStore.boardInstructions$;
+    this._boardStore.currentApplicationInstructions$;
   readonly selectedTask$ = this._boardStore.selectedTask$;
   readonly selectedDocument$ = this._boardStore.selectedDocument$;
   readonly activeCollection$ = this._boardStore.activeCollection$;
@@ -552,8 +539,6 @@ export class BoardPageComponent implements OnInit {
     documentId: string,
     document: BoardDocument
   ) {
-    console.log(document);
-
     this._dialog
       .open<
         EditDocumentSubmitPayload,
@@ -645,93 +630,103 @@ export class BoardPageComponent implements OnInit {
       .subscribe();
   }
 
-  onCommaPressed() {
-    const dialogRef = this._dialog.getDialogById('instructions-section');
+  onKeyDown(event: KeyboardEvent) {
+    switch (event.key) {
+      case 'Delete': {
+        this._boardStore.deleteSelected();
 
-    if (dialogRef === undefined) {
-      this._dialog.open(InstructionsSectionComponent, {
-        id: 'instructions-section',
-        width: '300px',
-        height: '500px',
-        hasBackdrop: false,
-        scrollStrategy: new NoopScrollStrategy(),
-        positionStrategy: new GlobalPositionStrategy()
-          .left('0')
-          .centerVertically(),
-        disableClose: true,
-        viewContainerRef: this._viewContainerRef,
-      });
-    } else {
-      dialogRef.close();
-    }
-  }
-
-  onDotPressed() {
-    const dialogRef = this._dialog.getDialogById('collections-section');
-
-    if (dialogRef === undefined) {
-      this._dialog.open(CollectionsSectionComponent, {
-        id: 'collections-section',
-        width: '300px',
-        height: '500px',
-        hasBackdrop: false,
-        scrollStrategy: new NoopScrollStrategy(),
-        positionStrategy: new GlobalPositionStrategy()
-          .right('0')
-          .centerVertically(),
-        disableClose: true,
-        viewContainerRef: this._viewContainerRef,
-      });
-    } else {
-      dialogRef.close();
-    }
-  }
-
-  onEscapePressed(
-    activeInstructionId: Option<string>,
-    activeCollectionId: Option<string>,
-    selectedTask: Option<BoardTask>,
-    selectedDocument: Option<BoardDocument>
-  ) {
-    const instructionsSectionRef = this._dialog.getDialogById(
-      'instructions-section'
-    );
-    const collectionsSectionRef = this._dialog.getDialogById(
-      'collections-section'
-    );
-
-    if (
-      instructionsSectionRef !== undefined ||
-      collectionsSectionRef !== undefined
-    ) {
-      instructionsSectionRef?.close();
-      collectionsSectionRef?.close();
-    } else if (activeInstructionId !== null) {
-      this._boardStore.setActiveInstructionId(null);
-    } else if (activeCollectionId !== null) {
-      this._boardStore.setActiveCollectionId(null);
-    } else if (selectedDocument !== null) {
-      this._boardStore.setSelectedDocumentId(null);
-    } else if (selectedTask !== null) {
-      this._boardStore.setSelectedTaskId(null);
-    }
-  }
-
-  onDeletePressed(
-    selectedTask: Option<BoardTask>,
-    selectedDocument: Option<BoardDocument>
-  ) {
-    if (selectedTask !== null) {
-      if (confirm('Are you sure? This action cannot be reverted.')) {
-        this._taskApiService
-          .deleteTask(selectedTask.ownerId, selectedTask.id)
-          .subscribe(() => (selectedTask = null));
+        break;
       }
-    } else if (selectedDocument !== null) {
-      if (confirm('Are you sure? This action cannot be reverted.')) {
-        this._documentApiService
-          .deleteDocument(selectedDocument.ownerId, selectedDocument.id)
-          .subscribe(() => (selectedDocument = null));
+      case 'Escape': {
+        const instructionsSectionRef = this._dialog.getDialogById(
+          'instructions-section'
+        );
+        const collectionsSectionRef = this._dialog.getDialogById(
+          'collections-section'
+        );
+        const applicationsSectionRef = this._dialog.getDialogById(
+          'applications-section'
+        );
+
+        if (
+          instructionsSectionRef !== undefined ||
+          collectionsSectionRef !== undefined ||
+          applicationsSectionRef !== undefined
+        ) {
+          instructionsSectionRef?.close();
+          collectionsSectionRef?.close();
+          applicationsSectionRef?.close();
+        } else {
+          this._boardStore.closeActiveOrSelected();
+        }
+
+        break;
+      }
+      case '.': {
+        const dialogRef = this._dialog.getDialogById('collections-section');
+
+        if (dialogRef === undefined) {
+          this._dialog.open(CollectionsSectionComponent, {
+            id: 'collections-section',
+            width: '300px',
+            height: '500px',
+            hasBackdrop: false,
+            scrollStrategy: new NoopScrollStrategy(),
+            positionStrategy: new GlobalPositionStrategy()
+              .right('0')
+              .centerVertically(),
+            disableClose: true,
+            viewContainerRef: this._viewContainerRef,
+          });
+        } else {
+          dialogRef.close();
+        }
+
+        break;
+      }
+      case ',': {
+        const dialogRef = this._dialog.getDialogById('instructions-section');
+
+        if (dialogRef === undefined) {
+          this._dialog.open(InstructionsSectionComponent, {
+            id: 'instructions-section',
+            width: '300px',
+            height: '500px',
+            hasBackdrop: false,
+            scrollStrategy: new NoopScrollStrategy(),
+            positionStrategy: new GlobalPositionStrategy()
+              .left('0')
+              .centerVertically(),
+            disableClose: true,
+            viewContainerRef: this._viewContainerRef,
+          });
+        } else {
+          dialogRef.close();
+        }
+
+        break;
+      }
+      case 'm': {
+        const dialogRef = this._dialog.getDialogById('applications-section');
+
+        if (dialogRef === undefined) {
+          this._dialog.open(ApplicationsSectionComponent, {
+            id: 'applications-section',
+            width: '300px',
+            height: '500px',
+            hasBackdrop: false,
+            scrollStrategy: new NoopScrollStrategy(),
+            positionStrategy: new GlobalPositionStrategy()
+              .left('0')
+              .centerVertically(),
+            disableClose: true,
+            viewContainerRef: this._viewContainerRef,
+          });
+        } else {
+          dialogRef.close();
+        }
+
+        break;
       }
     }
   }
