@@ -96,15 +96,14 @@ export class SquareButtonComponent {
 @Component({
   selector: 'pg-main-dock',
   template: `
-    <div
-      class="w-auto mx-auto p-4 bg-gray-700 flex gap-4 justify-center items-start"
-    >
-      <div>
+    <div class="w-auto mx-auto flex gap-4 justify-center space-between h-48">
+      <div class="bp-skin-metal"></div>
+      <div class="mr-10 pt-2">
         <header class="flex items-center gap-2 mb-2">
-          <h2>Instructions</h2>
+          <h2 class="z-10 text-white font-bold">Instructions</h2>
 
           <button
-            class="rounded-full bg-slate-400 w-8 h-8"
+            class="rounded-full bg-slate-400 w-6 h-6 z-10"
             pgEditInstructionModal
             (createInstruction)="
               onCreateInstruction(
@@ -154,12 +153,12 @@ export class SquareButtonComponent {
         </div>
       </div>
 
-      <div>
+      <div class="pt-2">
         <header class="flex items-center gap-2 mb-2">
-          <h2>Collections</h2>
+          <h2 class="z-10 text-white font-bold">Collections</h2>
 
           <button
-            class="rounded-full bg-slate-400 w-8 h-8"
+            class="rounded-full bg-slate-400 w-6 h-6 z-10"
             pgEditCollectionModal
             (createCollection)="
               onCreateCollection(

@@ -58,35 +58,43 @@ export class EditCollectionModalDirective {
 @Component({
   selector: 'pg-edit-collection-modal',
   template: `
-    <div class="px-4 pt-8 pb-4 bg-white shadow-xl relative">
-      <button
-        class="absolute top-2 right-2 rounded-full border border-black leading-none w-6 h-6"
-        (click)="onClose()"
-      >
-        x
-      </button>
+    <div
+      class="px-4 pt-1 pb-4 bp-skin-modal-body text-white shadow-xl relative"
+    >
+      <div class="absolute bp-skin-modal-top -z-10"></div>
+      <div class="absolute bp-skin-modal-bottom -z-10"></div>
+      <!-- <div class="absolute bp-skin-modal-1 -z-10"></div> -->
+      <div class="flex">
+        <button
+          class="absolute top-4 right-4 bp-button-close"
+          (click)="onClose()"
+        ></button>
 
-      <h1 class="text-center text-xl mb-4">
-        {{ collection === null ? 'Create' : 'Update' }} collection
-      </h1>
-
+        <h1
+          class="text-center text-xl mb-4 bp-font-game text-3xl tracking-wider pt-2.5"
+        >
+          {{ collection === null ? 'Create' : 'Update' }} collection
+        </h1>
+      </div>
       <form
         [formGroup]="form"
         (ngSubmit)="onSubmit()"
-        class="max-h-96 overflow-y-auto"
+        class="max-h-96 overflow-y-auto bp-font-game pr-2.5"
       >
-        <div>
-          <label class="block" for="collection-id-input">Collection ID</label>
+        <div class="mb-4">
+          <label class="block text-xl" for="collection-id-input"
+            >Collection ID</label
+          >
           <input
-            class="block border-b-2 border-black"
+            class="bp-input-metal"
             id="collection-id-input"
             type="text"
             formControlName="id"
             [readonly]="collection !== null"
           />
-          <p *ngIf="collection === null">
+          <!-- <p *ngIf="collection === null">
             Hint: The ID cannot be changed afterwards.
-          </p>
+          </p> -->
           <button
             *ngIf="collection === null"
             type="button"
@@ -96,24 +104,24 @@ export class EditCollectionModalDirective {
           </button>
         </div>
 
-        <div>
-          <label class="block" for="collection-name-input">
+        <div class="mb-4">
+          <label class="block text-xl" for="collection-name-input">
             Collection name
           </label>
           <input
-            class="block border-b-2 border-black"
+            class="bp-input-metal"
             id="collection-name-input"
             type="text"
             formControlName="name"
           />
         </div>
 
-        <div>
-          <label class="block" for="collection-thumbnail-url-input">
+        <div class="mb-4">
+          <label class="block text-xl" for="collection-thumbnail-url-input">
             Collection thumbnail
           </label>
           <input
-            class="block border-b-2 border-black"
+            class="bp-input-metal"
             id="collection-thumbnail-url-input"
             type="text"
             formControlName="thumbnailUrl"
@@ -122,7 +130,7 @@ export class EditCollectionModalDirective {
 
         <div formArrayName="attributes">
           <p>
-            <span>Collection attributes</span>
+            <span class="mr-8">Collection attributes</span>
             <button (click)="onAddAttribute()" type="button">+</button>
           </p>
 
@@ -132,10 +140,10 @@ export class EditCollectionModalDirective {
                 let attributeForm of attributesControl.controls;
                 let i = index
               "
-              class="border-black border-2 p-2"
+              class="bp-metal-plate p-3"
             >
               <div [formGroup]="attributeForm">
-                <div>
+                <div class="mb-4">
                   <label
                     class="block"
                     [for]="'collection-attributes-' + i + '-name'"
@@ -145,7 +153,7 @@ export class EditCollectionModalDirective {
                   <input
                     [id]="'collection-attributes-' + i + '-name'"
                     formControlName="name"
-                    class="block border-b-2 border-black"
+                    class="bp-input-metal"
                     type="text"
                   />
                 </div>
@@ -189,7 +197,7 @@ export class EditCollectionModalDirective {
         </div>
 
         <div class="flex justify-center items-center mt-4">
-          <button type="submit" class="px-4 py-2 border-blue-500 border">
+          <button type="submit" class="bp-button-metal">
             {{ collection === null ? 'Send' : 'Save' }}
           </button>
         </div>

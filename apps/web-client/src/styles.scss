@@ -13,6 +13,11 @@
   background-image: url('./assets/bricks.webp');
 }
 
+.bg-bp-earth {
+  background-repeat: repeat !important;
+  background-image: url('./assets/skins/dock/earth.png');
+}
+
 html,
 body {
   height: 100%;
@@ -27,4 +32,193 @@ body {
   &::-webkit-scrollbar {
     display: none; /* Safari and Chrome */
   }
+}
+
+@font-face {
+  font-family: 'game-font';
+  src: url('./assets/fonts/exxa_game.ttf');
+}
+
+.bp-font-game {
+  font-family: 'game-font';
+}
+
+.bp-skin-metal {
+  background-image: url('./assets/skins/dock/metal-new.png');
+  background-repeat: no-repeat;
+  width: 890px;
+  height: 271px;
+  position: absolute;
+  top: -50px;
+}
+
+.bp-bg-chip {
+  background-image: url('./assets/skins/dock/chip.png');
+  background-repeat: repeat;
+  -webkit-box-shadow: 13px 2px 23px -8px rgb(235 235 235);
+  -moz-box-shadow: 13px 2px 23px -8px rgb(235 235 235);
+  box-shadow: 13px 2px 23px -8px rgb(235 235 235);
+}
+
+/* This class are for the side bars, name to be changed!*/
+.bp-skin-sidbar-right {
+  background-image: url('./assets/skins/dock/sidebar-right.png');
+  background-repeat: no-repeat;
+  width: 340px;
+  height: 690px;
+  top: -91px;
+  right: -2px;
+}
+
+.bp-skin-sidbar-left {
+  background-image: url('./assets/skins/dock/sidebar-left.png');
+  background-repeat: no-repeat;
+  width: 340px;
+  height: 690px;
+  top: -91px;
+  left: -2px;
+}
+
+.bp-skin-modal-1 {
+  background-image: url('./assets/skins/dock/modal_1.png');
+  background-repeat: no-repeat;
+  width: 415px;
+  height: 572px;
+  top: -100px;
+  left: -37px;
+}
+
+.bp-skin-modal-top {
+  background-image: url('./assets/skins/dock/modal_top_part.png');
+  background-repeat: no-repeat;
+  width: 415px;
+  height: 72px;
+  top: -52px;
+  left: -8px;
+}
+
+.bp-skin-modal-bottom {
+  background-image: url('./assets/skins/dock/modal_bottom_part.png');
+  background-repeat: no-repeat;
+  width: 415px;
+  height: 72px;
+  bottom: -72px;
+  left: -4px;
+}
+
+.bp-skin-modal-body {
+  background-image: url('./assets/skins/dock/modal_body_part.png');
+  background-repeat: repeat;
+  width: 376px;
+  max-width: 376px;
+  min-width: 376px;
+}
+
+.bp-bg-metal-right {
+  background-image: url('./assets/skins/dock/metal-4.png');
+  background-repeat: repeat;
+  width: 280px;
+  margin-left: 3px;
+  margin-bottom: 6px;
+}
+
+.bp-bg-metal {
+  background-image: url('./assets/skins/dock/metal-4.png');
+  background-repeat: repeat;
+}
+
+.custom-style-1 {
+  padding-left: 17px;
+  width: 296px;
+}
+.custom-style-2 {
+  margin-left: 3px;
+  width: 280px;
+}
+/*end*/
+.bp-skin-metal-3 {
+  background-image: url('./assets/skins/dock/metal-bar.png');
+  background-repeat: repeat;
+  -webkit-box-shadow: -1px 6px 25px -4px rgba(0, 0, 0, 0.7);
+  -moz-box-shadow: -1px 6px 25px -4px rgba(0, 0, 0, 0.7);
+  box-shadow: -1px 6px 25px -4px rgba(0, 0, 0, 0.7);
+}
+
+.bp-skin-metal-2 {
+  background-image: url('./assets/skins/dock/metal-2.png');
+  background-repeat: repeat;
+  -webkit-box-shadow: -1px -6px 25px -4px rgba(0, 0, 0, 0.7);
+  -moz-box-shadow: -1px -6px 25px -4px rgba(0, 0, 0, 0.7);
+  box-shadow: -1px -6px 25px -4px rgba(0, 0, 0, 0.7);
+}
+
+.bp-skin-metal-3 {
+  background-image: url('./assets/skins/dock/metal-3.png');
+  background-repeat: repeat;
+  -webkit-box-shadow: -1px 4px 15px -4px rgba(0, 0, 0, 0.8);
+  -moz-box-shadow: -1px 4px 15px -4px rgba(0, 0, 0, 0.8);
+  box-shadow: -1px 4px 15px -4px rgba(0, 0, 0, 0.8);
+}
+
+.bp-metal-plate {
+  background-image: url('./assets/skins/dock/metal-plate.png');
+  background-repeat: repeat;
+  -webkit-box-shadow: -1px 4px 15px -4px rgba(0, 0, 0, 0.8);
+  -moz-box-shadow: -1px 4px 15px -4px rgba(0, 0, 0, 0.8);
+  box-shadow: -1px 4px 15px -4px rgba(0, 0, 0, 0.8);
+}
+
+.bp-input-metal {
+  background-image: url('./assets/skins/dock/input_metal_background.png');
+  background-repeat: repeat;
+  width: 100%;
+  padding: 7px;
+}
+
+.bp-button-metal {
+  background-color: transparent;
+  background-image: url('./assets/skins/dock/button.png');
+  background-repeat: no-repeat;
+  color: white;
+  width: 115px;
+  height: 47px;
+  font-size: 24px;
+}
+
+.bp-button-close {
+  background-color: transparent;
+  background-image: url('./assets/skins/dock/close_button.png');
+  background-repeat: no-repeat;
+  color: white;
+  width: 34px;
+  height: 34px;
+}
+
+.bp-button-close:hover {
+  background-image: url('./assets/skins/dock/close_button_hover.png');
+}
+
+.bp-button-metal:active {
+  background-image: url('./assets/skins/dock/button_pressed.png');
+}
+
+// SCROLL BAR
+/* width */
+::-webkit-scrollbar {
+  width: 12px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: #b2aea1;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #4b4a49;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #343434;
 }
