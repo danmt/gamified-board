@@ -53,7 +53,7 @@ interface RowInstruction {
         class="flex flex-col"
         (mouseenter)="isDocumentsHovered = true"
         (mouseleave)="isDocumentsHovered = false"
-        (click)="onCreateDocument()"
+        (click)="onCreateDocument(activeCollection?.id ?? null)"
       >
         <p>Documents</p>
 
@@ -115,7 +115,7 @@ interface RowInstruction {
         class="flex flex-col"
         (mouseenter)="isTasksHovered = true"
         (mouseleave)="isTasksHovered = false"
-        (click)="onCreateTask()"
+        (click)="onCreateTask(activeInstruction?.id ?? null)"
       >
         <p>Tasks</p>
 
@@ -181,8 +181,8 @@ export class RowComponent {
   @Input() instruction: Option<RowInstruction> = null;
   @Input() documentsDropLists: string[] = [];
   @Input() tasksDropLists: string[] = [];
-  @Output() createDocument = new EventEmitter();
-  @Output() createTask = new EventEmitter();
+  @Output() createDocument = new EventEmitter<string>();
+  @Output() createTask = new EventEmitter<string>();
   @Output() selectTask = new EventEmitter<string>();
   @Output() selectDocument = new EventEmitter<string>();
 
@@ -213,12 +213,16 @@ export class RowComponent {
   @HostBinding('class') class =
     'block w-full h-64 bg-blue-300 border border-blue-500 bg-bp-bricks';
 
-  onCreateDocument() {
-    this.createDocument.emit();
+  onCreateDocument(collectionId: Option<string>) {
+    if (collectionId !== null) {
+      this.createDocument.emit(collectionId);
+    }
   }
 
-  onCreateTask() {
-    this.createTask.emit();
+  onCreateTask(instructionId: Option<string>) {
+    if (instructionId !== null) {
+      this.createTask.emit(instructionId);
+    }
   }
 
   onSelectTask(taskId: string) {

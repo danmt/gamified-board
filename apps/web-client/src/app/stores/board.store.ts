@@ -112,6 +112,9 @@ interface ViewModel {
   activeApplicationId: Option<string>;
   instructionSlotIds: Option<string>[];
   collectionSlotIds: Option<string>[];
+  isCollectionsSectionOpen: boolean;
+  isInstructionsSectionOpen: boolean;
+  isApplicationsSectionOpen: boolean;
 }
 
 const initialState: ViewModel = {
@@ -131,6 +134,9 @@ const initialState: ViewModel = {
   activeInstructionId: null,
   instructionSlotIds: [null, null, null, null, null, null],
   collectionSlotIds: [null, null, null, null, null, null],
+  isCollectionsSectionOpen: false,
+  isInstructionsSectionOpen: false,
+  isApplicationsSectionOpen: false,
 };
 
 @Injectable()
@@ -147,6 +153,15 @@ export class BoardStore
   readonly workspace$ = this.select(({ workspace }) => workspace);
   readonly currentApplicationId$ = this.select(
     ({ currentApplicationId }) => currentApplicationId
+  );
+  readonly isCollectionsSectionOpen$ = this.select(
+    ({ isCollectionsSectionOpen }) => isCollectionsSectionOpen
+  );
+  readonly isInstructionsSectionOpen$ = this.select(
+    ({ isInstructionsSectionOpen }) => isInstructionsSectionOpen
+  );
+  readonly isApplicationsSectionOpen$ = this.select(
+    ({ isApplicationsSectionOpen }) => isApplicationsSectionOpen
   );
 
   readonly collections$: Observable<Option<BoardCollection[]>> = this.select(
@@ -603,10 +618,10 @@ export class BoardStore
     );
   readonly collectionSlots$: Observable<Option<BoardCollection>[]> =
     this.select(
-      this.currentApplication$,
+      this.collections$,
       this.select(({ collectionSlotIds }) => collectionSlotIds),
-      (currentApplication, collectionSlotIds) => {
-        if (currentApplication === null || collectionSlotIds === null) {
+      (collections, collectionSlotIds) => {
+        if (collections === null || collectionSlotIds === null) {
           return [];
         }
 
@@ -616,9 +631,8 @@ export class BoardStore
           }
 
           return (
-            currentApplication.collections.find(
-              (collection) => collection.id === collectionId
-            ) ?? null
+            collections.find((collection) => collection.id === collectionId) ??
+            null
           );
         });
       }
@@ -854,8 +868,57 @@ export class BoardStore
     })
   );
 
+  readonly setIsCollectionsSectionOpen = this.updater<boolean>(
+    (state, isCollectionsSectionOpen) => ({
+      ...state,
+      isCollectionsSectionOpen,
+    })
+  );
+
+  readonly toggleIsCollectionsSectionOpen = this.updater<void>((state) => ({
+    ...state,
+    isCollectionsSectionOpen: !state.isCollectionsSectionOpen,
+  }));
+
+  readonly setIsInstructionsSectionOpen = this.updater<boolean>(
+    (state, isInstructionsSectionOpen) => ({
+      ...state,
+      isInstructionsSectionOpen,
+    })
+  );
+
+  readonly toggleIsInstructionsSectionOpen = this.updater<void>((state) => ({
+    ...state,
+    isInstructionsSectionOpen: !state.isInstructionsSectionOpen,
+    isApplicationsSectionOpen: false,
+  }));
+
+  readonly setIsApplicationsSectionOpen = this.updater<boolean>(
+    (state, isApplicationsSectionOpen) => ({
+      ...state,
+      isApplicationsSectionOpen,
+    })
+  );
+
+  readonly toggleIsApplicationsSectionOpen = this.updater<void>((state) => ({
+    ...state,
+    isApplicationsSectionOpen: !state.isApplicationsSectionOpen,
+    isInstructionsSectionOpen: false,
+  }));
+
   readonly closeActiveOrSelected = this.updater<void>((state) => {
-    if (state.activeInstructionId !== null) {
+    if (
+      state.isCollectionsSectionOpen ||
+      state.isInstructionsSectionOpen ||
+      state.isApplicationsSectionOpen
+    ) {
+      return {
+        ...state,
+        isCollectionsSectionOpen: false,
+        isInstructionsSectionOpen: false,
+        isApplicationsSectionOpen: false,
+      };
+    } else if (state.activeInstructionId !== null) {
       return {
         ...state,
         activeInstructionId: null,

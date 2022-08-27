@@ -57,9 +57,6 @@ export interface EditDocumentData {
     bump: Option<Reference>;
     payer: Option<DocumentReference>;
   }>;
-  collection: {
-    name: string;
-  };
   instructionId: string;
 }
 
@@ -92,7 +89,7 @@ export interface EditDocumentSubmitPayload {
       </button>
 
       <h1 class="text-center text-xl mb-4">
-        {{ document === null ? 'Create' : 'Update' }} {{ collection.name }}
+        {{ document === null ? 'Create' : 'Update' }} document
       </h1>
 
       <form
@@ -394,7 +391,6 @@ export class EditDocumentModalComponent {
   private readonly _boardStore = inject(BoardStore);
 
   readonly document = this._data.document;
-  readonly collection = this._data.collection;
   readonly instructionId = this._data.instructionId;
   readonly form = this._formBuilder.group({
     id: this._formBuilder.control<string>(this.document?.id ?? '', {
