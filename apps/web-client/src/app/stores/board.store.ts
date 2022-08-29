@@ -418,7 +418,6 @@ export class BoardStore
   readonly isApplicationsSectionOpen$ = this.select(
     ({ isApplicationsSectionOpen }) => isApplicationsSectionOpen
   );
-
   readonly collections$: Observable<Option<CollectionView[]>> = this.select(
     ({ collections }) => {
       if (collections === null) {
@@ -770,7 +769,6 @@ export class BoardStore
       );
     }
   );
-
   readonly selectedTask$ = this.select(
     this.currentApplicationInstructions$,
     this.select(({ selectedTaskId }) => selectedTaskId),
@@ -852,12 +850,10 @@ export class BoardStore
     })
   );
 
-  readonly setActiveCollectionId = this.updater<Option<string>>(
-    (state, activeCollectionId) => ({
+  readonly setSelectedApplicationId = this.updater<Option<string>>(
+    (state, selectedApplicationId) => ({
       ...state,
-      activeCollectionId,
-      activeApplicationId: null,
-      activeInstructionId: null,
+      selectedApplicationId,
     })
   );
 
@@ -889,67 +885,21 @@ export class BoardStore
     };
   });
 
-  readonly setActiveInstructionId = this.updater<Option<string>>(
-    (state, activeInstructionId) => ({
-      ...state,
-      activeInstructionId,
-      activeApplicationId: null,
-      activeCollectionId: null,
-    })
-  );
-
   readonly setActiveId = this.updater<Option<string>>((state, activeId) => ({
     ...state,
     activeId,
   }));
-
-  readonly setSelectedApplicationId = this.updater<Option<string>>(
-    (state, selectedApplicationId) => ({
-      ...state,
-      selectedApplicationId,
-    })
-  );
-
-  readonly setActiveApplicationId = this.updater<Option<string>>(
-    (state, activeApplicationId) => ({
-      ...state,
-      activeApplicationId,
-      activeInstructionId: null,
-      activeCollectionId: null,
-    })
-  );
-
-  readonly setIsCollectionsSectionOpen = this.updater<boolean>(
-    (state, isCollectionsSectionOpen) => ({
-      ...state,
-      isCollectionsSectionOpen,
-    })
-  );
 
   readonly toggleIsCollectionsSectionOpen = this.updater<void>((state) => ({
     ...state,
     isCollectionsSectionOpen: !state.isCollectionsSectionOpen,
   }));
 
-  readonly setIsInstructionsSectionOpen = this.updater<boolean>(
-    (state, isInstructionsSectionOpen) => ({
-      ...state,
-      isInstructionsSectionOpen,
-    })
-  );
-
   readonly toggleIsInstructionsSectionOpen = this.updater<void>((state) => ({
     ...state,
     isInstructionsSectionOpen: !state.isInstructionsSectionOpen,
     isApplicationsSectionOpen: false,
   }));
-
-  readonly setIsApplicationsSectionOpen = this.updater<boolean>(
-    (state, isApplicationsSectionOpen) => ({
-      ...state,
-      isApplicationsSectionOpen,
-    })
-  );
 
   readonly toggleIsApplicationsSectionOpen = this.updater<void>((state) => ({
     ...state,

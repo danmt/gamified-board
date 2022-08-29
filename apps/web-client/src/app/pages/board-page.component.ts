@@ -375,7 +375,7 @@ export class BoardPageComponent implements OnInit {
 
     moveItemInArray(tasksOrder, previousIndex, newIndex);
 
-    this._instructionApiService
+    this._instructionTaskApiService
       .updateInstructionTasksOrder(instructionId, tasksOrder)
       .subscribe();
   }
@@ -420,8 +420,7 @@ export class BoardPageComponent implements OnInit {
             return EMPTY;
           }
 
-          this._boardStore.setActiveCollectionId(null);
-          this._boardStore.setActiveInstructionId(null);
+          this._boardStore.setActiveId(null);
 
           return this._documentApiService.updateDocument(
             instructionId,
@@ -453,8 +452,7 @@ export class BoardPageComponent implements OnInit {
             return EMPTY;
           }
 
-          this._boardStore.setActiveCollectionId(null);
-          this._boardStore.setActiveInstructionId(null);
+          this._boardStore.setActiveId(null);
 
           return this._instructionTaskApiService.updateInstructionTask(
             instructionId,

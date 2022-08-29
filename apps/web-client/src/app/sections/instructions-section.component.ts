@@ -197,7 +197,7 @@ export class InstructionsSectionComponent {
   readonly instructions$ = this._boardStore.instructions$;
 
   onActivateInstruction(instructionId: string) {
-    this._boardStore.setActiveInstructionId(instructionId);
+    this._boardStore.setActiveId(instructionId);
   }
 
   onSelectInstruction(instructionId: string) {

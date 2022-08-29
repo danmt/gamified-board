@@ -59,15 +59,6 @@ export class InstructionApiService {
     );
   }
 
-  updateInstructionTasksOrder(instructionId: string, tasksOrder: string[]) {
-    const instructionRef = doc(
-      this._firestore,
-      `instructions/${instructionId}`
-    );
-
-    return defer(() => from(updateDoc(instructionRef, { tasksOrder })));
-  }
-
   deleteInstruction(applicationId: string, instructionId: string) {
     return defer(() =>
       from(

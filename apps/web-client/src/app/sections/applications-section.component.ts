@@ -120,7 +120,7 @@ export class ApplicationsSectionComponent {
   readonly applications$ = this._boardStore.applications$;
 
   onActivateApplication(applicationId: string) {
-    this._boardStore.setActiveApplicationId(applicationId);
+    this._boardStore.setActiveId(applicationId);
   }
 
   onSelectApplication(applicationId: string) {
