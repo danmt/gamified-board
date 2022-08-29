@@ -12,135 +12,178 @@ import { Option } from '../utils';
 @Component({
   selector: 'pg-collections-section',
   template: `
-    <div class="bg-gray-500 h-full flex flex-col gap-4">
-      <h1 class="px-4 pt-4">Collections</h1>
-
-      <div class="flex-1 px-4 overflow-auto">
+    <div class="flex flex-col relative mt-10 z-40">
+      <div class="flex relative" style="height:78px">
+        <div class="bp-skin-metal-corner-left-top z-10"></div>
+        <div class="bp-skin-metal-border flex-1 z-10"></div>
+        <div class="absolute w-full bp-skin-title-box flipped">
+          <h1 class="bp-font-game text-3xl px-4 mt-6 text-right flipped">
+            <!-- hack -->
+            Collections
+          </h1>
+        </div>
         <div
-          *ngrxLet="collections$; let collections"
-          id="collections-section"
-          cdkDropList
-          [cdkDropListConnectedTo]="[
-            'collection-slot-0',
-            'collection-slot-1',
-            'collection-slot-2',
-            'collection-slot-3',
-            'collection-slot-4',
-            'collection-slot-5'
-          ]"
-          [cdkDropListData]="collections"
-          cdkDropListSortingDisabled
-          class="flex flex-wrap gap-2"
-        >
+          class="bp-skin-metal-detail-2 absolute -top-2.5 z-20 right-0"
+        ></div>
+      </div>
+
+      <div class="relative bp-bg-futuristic">
+        <div
+          class="bp-skin-metal-border-left absolute left-0 h-full z-20"
+        ></div>
+        <div>
           <div
-            *ngFor="let collection of collections; trackBy: trackBy"
-            class="relative"
+            class="flex-1 px-4 pt-4 pb-10 overflow-auto bp-skin-metal-body ml-4"
           >
-            <ng-container *ngIf="(isDragging$ | ngrxPush) === collection.id">
-              <div
-                class="w-full h-full absolute z-20 bg-black bg-opacity-50"
-              ></div>
-              <div class="bg-yellow-500 p-0.5 w-11 h-11">
-                <img
-                  class="w-full h-full object-cover"
-                  [src]="collection.thumbnailUrl"
-                />
-              </div>
-            </ng-container>
-
             <div
-              cdkDrag
-              [cdkDragData]="collection.id"
-              (click)="onSelectCollection(collection.id)"
-              (dblclick)="onActivateCollection(collection.id)"
-              (cdkDragStarted)="onDragStart($event)"
-              (cdkDragEnded)="onDragEnd()"
+              *ngrxLet="collections$; let collections"
+              id="collections-section"
+              cdkDropList
+              [cdkDropListConnectedTo]="[
+                'collection-slot-0',
+                'collection-slot-1',
+                'collection-slot-2',
+                'collection-slot-3',
+                'collection-slot-4',
+                'collection-slot-5'
+              ]"
+              [cdkDropListData]="collections"
+              cdkDropListSortingDisabled
+              class="flex flex-wrap gap-2"
             >
-              <div class="bg-yellow-500 p-0.5 w-11 h-11">
-                <img
-                  class="w-full h-full object-cover"
-                  [src]="collection.thumbnailUrl"
-                />
+              <div
+                *ngFor="let collection of collections; trackBy: trackBy"
+                class="relative"
+              >
+                <ng-container
+                  *ngIf="(isDragging$ | ngrxPush) === collection.id"
+                >
+                  <div
+                    class="w-full h-full absolute z-20 bg-black bg-opacity-50"
+                  ></div>
+                  <div class="bg-yellow-500 p-0.5 w-11 h-11">
+                    <img
+                      class="w-full h-full object-cover"
+                      [src]="collection.thumbnailUrl"
+                    />
+                  </div>
+                </ng-container>
+
+                <div
+                  cdkDrag
+                  [cdkDragData]="collection.id"
+                  (click)="onSelectCollection(collection.id)"
+                  (dblclick)="onActivateCollection(collection.id)"
+                  (cdkDragStarted)="onDragStart($event)"
+                  (cdkDragEnded)="onDragEnd()"
+                >
+                  <div class="bg-yellow-500 p-0.5 w-11 h-11">
+                    <img
+                      class="w-full h-full object-cover"
+                      [src]="collection.thumbnailUrl"
+                    />
+                  </div>
+
+                  <div
+                    *cdkDragPreview
+                    class="bg-gray-500 p-1 w-12 h-12 rounded-md"
+                  >
+                    <img
+                      class="w-full h-full object-cover"
+                      [src]="collection.thumbnailUrl"
+                    />
+                  </div>
+
+                  <div *cdkDragPlaceholder></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div
+            class="w-full h-32 px-4 relative"
+            *ngrxLet="selectedCollection$; let collection"
+          >
+            <div class="bp-skin-metal-divider left-1"></div>
+            <div class=" h-32 overflow-y-auto pb-6 pl-4">
+              {{ collection?.name }}
+
+              <div>
+                <p class="bp-font-game text-2xl text-white mt-4 ml-4">
+                  Collection arguments
+                </p>
+                <div class="flex gap-2 flex-wrap">
+                  <div
+                    *ngFor="let attribute of collection?.attributes"
+                    class="border-2 border-black p-1 text-xs"
+                  >
+                    {{ attribute.name }} - {{ attribute.type }}
+                  </div>
+                </div>
               </div>
 
-              <div *cdkDragPreview class="bg-gray-500 p-1 w-12 h-12 rounded-md">
-                <img
-                  class="w-full h-full object-cover"
-                  [src]="collection.thumbnailUrl"
-                />
-              </div>
+              <button
+                *ngIf="
+                  collection !== null &&
+                  collection.applicationId !== null &&
+                  collection.applicationId ===
+                    (currentApplicationId$ | ngrxPush)
+                "
+                pgEditCollectionModal
+                [collection]="collection"
+                (updateCollection)="
+                  onUpdateCollection(
+                    collection.id,
+                    $event.name,
+                    $event.thumbnailUrl,
+                    $event.attributes
+                  )
+                "
+              >
+                edit
+              </button>
 
-              <div *cdkDragPlaceholder></div>
+              <button
+                *ngIf="
+                  collection !== null &&
+                  collection.applicationId !== null &&
+                  collection.applicationId ===
+                    (currentApplicationId$ | ngrxPush)
+                "
+                class="rounded-full bg-slate-400 w-8 h-8"
+                (click)="
+                  onDeleteCollection(collection.applicationId, collection.id)
+                "
+              >
+                x
+              </button>
+
+              <a
+                class="underline"
+                *ngIf="
+                  collection !== null &&
+                  collection.workspaceId === (workspaceId$ | ngrxPush) &&
+                  collection.applicationId !==
+                    (currentApplicationId$ | ngrxPush)
+                "
+                [routerLink]="[
+                  '/board',
+                  collection.workspaceId,
+                  collection.applicationId
+                ]"
+              >
+                view
+              </a>
             </div>
           </div>
         </div>
       </div>
-
-      <div
-        class="w-full h-32 p-4 bg-black bg-opacity-25 overflow-auto"
-        *ngrxLet="selectedCollection$; let collection"
-      >
-        {{ collection?.name }}
-
-        <div>
-          <p>Collection attributes</p>
-          <div class="flex gap-2 flex-wrap">
-            <div
-              *ngFor="let attribute of collection?.attributes"
-              class="border-2 border-black p-1 text-xs"
-            >
-              {{ attribute.name }} - {{ attribute.type }}
-            </div>
-          </div>
-        </div>
-
-        <button
-          *ngIf="
-            collection !== null &&
-            collection.applicationId !== null &&
-            collection.applicationId === (currentApplicationId$ | ngrxPush)
-          "
-          pgEditCollectionModal
-          [collection]="collection"
-          (updateCollection)="
-            onUpdateCollection(
-              collection.id,
-              $event.name,
-              $event.thumbnailUrl,
-              $event.attributes
-            )
-          "
-        >
-          edit
-        </button>
-
-        <button
-          *ngIf="
-            collection !== null &&
-            collection.applicationId !== null &&
-            collection.applicationId === (currentApplicationId$ | ngrxPush)
-          "
-          class="rounded-full bg-slate-400 w-8 h-8"
-          (click)="onDeleteCollection(collection.applicationId, collection.id)"
-        >
-          x
-        </button>
-
-        <a
-          class="underline"
-          *ngIf="
-            collection !== null &&
-            collection.workspaceId === (workspaceId$ | ngrxPush) &&
-            collection.applicationId !== (currentApplicationId$ | ngrxPush)
-          "
-          [routerLink]="[
-            '/board',
-            collection.workspaceId,
-            collection.applicationId
-          ]"
-        >
-          view
-        </a>
+      <div class="flex items-end relative" style="top: -75px; z-index: 100;">
+        <div class="bp-skin-metal-corner-left-bottom"></div>
+        <div class="bp-skin-metal-border-bottom flex-1"></div>
+        <div
+          class="bp-skin-metal-detail-2 absolute -bottom-3 z-20 right-0"
+        ></div>
       </div>
     </div>
   `,

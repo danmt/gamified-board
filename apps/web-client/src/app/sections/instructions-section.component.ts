@@ -12,10 +12,9 @@ import { Option } from '../utils';
 @Component({
   selector: 'pg-instructions-section',
   template: `
-    <div class="flex flex-col relative mt-20">
-      <!-- <div class="bp-skin-sidbar-left absolute -z-10"></div> -->
-      <div class="flex relative" style="height:80px">
-        <div class="bp-skin-metal-detail absolute -top-2 z-20"></div>
+    <div class="flex flex-col relative mt-10 z-40">
+      <div class="flex relative" style="height:78px">
+        <div class="bp-skin-metal-detail absolute -top-2.5 z-20"></div>
         <div class="bp-skin-metal-border flex-1 z-10"></div>
         <div class="absolute w-full bp-skin-title-box">
           <h1 class="bp-font-game text-3xl px-4 mt-6">Instructions</h1>
@@ -28,7 +27,7 @@ import { Option } from '../utils';
           class="bp-skin-metal-border-right absolute right-0 h-full z-20"
         ></div>
         <div>
-          <div class="flex-1 px-4 py-6 overflow-auto bp-skin-metal-body">
+          <div class="flex-1 px-4 pt-4 pb-10 overflow-auto bp-skin-metal-body">
             <div
               *ngrxLet="instructions$; let instructions"
               id="instructions-section"
@@ -98,7 +97,7 @@ import { Option } from '../utils';
             class="w-full h-32 p-4 relative"
             *ngrxLet="selectedInstruction$; let instruction"
           >
-            <div class="bp-skin-metal-divider"></div>
+            <div class="bp-skin-metal-divider -left-3.5"></div>
             {{ instruction?.name }}
 
             <div>
@@ -168,11 +167,8 @@ import { Option } from '../utils';
         </div>
       </div>
 
-      <div
-        class="flex items-end relative"
-        style="    top: -63px;
-    z-index: 1000;"
-      >
+      <div class="flex items-end relative" style="top: -75px; z-index: 100;">
+        <div class="bp-skin-metal-detail absolute -bottom-3 z-20"></div>
         <div class="bp-skin-metal-border-bottom flex-1"></div>
         <div class="bp-skin-metal-corner-right-bottom"></div>
       </div>

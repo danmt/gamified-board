@@ -144,7 +144,6 @@ body {
   height: 66px;
 
   position: absolute;
-  left: -15px;
   top: -35px;
   width: calc(100% + 41px);
 }
@@ -158,8 +157,15 @@ body {
 .bp-skin-metal-detail {
   background-image: url('./assets/skins/dock/metal-details-1.png');
   background-repeat: no-repeat;
-  width: 38px;
-  height: 61px;
+  width: 30px;
+  height: 41px;
+}
+
+.bp-skin-metal-detail-2 {
+  background-image: url('./assets/skins/dock/metal-details-2.png');
+  background-repeat: no-repeat;
+  width: 30px;
+  height: 41px;
 }
 
 .bp-skin-metal-border {
@@ -180,6 +186,12 @@ body {
   width: 17px;
 }
 
+.bp-skin-metal-border-left {
+  background-image: url('./assets/skins/dock/left-line-repeat.png');
+  background-repeat: repeat;
+  width: 17px;
+}
+
 .bp-skin-metal-corner-right-top {
   background-image: url('./assets/skins/dock/top-right-corner.png');
   background-repeat: no-repeat;
@@ -187,8 +199,22 @@ body {
   width: 92px;
 }
 
+.bp-skin-metal-corner-left-top {
+  background-image: url('./assets/skins/dock/top-left-corner.png');
+  background-repeat: no-repeat;
+  height: 92px;
+  width: 92px;
+}
+
 .bp-skin-metal-corner-right-bottom {
   background-image: url('./assets/skins/dock/bottom-right-corner.png');
+  background-repeat: no-repeat;
+  height: 92px;
+  width: 92px;
+}
+
+.bp-skin-metal-corner-left-bottom {
+  background-image: url('./assets/skins/dock/bottom-left-corner.png');
   background-repeat: no-repeat;
   height: 92px;
   width: 92px;
@@ -288,4 +314,13 @@ body {
 /* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {
   background: #275045;
+}
+
+.flipped {
+  -moz-transform: scaleX(-1);
+  -o-transform: scaleX(-1);
+  -webkit-transform: scaleX(-1);
+  transform: scaleX(-1);
+  filter: FlipH;
+  -ms-filter: 'FlipH';
 }
