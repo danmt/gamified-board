@@ -127,6 +127,73 @@ body {
   background-repeat: repeat;
 }
 
+.bp-bg-futuristic {
+  background-image: url('./assets/skins/dock/repetead-background.png');
+  background-repeat: repeat;
+}
+
+.bp-skin-title-box {
+  background-image: url('./assets/skins/dock/title-background.png');
+  background-repeat: no-repeat;
+  height: 80px;
+}
+
+.bp-skin-metal-divider {
+  background-image: url('./assets/skins/dock/divider-1.png');
+  background-repeat: no-repeat;
+  height: 66px;
+
+  position: absolute;
+  left: -15px;
+  top: -35px;
+  width: calc(100% + 41px);
+}
+
+.bp-skin-metal-body {
+  height: 350px;
+  overflow-y: scroll;
+  width: 280px;
+}
+
+.bp-skin-metal-detail {
+  background-image: url('./assets/skins/dock/metal-details-1.png');
+  background-repeat: no-repeat;
+  width: 38px;
+  height: 61px;
+}
+
+.bp-skin-metal-border {
+  background-image: url('./assets/skins/dock/top-line-repeat.png');
+  background-repeat: repeat;
+  height: 17px;
+}
+
+.bp-skin-metal-border-bottom {
+  background-image: url('./assets/skins/dock/bottom-line-repeat.png');
+  background-repeat: repeat;
+  height: 17px;
+}
+
+.bp-skin-metal-border-right {
+  background-image: url('./assets/skins/dock/right-line-repeat.png');
+  background-repeat: repeat;
+  width: 17px;
+}
+
+.bp-skin-metal-corner-right-top {
+  background-image: url('./assets/skins/dock/top-right-corner.png');
+  background-repeat: no-repeat;
+  height: 92px;
+  width: 92px;
+}
+
+.bp-skin-metal-corner-right-bottom {
+  background-image: url('./assets/skins/dock/bottom-right-corner.png');
+  background-repeat: no-repeat;
+  height: 92px;
+  width: 92px;
+}
+
 .custom-style-1 {
   padding-left: 17px;
   width: 296px;
@@ -210,15 +277,15 @@ body {
 
 /* Track */
 ::-webkit-scrollbar-track {
-  background: #b2aea1;
+  background: transparent;
 }
 
 /* Handle */
 ::-webkit-scrollbar-thumb {
-  background: #4b4a49;
+  background: #3c7364;
 }
 
 /* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {
-  background: #343434;
+  background: #275045;
 }

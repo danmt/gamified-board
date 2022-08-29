@@ -12,137 +12,169 @@ import { Option } from '../utils';
 @Component({
   selector: 'pg-instructions-section',
   template: `
-    <div class="bg-gray-500 h-full flex flex-col gap-4">
-      <h1 class="px-4 pt-4">Instructions</h1>
+    <div class="flex flex-col relative mt-20">
+      <!-- <div class="bp-skin-sidbar-left absolute -z-10"></div> -->
+      <div class="flex relative" style="height:80px">
+        <div class="bp-skin-metal-detail absolute -top-2 z-20"></div>
+        <div class="bp-skin-metal-border flex-1 z-10"></div>
+        <div class="absolute w-full bp-skin-title-box">
+          <h1 class="bp-font-game text-3xl px-4 mt-6">Instructions</h1>
+        </div>
+        <div class="bp-skin-metal-corner-right-top z-10"></div>
+      </div>
 
-      <div class="flex-1 px-4 overflow-auto">
+      <div class="relative bp-bg-futuristic">
         <div
-          *ngrxLet="instructions$; let instructions"
-          id="instructions-section"
-          cdkDropList
-          [cdkDropListConnectedTo]="[
-            'instruction-slot-0',
-            'instruction-slot-1',
-            'instruction-slot-2',
-            'instruction-slot-3',
-            'instruction-slot-4',
-            'instruction-slot-5'
-          ]"
-          [cdkDropListData]="instructions"
-          cdkDropListSortingDisabled
-          class="flex flex-wrap gap-2"
-        >
-          <div
-            *ngFor="let instruction of instructions; trackBy: trackBy"
-            class="relative"
-          >
-            <ng-container *ngIf="(isDragging$ | ngrxPush) === instruction.id">
-              <div
-                class="w-full h-full absolute z-20 bg-black bg-opacity-50"
-              ></div>
-              <div class="bg-yellow-500 p-0.5 w-11 h-11">
-                <img
-                  class="w-full h-full object-cover"
-                  [src]="instruction.thumbnailUrl"
-                />
-              </div>
-            </ng-container>
-
+          class="bp-skin-metal-border-right absolute right-0 h-full z-20"
+        ></div>
+        <div>
+          <div class="flex-1 px-4 py-6 overflow-auto bp-skin-metal-body">
             <div
-              cdkDrag
-              [cdkDragData]="instruction.id"
-              (click)="onSelectInstruction(instruction.id)"
-              (dblclick)="onActivateInstruction(instruction.id)"
-              (cdkDragStarted)="onDragStart($event)"
-              (cdkDragEnded)="onDragEnd()"
+              *ngrxLet="instructions$; let instructions"
+              id="instructions-section"
+              cdkDropList
+              [cdkDropListConnectedTo]="[
+                'instruction-slot-0',
+                'instruction-slot-1',
+                'instruction-slot-2',
+                'instruction-slot-3',
+                'instruction-slot-4',
+                'instruction-slot-5'
+              ]"
+              [cdkDropListData]="instructions"
+              cdkDropListSortingDisabled
+              class="flex flex-wrap gap-4"
             >
-              <div class="bg-yellow-500 p-0.5 w-11 h-11">
-                <img
-                  class="w-full h-full object-cover"
-                  [src]="instruction.thumbnailUrl"
-                />
-              </div>
+              <div
+                *ngFor="let instruction of instructions; trackBy: trackBy"
+                class="relative"
+              >
+                <ng-container
+                  *ngIf="(isDragging$ | ngrxPush) === instruction.id"
+                >
+                  <div
+                    class="w-full h-full absolute z-20 bg-black bg-opacity-50"
+                  ></div>
+                  <div class="bg-yellow-500 p-0.5 w-11 h-11">
+                    <img
+                      class="w-full h-full object-cover"
+                      [src]="instruction.thumbnailUrl"
+                    />
+                  </div>
+                </ng-container>
 
-              <div *cdkDragPreview class="bg-gray-500 p-1 w-12 h-12 rounded-md">
-                <img
-                  class="w-full h-full object-cover"
-                  [src]="instruction.thumbnailUrl"
-                />
-              </div>
+                <div
+                  cdkDrag
+                  [cdkDragData]="instruction.id"
+                  (click)="onSelectInstruction(instruction.id)"
+                  (dblclick)="onActivateInstruction(instruction.id)"
+                  (cdkDragStarted)="onDragStart($event)"
+                  (cdkDragEnded)="onDragEnd()"
+                >
+                  <div class="bg-yellow-500 p-0.5 w-11 h-11">
+                    <img
+                      class="w-full h-full object-cover"
+                      [src]="instruction.thumbnailUrl"
+                    />
+                  </div>
 
-              <div *cdkDragPlaceholder></div>
+                  <div
+                    *cdkDragPreview
+                    class="bg-gray-500 p-1 w-12 h-12 rounded-md"
+                  >
+                    <img
+                      class="w-full h-full object-cover"
+                      [src]="instruction.thumbnailUrl"
+                    />
+                  </div>
+
+                  <div *cdkDragPlaceholder></div>
+                </div>
+              </div>
             </div>
+          </div>
+
+          <div
+            class="w-full h-32 p-4 relative"
+            *ngrxLet="selectedInstruction$; let instruction"
+          >
+            <div class="bp-skin-metal-divider"></div>
+            {{ instruction?.name }}
+
+            <div>
+              <p class="bp-font-game text-2xl text-white mt-4">
+                Instruction arguments
+              </p>
+              <div class="flex gap-2 flex-wrap">
+                <div
+                  *ngFor="let arg of instruction?.arguments"
+                  class="border-2 border-black p-1 text-xs"
+                >
+                  {{ arg.name }} - {{ arg.type }}
+                </div>
+              </div>
+            </div>
+
+            <button
+              *ngIf="
+                instruction !== null &&
+                instruction.applicationId !== null &&
+                instruction.applicationId === (currentApplicationId$ | ngrxPush)
+              "
+              pgEditInstructionModal
+              [instruction]="instruction"
+              (updateInstruction)="
+                onUpdateInstruction(
+                  instruction.id,
+                  $event.name,
+                  $event.thumbnailUrl,
+                  $event.arguments
+                )
+              "
+            >
+              edit
+            </button>
+
+            <button
+              *ngIf="
+                instruction !== null &&
+                instruction.applicationId !== null &&
+                instruction.applicationId === (currentApplicationId$ | ngrxPush)
+              "
+              class="rounded-full bg-slate-400 w-8 h-8"
+              (click)="
+                onDeleteInstruction(instruction.applicationId, instruction.id)
+              "
+            >
+              x
+            </button>
+
+            <a
+              class="underline"
+              *ngIf="
+                instruction !== null &&
+                instruction.workspaceId === (workspaceId$ | ngrxPush) &&
+                instruction.applicationId !== (currentApplicationId$ | ngrxPush)
+              "
+              [routerLink]="[
+                '/board',
+                instruction.workspaceId,
+                instruction.applicationId
+              ]"
+            >
+              view
+            </a>
           </div>
         </div>
       </div>
 
       <div
-        class="w-full h-32 p-4 bg-black bg-opacity-25 overflow-auto"
-        *ngrxLet="selectedInstruction$; let instruction"
+        class="flex items-end relative"
+        style="    top: -63px;
+    z-index: 1000;"
       >
-        {{ instruction?.name }}
-
-        <div>
-          <p>Instruction arguments</p>
-          <div class="flex gap-2 flex-wrap">
-            <div
-              *ngFor="let arg of instruction?.arguments"
-              class="border-2 border-black p-1 text-xs"
-            >
-              {{ arg.name }} - {{ arg.type }}
-            </div>
-          </div>
-        </div>
-
-        <button
-          *ngIf="
-            instruction !== null &&
-            instruction.applicationId !== null &&
-            instruction.applicationId === (currentApplicationId$ | ngrxPush)
-          "
-          pgEditInstructionModal
-          [instruction]="instruction"
-          (updateInstruction)="
-            onUpdateInstruction(
-              instruction.id,
-              $event.name,
-              $event.thumbnailUrl,
-              $event.arguments
-            )
-          "
-        >
-          edit
-        </button>
-
-        <button
-          *ngIf="
-            instruction !== null &&
-            instruction.applicationId !== null &&
-            instruction.applicationId === (currentApplicationId$ | ngrxPush)
-          "
-          class="rounded-full bg-slate-400 w-8 h-8"
-          (click)="
-            onDeleteInstruction(instruction.applicationId, instruction.id)
-          "
-        >
-          x
-        </button>
-
-        <a
-          class="underline"
-          *ngIf="
-            instruction !== null &&
-            instruction.workspaceId === (workspaceId$ | ngrxPush) &&
-            instruction.applicationId !== (currentApplicationId$ | ngrxPush)
-          "
-          [routerLink]="[
-            '/board',
-            instruction.workspaceId,
-            instruction.applicationId
-          ]"
-        >
-          view
-        </a>
+        <div class="bp-skin-metal-border-bottom flex-1"></div>
+        <div class="bp-skin-metal-corner-right-bottom"></div>
       </div>
     </div>
   `,
