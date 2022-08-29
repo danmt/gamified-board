@@ -9,13 +9,19 @@ import {
   Input,
   Output,
 } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  FormBuilder,
+  FormControl,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { v4 as uuid } from 'uuid';
 import { Option } from '../utils';
 
 export interface EditApplicationData {
   id: string;
   name: string;
+  thumbnailUrl: string;
 }
 
 @Directive({ selector: '[pgEditApplicationModal]', standalone: true })
@@ -77,7 +83,7 @@ export class EditApplicationModalDirective {
           <button
             *ngIf="application === null"
             type="button"
-            (click)="onGenerateId()"
+            (click)="idControl.setValue(onGenerateId())"
           >
             Generate
           </button>
@@ -92,6 +98,18 @@ export class EditApplicationModalDirective {
             id="application-name-input"
             type="text"
             formControlName="name"
+          />
+        </div>
+
+        <div>
+          <label class="block" for="application-thumbnail-url-input">
+            Application thumbnail
+          </label>
+          <input
+            class="block border-b-2 border-black"
+            id="application-thumbnail-url-input"
+            type="text"
+            formControlName="thumbnailUrl"
           />
         </div>
 
@@ -123,23 +141,37 @@ export class EditApplicationModalComponent {
       validators: [Validators.required],
       nonNullable: true,
     }),
+    thumbnailUrl: this._formBuilder.control<string>(
+      this.application?.thumbnailUrl ?? '',
+      {
+        validators: [Validators.required],
+        nonNullable: true,
+      }
+    ),
   });
+
+  get idControl() {
+    return this.form.get('id') as FormControl<string>;
+  }
+
+  get nameControl() {
+    return this.form.get('name') as FormControl<string>;
+  }
+
+  get thumbnailUrlControl() {
+    return this.form.get('thumbnailUrl') as FormControl<string>;
+  }
 
   onSubmit() {
     if (this.form.valid) {
-      const { id, name } = this.form.value;
-
-      if (id === undefined) {
-        throw new Error('ID is not properly defined.');
-      }
-
-      if (name === undefined) {
-        throw new Error('Name is not properly defined.');
-      }
+      const id = this.idControl.value;
+      const name = this.nameControl.value;
+      const thumbnailUrl = this.thumbnailUrlControl.value;
 
       this._dialogRef.close({
         id,
         name,
+        thumbnailUrl,
       });
     }
   }
@@ -149,6 +181,6 @@ export class EditApplicationModalComponent {
   }
 
   onGenerateId() {
-    this.form.get('id')?.setValue(uuid());
+    return uuid();
   }
 }

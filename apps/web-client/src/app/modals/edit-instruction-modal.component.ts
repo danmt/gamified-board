@@ -1,4 +1,9 @@
 import { Dialog, DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
+import {
+  CdkDragDrop,
+  DragDropModule,
+  moveItemInArray,
+} from '@angular/cdk/drag-drop';
 import { CommonModule } from '@angular/common';
 import {
   Component,
@@ -24,7 +29,7 @@ export interface EditInstructionData {
   id: string;
   name: string;
   thumbnailUrl: string;
-  arguments: { name: string; type: string; isOption: boolean }[];
+  arguments: { id: string; name: string; type: string; isOption: boolean }[];
 }
 
 @Directive({ selector: '[pgEditInstructionModal]', standalone: true })
@@ -90,7 +95,7 @@ export class EditInstructionModalDirective {
           <button
             *ngIf="instruction === null"
             type="button"
-            (click)="onGenerateId()"
+            (click)="idControl.setValue(onGenerateId())"
           >
             Generate
           </button>
@@ -123,24 +128,66 @@ export class EditInstructionModalDirective {
         <div formArrayName="arguments">
           <p>
             <span>Instruction arguments</span>
-            <button (click)="onAddAttribute()" type="button">+</button>
+            <button (click)="onAddArgument()" type="button">+</button>
           </p>
 
-          <div class="flex flex-col gap-2">
+          <div
+            class="flex flex-col gap-2"
+            cdkDropList
+            [cdkDropListData]="argumentsControl.value"
+            (cdkDropListDropped)="onArgumentDropped($event)"
+          >
             <div
               *ngFor="
                 let argumentForm of argumentsControl.controls;
                 let i = index
               "
-              class="border-black border-2 p-2"
+              class="border-black border-2 p-2 bg-white relative"
+              cdkDrag
+              [cdkDragData]="argumentForm.value"
             >
+              <div class="absolute right-2 top-2" cdkDragHandle>
+                <svg width="24px" fill="currentColor" viewBox="0 0 24 24">
+                  <path
+                    d="M10 9h4V6h3l-5-5-5 5h3v3zm-1 1H6V7l-5 5 5 5v-3h3v-4zm14 2l-5-5v3h-3v4h3v3l5-5zm-9 3h-4v3H7l5 5 5-5h-3v-3z"
+                  ></path>
+                  <path d="M0 0h24v24H0z" fill="none"></path>
+                </svg>
+              </div>
+
               <div [formGroup]="argumentForm">
+                <div>
+                  <label
+                    class="block"
+                    [for]="'instruction-arguments-' + i + '-id'"
+                  >
+                    Argument ID
+                  </label>
+                  <input
+                    [id]="'instruction-arguments-' + i + '-id'"
+                    formControlName="id"
+                    class="block border-b-2 border-black"
+                    type="text"
+                    [readonly]="instruction !== null"
+                  />
+                  <p *ngIf="instruction !== null">
+                    Hint: The ID cannot be changed afterwards.
+                  </p>
+                  <button
+                    *ngIf="instruction !== null"
+                    type="button"
+                    (click)="argumentForm.get('id')?.setValue(onGenerateId())"
+                  >
+                    Generate
+                  </button>
+                </div>
+
                 <div>
                   <label
                     class="block"
                     [for]="'instruction-arguments-' + i + '-name'"
                   >
-                    Attribute name
+                    Argument name
                   </label>
                   <input
                     [id]="'instruction-arguments-' + i + '-name'"
@@ -149,12 +196,13 @@ export class EditInstructionModalDirective {
                     type="text"
                   />
                 </div>
+
                 <div>
                   <label
                     class="block"
                     [for]="'instruction-arguments-' + i + '-type'"
                   >
-                    Attribute type
+                    Argument type
                   </label>
 
                   <select
@@ -182,7 +230,7 @@ export class EditInstructionModalDirective {
                   >
                 </div>
 
-                <button (click)="onRemoveAttribute(i)" type="button">x</button>
+                <button (click)="onRemoveArgument(i)" type="button">x</button>
               </div>
             </div>
           </div>
@@ -197,7 +245,7 @@ export class EditInstructionModalDirective {
     </div>
   `,
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, DragDropModule],
 })
 export class EditInstructionModalComponent {
   private readonly _dialogRef =
@@ -227,6 +275,10 @@ export class EditInstructionModalComponent {
       ? this._formBuilder.array(
           this.instruction.arguments.map((argument) =>
             this._formBuilder.group({
+              id: this._formBuilder.control<string>(argument.id, {
+                validators: [Validators.required],
+                nonNullable: true,
+              }),
               name: this._formBuilder.control<string>(argument.name, {
                 validators: [Validators.required],
                 nonNullable: true,
@@ -259,6 +311,7 @@ export class EditInstructionModalComponent {
   get argumentsControl() {
     return this.form.get('arguments') as FormArray<
       FormGroup<{
+        id: FormControl<string>;
         name: FormControl<string>;
         type: FormControl<string>;
         isOption: FormControl<boolean>;
@@ -266,8 +319,12 @@ export class EditInstructionModalComponent {
     >;
   }
 
-  onAddAttribute() {
+  onAddArgument() {
     const argumentForm = this._formBuilder.group({
+      id: this._formBuilder.control<string>('', {
+        validators: [Validators.required],
+        nonNullable: true,
+      }),
       name: this._formBuilder.control<string>('', {
         validators: [Validators.required],
         nonNullable: true,
@@ -284,8 +341,41 @@ export class EditInstructionModalComponent {
     this.argumentsControl.push(argumentForm);
   }
 
-  onRemoveAttribute(index: number) {
+  onRemoveArgument(index: number) {
     this.argumentsControl.removeAt(index);
+  }
+
+  onArgumentDropped(
+    event: CdkDragDrop<
+      Partial<{
+        id: string;
+        name: string;
+        type: string;
+        isOption: boolean;
+      }>[],
+      unknown,
+      Partial<{
+        id: string;
+        name: string;
+        type: string;
+        isOption: boolean;
+      }>
+    >
+  ) {
+    moveItemInArray(
+      event.container.data,
+      event.previousIndex,
+      event.currentIndex
+    );
+
+    this.argumentsControl.setValue(
+      event.container.data.map((argumentData) => ({
+        id: argumentData.id ?? '',
+        name: argumentData.name ?? '',
+        type: argumentData.type ?? '',
+        isOption: !!argumentData.isOption,
+      }))
+    );
   }
 
   onSubmit() {
@@ -294,6 +384,7 @@ export class EditInstructionModalComponent {
       const name = this.nameControl.value;
       const thumbnailUrl = this.thumbnailUrlControl.value;
       const args = this.argumentsControl.controls.map((argumentForm) => {
+        const idControl = argumentForm.get('id') as FormControl<string>;
         const nameControl = argumentForm.get('name') as FormControl<string>;
         const typeControl = argumentForm.get('type') as FormControl<string>;
         const isOptionControl = argumentForm.get(
@@ -301,6 +392,7 @@ export class EditInstructionModalComponent {
         ) as FormControl<boolean>;
 
         return {
+          id: idControl.value,
           name: nameControl.value,
           type: typeControl.value,
           isOption: isOptionControl.value,
@@ -321,6 +413,6 @@ export class EditInstructionModalComponent {
   }
 
   onGenerateId() {
-    this.form.get('id')?.setValue(uuid());
+    return uuid();
   }
 }

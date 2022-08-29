@@ -9,11 +9,11 @@ import {
 import { combineLatest, defer, from, map, Observable, of } from 'rxjs';
 import { Entity } from '../utils';
 
-export interface CollectionAttributeDto {
+export type CollectionAttributeDto = Entity<{
   name: string;
   type: string;
   isOption: boolean;
-}
+}>;
 
 export type CollectionDto = Entity<{
   name: string;

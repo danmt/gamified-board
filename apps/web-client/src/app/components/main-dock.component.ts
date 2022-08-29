@@ -262,7 +262,7 @@ export class MainDockComponent {
     id: string;
     name: string;
     thumbnailUrl: string;
-    arguments: { name: string; type: string; isOption: boolean }[];
+    arguments: { id: string; name: string; type: string; isOption: boolean }[];
   }>();
   @Output() swapCollectionSlots = new EventEmitter<[number, number]>();
   @Output() removeFromCollectionSlot = new EventEmitter<number>();
@@ -275,7 +275,7 @@ export class MainDockComponent {
     id: string;
     name: string;
     thumbnailUrl: string;
-    attributes: { name: string; type: string; isOption: boolean }[];
+    attributes: { id: string; name: string; type: string; isOption: boolean }[];
   }>();
   @HostListener('document:keydown', ['$event'])
   onKeydown(event: KeyboardEvent) {
@@ -344,7 +344,7 @@ export class MainDockComponent {
     id: string,
     name: string,
     thumbnailUrl: string,
-    args: { name: string; type: string; isOption: boolean }[]
+    args: { id: string; name: string; type: string; isOption: boolean }[]
   ) {
     this.createInstruction.emit({
       id,
@@ -390,7 +390,7 @@ export class MainDockComponent {
     id: string,
     name: string,
     thumbnailUrl: string,
-    attributes: { name: string; type: string; isOption: boolean }[]
+    attributes: { id: string; name: string; type: string; isOption: boolean }[]
   ) {
     this.createCollection.emit({
       id,

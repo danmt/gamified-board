@@ -1,4 +1,9 @@
 import { Dialog, DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
+import {
+  CdkDragDrop,
+  DragDropModule,
+  moveItemInArray,
+} from '@angular/cdk/drag-drop';
 import { CommonModule } from '@angular/common';
 import {
   Component,
@@ -24,7 +29,7 @@ export interface EditCollectionData {
   id: string;
   name: string;
   thumbnailUrl: string;
-  attributes: { name: string; type: string; isOption: boolean }[];
+  attributes: { id: string; name: string; type: string; isOption: boolean }[];
 }
 
 @Directive({ selector: '[pgEditCollectionModal]', standalone: true })
@@ -58,70 +63,62 @@ export class EditCollectionModalDirective {
 @Component({
   selector: 'pg-edit-collection-modal',
   template: `
-    <div
-      class="px-4 pt-1 pb-4 bp-skin-modal-body text-white shadow-xl relative"
-    >
-      <div class="absolute bp-skin-modal-top -z-10"></div>
-      <div class="absolute bp-skin-modal-bottom -z-10"></div>
-      <!-- <div class="absolute bp-skin-modal-1 -z-10"></div> -->
-      <div class="flex">
-        <button
-          class="absolute top-4 right-4 bp-button-close"
-          (click)="onClose()"
-        ></button>
+    <div class="px-4 pt-8 pb-4 bg-white shadow-xl relative">
+      <button
+        class="absolute top-2 right-2 rounded-full border border-black leading-none w-6 h-6"
+        (click)="onClose()"
+      >
+        x
+      </button>
 
-        <h1
-          class="text-center text-xl mb-4 bp-font-game text-3xl tracking-wider pt-2.5"
-        >
-          {{ collection === null ? 'Create' : 'Update' }} collection
-        </h1>
-      </div>
+      <h1 class="text-center text-xl mb-4">
+        {{ collection === null ? 'Create' : 'Update' }} collection
+      </h1>
+
       <form
         [formGroup]="form"
         (ngSubmit)="onSubmit()"
-        class="max-h-96 overflow-y-auto bp-font-game pr-2.5"
+        class="max-h-96 overflow-y-auto"
       >
-        <div class="mb-4">
-          <label class="block text-xl" for="collection-id-input"
-            >Collection ID</label
-          >
+        <div>
+          <label class="block" for="collection-id-input">Collection ID</label>
           <input
-            class="bp-input-metal"
+            class="block border-b-2 border-black"
             id="collection-id-input"
             type="text"
             formControlName="id"
             [readonly]="collection !== null"
           />
-          <!-- <p *ngIf="collection === null">
+          <p *ngIf="collection === null">
             Hint: The ID cannot be changed afterwards.
-          </p> -->
+          </p>
           <button
             *ngIf="collection === null"
             type="button"
-            (click)="onGenerateId()"
+            (click)="idControl.setValue(onGenerateId())"
           >
             Generate
           </button>
         </div>
 
-        <div class="mb-4">
-          <label class="block text-xl" for="collection-name-input">
+        <div>
+          <label class="block" for="collection-name-input">
             Collection name
           </label>
           <input
-            class="bp-input-metal"
+            class="block border-b-2 border-black"
             id="collection-name-input"
             type="text"
             formControlName="name"
           />
         </div>
 
-        <div class="mb-4">
-          <label class="block text-xl" for="collection-thumbnail-url-input">
+        <div>
+          <label class="block" for="collection-thumbnail-url-input">
             Collection thumbnail
           </label>
           <input
-            class="bp-input-metal"
+            class="block border-b-2 border-black"
             id="collection-thumbnail-url-input"
             type="text"
             formControlName="thumbnailUrl"
@@ -130,20 +127,62 @@ export class EditCollectionModalDirective {
 
         <div formArrayName="attributes">
           <p>
-            <span class="mr-8">Collection attributes</span>
+            <span>Collection attributes</span>
             <button (click)="onAddAttribute()" type="button">+</button>
           </p>
 
-          <div class="flex flex-col gap-2">
+          <div
+            class="flex flex-col gap-2"
+            cdkDropList
+            [cdkDropListData]="attributesControl.value"
+            (cdkDropListDropped)="onAttributeDropped($event)"
+          >
             <div
               *ngFor="
                 let attributeForm of attributesControl.controls;
                 let i = index
               "
-              class="bp-metal-plate p-3"
+              class="border-black border-2 p-2 bg-white relative"
+              cdkDrag
+              [cdkDragData]="attributeForm.value"
             >
+              <div class="absolute right-2 top-2" cdkDragHandle>
+                <svg width="24px" fill="currentColor" viewBox="0 0 24 24">
+                  <path
+                    d="M10 9h4V6h3l-5-5-5 5h3v3zm-1 1H6V7l-5 5 5 5v-3h3v-4zm14 2l-5-5v3h-3v4h3v3l5-5zm-9 3h-4v3H7l5 5 5-5h-3v-3z"
+                  ></path>
+                  <path d="M0 0h24v24H0z" fill="none"></path>
+                </svg>
+              </div>
+
               <div [formGroup]="attributeForm">
-                <div class="mb-4">
+                <div>
+                  <label
+                    class="block"
+                    [for]="'collection-attributes-' + i + '-id'"
+                  >
+                    Attribute ID
+                  </label>
+                  <input
+                    [id]="'collection-attributes-' + i + '-id'"
+                    formControlName="id"
+                    class="block border-b-2 border-black"
+                    type="text"
+                    [readonly]="collection !== null"
+                  />
+                  <p *ngIf="collection !== null">
+                    Hint: The ID cannot be changed afterwards.
+                  </p>
+                  <button
+                    *ngIf="collection !== null"
+                    type="button"
+                    (click)="attributeForm.get('id')?.setValue(onGenerateId())"
+                  >
+                    Generate
+                  </button>
+                </div>
+
+                <div>
                   <label
                     class="block"
                     [for]="'collection-attributes-' + i + '-name'"
@@ -153,7 +192,7 @@ export class EditCollectionModalDirective {
                   <input
                     [id]="'collection-attributes-' + i + '-name'"
                     formControlName="name"
-                    class="bp-input-metal"
+                    class="block border-b-2 border-black"
                     type="text"
                   />
                 </div>
@@ -185,9 +224,9 @@ export class EditCollectionModalDirective {
                     type="checkbox"
                     [id]="'collection-attributes-' + i + '-is-option'"
                   />
-                  <label for="'collection-attributes-' + i + '-is-option'"
-                    >Is Optional</label
-                  >
+                  <label [for]="'collection-attributes-' + i + '-is-option'">
+                    Is Optional
+                  </label>
                 </div>
 
                 <button (click)="onRemoveAttribute(i)" type="button">x</button>
@@ -197,7 +236,7 @@ export class EditCollectionModalDirective {
         </div>
 
         <div class="flex justify-center items-center mt-4">
-          <button type="submit" class="bp-button-metal">
+          <button type="submit" class="px-4 py-2 border-blue-500 border">
             {{ collection === null ? 'Send' : 'Save' }}
           </button>
         </div>
@@ -205,7 +244,7 @@ export class EditCollectionModalDirective {
     </div>
   `,
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, DragDropModule],
 })
 export class EditCollectionModalComponent {
   private readonly _dialogRef =
@@ -235,6 +274,10 @@ export class EditCollectionModalComponent {
       ? this._formBuilder.array(
           this.collection.attributes.map((attribute) =>
             this._formBuilder.group({
+              id: this._formBuilder.control<string>(attribute.id, {
+                validators: [Validators.required],
+                nonNullable: true,
+              }),
               name: this._formBuilder.control<string>(attribute.name, {
                 validators: [Validators.required],
                 nonNullable: true,
@@ -267,6 +310,7 @@ export class EditCollectionModalComponent {
   get attributesControl() {
     return this.form.get('attributes') as FormArray<
       FormGroup<{
+        id: FormControl<string>;
         name: FormControl<string>;
         type: FormControl<string>;
         isOption: FormControl<boolean>;
@@ -276,6 +320,10 @@ export class EditCollectionModalComponent {
 
   onAddAttribute() {
     const attributeForm = this._formBuilder.group({
+      id: this._formBuilder.control<string>('', {
+        validators: [Validators.required],
+        nonNullable: true,
+      }),
       name: this._formBuilder.control<string>('', {
         validators: [Validators.required],
         nonNullable: true,
@@ -296,6 +344,39 @@ export class EditCollectionModalComponent {
     this.attributesControl.removeAt(index);
   }
 
+  onAttributeDropped(
+    event: CdkDragDrop<
+      Partial<{
+        id: string;
+        name: string;
+        type: string;
+        isOption: boolean;
+      }>[],
+      unknown,
+      Partial<{
+        id: string;
+        name: string;
+        type: string;
+        isOption: boolean;
+      }>
+    >
+  ) {
+    moveItemInArray(
+      event.container.data,
+      event.previousIndex,
+      event.currentIndex
+    );
+
+    this.attributesControl.setValue(
+      event.container.data.map((attributeData) => ({
+        id: attributeData.id ?? '',
+        name: attributeData.name ?? '',
+        type: attributeData.type ?? '',
+        isOption: !!attributeData.isOption,
+      }))
+    );
+  }
+
   onSubmit() {
     if (this.form.valid) {
       const id = this.idControl.value;
@@ -303,6 +384,7 @@ export class EditCollectionModalComponent {
       const thumbnailUrl = this.thumbnailUrlControl.value;
       const attributes = this.attributesControl.controls.map(
         (attributeForm) => {
+          const idControl = attributeForm.get('id') as FormControl<string>;
           const nameControl = attributeForm.get('name') as FormControl<string>;
           const typeControl = attributeForm.get('type') as FormControl<string>;
           const isOptionControl = attributeForm.get(
@@ -310,6 +392,7 @@ export class EditCollectionModalComponent {
           ) as FormControl<boolean>;
 
           return {
+            id: idControl.value,
             name: nameControl.value,
             type: typeControl.value,
             isOption: isOptionControl.value,
@@ -331,6 +414,6 @@ export class EditCollectionModalComponent {
   }
 
   onGenerateId() {
-    this.form.get('id')?.setValue(uuid());
+    return uuid();
   }
 }
