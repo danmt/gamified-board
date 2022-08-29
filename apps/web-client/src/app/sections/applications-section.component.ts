@@ -5,7 +5,6 @@ import { RouterModule } from '@angular/router';
 import { LetModule, PushModule } from '@ngrx/component';
 import { BehaviorSubject } from 'rxjs';
 import { EditApplicationModalDirective } from '../modals';
-import { ApplicationApiService } from '../services';
 import { BoardStore } from '../stores';
 import { Option } from '../utils';
 
@@ -21,12 +20,16 @@ import { Option } from '../utils';
           id="applications-section"
           cdkDropList
           [cdkDropListConnectedTo]="[
-            'application-slot-0',
-            'application-slot-1',
-            'application-slot-2',
-            'application-slot-3',
-            'application-slot-4',
-            'application-slot-5'
+            'slot-0',
+            'slot-1',
+            'slot-2',
+            'slot-3',
+            'slot-4',
+            'slot-5',
+            'slot-6',
+            'slot-7',
+            'slot-8',
+            'slot-9'
           ]"
           [cdkDropListData]="applications"
           cdkDropListSortingDisabled
@@ -50,7 +53,7 @@ import { Option } from '../utils';
 
             <div
               cdkDrag
-              [cdkDragData]="application.id"
+              [cdkDragData]="{ id: application.id, kind: 'application' }"
               (click)="onSelectApplication(application.id)"
               (dblclick)="onActivateApplication(application.id)"
               (cdkDragStarted)="onDragStart($event)"
@@ -82,37 +85,6 @@ import { Option } from '../utils';
       >
         {{ application?.name }}
 
-        <button
-          *ngIf="
-            application !== null &&
-            application.id !== null &&
-            application.id === (currentApplicationId$ | ngrxPush)
-          "
-          pgEditApplicationModal
-          [application]="application"
-          (updateApplication)="
-            onUpdateApplication(
-              application.id,
-              $event.name,
-              $event.thumbnailUrl
-            )
-          "
-        >
-          edit
-        </button>
-
-        <button
-          *ngIf="
-            application !== null &&
-            application.id !== null &&
-            application.id === (currentApplicationId$ | ngrxPush)
-          "
-          class="rounded-full bg-slate-400 w-8 h-8"
-          (click)="onDeleteApplication(application.id, application.id)"
-        >
-          x
-        </button>
-
         <a
           class="underline"
           *ngIf="
@@ -139,7 +111,6 @@ import { Option } from '../utils';
 })
 export class ApplicationsSectionComponent {
   private readonly _boardStore = inject(BoardStore);
-  private readonly _applicationApiService = inject(ApplicationApiService);
 
   private readonly _isDragging = new BehaviorSubject<Option<string>>(null);
   readonly isDragging$ = this._isDragging.asObservable();
@@ -154,22 +125,6 @@ export class ApplicationsSectionComponent {
 
   onSelectApplication(applicationId: string) {
     this._boardStore.setSelectedApplicationId(applicationId);
-  }
-
-  onUpdateApplication(
-    applicationId: string,
-    applicationName: string,
-    thumbnailUrl: string
-  ) {
-    this._applicationApiService
-      .updateApplication(applicationId, applicationName, thumbnailUrl)
-      .subscribe();
-  }
-
-  onDeleteApplication(applicationId: string, workspaceId: string) {
-    this._applicationApiService
-      .deleteApplication(applicationId, workspaceId)
-      .subscribe(() => this._boardStore.setSelectedApplicationId(null));
   }
 
   onDragStart(event: CdkDragStart) {

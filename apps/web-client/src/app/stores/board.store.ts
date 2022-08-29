@@ -1,4 +1,5 @@
-import { inject, Injectable } from '@angular/core';
+import { Dialog } from '@angular/cdk/dialog';
+import { inject, Injectable, ViewContainerRef } from '@angular/core';
 import {
   ComponentStore,
   OnStoreInit,
@@ -12,6 +13,15 @@ import {
   switchMap,
   withLatestFrom,
 } from 'rxjs';
+import {
+  EditDocumentData,
+  EditDocumentModalComponent,
+  EditDocumentSubmitPayload,
+  EditInstructionApplicationData,
+  EditInstructionApplicationModalComponent,
+  EditTaskData,
+  EditTaskModalComponent,
+} from '../modals';
 import { IdlStructField, PluginsService } from '../plugins';
 import {
   ApplicationDto,
@@ -19,41 +29,44 @@ import {
   CollectionDto,
   DocumentApiService,
   DocumentDto,
+  InstructionApplicationApiService,
+  InstructionApplicationDto,
   InstructionArgumentDto,
   InstructionDto,
-  TaskApiService,
+  InstructionTaskApiService,
+  InstructionTaskDto,
   WorkspaceApiService,
   WorkspaceDto,
 } from '../services';
 import { Entity, isNotNull, Option } from '../utils';
 
-export type BoardArgumentReference = {
+export type ArgumentReferenceView = {
   kind: 'argument';
   argument: InstructionArgumentDto;
 };
 
-export type BoardDocumentReference = {
+export type DocumentReferenceView = {
   kind: 'document';
   document: DocumentDto;
   attribute: CollectionAttributeDto;
 };
 
-export type BoardReference = BoardArgumentReference | BoardDocumentReference;
+export type ReferenceView = ArgumentReferenceView | DocumentReferenceView;
 
-export type BoardValue = {
+export type ValueView = {
   type: string;
   value: string;
 };
 
-export type BoardApplication = Entity<{
+export type ApplicationView = Entity<{
   name: string;
   thumbnailUrl: string;
   workspaceId: string;
-  collections: BoardCollection[];
-  instructions: BoardInstruction[];
+  collections: CollectionView[];
+  instructions: InstructionView[];
 }>;
 
-export type BoardCollection = Entity<{
+export type CollectionView = Entity<{
   name: string;
   thumbnailUrl: string;
   applicationId: string;
@@ -61,39 +74,271 @@ export type BoardCollection = Entity<{
   attributes: CollectionAttributeDto[];
 }>;
 
-export type BoardDocument = Entity<{
+export type DocumentView = Entity<{
   name: string;
   method: string;
   ownerId: string;
-  collection: BoardCollection;
-  seeds: Option<BoardReference | BoardValue>[];
-  bump: Option<BoardReference>;
-  payer: Option<BoardDocumentReference>;
+  collection: CollectionView;
+  seeds: Option<ReferenceView | ValueView>[];
+  bump: Option<ReferenceView>;
+  payer: Option<DocumentReferenceView>;
 }>;
 
-export type BoardInstruction = Entity<{
+export type InstructionApplicationView = Entity<{
+  name: string;
+  ownerId: string;
+  application: ApplicationDto;
+}>;
+
+export type InstructionView = Entity<{
   name: string;
   thumbnailUrl: string;
   applicationId: string;
   workspaceId: string;
   arguments: InstructionArgumentDto[];
-  documents: BoardDocument[];
-  tasks: BoardTask[];
+  documents: DocumentView[];
+  tasks: TaskView[];
+  applications: InstructionApplicationView[];
 }>;
 
-export type BoardTask = Entity<{
+export type TaskView = Entity<{
   name: string;
   ownerId: string;
-  instruction: BoardInstruction;
+  instruction: InstructionView;
 }>;
 
-export interface BoardEntry {
+export interface EntryView {
   id: string;
   name: string;
-  tasks: BoardTask[];
-  documents: BoardDocument[];
+  tasks: TaskView[];
+  documents: DocumentView[];
   arguments: InstructionArgumentDto[];
+  applications: InstructionApplicationView[];
 }
+
+const populateInstructionApplication = (
+  instructionApplication: InstructionApplicationDto,
+  applications: ApplicationDto[]
+): InstructionApplicationView => {
+  const application =
+    applications.find(
+      (application) => application.id === instructionApplication.applicationId
+    ) ?? null;
+
+  if (application === null) {
+    throw new Error(
+      `Application ${instructionApplication.id} has an reference to an unknown application.`
+    );
+  }
+
+  return {
+    id: instructionApplication.id,
+    name: instructionApplication.name,
+    ownerId: instructionApplication.ownerId,
+    application,
+  };
+};
+
+const populateInstructionDocument = (
+  document: DocumentDto,
+  documents: DocumentDto[],
+  args: InstructionArgumentDto[],
+  collections: CollectionDto[]
+): DocumentView => {
+  const collection =
+    collections.find((collection) => collection.id === document.collectionId) ??
+    null;
+
+  if (collection === null) {
+    throw new Error(
+      `Document ${document.id} has an reference to an unknown collection.`
+    );
+  }
+
+  let bump: Option<ReferenceView> = null;
+
+  if (document.bump?.kind === 'document') {
+    const documentId = document.bump.documentId;
+    const attributeId = document.bump.attributeId;
+
+    const bumpDocument = documents.find(({ id }) => id === documentId) ?? null;
+    const collection =
+      collections.find(({ id }) => id === bumpDocument?.collectionId) ?? null;
+    const attribute =
+      collection?.attributes.find(({ id }) => id === attributeId) ?? null;
+
+    bump =
+      bumpDocument !== null && attribute !== null
+        ? {
+            kind: 'document' as const,
+            document: bumpDocument,
+            attribute,
+          }
+        : null;
+  } else if (document.bump?.kind === 'argument') {
+    const argumentId = document.bump.argumentId;
+    const argument = args.find(({ id }) => id === argumentId) ?? null;
+
+    bump =
+      argument !== null
+        ? {
+            kind: 'argument' as const,
+            argument,
+          }
+        : null;
+  }
+
+  let payer: Option<ReferenceView> = null;
+
+  if (document.payer !== null) {
+    const documentId = document.payer.documentId;
+    const attributeId = document.payer.attributeId;
+
+    const payerDocument = documents.find(({ id }) => id === documentId) ?? null;
+    const collection =
+      collections.find(({ id }) => id === payerDocument?.collectionId) ?? null;
+    const attribute =
+      collection?.attributes.find(({ id }) => id === attributeId) ?? null;
+
+    payer =
+      payerDocument !== null && attribute !== null
+        ? {
+            kind: 'document',
+            document: payerDocument,
+            attribute,
+          }
+        : null;
+  }
+
+  return {
+    id: document.id,
+    name: document.name,
+    method: document.method,
+    ownerId: document.ownerId,
+    payer,
+    seeds:
+      document.seeds
+        ?.map<Option<ReferenceView | ValueView>>((seed) => {
+          if (!('kind' in seed)) {
+            return {
+              value: seed.value,
+              type: seed.type,
+            };
+          }
+
+          switch (seed.kind) {
+            case 'argument': {
+              const arg = args.find(({ id }) => id === seed.argumentId) ?? null;
+
+              return arg !== null
+                ? {
+                    kind: seed.kind,
+                    argument: arg,
+                  }
+                : null;
+            }
+            case 'document': {
+              const document =
+                documents.find(({ id }) => id === seed.documentId) ?? null;
+              const collection =
+                collections.find(({ id }) => id === document?.collectionId) ??
+                null;
+              const attribute =
+                collection?.attributes.find(
+                  ({ id }) => id === seed.attributeId
+                ) ?? null;
+
+              return document !== null && attribute !== null
+                ? {
+                    kind: seed.kind,
+                    document,
+                    attribute,
+                  }
+                : null;
+            }
+            default: {
+              return null;
+            }
+          }
+        })
+        .filter(isNotNull) ?? [],
+    bump,
+    collection,
+  };
+};
+
+const populateInstructionTask = (
+  task: InstructionTaskDto,
+  instructions: InstructionDto[],
+  applications: ApplicationDto[],
+  collections: CollectionDto[]
+): TaskView => {
+  console.log({ task, instructions, applications, collections });
+
+  const instruction =
+    instructions.find(({ id }) => id === task.instructionId) ?? null;
+
+  if (instruction === null) {
+    throw new Error(
+      `Task ${task.id} has an reference to an unknown instruction.`
+    );
+  }
+
+  return {
+    id: task.id,
+    name: task.name,
+    ownerId: task.ownerId,
+    instruction: populateInstruction(
+      instruction,
+      applications,
+      collections,
+      instructions,
+      {
+        ignoreTasks: true,
+      }
+    ),
+  };
+};
+
+const populateInstruction = (
+  instruction: InstructionDto,
+  applications: ApplicationDto[],
+  collections: CollectionDto[],
+  instructions: InstructionDto[],
+  options?: {
+    ignoreTasks: boolean;
+  }
+): InstructionView => {
+  return {
+    id: instruction.id,
+    name: instruction.name,
+    thumbnailUrl: instruction.thumbnailUrl,
+    applicationId: instruction.applicationId,
+    workspaceId: instruction.workspaceId,
+    arguments: instruction.arguments,
+    applications: instruction.applications.map((instructionApplication) =>
+      populateInstructionApplication(instructionApplication, applications)
+    ),
+    documents: instruction.documents.map((document) =>
+      populateInstructionDocument(
+        document,
+        instruction.documents,
+        instruction.arguments,
+        collections
+      )
+    ),
+    tasks: options?.ignoreTasks
+      ? []
+      : instruction.tasks.map((instructionTask) =>
+          populateInstructionTask(
+            instructionTask,
+            instructions,
+            applications,
+            collections
+          )
+        ),
+  };
+};
 
 interface ViewModel {
   workspaceId: Option<string>;
@@ -110,11 +355,14 @@ interface ViewModel {
   activeCollectionId: Option<string>;
   activeInstructionId: Option<string>;
   activeApplicationId: Option<string>;
-  instructionSlotIds: Option<string>[];
-  collectionSlotIds: Option<string>[];
   isCollectionsSectionOpen: boolean;
   isInstructionsSectionOpen: boolean;
   isApplicationsSectionOpen: boolean;
+  activeId: Option<string>;
+  slots: Option<{
+    id: string;
+    kind: 'collection' | 'instruction' | 'application';
+  }>[];
 }
 
 const initialState: ViewModel = {
@@ -132,11 +380,11 @@ const initialState: ViewModel = {
   activeApplicationId: null,
   activeCollectionId: null,
   activeInstructionId: null,
-  instructionSlotIds: [null, null, null, null, null, null],
-  collectionSlotIds: [null, null, null, null, null, null],
   isCollectionsSectionOpen: false,
   isInstructionsSectionOpen: false,
   isApplicationsSectionOpen: false,
+  activeId: null,
+  slots: [null, null, null, null, null, null, null, null, null, null],
 };
 
 @Injectable()
@@ -144,10 +392,17 @@ export class BoardStore
   extends ComponentStore<ViewModel>
   implements OnStoreInit
 {
+  private readonly _dialog = inject(Dialog);
+  private readonly _viewContainerRef = inject(ViewContainerRef);
   private readonly _pluginsService = inject(PluginsService);
   private readonly _workspaceApiService = inject(WorkspaceApiService);
-  private readonly _taskApiService = inject(TaskApiService);
+  private readonly _instructionTaskApiService = inject(
+    InstructionTaskApiService
+  );
   private readonly _documentApiService = inject(DocumentApiService);
+  private readonly _instructionApplicationApiService = inject(
+    InstructionApplicationApiService
+  );
 
   readonly workspaceId$ = this.select(({ workspaceId }) => workspaceId);
   readonly workspace$ = this.select(({ workspace }) => workspace);
@@ -164,15 +419,14 @@ export class BoardStore
     ({ isApplicationsSectionOpen }) => isApplicationsSectionOpen
   );
 
-  readonly collections$: Observable<Option<BoardCollection[]>> = this.select(
+  readonly collections$: Observable<Option<CollectionView[]>> = this.select(
     ({ collections }) => {
       if (collections === null) {
         return null;
       }
 
-      return [
-        ...collections,
-        ...this._pluginsService.plugins.reduce<CollectionDto[]>(
+      return collections.concat(
+        this._pluginsService.plugins.reduce<CollectionDto[]>(
           (collections, plugin) => [
             ...collections,
             ...plugin.accounts.reduce<CollectionDto[]>(
@@ -247,175 +501,28 @@ export class BoardStore
             ),
           ],
           []
-        ),
-      ];
+        )
+      );
     }
   );
-  readonly instructions$: Observable<Option<BoardInstruction[]>> = this.select(
+  readonly instructions$: Observable<Option<InstructionView[]>> = this.select(
+    this.select(({ applications }) => applications),
     this.select(({ instructions }) => instructions),
     this.collections$,
-    (instructions, collections) => {
-      if (instructions === null || collections === null) {
+    (applications, instructions, collections) => {
+      if (
+        applications === null ||
+        instructions === null ||
+        collections === null
+      ) {
         return null;
       }
 
-      return [
-        ...instructions.map((instruction) => {
-          return {
-            id: instruction.id,
-            name: instruction.name,
-            thumbnailUrl: instruction.thumbnailUrl,
-            applicationId: instruction.applicationId,
-            workspaceId: instruction.workspaceId,
-            arguments: instruction.arguments,
-            documents: instruction.documents.map((document) => {
-              const collection =
-                collections.find(
-                  (collection) => collection.id === document.collectionId
-                ) ?? null;
-
-              if (collection === null) {
-                throw new Error(
-                  `Document ${document.id} has an reference to an unknown collection.`
-                );
-              }
-
-              let bump: Option<BoardReference> = null;
-
-              if (document.bump?.kind === 'document') {
-                const documentId = document.bump.documentId;
-                const attributeId = document.bump.attributeId;
-
-                const bumpDocument =
-                  instruction.documents.find(({ id }) => id === documentId) ??
-                  null;
-                const collection =
-                  collections.find(
-                    ({ id }) => id === bumpDocument?.collectionId
-                  ) ?? null;
-                const attribute =
-                  collection?.attributes.find(({ id }) => id === attributeId) ??
-                  null;
-
-                bump =
-                  bumpDocument !== null && attribute !== null
-                    ? {
-                        kind: 'document' as const,
-                        document: bumpDocument,
-                        attribute,
-                      }
-                    : null;
-              } else if (document.bump?.kind === 'argument') {
-                const argumentId = document.bump.argumentId;
-                const argument =
-                  instruction?.arguments.find(({ id }) => id === argumentId) ??
-                  null;
-
-                bump =
-                  argument !== null
-                    ? {
-                        kind: 'argument' as const,
-                        argument,
-                      }
-                    : null;
-              }
-
-              let payer: Option<BoardReference> = null;
-
-              if (document.payer !== null) {
-                const documentId = document.payer.documentId;
-                const attributeId = document.payer.attributeId;
-
-                const payerDocument =
-                  instruction.documents.find(({ id }) => id === documentId) ??
-                  null;
-                const collection =
-                  collections.find(
-                    ({ id }) => id === payerDocument?.collectionId
-                  ) ?? null;
-                const attribute =
-                  collection?.attributes.find(({ id }) => id === attributeId) ??
-                  null;
-
-                payer =
-                  payerDocument !== null && attribute !== null
-                    ? {
-                        kind: 'document',
-                        document: payerDocument,
-                        attribute,
-                      }
-                    : null;
-              }
-
-              return {
-                id: document.id,
-                name: document.name,
-                method: document.method,
-                ownerId: document.ownerId,
-                payer,
-                seeds:
-                  document.seeds
-                    ?.map<Option<BoardReference | BoardValue>>((seed) => {
-                      if (!('kind' in seed)) {
-                        return {
-                          value: seed.value,
-                          type: seed.type,
-                        };
-                      }
-
-                      switch (seed.kind) {
-                        case 'argument': {
-                          const arg =
-                            instruction.arguments.find(
-                              ({ id }) => id === seed.argumentId
-                            ) ?? null;
-
-                          return arg !== null
-                            ? {
-                                kind: seed.kind,
-                                argument: arg,
-                              }
-                            : null;
-                        }
-                        case 'document': {
-                          const document =
-                            instruction.documents.find(
-                              ({ id }) => id === seed.documentId
-                            ) ?? null;
-                          const collection =
-                            collections.find(
-                              ({ id }) => id === document?.collectionId
-                            ) ?? null;
-                          const attribute =
-                            collection?.attributes.find(
-                              ({ id }) => id === seed.attributeId
-                            ) ?? null;
-
-                          return document !== null && attribute !== null
-                            ? {
-                                kind: seed.kind,
-                                document,
-                                attribute,
-                              }
-                            : null;
-                        }
-                        default: {
-                          return null;
-                        }
-                      }
-                    })
-                    .filter(isNotNull) ?? [],
-                bump,
-                collection,
-              };
-            }),
-            tasks: [],
-          };
-        }),
-        ...this._pluginsService.plugins.reduce<BoardInstruction[]>(
-          (instructions, plugin) => [
-            ...instructions,
-            ...plugin.instructions.reduce<BoardInstruction[]>(
+      const allInstructions = instructions.concat(
+        this._pluginsService.plugins.reduce<InstructionDto[]>(
+          (pluginsInstructions, plugin) => [
+            ...pluginsInstructions,
+            ...plugin.instructions.reduce<InstructionDto[]>(
               (pluginInstructions, instruction) => {
                 const args = instruction.args;
 
@@ -429,6 +536,7 @@ export class BoardStore
                     workspaceId: plugin.namespace,
                     documents: [],
                     tasks: [],
+                    applications: [],
                     arguments: args.map((arg) => {
                       if (typeof arg.type === 'string') {
                         return {
@@ -484,11 +592,20 @@ export class BoardStore
             ),
           ],
           []
-        ),
-      ];
+        )
+      );
+
+      return allInstructions.map((instruction) =>
+        populateInstruction(
+          instruction,
+          applications,
+          collections,
+          allInstructions
+        )
+      );
     }
   );
-  readonly applications$: Observable<Option<BoardApplication[]>> = this.select(
+  readonly applications$: Observable<Option<ApplicationView[]>> = this.select(
     this.select(({ applications }) => applications),
     this.instructions$,
     this.collections$,
@@ -501,8 +618,16 @@ export class BoardStore
         return null;
       }
 
-      return [
-        ...applications.map((application) => ({
+      return applications
+        .concat(
+          this._pluginsService.plugins.map((plugin) => ({
+            id: plugin.name,
+            name: plugin.name,
+            workspaceId: plugin.namespace,
+            thumbnailUrl: `assets/plugins/${plugin.namespace}/${plugin.name}/thumbnail.png`,
+          }))
+        )
+        .map((application) => ({
           ...application,
           instructions: instructions.filter(
             (instruction) => instruction.applicationId === application.id
@@ -510,24 +635,7 @@ export class BoardStore
           collections: collections.filter(
             (collection) => collection.applicationId === application.id
           ),
-        })),
-        ...this._pluginsService.plugins.map((plugin) => ({
-          id: plugin.name,
-          name: plugin.name,
-          workspaceId: plugin.namespace,
-          thumbnailUrl: `assets/plugins/${plugin.namespace}/${plugin.name}/thumbnail.png`,
-          instructions: instructions.filter(
-            (instruction) =>
-              instruction.applicationId === plugin.name &&
-              instruction.workspaceId === plugin.namespace
-          ),
-          collections: collections.filter(
-            (collection) =>
-              collection.applicationId === plugin.name &&
-              collection.workspaceId === plugin.namespace
-          ),
-        })),
-      ];
+        }));
     }
   );
   readonly currentApplication$ = this.select(
@@ -545,99 +653,54 @@ export class BoardStore
     this.currentApplication$,
     (currentApplication) => currentApplication?.instructions ?? []
   );
-  readonly otherApplications$ = this.select(
+  readonly slots$: Observable<
+    Option<InstructionView | CollectionView | ApplicationView>[]
+  > = this.select(
     this.applications$,
-    this.currentApplicationId$,
-    (applications, currentApplicationId) => {
-      if (applications === null) {
-        return null;
+    this.instructions$,
+    this.collections$,
+    this.select(({ slots }) => slots),
+    (applications, instructions, collections, slots) => {
+      if (
+        instructions === null ||
+        collections === null ||
+        applications === null ||
+        slots === null
+      ) {
+        return [];
       }
 
-      return applications.filter(({ id }) => id !== currentApplicationId);
-    }
-  );
-
-  readonly activeCollectionId$ = this.select(
-    ({ activeCollectionId }) => activeCollectionId
-  );
-  readonly activeInstructionId$ = this.select(
-    ({ activeInstructionId }) => activeInstructionId
-  );
-  readonly activeInstruction$: Observable<Option<BoardInstruction>> =
-    this.select(
-      this.instructions$,
-      this.select(({ activeInstructionId }) => activeInstructionId),
-      (instructions, activeInstructionId) => {
-        if (instructions === null || activeInstructionId === null) {
+      return slots.map((slot) => {
+        if (slot === null) {
           return null;
         }
 
-        return (
-          instructions?.find(
-            (instruction) => instruction.id === activeInstructionId
-          ) ?? null
-        );
-      }
-    );
-  readonly activeCollection$: Observable<Option<BoardCollection>> = this.select(
-    this.collections$,
-    this.select(({ activeCollectionId }) => activeCollectionId),
-    (collections, activeCollectionId) => {
-      if (collections === null || activeCollectionId === null) {
-        return null;
-      }
+        switch (slot.kind) {
+          case 'collection': {
+            return (
+              collections.find((collection) => collection.id === slot.id) ??
+              null
+            );
+          }
 
-      return (
-        collections?.find(
-          (collection) => collection.id === activeCollectionId
-        ) ?? null
-      );
+          case 'instruction': {
+            return (
+              instructions.find((instruction) => instruction.id === slot.id) ??
+              null
+            );
+          }
+
+          case 'application': {
+            return (
+              applications.find((application) => application.id === slot.id) ??
+              null
+            );
+          }
+        }
+      });
     }
   );
-  readonly instructionSlots$: Observable<Option<BoardInstruction>[]> =
-    this.select(
-      this.instructions$,
-      this.select(({ instructionSlotIds }) => instructionSlotIds),
-      (instructions, instructionSlotIds) => {
-        if (instructions === null || instructionSlotIds === null) {
-          return [];
-        }
-
-        return instructionSlotIds.map((instructionId) => {
-          if (instructionId === null) {
-            return null;
-          }
-
-          return (
-            instructions.find(
-              (instruction) => instruction.id === instructionId
-            ) ?? null
-          );
-        });
-      }
-    );
-  readonly collectionSlots$: Observable<Option<BoardCollection>[]> =
-    this.select(
-      this.collections$,
-      this.select(({ collectionSlotIds }) => collectionSlotIds),
-      (collections, collectionSlotIds) => {
-        if (collections === null || collectionSlotIds === null) {
-          return [];
-        }
-
-        return collectionSlotIds.map((collectionId) => {
-          if (collectionId === null) {
-            return null;
-          }
-
-          return (
-            collections.find((collection) => collection.id === collectionId) ??
-            null
-          );
-        });
-      }
-    );
-  readonly selectedInstruction$: Observable<Option<BoardInstruction>> =
+  readonly selectedInstruction$: Observable<Option<InstructionView>> =
     this.select(
       this.currentApplication$,
       this.select(({ selectedInstructionId }) => selectedInstructionId),
@@ -653,7 +716,7 @@ export class BoardStore
         );
       }
     );
-  readonly selectedCollection$: Observable<Option<BoardCollection>> =
+  readonly selectedCollection$: Observable<Option<CollectionView>> =
     this.select(
       this.collections$,
       this.select(({ selectedCollectionId }) => selectedCollectionId),
@@ -684,21 +747,30 @@ export class BoardStore
       );
     }
   );
-  readonly activeApplication$ = this.select(
+  readonly active$ = this.select(
     this.applications$,
-    this.select(({ activeApplicationId }) => activeApplicationId),
-    (applications, activeApplicationId) => {
-      if (applications === null || activeApplicationId === null) {
+    this.instructions$,
+    this.collections$,
+    this.select(({ activeId }) => activeId),
+    (applications, instructions, collections, activeId) => {
+      if (
+        applications === null ||
+        instructions === null ||
+        collections === null ||
+        activeId === null
+      ) {
         return null;
       }
 
       return (
-        applications?.find(
-          (application) => application.id === activeApplicationId
-        ) ?? null
+        applications.find((application) => application.id === activeId) ??
+        instructions.find((instruction) => instruction.id === activeId) ??
+        collections.find((collection) => collection.id === activeId) ??
+        null
       );
     }
   );
+
   readonly selectedTask$ = this.select(
     this.currentApplicationInstructions$,
     this.select(({ selectedTaskId }) => selectedTaskId),
@@ -789,30 +861,31 @@ export class BoardStore
     })
   );
 
-  readonly setCollectionSlotId = this.updater<{
+  readonly setSlot = this.updater<{
     index: number;
-    collectionId: Option<string>;
-  }>((state, { index, collectionId }) => {
+    data: Option<{
+      id: string;
+      kind: 'instruction' | 'collection' | 'application';
+    }>;
+  }>((state, { index, data }) => {
     return {
       ...state,
-      collectionSlotIds: state.collectionSlotIds.map((id, i) =>
-        i === index ? collectionId : id
-      ),
+      slots: state.slots.map((slot, i) => (i === index ? data : slot)),
     };
   });
 
-  readonly swapCollectionSlotIds = this.updater<{
+  readonly swapSlots = this.updater<{
     previousIndex: number;
     newIndex: number;
   }>((state, { previousIndex, newIndex }) => {
-    const collectionSlotIds = [...state.collectionSlotIds];
-    const temp = collectionSlotIds[newIndex];
-    collectionSlotIds[newIndex] = collectionSlotIds[previousIndex];
-    collectionSlotIds[previousIndex] = temp;
+    const slots = [...state.slots];
+    const temp = slots[newIndex];
+    slots[newIndex] = slots[previousIndex];
+    slots[previousIndex] = temp;
 
     return {
       ...state,
-      collectionSlotIds,
+      slots,
     };
   });
 
@@ -825,32 +898,10 @@ export class BoardStore
     })
   );
 
-  readonly setInstructionSlotId = this.updater<{
-    index: number;
-    instructionId: Option<string>;
-  }>((state, { index, instructionId }) => {
-    return {
-      ...state,
-      instructionSlotIds: state.instructionSlotIds.map((id, i) =>
-        i === index ? instructionId : id
-      ),
-    };
-  });
-
-  readonly swapInstructionSlotIds = this.updater<{
-    previousIndex: number;
-    newIndex: number;
-  }>((state, { previousIndex, newIndex }) => {
-    const instructionSlotIds = [...state.instructionSlotIds];
-    const temp = instructionSlotIds[newIndex];
-    instructionSlotIds[newIndex] = instructionSlotIds[previousIndex];
-    instructionSlotIds[previousIndex] = temp;
-
-    return {
-      ...state,
-      instructionSlotIds,
-    };
-  });
+  readonly setActiveId = this.updater<Option<string>>((state, activeId) => ({
+    ...state,
+    activeId,
+  }));
 
   readonly setSelectedApplicationId = this.updater<Option<string>>(
     (state, selectedApplicationId) => ({
@@ -918,15 +969,10 @@ export class BoardStore
         isInstructionsSectionOpen: false,
         isApplicationsSectionOpen: false,
       };
-    } else if (state.activeInstructionId !== null) {
+    } else if (state.activeId !== null) {
       return {
         ...state,
-        activeInstructionId: null,
-      };
-    } else if (state.activeCollectionId !== null) {
-      return {
-        ...state,
-        activeCollectionId: null,
+        activeId: null,
       };
     } else if (state.selectedDocumentId !== null) {
       return {
@@ -1016,8 +1062,8 @@ export class BoardStore
         concatMap(([, selectedTask, selectedDocument]) => {
           if (selectedTask !== null) {
             if (confirm('Are you sure? This action cannot be reverted.')) {
-              return this._taskApiService
-                .deleteTask(selectedTask.ownerId, selectedTask.id)
+              return this._instructionTaskApiService
+                .deleteInstructionTask(selectedTask.ownerId, selectedTask.id)
                 .pipe(
                   tapResponse(
                     () => this.patchState({ selectedTaskId: null }),
@@ -1042,6 +1088,99 @@ export class BoardStore
             }
           } else {
             return EMPTY;
+          }
+        })
+      );
+    })
+  );
+
+  readonly useActive = this.effect<string>(
+    switchMap((instructionId) => {
+      return of(instructionId).pipe(
+        withLatestFrom(this.active$),
+        concatMap(([instructionId, active]) => {
+          if (active === null) {
+            return EMPTY;
+          }
+
+          this.patchState({
+            activeId: null,
+          });
+
+          if ('collections' in active) {
+            // application
+            return this._dialog
+              .open<
+                EditInstructionApplicationData,
+                EditInstructionApplicationData,
+                EditInstructionApplicationModalComponent
+              >(EditInstructionApplicationModalComponent)
+              .closed.pipe(
+                concatMap((instructionApplicationData) => {
+                  if (instructionApplicationData === undefined) {
+                    return EMPTY;
+                  }
+
+                  return this._instructionApplicationApiService.createInstructionApplication(
+                    instructionId,
+                    instructionApplicationData.id,
+                    instructionApplicationData.name,
+                    active.id
+                  );
+                })
+              );
+          } else if ('documents' in active) {
+            // instruction
+            return this._dialog
+              .open<EditTaskData, Option<EditTaskData>, EditTaskModalComponent>(
+                EditTaskModalComponent
+              )
+              .closed.pipe(
+                concatMap((taskData) => {
+                  if (taskData === undefined) {
+                    return EMPTY;
+                  }
+
+                  return this._instructionTaskApiService.createInstructionTask(
+                    instructionId,
+                    taskData.id,
+                    taskData.name,
+                    active.id
+                  );
+                })
+              );
+          } else {
+            // collection
+            return this._dialog
+              .open<
+                EditDocumentSubmitPayload,
+                EditDocumentData,
+                EditDocumentModalComponent
+              >(EditDocumentModalComponent, {
+                data: {
+                  document: null,
+                  instructionId,
+                },
+                viewContainerRef: this._viewContainerRef,
+              })
+              .closed.pipe(
+                concatMap((documentData) => {
+                  if (documentData === undefined) {
+                    return EMPTY;
+                  }
+
+                  return this._documentApiService.createDocument(
+                    instructionId,
+                    documentData.id,
+                    documentData.name,
+                    documentData.method,
+                    active.id,
+                    documentData.seeds,
+                    documentData.bump,
+                    documentData.payer
+                  );
+                })
+              );
           }
         })
       );

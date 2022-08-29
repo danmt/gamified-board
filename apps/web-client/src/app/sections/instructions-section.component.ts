@@ -13,7 +13,32 @@ import { Option } from '../utils';
   selector: 'pg-instructions-section',
   template: `
     <div class="bg-gray-500 h-full flex flex-col gap-4">
-      <h1 class="px-4 pt-4">Instructions</h1>
+      <header class="flex items-center gap-2 mb-2 px-4 pt-4">
+        <h2>Instructions</h2>
+
+        <ng-container *ngIf="workspaceId$ | ngrxPush as workspaceId">
+          <ng-container
+            *ngIf="currentApplicationId$ | ngrxPush as applicationId"
+          >
+            <button
+              class="rounded-full bg-slate-400 w-8 h-8"
+              pgEditInstructionModal
+              (createInstruction)="
+                onCreateInstruction(
+                  workspaceId,
+                  applicationId,
+                  $event.id,
+                  $event.name,
+                  $event.thumbnailUrl,
+                  $event.arguments
+                )
+              "
+            >
+              +
+            </button>
+          </ng-container>
+        </ng-container>
+      </header>
 
       <div class="flex-1 px-4 overflow-auto">
         <div
@@ -21,12 +46,16 @@ import { Option } from '../utils';
           id="instructions-section"
           cdkDropList
           [cdkDropListConnectedTo]="[
-            'instruction-slot-0',
-            'instruction-slot-1',
-            'instruction-slot-2',
-            'instruction-slot-3',
-            'instruction-slot-4',
-            'instruction-slot-5'
+            'slot-0',
+            'slot-1',
+            'slot-2',
+            'slot-3',
+            'slot-4',
+            'slot-5',
+            'slot-6',
+            'slot-7',
+            'slot-8',
+            'slot-9'
           ]"
           [cdkDropListData]="instructions"
           cdkDropListSortingDisabled
@@ -50,7 +79,7 @@ import { Option } from '../utils';
 
             <div
               cdkDrag
-              [cdkDragData]="instruction.id"
+              [cdkDragData]="{ id: instruction.id, kind: 'instruction' }"
               (click)="onSelectInstruction(instruction.id)"
               (dblclick)="onActivateInstruction(instruction.id)"
               (cdkDragStarted)="onDragStart($event)"
@@ -173,6 +202,26 @@ export class InstructionsSectionComponent {
 
   onSelectInstruction(instructionId: string) {
     this._boardStore.setSelectedInstructionId(instructionId);
+  }
+
+  onCreateInstruction(
+    workspaceId: string,
+    applicationId: string,
+    id: string,
+    name: string,
+    thumbnailUrl: string,
+    args: { id: string; name: string; type: string; isOption: boolean }[]
+  ) {
+    this._instructionApiService
+      .createInstruction(
+        workspaceId,
+        applicationId,
+        id,
+        name,
+        thumbnailUrl,
+        args
+      )
+      .subscribe();
   }
 
   onUpdateInstruction(

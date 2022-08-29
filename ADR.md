@@ -84,3 +84,14 @@ It seems better to let users have the `create` method for any collection and lif
 This means that we can't rely on the "create" method to actually go through the whole process, it's more of a way to tell the program: "Hey, this account is not created yet, but will be at the end of this instruction.". The only feasible option seems be: allow any document to be of "create" method and if you're creating something that needs CPIs, you are responsible of doing so.
 
 Once this solution is settled in, we could introduce some sort of "model-checking" through rules. Basically each application comes with a set of rules or boolean functions that tell how "correct" a given instruction is. i.e. If you have a document of the "mint" collection but you don't have an initializeMint task, a rule would be broken and you'd know you have something missing.
+
+## 4. Adding (using) items to instructions from the board
+
+Right now, when a collection/instruction is active, the user has to hover the respective section (documents/tasks) to see where the item will added. If the user is on top of something else, there's no intuitive way of knowing what's wrong. Also, there's a separate logic for each item kind, when having two it's not a big deal but we're introducing now "applications" and "sysvars".
+
+Since day one the idea was to show the active item next to the cursor and visually "tell" the user when the item "can" be added at a given location and when they "can't".
+
+To get started, we'll make sure we can show the active item thumbnail next to the cursor, if that works we're going to update the display based on the location of the cursor:
+
+- If the cursor is over a section where the active item can be dropped a plus sign is added and a green shadow.
+- If the cursor is over a section where the active item can't be dropped an x sign is added and a red shadow.

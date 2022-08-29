@@ -20,7 +20,8 @@ body {
   margin: 0;
 }
 
-body {
+body,
+.board {
   -ms-overflow-style: none; /* Internet Explorer 10+ */
   scrollbar-width: none; /* Firefox */
 

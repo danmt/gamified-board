@@ -13,7 +13,32 @@ import { Option } from '../utils';
   selector: 'pg-collections-section',
   template: `
     <div class="bg-gray-500 h-full flex flex-col gap-4">
-      <h1 class="px-4 pt-4">Collections</h1>
+      <header class="flex items-center gap-2 mb-2 px-4 pt-4">
+        <h2>Collections</h2>
+
+        <ng-container *ngIf="workspaceId$ | ngrxPush as workspaceId">
+          <ng-container
+            *ngIf="currentApplicationId$ | ngrxPush as applicationId"
+          >
+            <button
+              class="rounded-full bg-slate-400 w-8 h-8"
+              pgEditCollectionModal
+              (createCollection)="
+                onCreateCollection(
+                  workspaceId,
+                  applicationId,
+                  $event.id,
+                  $event.name,
+                  $event.thumbnailUrl,
+                  $event.attributes
+                )
+              "
+            >
+              +
+            </button>
+          </ng-container>
+        </ng-container>
+      </header>
 
       <div class="flex-1 px-4 overflow-auto">
         <div
@@ -21,12 +46,16 @@ import { Option } from '../utils';
           id="collections-section"
           cdkDropList
           [cdkDropListConnectedTo]="[
-            'collection-slot-0',
-            'collection-slot-1',
-            'collection-slot-2',
-            'collection-slot-3',
-            'collection-slot-4',
-            'collection-slot-5'
+            'slot-0',
+            'slot-1',
+            'slot-2',
+            'slot-3',
+            'slot-4',
+            'slot-5',
+            'slot-6',
+            'slot-7',
+            'slot-8',
+            'slot-9'
           ]"
           [cdkDropListData]="collections"
           cdkDropListSortingDisabled
@@ -50,7 +79,7 @@ import { Option } from '../utils';
 
             <div
               cdkDrag
-              [cdkDragData]="collection.id"
+              [cdkDragData]="{ id: collection.id, kind: 'collection' }"
               (click)="onSelectCollection(collection.id)"
               (dblclick)="onActivateCollection(collection.id)"
               (cdkDragStarted)="onDragStart($event)"
@@ -171,6 +200,26 @@ export class CollectionsSectionComponent {
 
   onSelectCollection(collectionId: string) {
     this._boardStore.setSelectedCollectionId(collectionId);
+  }
+
+  onCreateCollection(
+    workspaceId: string,
+    applicationId: string,
+    id: string,
+    name: string,
+    thumbnailUrl: string,
+    attributes: { id: string; name: string; type: string; isOption: boolean }[]
+  ) {
+    this._collectionApiService
+      .createCollection(
+        workspaceId,
+        applicationId,
+        id,
+        name,
+        thumbnailUrl,
+        attributes
+      )
+      .subscribe();
   }
 
   onUpdateCollection(
