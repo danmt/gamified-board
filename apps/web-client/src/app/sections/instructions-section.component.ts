@@ -42,7 +42,7 @@ import { Option } from '../utils';
               ]"
               [cdkDropListData]="instructions"
               cdkDropListSortingDisabled
-              class="flex flex-wrap gap-4"
+              class="flex flex-wrap gap-2"
             >
               <div
                 *ngFor="let instruction of instructions; trackBy: trackBy"
@@ -64,7 +64,7 @@ import { Option } from '../utils';
 
                 <div
                   cdkDrag
-                  [cdkDragData]="instruction.id"
+                  [cdkDragData]="{ id: instruction.id, kind: 'instruction' }"
                   (click)="onSelectInstruction(instruction.id)"
                   (dblclick)="onActivateInstruction(instruction.id)"
                   (cdkDragStarted)="onDragStart($event)"
@@ -196,11 +196,31 @@ export class InstructionsSectionComponent {
   readonly instructions$ = this._boardStore.instructions$;
 
   onActivateInstruction(instructionId: string) {
-    this._boardStore.setActiveInstructionId(instructionId);
+    this._boardStore.setActiveId(instructionId);
   }
 
   onSelectInstruction(instructionId: string) {
     this._boardStore.setSelectedInstructionId(instructionId);
+  }
+
+  onCreateInstruction(
+    workspaceId: string,
+    applicationId: string,
+    id: string,
+    name: string,
+    thumbnailUrl: string,
+    args: { id: string; name: string; type: string; isOption: boolean }[]
+  ) {
+    this._instructionApiService
+      .createInstruction(
+        workspaceId,
+        applicationId,
+        id,
+        name,
+        thumbnailUrl,
+        args
+      )
+      .subscribe();
   }
 
   onUpdateInstruction(

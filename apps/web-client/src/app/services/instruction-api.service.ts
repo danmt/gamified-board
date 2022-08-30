@@ -1,22 +1,16 @@
 import { inject, Injectable } from '@angular/core';
 import {
-  collectionData,
-  collectionGroup,
   doc,
   docData,
-  documentId,
-  endAt,
   Firestore,
-  orderBy,
-  query,
   runTransaction,
-  startAt,
   updateDoc,
 } from '@angular/fire/firestore';
 import { combineLatest, defer, from, map, Observable, of } from 'rxjs';
 import { Entity } from '../utils';
 import { DocumentDto } from './document-api.service';
-import { TaskDto } from './task-api.service';
+import { InstructionApplicationDto } from './instruction-application-api.service';
+import { InstructionTaskDto } from './instruction-task-api.service';
 
 export type InstructionArgumentDto = Entity<{
   name: string;
@@ -30,7 +24,8 @@ export type InstructionDto = Entity<{
   applicationId: string;
   workspaceId: string;
   documents: DocumentDto[];
-  tasksOrder: string[];
+  applications: InstructionApplicationDto[];
+  tasks: InstructionTaskDto[];
   arguments: InstructionArgumentDto[];
 }>;
 
@@ -47,7 +42,8 @@ export class InstructionApiService {
         workspaceId: instruction['workspaceRef'].id,
         applicationId: instruction['applicationRef'].id,
         documents: instruction['documents'] ?? [],
-        tasksOrder: instruction['tasksOrder'],
+        applications: instruction['applications'] ?? [],
+        tasks: instruction['tasks'],
         arguments: instruction['arguments'] ?? [],
       }))
     );
@@ -61,36 +57,6 @@ export class InstructionApiService {
     return combineLatest(
       instructionIds.map((instructionId) => this.getInstruction(instructionId))
     );
-  }
-
-  getInstructionTasks(instructionId: string): Observable<TaskDto[]> {
-    const ownerRef = doc(this._firestore, `instructions/${instructionId}`);
-
-    return collectionData(
-      query(
-        collectionGroup(this._firestore, 'tasks').withConverter({
-          fromFirestore: (snapshot) => ({
-            id: snapshot.id,
-            name: snapshot.data()['name'],
-            ownerId: snapshot.data()['ownerId'],
-            instructionId: snapshot.data()['instructionId'],
-          }),
-          toFirestore: (it) => it,
-        }),
-        orderBy(documentId()),
-        startAt(ownerRef.path),
-        endAt(ownerRef.path + '\uf8ff')
-      )
-    );
-  }
-
-  updateInstructionTasksOrder(instructionId: string, tasksOrder: string[]) {
-    const instructionRef = doc(
-      this._firestore,
-      `instructions/${instructionId}`
-    );
-
-    return defer(() => from(updateDoc(instructionRef, { tasksOrder })));
   }
 
   deleteInstruction(applicationId: string, instructionId: string) {

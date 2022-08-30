@@ -14,14 +14,17 @@ import { LetModule, PushModule } from '@ngrx/component';
 import { provideComponentStore } from '@ngrx/component-store';
 import { concatMap, EMPTY, map } from 'rxjs';
 import {
-  BoardComponent,
   HotKey,
   MainDockComponent,
   RowComponent,
   SelectedDocumentDockComponent,
   SelectedTaskDockComponent,
 } from '../components';
-import { KeyboardListenerDirective } from '../directives';
+import {
+  CursorScrollDirective,
+  FollowCursorDirective,
+  KeyboardListenerDirective,
+} from '../directives';
 import {
   EditDocumentData,
   EditDocumentModalComponent,
@@ -36,73 +39,71 @@ import {
   InstructionsSectionComponent,
 } from '../sections';
 import {
-  CollectionApiService,
   DocumentApiService,
   InstructionApiService,
-  TaskApiService,
+  InstructionTaskApiService,
 } from '../services';
-import { BoardDocument, BoardEntry, BoardStore, BoardTask } from '../stores';
+import { BoardStore, DocumentView, EntryView, TaskView } from '../stores';
 import { Entity, Option } from '../utils';
 
 @Component({
   selector: 'pg-board-page',
   template: `
-    <ng-container *ngrxLet="currentApplicationInstructions$; let instructions">
-      <pg-board
-        *ngIf="instructions !== null"
-        pgKeyboardListener
-        (pgKeyDown)="onKeyDown($event)"
+    <div
+      *ngIf="currentApplicationInstructions$ | ngrxPush as instructions"
+      pgKeyboardListener
+      pgCursorScroll
+      (pgKeyDown)="onKeyDown($event)"
+    >
+      <pg-row
+        *ngFor="let instruction of instructions; trackBy: trackBy"
+        [ngClass]="{ 'border-blue-500': hoveredRow === instruction.id }"
+        style="width: 8000px"
+        [active]="(active$ | ngrxPush) ?? null"
+        [instruction]="instruction"
+        [documentsDropLists]="instructions | pgBoardItemDropLists: 'document'"
+        [tasksDropLists]="instructions | pgBoardItemDropLists: 'task'"
+        (useActive)="onUseActive(instruction.id)"
+        (selectTask)="onSelectTask($event)"
+        (selectDocument)="onSelectDocument($event)"
+        (moveDocument)="
+          onMoveDocument(
+            instructions,
+            instruction.id,
+            $event.previousIndex,
+            $event.newIndex
+          )
+        "
+        (transferDocument)="
+          onTransferDocument(
+            $event.previousInstructionId,
+            $event.newInstructionId,
+            $event.documentId,
+            $event.newIndex
+          )
+        "
+        (moveTask)="
+          onMoveTask(
+            instructions,
+            instruction.id,
+            $event.previousIndex,
+            $event.newIndex
+          )
+        "
+        (transferTask)="
+          onTransferTask(
+            $event.previousInstructionId,
+            $event.newInstructionId,
+            $event.instructionTaskId,
+            $event.newIndex
+          )
+        "
+        (mouseenter)="hoveredRow = instruction.id"
+        (mouseleave)="hoveredRow = null"
       >
-        <pg-row
-          *ngFor="let instruction of instructions; trackBy: trackBy"
-          [activeInstruction]="(activeInstruction$ | ngrxPush) ?? null"
-          [activeCollection]="(activeCollection$ | ngrxPush) ?? null"
-          [instruction]="instruction"
-          [documentsDropLists]="instructions | pgBoardItemDropLists: 'document'"
-          [tasksDropLists]="instructions | pgBoardItemDropLists: 'task'"
-          (createDocument)="onCreateDocument(instruction.id, $event)"
-          (createTask)="onCreateTask(instruction.id, $event)"
-          (selectTask)="onSelectTask($event)"
-          (selectDocument)="onSelectDocument($event)"
-          (moveDocument)="
-            onMoveDocument(
-              instructions,
-              instruction.id,
-              $event.previousIndex,
-              $event.newIndex
-            )
-          "
-          (transferDocument)="
-            onTransferDocument(
-              $event.previousInstructionId,
-              $event.newInstructionId,
-              $event.documentId,
-              $event.newIndex
-            )
-          "
-          (moveTask)="
-            onMoveTask(
-              instructions,
-              instruction.id,
-              $event.previousIndex,
-              $event.newIndex
-            )
-          "
-          (transferTask)="
-            onTransferTask(
-              instructions,
-              $event.previousInstructionId,
-              $event.newInstructionId,
-              $event.documentId,
-              $event.previousIndex,
-              $event.newIndex
-            )
-          "
-        >
-          <p>Instruction: {{ instruction.name }}</p>
-        </pg-row>
-      </pg-board>
-    </ng-container>
+        <p>Instruction: {{ instruction.name }}</p>
+      </pg-row>
+    </div>
 
     <pg-main-dock
       *ngIf="
@@ -110,38 +111,13 @@ import { Entity, Option } from '../utils';
         (selectedDocument$ | ngrxPush) === null
       "
       class="fixed bottom-0 z-10 -translate-x-1/2 left-1/2"
-      [instructionSlots]="(instructionSlots$ | ngrxPush) ?? null"
-      [instructionHotkeys]="instructionHotkeys"
-      [activeInstructionId]="(activeInstruction$ | ngrxPush)?.id ?? null"
-      [collectionSlots]="(collectionSlots$ | ngrxPush) ?? null"
-      [collectionHotkeys]="collectionHotkeys"
-      [activeCollectionId]="(activeCollection$ | ngrxPush)?.id ?? null"
-      (swapInstructionSlots)="onSwapInstructionSlots($event[0], $event[1])"
-      (removeFromInstructionSlot)="onRemoveFromInstructionSlot($event)"
-      (activateInstructionSlot)="onActivateInstructionSlot($event)"
-      (updateInstructionSlot)="
-        onUpdateInstructionSlot($event.index, $event.data)
-      "
-      (createInstruction)="
-        onCreateInstruction(
-          $event.id,
-          $event.name,
-          $event.thumbnailUrl,
-          $event.arguments
-        )
-      "
-      (swapCollectionSlots)="onSwapCollectionSlots($event[0], $event[1])"
-      (removeFromCollectionSlot)="onRemoveFromCollectionSlot($event)"
-      (activateCollectionSlot)="onActivateCollectionSlot($event)"
-      (updateCollectionSlot)="onUpdateCollectionSlot($event.index, $event.data)"
-      (createCollection)="
-        onCreateCollection(
-          $event.id,
-          $event.name,
-          $event.thumbnailUrl,
-          $event.attributes
-        )
-      "
+      [slots]="(slots$ | ngrxPush) ?? null"
+      [hotkeys]="hotkeys"
+      [activeId]="(active$ | ngrxPush)?.id ?? null"
+      (swapSlots)="onSwapSlots($event[0], $event[1])"
+      (removeFromSlot)="onRemoveFromSlot($event)"
+      (activateSlot)="onActivateSlot($event)"
+      (updateSlot)="onUpdateSlot($event.index, $event.data)"
     ></pg-main-dock>
 
     <pg-selected-document-dock
@@ -185,6 +161,39 @@ import { Entity, Option } from '../utils';
       class="fixed left-0 top-24"
       style="width: 300px; height: 500px"
     ></pg-applications-section>
+
+    <div
+      class="fixed z-20 pointer-events-none"
+      pgFollowCursor
+      *ngrxLet="active$; let active"
+    >
+      <div
+        *ngIf="active !== null"
+        class="inline-block relative rounded-md shadow-2xl p-1"
+        [ngClass]="{
+          'bg-green-500': hoveredRow !== null,
+          'bg-red-500': hoveredRow === null
+        }"
+      >
+        <img
+          [src]="active.thumbnailUrl"
+          class="w-16"
+          style="min-width: 4rem;"
+        />
+
+        <span
+          *ngIf="hoveredRow !== null"
+          class="text-white absolute bottom-1 right-1 leading-none"
+          >+</span
+        >
+
+        <span
+          *ngIf="hoveredRow === null"
+          class="text-white absolute bottom-1 right-1  leading-none"
+          >x</span
+        >
+      </div>
+    </div>
   `,
   standalone: true,
   imports: [
@@ -194,12 +203,13 @@ import { Entity, Option } from '../utils';
     MainDockComponent,
     SelectedTaskDockComponent,
     SelectedDocumentDockComponent,
-    BoardComponent,
     RowComponent,
     PushModule,
     LetModule,
     BoardItemDropListsPipe,
     KeyboardListenerDirective,
+    FollowCursorDirective,
+    CursorScrollDirective,
     CollectionsSectionComponent,
     InstructionsSectionComponent,
     ApplicationsSectionComponent,
@@ -210,9 +220,10 @@ import { Entity, Option } from '../utils';
 export class BoardPageComponent implements OnInit {
   private readonly _dialog = inject(Dialog);
   private readonly _activatedRoute = inject(ActivatedRoute);
-  private readonly _taskApiService = inject(TaskApiService);
+  private readonly _instructionTaskApiService = inject(
+    InstructionTaskApiService
+  );
   private readonly _documentApiService = inject(DocumentApiService);
-  private readonly _collectionApiService = inject(CollectionApiService);
   private readonly _instructionApiService = inject(InstructionApiService);
   private readonly _boardStore = inject(BoardStore);
   private readonly _viewContainerRef = inject(ViewContainerRef);
@@ -227,10 +238,8 @@ export class BoardPageComponent implements OnInit {
     this._boardStore.currentApplicationInstructions$;
   readonly selectedTask$ = this._boardStore.selectedTask$;
   readonly selectedDocument$ = this._boardStore.selectedDocument$;
-  readonly activeCollection$ = this._boardStore.activeCollection$;
-  readonly activeInstruction$ = this._boardStore.activeInstruction$;
-  readonly instructionSlots$ = this._boardStore.instructionSlots$;
-  readonly collectionSlots$ = this._boardStore.collectionSlots$;
+  readonly slots$ = this._boardStore.slots$;
+  readonly active$ = this._boardStore.active$;
   readonly isCollectionsSectionOpen$ =
     this._boardStore.isCollectionsSectionOpen$;
   readonly isInstructionsSectionOpen$ =
@@ -238,7 +247,8 @@ export class BoardPageComponent implements OnInit {
   readonly isApplicationsSectionOpen$ =
     this._boardStore.isApplicationsSectionOpen$;
 
-  instructionHotkeys: HotKey[] = [
+  hoveredRow: Option<string> = null;
+  hotkeys: HotKey[] = [
     {
       slot: 0,
       key: 'q',
@@ -261,77 +271,53 @@ export class BoardPageComponent implements OnInit {
     },
     {
       slot: 5,
-      key: 'y',
+      key: 'a',
+    },
+    {
+      slot: 6,
+      key: 's',
+    },
+    {
+      slot: 7,
+      key: 'd',
+    },
+    {
+      slot: 8,
+      key: 'f',
+    },
+    {
+      slot: 9,
+      key: 'g',
     },
   ];
-  collectionHotkeys: HotKey[] = [
-    {
-      slot: 0,
-      key: '1',
-    },
-    {
-      slot: 1,
-      key: '2',
-    },
-    {
-      slot: 2,
-      key: '3',
-    },
-    {
-      slot: 3,
-      key: '4',
-    },
-    {
-      slot: 4,
-      key: '5',
-    },
-    {
-      slot: 5,
-      key: '6',
-    },
-  ];
-  @HostBinding('class') class = 'block';
+  @HostBinding('class') class = 'block relative min-h-screen min-w-screen';
 
   ngOnInit() {
     this._boardStore.setWorkspaceId(this.workspaceId$);
     this._boardStore.setCurrentApplicationId(this.applicationId$);
   }
 
-  onUpdateInstructionSlot(index: number, instructionId: string) {
-    this._boardStore.setInstructionSlotId({ index, instructionId });
+  onUpdateSlot(
+    index: number,
+    data: { id: string; kind: 'collection' | 'instruction' | 'application' }
+  ) {
+    this._boardStore.setSlot({ index, data });
   }
 
-  onRemoveFromInstructionSlot(index: number) {
-    this._boardStore.setInstructionSlotId({ index, instructionId: null });
+  onRemoveFromSlot(index: number) {
+    this._boardStore.setSlot({ index, data: null });
   }
 
-  onSwapInstructionSlots(previousIndex: number, newIndex: number) {
-    this._boardStore.swapInstructionSlotIds({ previousIndex, newIndex });
+  onSwapSlots(previousIndex: number, newIndex: number) {
+    this._boardStore.swapSlots({ previousIndex, newIndex });
   }
 
-  onActivateInstructionSlot(instructionId: string) {
-    this._boardStore.setActiveInstructionId(instructionId);
-  }
-
-  onUpdateCollectionSlot(index: number, collectionId: string) {
-    console.log(index, collectionId);
-    this._boardStore.setCollectionSlotId({ index, collectionId });
-  }
-
-  onRemoveFromCollectionSlot(index: number) {
-    this._boardStore.setCollectionSlotId({ index, collectionId: null });
-  }
-
-  onSwapCollectionSlots(previousIndex: number, newIndex: number) {
-    this._boardStore.swapCollectionSlotIds({ previousIndex, newIndex });
-  }
-
-  onActivateCollectionSlot(collectionId: string) {
-    this._boardStore.setActiveCollectionId(collectionId);
+  onActivateSlot(activeId: string) {
+    this._boardStore.setActiveId(activeId);
   }
 
   onMoveDocument(
-    entries: BoardEntry[],
+    entries: EntryView[],
     instructionId: string,
     previousIndex: number,
     newIndex: number
@@ -372,7 +358,7 @@ export class BoardPageComponent implements OnInit {
   }
 
   onMoveTask(
-    entries: BoardEntry[],
+    entries: EntryView[],
     instructionId: string,
     previousIndex: number,
     newIndex: number
@@ -389,89 +375,23 @@ export class BoardPageComponent implements OnInit {
 
     moveItemInArray(tasksOrder, previousIndex, newIndex);
 
-    this._instructionApiService
+    this._instructionTaskApiService
       .updateInstructionTasksOrder(instructionId, tasksOrder)
       .subscribe();
   }
 
   onTransferTask(
-    entries: BoardEntry[],
     previousInstructionId: string,
     newInstructionId: string,
-    taskId: string,
-    previousIndex: number,
+    documentId: string,
     newIndex: number
   ) {
-    this._taskApiService
-      .transferTask(
-        entries,
+    this._instructionTaskApiService
+      .transferInstructionTask(
         previousInstructionId,
         newInstructionId,
-        taskId,
-        previousIndex,
+        documentId,
         newIndex
-      )
-      .subscribe();
-  }
-
-  onCreateInstruction(
-    instructionId: string,
-    instructionName: string,
-    thumbnailUrl: string,
-    args: { id: string; name: string; type: string; isOption: boolean }[]
-  ) {
-    const workspaceId =
-      this._activatedRoute.snapshot.paramMap.get('workspaceId');
-    const applicationId =
-      this._activatedRoute.snapshot.paramMap.get('applicationId');
-
-    if (workspaceId === null) {
-      throw new Error('WorkspaceId not defined.');
-    }
-
-    if (applicationId === null) {
-      throw new Error('ApplicationId not defined.');
-    }
-
-    this._instructionApiService
-      .createInstruction(
-        workspaceId,
-        applicationId,
-        instructionId,
-        instructionName,
-        thumbnailUrl,
-        args
-      )
-      .subscribe();
-  }
-
-  onCreateCollection(
-    collectionId: string,
-    collectionName: string,
-    thumbnailUrl: string,
-    attributes: { id: string; name: string; type: string; isOption: boolean }[]
-  ) {
-    const workspaceId =
-      this._activatedRoute.snapshot.paramMap.get('workspaceId');
-    const applicationId =
-      this._activatedRoute.snapshot.paramMap.get('applicationId');
-
-    if (workspaceId === null) {
-      throw new Error('WorkspaceId not defined.');
-    }
-
-    if (applicationId === null) {
-      throw new Error('ApplicationId not defined.');
-    }
-
-    this._collectionApiService
-      .createCollection(
-        workspaceId,
-        applicationId,
-        collectionId,
-        collectionName,
-        thumbnailUrl,
-        attributes
       )
       .subscribe();
   }
@@ -480,47 +400,10 @@ export class BoardPageComponent implements OnInit {
     this._boardStore.setSelectedDocumentId(documentId);
   }
 
-  onCreateDocument(instructionId: string, ownerId: string) {
-    this._dialog
-      .open<
-        EditDocumentSubmitPayload,
-        EditDocumentData,
-        EditDocumentModalComponent
-      >(EditDocumentModalComponent, {
-        data: {
-          document: null,
-          instructionId,
-        },
-        viewContainerRef: this._viewContainerRef,
-      })
-      .closed.pipe(
-        concatMap((documentData) => {
-          if (documentData === undefined) {
-            return EMPTY;
-          }
-
-          this._boardStore.setActiveCollectionId(null);
-          this._boardStore.setActiveInstructionId(null);
-
-          return this._documentApiService.createDocument(
-            instructionId,
-            documentData.id,
-            documentData.name,
-            documentData.method,
-            ownerId,
-            documentData.seeds,
-            documentData.bump,
-            documentData.payer
-          );
-        })
-      )
-      .subscribe();
-  }
-
   onUpdateDocument(
     instructionId: string,
     documentId: string,
-    document: BoardDocument
+    document: DocumentView
   ) {
     this._dialog
       .open<
@@ -537,8 +420,7 @@ export class BoardPageComponent implements OnInit {
             return EMPTY;
           }
 
-          this._boardStore.setActiveCollectionId(null);
-          this._boardStore.setActiveInstructionId(null);
+          this._boardStore.setActiveId(null);
 
           return this._documentApiService.updateDocument(
             instructionId,
@@ -558,32 +440,7 @@ export class BoardPageComponent implements OnInit {
     this._boardStore.setSelectedTaskId(taskId);
   }
 
-  onCreateTask(instructionId: string, ownerId: string) {
-    this._dialog
-      .open<EditTaskData, Option<EditTaskData>, EditTaskModalComponent>(
-        EditTaskModalComponent
-      )
-      .closed.pipe(
-        concatMap((taskData) => {
-          if (taskData === undefined) {
-            return EMPTY;
-          }
-
-          this._boardStore.setActiveCollectionId(null);
-          this._boardStore.setActiveInstructionId(null);
-
-          return this._taskApiService.createTask(
-            instructionId,
-            taskData.id,
-            taskData.name,
-            ownerId
-          );
-        })
-      )
-      .subscribe();
-  }
-
-  onUpdateTask(instructionId: string, taskId: string, task: BoardTask) {
+  onUpdateTask(instructionId: string, taskId: string, task: TaskView) {
     this._dialog
       .open<EditTaskData, Option<EditTaskData>, EditTaskModalComponent>(
         EditTaskModalComponent,
@@ -595,10 +452,9 @@ export class BoardPageComponent implements OnInit {
             return EMPTY;
           }
 
-          this._boardStore.setActiveCollectionId(null);
-          this._boardStore.setActiveInstructionId(null);
+          this._boardStore.setActiveId(null);
 
-          return this._taskApiService.updateTask(
+          return this._instructionTaskApiService.updateInstructionTask(
             instructionId,
             taskId,
             taskData.name
@@ -640,5 +496,9 @@ export class BoardPageComponent implements OnInit {
 
   trackBy(_: number, item: Entity<unknown>): string {
     return item.id;
+  }
+
+  onUseActive(instructionId: string) {
+    this._boardStore.useActive(instructionId);
   }
 }

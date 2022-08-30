@@ -129,9 +129,10 @@ export class WorkspaceApiService {
               thumbnailUrl: data['thumbnailUrl'],
               arguments: data['arguments'] ?? [],
               documents: data['documents'] ?? [],
-              tasksOrder: data['tasksOrder'] ?? [],
+              tasks: data['tasks'] ?? [],
               workspaceId,
               applicationId: data['applicationRef'].id,
+              applications: data['applications'] ?? [],
             };
           },
           toFirestore: (it) => it,

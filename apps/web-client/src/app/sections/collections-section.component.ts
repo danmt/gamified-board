@@ -209,11 +209,31 @@ export class CollectionsSectionComponent {
   readonly collections$ = this._boardStore.collections$;
 
   onActivateCollection(collectionId: string) {
-    this._boardStore.setActiveCollectionId(collectionId);
+    this._boardStore.setActiveId(collectionId);
   }
 
   onSelectCollection(collectionId: string) {
     this._boardStore.setSelectedCollectionId(collectionId);
+  }
+
+  onCreateCollection(
+    workspaceId: string,
+    applicationId: string,
+    id: string,
+    name: string,
+    thumbnailUrl: string,
+    attributes: { id: string; name: string; type: string; isOption: boolean }[]
+  ) {
+    this._collectionApiService
+      .createCollection(
+        workspaceId,
+        applicationId,
+        id,
+        name,
+        thumbnailUrl,
+        attributes
+      )
+      .subscribe();
   }
 
   onUpdateCollection(
