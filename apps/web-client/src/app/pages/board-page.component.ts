@@ -20,6 +20,7 @@ import {
   CollectionsSectionComponent,
   InstructionDocumentSectionComponent,
   InstructionSectionComponent,
+  InstructionSignerSectionComponent,
   InstructionsSectionComponent,
   InstructionSysvarSectionComponent,
   InstructionTaskSectionComponent,
@@ -62,6 +63,10 @@ import { BoardStore } from '../stores';
     <pg-instruction-sysvar-section
       class="fixed bottom-0 -translate-x-1/2 left-1/2"
     ></pg-instruction-sysvar-section>
+
+    <pg-instruction-signer-section
+      class="fixed bottom-0 -translate-x-1/2 left-1/2"
+    ></pg-instruction-signer-section>
 
     <pg-collection-section
       class="fixed bottom-0 -translate-x-1/2 left-1/2"
@@ -121,6 +126,7 @@ import { BoardStore } from '../stores';
     InstructionTaskSectionComponent,
     InstructionApplicationSectionComponent,
     InstructionSysvarSectionComponent,
+    InstructionSignerSectionComponent,
     CollectionSectionComponent,
     InstructionSectionComponent,
     SysvarsSectionComponent,

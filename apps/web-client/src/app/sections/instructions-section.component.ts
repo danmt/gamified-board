@@ -127,7 +127,7 @@ export class InstructionsSectionComponent {
   readonly instructions$ = this._boardStore.instructions$;
 
   onActivateInstruction(instructionId: string) {
-    this._boardStore.setActiveId(instructionId);
+    this._boardStore.setActive({ id: instructionId, kind: 'instruction' });
   }
 
   onSelectInstruction(instructionId: string) {

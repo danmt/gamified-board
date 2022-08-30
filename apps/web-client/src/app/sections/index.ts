@@ -6,6 +6,7 @@ export * from './collection-section.component';
 export * from './collections-section.component';
 export * from './instruction-document-section.component';
 export * from './instruction-section.component';
+export * from './instruction-signer-section.component';
 export * from './instruction-sysvar-section.component';
 export * from './instruction-task-section.component';
 export * from './instructions-section.component';

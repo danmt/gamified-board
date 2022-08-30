@@ -44,11 +44,7 @@ export class ApplicationSectionComponent {
   readonly currentApplicationId$ = this._boardStore.currentApplicationId$;
   readonly selected$ = this._boardStore.selected$.pipe(
     map((selected) => {
-      if (selected !== null && 'collections' in selected) {
-        selected;
-      }
-
-      if (selected === null || !('collections' in selected)) {
+      if (selected === null || selected.kind !== 'application') {
         return null;
       }
 
@@ -71,7 +67,7 @@ export class ApplicationSectionComponent {
             return EMPTY;
           }
 
-          this._boardStore.setActiveId(null);
+          this._boardStore.setActive(null);
 
           return this._applicationApiService.updateApplication(
             applicationId,

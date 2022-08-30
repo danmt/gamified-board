@@ -11,6 +11,7 @@ import { combineLatest, defer, from, map, Observable, of } from 'rxjs';
 import { Entity } from '../utils';
 import { InstructionApplicationDto } from './instruction-application-api.service';
 import { InstructionDocumentDto } from './instruction-document-api.service';
+import { InstructionSignerDto } from './instruction-signer-api.service';
 import { InstructionSysvarDto } from './instruction-sysvar-api.service';
 import { InstructionTaskDto } from './instruction-task-api.service';
 
@@ -30,6 +31,7 @@ export type InstructionDto = Entity<{
   tasks: InstructionTaskDto[];
   arguments: InstructionArgumentDto[];
   sysvars: InstructionSysvarDto[];
+  signers: InstructionSignerDto[];
 }>;
 
 @Injectable({ providedIn: 'root' })
@@ -49,6 +51,7 @@ export class InstructionApiService {
         tasks: instruction['tasks'] ?? [],
         arguments: instruction['arguments'] ?? [],
         sysvars: instruction['sysvars'] ?? [],
+        signers: instruction['signers'] ?? [],
       }))
     );
   }

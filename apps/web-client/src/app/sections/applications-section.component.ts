@@ -100,7 +100,7 @@ export class ApplicationsSectionComponent {
   readonly applications$ = this._boardStore.applications$;
 
   onActivateApplication(applicationId: string) {
-    this._boardStore.setActiveId(applicationId);
+    this._boardStore.setActive({ id: applicationId, kind: 'application' });
   }
 
   onSelectApplication(applicationId: string) {

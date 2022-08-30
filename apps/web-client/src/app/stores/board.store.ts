@@ -19,6 +19,8 @@ import {
   EditInstructionDocumentData,
   EditInstructionDocumentModalComponent,
   EditInstructionDocumentSubmitPayload,
+  EditInstructionSignerData,
+  EditInstructionSignerModalComponent,
   EditInstructionSysvarData,
   EditInstructionSysvarModalComponent,
   EditInstructionTaskData,
@@ -35,6 +37,8 @@ import {
   InstructionDocumentApiService,
   InstructionDocumentDto,
   InstructionDto,
+  InstructionSignerApiService,
+  InstructionSignerDto,
   InstructionSysvarApiService,
   InstructionSysvarDto,
   InstructionTaskApiService,
@@ -70,6 +74,7 @@ export type ApplicationView = Entity<{
   workspaceId: string;
   collections: CollectionView[];
   instructions: InstructionView[];
+  kind: 'application';
 }>;
 
 export type CollectionView = Entity<{
@@ -78,11 +83,13 @@ export type CollectionView = Entity<{
   applicationId: string;
   workspaceId: string;
   attributes: CollectionAttributeDto[];
+  kind: 'collection';
 }>;
 
 export type SysvarView = Entity<{
   name: string;
   thumbnailUrl: string;
+  kind: 'sysvar';
 }>;
 
 export type InstructionDocumentView = Entity<{
@@ -93,12 +100,14 @@ export type InstructionDocumentView = Entity<{
   seeds: Option<ReferenceView | ValueView>[];
   bump: Option<ReferenceView>;
   payer: Option<DocumentReferenceView>;
+  kind: 'instructionDocument';
 }>;
 
 export type InstructionApplicationView = Entity<{
   name: string;
   ownerId: string;
   application: ApplicationDto;
+  kind: 'instructionApplication';
 }>;
 
 export type InstructionView = Entity<{
@@ -111,18 +120,29 @@ export type InstructionView = Entity<{
   tasks: InstructionTaskView[];
   applications: InstructionApplicationView[];
   sysvars: InstructionSysvarView[];
+  signers: InstructionSignerView[];
+  kind: 'instruction';
 }>;
 
 export type InstructionTaskView = Entity<{
   name: string;
   ownerId: string;
   instruction: InstructionView;
+  kind: 'instructionTask';
 }>;
 
 export type InstructionSysvarView = Entity<{
   name: string;
   ownerId: string;
   sysvar: SysvarView;
+  kind: 'instructionSysvar';
+}>;
+
+export type InstructionSignerView = Entity<{
+  name: string;
+  ownerId: string;
+  saveChanges: boolean;
+  kind: 'instructionSigner';
 }>;
 
 const populateInstructionApplication = (
@@ -145,6 +165,19 @@ const populateInstructionApplication = (
     name: instructionApplication.name,
     ownerId: instructionApplication.ownerId,
     application,
+    kind: 'instructionApplication',
+  };
+};
+
+const populateCollection = (collection: CollectionDto): CollectionView => {
+  return {
+    id: collection.id,
+    name: collection.name,
+    thumbnailUrl: collection.thumbnailUrl,
+    applicationId: collection.applicationId,
+    attributes: collection.attributes,
+    workspaceId: collection.workspaceId,
+    kind: 'collection',
   };
 };
 
@@ -272,7 +305,17 @@ const populateInstructionDocument = (
         })
         .filter(isNotNull) ?? [],
     bump,
-    collection,
+    collection: populateCollection(collection),
+    kind: 'instructionDocument',
+  };
+};
+
+const populateSysvar = (sysvar: SysvarDto): SysvarView => {
+  return {
+    id: sysvar.id,
+    name: sysvar.name,
+    thumbnailUrl: sysvar.thumbnailUrl,
+    kind: 'sysvar',
   };
 };
 
@@ -306,12 +349,13 @@ const populateInstructionTask = (
         ignoreTasks: true,
       }
     ),
+    kind: 'instructionTask',
   };
 };
 
 const populateInstructionSysvar = (
   instructionSysvar: InstructionSysvarDto,
-  sysvars: SysvarView[]
+  sysvars: SysvarDto[]
 ): InstructionSysvarView => {
   const sysvar =
     sysvars.find((sysvar) => sysvar.id === instructionSysvar.sysvarId) ?? null;
@@ -326,7 +370,20 @@ const populateInstructionSysvar = (
     id: instructionSysvar.id,
     name: instructionSysvar.name,
     ownerId: instructionSysvar.ownerId,
-    sysvar,
+    sysvar: populateSysvar(sysvar),
+    kind: 'instructionSysvar',
+  };
+};
+
+const populateInstructionSigner = (
+  instructionSigner: InstructionSignerDto
+): InstructionSignerView => {
+  return {
+    id: instructionSigner.id,
+    name: instructionSigner.name,
+    ownerId: instructionSigner.ownerId,
+    saveChanges: instructionSigner.saveChanges,
+    kind: 'instructionSigner',
   };
 };
 
@@ -347,6 +404,10 @@ const populateInstruction = (
     applicationId: instruction.applicationId,
     workspaceId: instruction.workspaceId,
     arguments: instruction.arguments,
+    kind: 'instruction',
+    signers: instruction.signers.map((signer) =>
+      populateInstructionSigner(signer)
+    ),
     applications: instruction.applications.map((instructionApplication) =>
       populateInstructionApplication(instructionApplication, applications)
     ),
@@ -387,7 +448,10 @@ interface ViewModel {
   isInstructionsSectionOpen: boolean;
   isApplicationsSectionOpen: boolean;
   isSysvarsSectionOpen: boolean;
-  activeId: Option<string>;
+  active: Option<{
+    id: string;
+    kind: 'collection' | 'instruction' | 'application' | 'sysvar' | 'signer';
+  }>;
   selectedId: Option<string>;
   hoveredId: Option<string>;
   slots: Option<{
@@ -408,7 +472,7 @@ const initialState: ViewModel = {
   isInstructionsSectionOpen: false,
   isApplicationsSectionOpen: false,
   isSysvarsSectionOpen: false,
-  activeId: null,
+  active: null,
   selectedId: null,
   hoveredId: null,
   slots: [null, null, null, null, null, null, null, null, null, null],
@@ -436,6 +500,9 @@ export class BoardStore
   private readonly _instructionSysvarApiService = inject(
     InstructionSysvarApiService
   );
+  private readonly _instructionSignerApiService = inject(
+    InstructionSignerApiService
+  );
 
   readonly workspaceId$ = this.select(({ workspaceId }) => workspaceId);
   readonly hoveredId$ = this.select(({ hoveredId }) => hoveredId);
@@ -456,10 +523,11 @@ export class BoardStore
     ({ isSysvarsSectionOpen }) => isSysvarsSectionOpen
   );
   readonly collections$: Observable<Option<CollectionView[]>> = this.select(
-    ({ collections }) => collections
+    ({ collections }) =>
+      collections?.map((collection) => populateCollection(collection)) ?? null
   );
   readonly sysvars$: Observable<Option<SysvarView[]>> = this.select(
-    ({ sysvars }) => sysvars
+    ({ sysvars }) => sysvars?.map((sysvar) => populateSysvar(sysvar)) ?? null
   );
   readonly instructions$: Observable<Option<InstructionView[]>> = this.select(
     this.select(({ applications }) => applications),
@@ -508,6 +576,7 @@ export class BoardStore
         collections: collections.filter(
           (collection) => collection.applicationId === application.id
         ),
+        kind: 'application',
       }));
     }
   );
@@ -526,9 +595,7 @@ export class BoardStore
     this.currentApplication$,
     (currentApplication) => currentApplication?.instructions ?? []
   );
-  readonly slots$: Observable<
-    Option<InstructionView | CollectionView | ApplicationView | SysvarView>[]
-  > = this.select(
+  readonly slots$ = this.select(
     this.applications$,
     this.instructions$,
     this.collections$,
@@ -579,46 +646,51 @@ export class BoardStore
       });
     }
   );
-  readonly active$: Observable<
-    Option<ApplicationView | CollectionView | InstructionView | SysvarView>
-  > = this.select(
+  readonly active$ = this.select(
     this.applications$,
     this.instructions$,
     this.collections$,
     this.sysvars$,
-    this.select(({ activeId }) => activeId),
-    (applications, instructions, collections, sysvars, activeId) => {
+    this.select(({ active }) => active),
+    (applications, instructions, collections, sysvars, active) => {
       if (
         applications === null ||
         instructions === null ||
         collections === null ||
         sysvars === null ||
-        activeId === null
+        active === null
       ) {
         return null;
       }
 
-      return (
-        applications.find((application) => application.id === activeId) ??
-        instructions.find((instruction) => instruction.id === activeId) ??
-        collections.find((collection) => collection.id === activeId) ??
-        sysvars.find((sysvar) => sysvar.id === activeId) ??
-        null
-      );
+      switch (active.kind) {
+        case 'application':
+          return (
+            applications.find((application) => application.id === active.id) ??
+            null
+          );
+        case 'collection':
+          return (
+            collections.find((collection) => collection.id === active.id) ??
+            null
+          );
+        case 'instruction':
+          return (
+            instructions.find((instruction) => instruction.id === active.id) ??
+            null
+          );
+        case 'sysvar':
+          return sysvars.find((sysvar) => sysvar.id === active.id) ?? null;
+        case 'signer':
+          return {
+            id: 'signer',
+            kind: 'signer' as const,
+            thumbnailUrl: 'asd',
+          };
+      }
     }
   );
-  readonly selected$: Observable<
-    Option<
-      | ApplicationView
-      | CollectionView
-      | InstructionView
-      | SysvarView
-      | InstructionApplicationView
-      | InstructionDocumentView
-      | InstructionTaskView
-      | InstructionSysvarView
-    >
-  > = this.select(
+  readonly selected$ = this.select(
     this.applications$,
     this.instructions$,
     this.collections$,
@@ -664,6 +736,12 @@ export class BoardStore
             []
           )
           .find((sysvar) => sysvar.id === selectedId) ??
+        instructions
+          .reduce<InstructionSignerView[]>(
+            (all, instruction) => all.concat(instruction.signers),
+            []
+          )
+          .find((signer) => signer.id === selectedId) ??
         null
       );
     }
@@ -711,9 +789,14 @@ export class BoardStore
     };
   });
 
-  readonly setActiveId = this.updater<Option<string>>((state, activeId) => ({
+  readonly setActive = this.updater<
+    Option<{
+      id: string;
+      kind: 'application' | 'collection' | 'instruction' | 'sysvar' | 'signer';
+    }>
+  >((state, active) => ({
     ...state,
-    activeId,
+    active,
   }));
 
   readonly setSelectedId = this.updater<Option<string>>(
@@ -766,10 +849,10 @@ export class BoardStore
         isApplicationsSectionOpen: false,
         isSysvarsSectionOpen: false,
       };
-    } else if (state.activeId !== null) {
+    } else if (state.active !== null) {
       return {
         ...state,
-        activeId: null,
+        active: null,
       };
     } else if (state.selectedId !== null) {
       return {
@@ -952,6 +1035,7 @@ export class BoardStore
                               tasks: [],
                               applications: [],
                               sysvars: [],
+                              signers: [],
                               arguments: args.map((arg) => {
                                 if (typeof arg.type === 'string') {
                                   return {
@@ -1037,10 +1121,10 @@ export class BoardStore
           }
 
           this.patchState({
-            activeId: null,
+            active: null,
           });
 
-          if ('collections' in active) {
+          if (active.kind === 'application') {
             // application
             return this._dialog
               .open<
@@ -1062,7 +1146,7 @@ export class BoardStore
                   );
                 })
               );
-          } else if ('documents' in active) {
+          } else if (active.kind === 'instruction') {
             // instruction
             return this._dialog
               .open<
@@ -1084,7 +1168,7 @@ export class BoardStore
                   );
                 })
               );
-          } else if ('attributes' in active) {
+          } else if (active.kind === 'collection') {
             // collection
             return this._dialog
               .open<
@@ -1116,7 +1200,7 @@ export class BoardStore
                   );
                 })
               );
-          } else {
+          } else if (active.kind === 'sysvar') {
             // sysvar
             return this._dialog
               .open<
@@ -1135,6 +1219,28 @@ export class BoardStore
                     documentData.id,
                     documentData.name,
                     active.id
+                  );
+                })
+              );
+          } else {
+            // signer
+            return this._dialog
+              .open<
+                EditInstructionSignerData,
+                EditInstructionSignerData,
+                EditInstructionSignerModalComponent
+              >(EditInstructionSignerModalComponent)
+              .closed.pipe(
+                concatMap((signerData) => {
+                  if (signerData === undefined) {
+                    return EMPTY;
+                  }
+
+                  return this._instructionSignerApiService.createInstructionSigner(
+                    instructionId,
+                    signerData.id,
+                    signerData.name,
+                    signerData.saveChanges
                   );
                 })
               );

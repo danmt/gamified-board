@@ -34,11 +34,7 @@ export class SysvarSectionComponent {
   readonly currentApplicationId$ = this._boardStore.currentApplicationId$;
   readonly selected$ = this._boardStore.selected$.pipe(
     map((selected) => {
-      if (
-        selected === null ||
-        'workspaceId' in selected ||
-        'ownerId' in selected
-      ) {
+      if (selected === null || selected.kind !== 'sysvar') {
         return null;
       }
 
@@ -60,7 +56,7 @@ export class SysvarSectionComponent {
             return EMPTY;
           }
 
-          this._boardStore.setActiveId(null);
+          this._boardStore.setActive(null);
 
           return this._sysvarApiService.updateSysvar(
             sysvarId,

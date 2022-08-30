@@ -49,7 +49,7 @@ export class InstructionSysvarSectionComponent {
 
   readonly selected$ = this._boardStore.selected$.pipe(
     map((selected) => {
-      if (selected === null || !('sysvar' in selected)) {
+      if (selected === null || selected.kind !== 'instructionSysvar') {
         return null;
       }
 
@@ -77,7 +77,7 @@ export class InstructionSysvarSectionComponent {
             return EMPTY;
           }
 
-          this._boardStore.setActiveId(null);
+          this._boardStore.setActive(null);
 
           return this._instructionSysvarApiService.updateInstructionSysvar(
             instructionId,

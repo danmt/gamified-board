@@ -50,7 +50,7 @@ export class InstructionDocumentSectionComponent {
 
   readonly selected$ = this._boardStore.selected$.pipe(
     map((selected) => {
-      if (selected === null || !('collection' in selected)) {
+      if (selected === null || selected.kind !== 'instructionDocument') {
         return null;
       }
 
@@ -78,7 +78,7 @@ export class InstructionDocumentSectionComponent {
             return EMPTY;
           }
 
-          this._boardStore.setActiveId(null);
+          this._boardStore.setActive(null);
 
           return this._instructionDocumentApiService.updateInstructionDocument(
             instructionId,

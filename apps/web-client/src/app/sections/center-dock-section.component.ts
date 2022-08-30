@@ -53,7 +53,7 @@ import { Entity, Option } from '../utils';
                 *ngIf="slot !== null"
                 [pgIsActive]="active?.id === slot.id"
                 [pgThumbnailUrl]="slot.thumbnailUrl"
-                (pgActivated)="onActivate(slot.id)"
+                (pgActivated)="onActivate(slot.id, slot.kind)"
               ></pg-square-button>
 
               <div *cdkDragPreview class="bg-gray-500 p-1 rounded-md">
@@ -174,7 +174,9 @@ export class CenterDockSectionComponent {
   }
 
   onKeyDown(
-    slots: Option<Entity<unknown>>[],
+    slots: Option<
+      Entity<{ kind: 'instruction' | 'collection' | 'application' | 'sysvar' }>
+    >[],
     hotkeys: HotKey[],
     event: KeyboardEvent
   ) {
@@ -185,14 +187,17 @@ export class CenterDockSectionComponent {
         const slot = slots[hotkey.slot] ?? null;
 
         if (slot !== null) {
-          this._boardStore.setActiveId(slot.id);
+          this._boardStore.setActive({ id: slot.id, kind: slot.kind });
         }
       }
     }
   }
 
-  onActivate(activeId: string) {
-    this._boardStore.setActiveId(activeId);
+  onActivate(
+    activeId: string,
+    kind: 'instruction' | 'collection' | 'application' | 'sysvar'
+  ) {
+    this._boardStore.setActive({ id: activeId, kind });
   }
 
   trackBy(index: number): number {

@@ -6,8 +6,6 @@ import { BoardStore } from '../stores';
   selector: 'pg-left-dock-section',
   template: `
     <div class="p-4 bg-gray-700 flex gap-4 justify-center items-start">
-      left dock
-
       <button (click)="onToggleInstructionsSection()">instructions</button>
 
       <button (click)="onToggleApplicationsSection()">applications</button>

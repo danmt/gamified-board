@@ -10,6 +10,7 @@ import {
 import {
   InstructionApplicationApiService,
   InstructionDocumentApiService,
+  InstructionSignerApiService,
   InstructionSysvarApiService,
   InstructionTaskApiService,
 } from '../services';
@@ -97,6 +98,22 @@ import { Entity, Option } from '../utils';
             $event.newIndex
           )
         "
+        (pgMoveSigner)="
+          onMoveSigner(
+            instructions,
+            instruction.id,
+            $event.previousIndex,
+            $event.newIndex
+          )
+        "
+        (pgTransferSigner)="
+          onTransferSigner(
+            $event.previousInstructionId,
+            $event.newInstructionId,
+            $event.instructionSignerId,
+            $event.newIndex
+          )
+        "
         (mouseenter)="onMouseEnterRow(instruction.id)"
         (mouseleave)="onMouseLeaveRow()"
       >
@@ -133,6 +150,9 @@ export class BoardSectionComponent {
   );
   private readonly _instructionSysvarApiService = inject(
     InstructionSysvarApiService
+  );
+  private readonly _instructionSignerApiService = inject(
+    InstructionSignerApiService
   );
   private readonly _boardStore = inject(BoardStore);
 
@@ -309,6 +329,45 @@ export class BoardSectionComponent {
       .subscribe();
   }
 
+  onMoveSigner(
+    entries: InstructionView[],
+    instructionId: string,
+    previousIndex: number,
+    newIndex: number
+  ) {
+    const instructionIndex = entries.findIndex(
+      ({ id }) => id === instructionId
+    );
+
+    if (instructionIndex === -1) {
+      throw new Error('Invalid instruction.');
+    }
+
+    const signersOrder = entries[instructionIndex].signers.map(({ id }) => id);
+
+    moveItemInArray(signersOrder, previousIndex, newIndex);
+
+    this._instructionSignerApiService
+      .updateInstructionSignersOrder(instructionId, signersOrder)
+      .subscribe();
+  }
+
+  onTransferSigner(
+    previousInstructionId: string,
+    newInstructionId: string,
+    instructionSignerId: string,
+    newIndex: number
+  ) {
+    this._instructionSignerApiService
+      .transferInstructionSigner(
+        previousInstructionId,
+        newInstructionId,
+        instructionSignerId,
+        newIndex
+      )
+      .subscribe();
+  }
+
   onSelect(selectId: Option<string>) {
     this._boardStore.setSelectedId(selectId);
   }
@@ -324,18 +383,24 @@ export class BoardSectionComponent {
 
         break;
       }
-      case '.': {
-        this._boardStore.toggleIsCollectionsSectionOpen();
 
-        break;
-      }
-      case ',': {
-        this._boardStore.toggleIsInstructionsSectionOpen();
+      case 'n': {
+        this._boardStore.toggleIsApplicationsSectionOpen();
 
         break;
       }
       case 'm': {
-        this._boardStore.toggleIsApplicationsSectionOpen();
+        this._boardStore.toggleIsInstructionsSectionOpen();
+
+        break;
+      }
+      case ',': {
+        this._boardStore.setActive({ id: 'signer', kind: 'signer' });
+
+        break;
+      }
+      case '.': {
+        this._boardStore.toggleIsCollectionsSectionOpen();
 
         break;
       }

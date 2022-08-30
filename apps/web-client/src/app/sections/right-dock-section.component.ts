@@ -6,7 +6,7 @@ import { BoardStore } from '../stores';
   selector: 'pg-right-dock-section',
   template: `
     <div class="p-4 bg-gray-700 flex gap-4 justify-center items-start">
-      right dock
+      <button (click)="onActivateSigner()">signer</button>
 
       <button (click)="onToggleSysvarsSection()">sysvars</button>
 
@@ -25,6 +25,10 @@ import { BoardStore } from '../stores';
 })
 export class RightDockSectionComponent {
   private readonly _boardStore = inject(BoardStore);
+
+  onActivateSigner() {
+    this._boardStore.setActive({ id: 'signer', kind: 'signer' });
+  }
 
   onToggleSysvarsSection() {
     this._boardStore.toggleIsSysvarsSectionOpen();

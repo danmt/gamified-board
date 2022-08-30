@@ -18,35 +18,36 @@ import {
 import { v4 as uuid } from 'uuid';
 import { Option } from '../utils';
 
-export interface EditInstructionSysvarData {
+export interface EditInstructionSignerData {
   id: string;
   name: string;
+  saveChanges: boolean;
 }
 
-@Directive({ selector: '[pgEditInstructionSysvarModal]', standalone: true })
-export class EditInstructionSysvarModalDirective {
+@Directive({ selector: '[pgEditInstructionSignerModal]', standalone: true })
+export class EditInstructionSignerModalDirective {
   private readonly _dialog = inject(Dialog);
 
-  @Input() instructionSysvar: Option<EditInstructionSysvarData> = null;
-  @Output() createInstructionSysvar =
-    new EventEmitter<EditInstructionSysvarData>();
-  @Output() updateInstructionSysvar =
-    new EventEmitter<EditInstructionSysvarData>();
+  @Input() instructionSigner: Option<EditInstructionSignerData> = null;
+  @Output() createInstructionSigner =
+    new EventEmitter<EditInstructionSignerData>();
+  @Output() updateInstructionSigner =
+    new EventEmitter<EditInstructionSignerData>();
   @HostListener('click', []) onClick() {
     this._dialog
       .open<
-        EditInstructionSysvarData,
-        Option<EditInstructionSysvarData>,
-        EditInstructionSysvarModalComponent
-      >(EditInstructionSysvarModalComponent, {
-        data: this.instructionSysvar,
+        EditInstructionSignerData,
+        Option<EditInstructionSignerData>,
+        EditInstructionSignerModalComponent
+      >(EditInstructionSignerModalComponent, {
+        data: this.instructionSigner,
       })
-      .closed.subscribe((instructionSysvarData) => {
-        if (instructionSysvarData !== undefined) {
-          if (this.instructionSysvar === null) {
-            this.createInstructionSysvar.emit(instructionSysvarData);
+      .closed.subscribe((instructionSignerData) => {
+        if (instructionSignerData !== undefined) {
+          if (this.instructionSigner === null) {
+            this.createInstructionSigner.emit(instructionSignerData);
           } else {
-            this.updateInstructionSysvar.emit(instructionSysvarData);
+            this.updateInstructionSigner.emit(instructionSignerData);
           }
         }
       });
@@ -54,7 +55,7 @@ export class EditInstructionSysvarModalDirective {
 }
 
 @Component({
-  selector: 'pg-edit-instruction-sysvar-modal',
+  selector: 'pg-edit-instruction-signer-modal',
   template: `
     <div class="px-4 pt-8 pb-4 bg-white shadow-xl relative">
       <button
@@ -65,24 +66,24 @@ export class EditInstructionSysvarModalDirective {
       </button>
 
       <h1 class="text-center text-xl mb-4">
-        {{ sysvar === null ? 'Create' : 'Update' }} sysvar
+        {{ signer === null ? 'Create' : 'Update' }} signer
       </h1>
 
       <form [formGroup]="form" (ngSubmit)="onSubmit()">
         <div>
-          <label class="block" for="sysvar-id-input">Sysvar ID</label>
+          <label class="block" for="signer-id-input">Signer ID</label>
           <input
             class="block border-b-2 border-black"
-            id="sysvar-id-input"
+            id="signer-id-input"
             type="text"
             formControlName="id"
-            [readonly]="sysvar !== null"
+            [readonly]="signer !== null"
           />
-          <p *ngIf="sysvar === null">
+          <p *ngIf="signer === null">
             Hint: The ID cannot be changed afterwards.
           </p>
           <button
-            *ngIf="sysvar === null"
+            *ngIf="signer === null"
             type="button"
             (click)="idControl.setValue(onGenerateId())"
           >
@@ -91,18 +92,27 @@ export class EditInstructionSysvarModalDirective {
         </div>
 
         <div>
-          <label class="block" for="sysvar-name-input"> Sysvar name </label>
+          <label class="block" for="signer-name-input"> Signer name </label>
           <input
             class="block border-b-2 border-black"
-            id="sysvar-name-input"
+            id="signer-name-input"
             type="text"
             formControlName="name"
           />
         </div>
 
+        <div>
+          <input
+            formControlName="saveChanges"
+            type="checkbox"
+            id="signer-save-chages"
+          />
+          <label for="signer-save-chages"> Save changes </label>
+        </div>
+
         <div class="flex justify-center items-center mt-4">
           <button type="submit" class="px-4 py-2 border-blue-500 border">
-            {{ sysvar === null ? 'Send' : 'Save' }}
+            {{ signer === null ? 'Send' : 'Save' }}
           </button>
         </div>
       </form>
@@ -111,23 +121,30 @@ export class EditInstructionSysvarModalDirective {
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
 })
-export class EditInstructionSysvarModalComponent {
+export class EditInstructionSignerModalComponent {
   private readonly _dialogRef =
     inject<
-      DialogRef<EditInstructionSysvarData, EditInstructionSysvarModalComponent>
+      DialogRef<EditInstructionSignerData, EditInstructionSignerModalComponent>
     >(DialogRef);
   private readonly _formBuilder = inject(FormBuilder);
 
-  readonly sysvar = inject<Option<EditInstructionSysvarData>>(DIALOG_DATA);
+  readonly signer = inject<Option<EditInstructionSignerData>>(DIALOG_DATA);
   readonly form = this._formBuilder.group({
-    id: this._formBuilder.control<string>(this.sysvar?.id ?? '', {
+    id: this._formBuilder.control<string>(this.signer?.id ?? '', {
       validators: [Validators.required],
       nonNullable: true,
     }),
-    name: this._formBuilder.control<string>(this.sysvar?.name ?? '', {
+    name: this._formBuilder.control<string>(this.signer?.name ?? '', {
       validators: [Validators.required],
       nonNullable: true,
     }),
+    saveChanges: this._formBuilder.control<boolean>(
+      this.signer?.saveChanges ?? false,
+      {
+        validators: [Validators.required],
+        nonNullable: true,
+      }
+    ),
   });
 
   get idControl() {
@@ -138,14 +155,20 @@ export class EditInstructionSysvarModalComponent {
     return this.form.get('name') as FormControl<string>;
   }
 
+  get saveChangesControl() {
+    return this.form.get('saveChanges') as FormControl<boolean>;
+  }
+
   onSubmit() {
     if (this.form.valid) {
       const id = this.idControl.value;
       const name = this.nameControl.value;
+      const saveChanges = this.saveChangesControl.value;
 
       this._dialogRef.close({
         id,
         name,
+        saveChanges,
       });
     }
   }

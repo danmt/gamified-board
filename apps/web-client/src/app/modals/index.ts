@@ -3,6 +3,7 @@ export * from './edit-collection-modal.component';
 export * from './edit-instruction-application-modal.component';
 export * from './edit-instruction-document-modal.component';
 export * from './edit-instruction-modal.component';
+export * from './edit-instruction-signer-modal.component';
 export * from './edit-instruction-sysvar-modal.component';
 export * from './edit-instruction-task-modal.component';
 export * from './edit-sysvar-modal.component';

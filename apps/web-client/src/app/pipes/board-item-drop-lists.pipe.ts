@@ -1,7 +1,12 @@
 import { Pipe, PipeTransform } from '@angular/core';
 import { Entity, Option } from '../utils';
 
-export type BoardItemKind = 'document' | 'task' | 'application' | 'sysvar';
+export type BoardItemKind =
+  | 'document'
+  | 'task'
+  | 'application'
+  | 'sysvar'
+  | 'signer';
 
 @Pipe({
   name: 'pgBoardItemDropLists',

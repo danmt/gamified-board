@@ -112,7 +112,7 @@ export class SysvarsSectionComponent {
   readonly sysvars$ = this._boardStore.sysvars$;
 
   onActivateSysvar(sysvarId: string) {
-    this._boardStore.setActiveId(sysvarId);
+    this._boardStore.setActive({ id: sysvarId, kind: 'sysvar' });
   }
 
   onSelectSysvar(sysvarId: string) {

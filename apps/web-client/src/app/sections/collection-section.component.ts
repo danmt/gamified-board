@@ -44,7 +44,7 @@ export class CollectionSectionComponent {
   readonly currentApplicationId$ = this._boardStore.currentApplicationId$;
   readonly selected$ = this._boardStore.selected$.pipe(
     map((selected) => {
-      if (selected === null || !('attributes' in selected)) {
+      if (selected === null || selected.kind !== 'collection') {
         return null;
       }
 
@@ -67,7 +67,7 @@ export class CollectionSectionComponent {
             return EMPTY;
           }
 
-          this._boardStore.setActiveId(null);
+          this._boardStore.setActive(null);
 
           return this._collectionApiService.updateCollection(
             collectionId,

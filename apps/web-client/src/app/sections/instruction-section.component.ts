@@ -44,7 +44,7 @@ export class InstructionSectionComponent {
   readonly currentApplicationId$ = this._boardStore.currentApplicationId$;
   readonly selected$ = this._boardStore.selected$.pipe(
     map((selected) => {
-      if (selected === null || !('arguments' in selected)) {
+      if (selected === null || selected.kind !== 'instruction') {
         return null;
       }
 
@@ -67,7 +67,7 @@ export class InstructionSectionComponent {
             return EMPTY;
           }
 
-          this._boardStore.setActiveId(null);
+          this._boardStore.setActive(null);
 
           return this._instructionApiService.updateInstruction(
             instructionId,
