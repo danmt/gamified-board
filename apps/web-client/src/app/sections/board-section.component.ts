@@ -64,6 +64,22 @@ import { Entity, Option } from '../utils';
             $event.newIndex
           )
         "
+        (pgMoveApplication)="
+          onMoveApplication(
+            instructions,
+            instruction.id,
+            $event.previousIndex,
+            $event.newIndex
+          )
+        "
+        (pgTransferApplication)="
+          onTransferApplication(
+            $event.previousInstructionId,
+            $event.newInstructionId,
+            $event.instructionApplicationId,
+            $event.newIndex
+          )
+        "
         (mouseenter)="onMouseEnterRow(instruction.id)"
         (mouseleave)="onMouseLeaveRow()"
       >
@@ -207,12 +223,14 @@ export class BoardSectionComponent {
       throw new Error('Invalid instruction.');
     }
 
-    const tasksOrder = entries[instructionIndex].tasks.map(({ id }) => id);
+    const applicationsOrder = entries[instructionIndex].applications.map(
+      ({ id }) => id
+    );
 
-    moveItemInArray(tasksOrder, previousIndex, newIndex);
+    moveItemInArray(applicationsOrder, previousIndex, newIndex);
 
     this._instructionApplicationApiService
-      .updateInstructionApplicationsOrder(instructionId, tasksOrder)
+      .updateInstructionApplicationsOrder(instructionId, applicationsOrder)
       .subscribe();
   }
 

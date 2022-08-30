@@ -408,90 +408,7 @@ export class BoardStore
     ({ isApplicationsSectionOpen }) => isApplicationsSectionOpen
   );
   readonly collections$: Observable<Option<CollectionView[]>> = this.select(
-    ({ collections }) => {
-      if (collections === null) {
-        return null;
-      }
-
-      return collections.concat(
-        this._pluginsService.plugins.reduce<CollectionDto[]>(
-          (collections, plugin) => [
-            ...collections,
-            ...plugin.accounts.reduce<CollectionDto[]>(
-              (innerCollections, account) => {
-                const fields: IdlStructField[] =
-                  typeof account.type === 'string'
-                    ? []
-                    : 'kind' in account.type
-                    ? account.type.fields
-                    : [];
-
-                return [
-                  ...innerCollections,
-                  {
-                    id: `${plugin.namespace}/${plugin.name}/${account.name}`,
-                    name: account.name,
-                    thumbnailUrl: `assets/plugins/${plugin.namespace}/${plugin.name}/accounts/${account.name}.png`,
-                    applicationId: plugin.name,
-                    workspaceId: plugin.namespace,
-                    attributes: fields.map((field) => {
-                      if (typeof field.type === 'string') {
-                        return {
-                          id: field.name,
-                          name: field.name,
-                          type: field.type,
-                          isOption: false,
-                          isCOption: false,
-                          isDefined: false,
-                        };
-                      } else if ('option' in field.type) {
-                        return {
-                          id: field.name,
-                          name: field.name,
-                          type: field.type.option,
-                          isOption: true,
-                          isCOption: false,
-                          isDefined: false,
-                        };
-                      } else if ('coption' in field.type) {
-                        return {
-                          id: field.name,
-                          name: field.name,
-                          type: field.type.coption,
-                          isOption: false,
-                          isCOption: true,
-                          isDefined: false,
-                        };
-                      } else if ('defined' in field.type) {
-                        return {
-                          id: field.name,
-                          name: field.name,
-                          type: field.type.defined,
-                          isOption: false,
-                          isCOption: false,
-                          isDefined: true,
-                        };
-                      } else {
-                        return {
-                          id: field.name,
-                          name: field.name,
-                          type: JSON.stringify(field.type),
-                          isOption: false,
-                          isCOption: false,
-                          isDefined: false,
-                        };
-                      }
-                    }),
-                  },
-                ];
-              },
-              []
-            ),
-          ],
-          []
-        )
-      );
-    }
+    ({ collections }) => collections
   );
   readonly instructions$: Observable<Option<InstructionView[]>> = this.select(
     this.select(({ applications }) => applications),
@@ -506,89 +423,12 @@ export class BoardStore
         return null;
       }
 
-      const allInstructions = instructions.concat(
-        this._pluginsService.plugins.reduce<InstructionDto[]>(
-          (pluginsInstructions, plugin) => [
-            ...pluginsInstructions,
-            ...plugin.instructions.reduce<InstructionDto[]>(
-              (pluginInstructions, instruction) => {
-                const args = instruction.args;
-
-                return [
-                  ...pluginInstructions,
-                  {
-                    id: `${plugin.namespace}/${plugin.name}/${instruction.name}`,
-                    name: instruction.name,
-                    thumbnailUrl: `assets/plugins/${plugin.namespace}/${plugin.name}/instructions/${instruction.name}.png`,
-                    applicationId: plugin.name,
-                    workspaceId: plugin.namespace,
-                    documents: [],
-                    tasks: [],
-                    applications: [],
-                    arguments: args.map((arg) => {
-                      if (typeof arg.type === 'string') {
-                        return {
-                          id: `${instruction.name}/${arg.name}`,
-                          name: arg.name,
-                          type: arg.type,
-                          isOption: false,
-                          isCOption: false,
-                          isDefined: false,
-                        };
-                      } else if ('option' in arg.type) {
-                        return {
-                          id: `${instruction.name}/${arg.name}`,
-                          name: arg.name,
-                          type: arg.type.option,
-                          isOption: true,
-                          isCOption: false,
-                          isDefined: false,
-                        };
-                      } else if ('coption' in arg.type) {
-                        return {
-                          id: `${instruction.name}/${arg.name}`,
-                          name: arg.name,
-                          type: arg.type.coption,
-                          isOption: false,
-                          isCOption: true,
-                          isDefined: false,
-                        };
-                      } else if ('defined' in arg.type) {
-                        return {
-                          id: `${instruction.name}/${arg.name}`,
-                          name: arg.name,
-                          type: arg.type.defined,
-                          isOption: false,
-                          isCOption: false,
-                          isDefined: true,
-                        };
-                      } else {
-                        return {
-                          id: `${instruction.name}/${arg.name}`,
-                          name: arg.name,
-                          type: JSON.stringify(arg.type),
-                          isOption: false,
-                          isCOption: false,
-                          isDefined: false,
-                        };
-                      }
-                    }),
-                  },
-                ];
-              },
-              []
-            ),
-          ],
-          []
-        )
-      );
-
-      return allInstructions.map((instruction) =>
+      return instructions.map((instruction) =>
         populateInstruction(
           instruction,
           applications,
           collections,
-          allInstructions
+          instructions
         )
       );
     }
@@ -606,24 +446,15 @@ export class BoardStore
         return null;
       }
 
-      return applications
-        .concat(
-          this._pluginsService.plugins.map((plugin) => ({
-            id: plugin.name,
-            name: plugin.name,
-            workspaceId: plugin.namespace,
-            thumbnailUrl: `assets/plugins/${plugin.namespace}/${plugin.name}/thumbnail.png`,
-          }))
-        )
-        .map((application) => ({
-          ...application,
-          instructions: instructions.filter(
-            (instruction) => instruction.applicationId === application.id
-          ),
-          collections: collections.filter(
-            (collection) => collection.applicationId === application.id
-          ),
-        }));
+      return applications.map((application) => ({
+        ...application,
+        instructions: instructions.filter(
+          (instruction) => instruction.applicationId === application.id
+        ),
+        collections: collections.filter(
+          (collection) => collection.applicationId === application.id
+        ),
+      }));
     }
   );
   readonly currentApplication$ = this.select(
@@ -881,7 +712,17 @@ export class BoardStore
         .getWorkspaceApplications(workspaceId)
         .pipe(
           tapResponse(
-            (applications) => this.patchState({ applications }),
+            (applications) =>
+              this.patchState({
+                applications: applications.concat(
+                  this._pluginsService.plugins.map((plugin) => ({
+                    id: plugin.name,
+                    name: plugin.name,
+                    workspaceId: plugin.namespace,
+                    thumbnailUrl: `assets/plugins/${plugin.namespace}/${plugin.name}/thumbnail.png`,
+                  }))
+                ),
+              }),
             (error) => this._handleError(error)
           )
         );
@@ -898,7 +739,87 @@ export class BoardStore
         .getWorkspaceCollections(workspaceId)
         .pipe(
           tapResponse(
-            (collections) => this.patchState({ collections }),
+            (collections) =>
+              this.patchState({
+                collections: collections.concat(
+                  this._pluginsService.plugins.reduce<CollectionDto[]>(
+                    (collections, plugin) => [
+                      ...collections,
+                      ...plugin.accounts.reduce<CollectionDto[]>(
+                        (innerCollections, account) => {
+                          const fields: IdlStructField[] =
+                            typeof account.type === 'string'
+                              ? []
+                              : 'kind' in account.type
+                              ? account.type.fields
+                              : [];
+
+                          return [
+                            ...innerCollections,
+                            {
+                              id: `${plugin.namespace}/${plugin.name}/${account.name}`,
+                              name: account.name,
+                              thumbnailUrl: `assets/plugins/${plugin.namespace}/${plugin.name}/accounts/${account.name}.png`,
+                              applicationId: plugin.name,
+                              workspaceId: plugin.namespace,
+                              attributes: fields.map((field) => {
+                                if (typeof field.type === 'string') {
+                                  return {
+                                    id: field.name,
+                                    name: field.name,
+                                    type: field.type,
+                                    isOption: false,
+                                    isCOption: false,
+                                    isDefined: false,
+                                  };
+                                } else if ('option' in field.type) {
+                                  return {
+                                    id: field.name,
+                                    name: field.name,
+                                    type: field.type.option,
+                                    isOption: true,
+                                    isCOption: false,
+                                    isDefined: false,
+                                  };
+                                } else if ('coption' in field.type) {
+                                  return {
+                                    id: field.name,
+                                    name: field.name,
+                                    type: field.type.coption,
+                                    isOption: false,
+                                    isCOption: true,
+                                    isDefined: false,
+                                  };
+                                } else if ('defined' in field.type) {
+                                  return {
+                                    id: field.name,
+                                    name: field.name,
+                                    type: field.type.defined,
+                                    isOption: false,
+                                    isCOption: false,
+                                    isDefined: true,
+                                  };
+                                } else {
+                                  return {
+                                    id: field.name,
+                                    name: field.name,
+                                    type: JSON.stringify(field.type),
+                                    isOption: false,
+                                    isCOption: false,
+                                    isDefined: false,
+                                  };
+                                }
+                              }),
+                            },
+                          ];
+                        },
+                        []
+                      ),
+                    ],
+                    []
+                  )
+                ),
+              }),
             (error) => this._handleError(error)
           )
         );
@@ -915,7 +836,85 @@ export class BoardStore
         .getWorkspaceInstructions(workspaceId)
         .pipe(
           tapResponse(
-            (instructions) => this.patchState({ instructions }),
+            (instructions) =>
+              this.patchState({
+                instructions: instructions.concat(
+                  this._pluginsService.plugins.reduce<InstructionDto[]>(
+                    (pluginsInstructions, plugin) => [
+                      ...pluginsInstructions,
+                      ...plugin.instructions.reduce<InstructionDto[]>(
+                        (pluginInstructions, instruction) => {
+                          const args = instruction.args;
+
+                          return [
+                            ...pluginInstructions,
+                            {
+                              id: `${plugin.namespace}/${plugin.name}/${instruction.name}`,
+                              name: instruction.name,
+                              thumbnailUrl: `assets/plugins/${plugin.namespace}/${plugin.name}/instructions/${instruction.name}.png`,
+                              applicationId: plugin.name,
+                              workspaceId: plugin.namespace,
+                              documents: [],
+                              tasks: [],
+                              applications: [],
+                              arguments: args.map((arg) => {
+                                if (typeof arg.type === 'string') {
+                                  return {
+                                    id: `${instruction.name}/${arg.name}`,
+                                    name: arg.name,
+                                    type: arg.type,
+                                    isOption: false,
+                                    isCOption: false,
+                                    isDefined: false,
+                                  };
+                                } else if ('option' in arg.type) {
+                                  return {
+                                    id: `${instruction.name}/${arg.name}`,
+                                    name: arg.name,
+                                    type: arg.type.option,
+                                    isOption: true,
+                                    isCOption: false,
+                                    isDefined: false,
+                                  };
+                                } else if ('coption' in arg.type) {
+                                  return {
+                                    id: `${instruction.name}/${arg.name}`,
+                                    name: arg.name,
+                                    type: arg.type.coption,
+                                    isOption: false,
+                                    isCOption: true,
+                                    isDefined: false,
+                                  };
+                                } else if ('defined' in arg.type) {
+                                  return {
+                                    id: `${instruction.name}/${arg.name}`,
+                                    name: arg.name,
+                                    type: arg.type.defined,
+                                    isOption: false,
+                                    isCOption: false,
+                                    isDefined: true,
+                                  };
+                                } else {
+                                  return {
+                                    id: `${instruction.name}/${arg.name}`,
+                                    name: arg.name,
+                                    type: JSON.stringify(arg.type),
+                                    isOption: false,
+                                    isCOption: false,
+                                    isDefined: false,
+                                  };
+                                }
+                              }),
+                            },
+                          ];
+                        },
+                        []
+                      ),
+                    ],
+                    []
+                  )
+                ),
+              }),
             (error) => this._handleError(error)
           )
         );
