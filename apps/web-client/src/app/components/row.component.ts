@@ -35,7 +35,7 @@ interface Instruction {
   template: `
     <div
       *ngIf="pgInstruction !== null"
-      class="text-2xl text-white uppercase relative h-full flex gap-4"
+      class="text-2xl text-white uppercase relative h-full flex gap-4 border-2"
       [ngClass]="{ 'border-blue-500': pgIsHovered }"
       (click)="onUseActive()"
     >
@@ -230,7 +230,7 @@ export class RowComponent {
     newIndex: number;
   }>();
 
-  @HostBinding('class') class = 'block w-full h-64 border-2 bg-bp-bricks';
+  @HostBinding('class') class = 'block h-64 bg-bp-bricks';
 
   onSelect(selectId: string) {
     this.pgSelect.emit(selectId);
