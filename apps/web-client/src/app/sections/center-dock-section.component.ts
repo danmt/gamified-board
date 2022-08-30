@@ -14,10 +14,10 @@ import { BoardStore } from '../stores';
 import { Entity, Option } from '../utils';
 
 @Component({
-  selector: 'pg-dock-section',
+  selector: 'pg-center-dock-section',
   template: `
     <div
-      class="w-auto mx-auto p-4 bg-gray-700 flex gap-4 justify-center items-start"
+      class="p-4 bg-gray-700 flex gap-4 justify-center items-start"
       *ngrxLet="slots$; let slots"
     >
       <ng-container
@@ -87,7 +87,7 @@ import { Entity, Option } from '../utils';
     `,
   ],
 })
-export class DockSectionComponent {
+export class CenterDockSectionComponent {
   private readonly _boardStore = inject(BoardStore);
 
   readonly slots$ = this._boardStore.slots$;

@@ -15,13 +15,15 @@ import {
   ApplicationSectionComponent,
   ApplicationsSectionComponent,
   BoardSectionComponent,
+  CenterDockSectionComponent,
   CollectionSectionComponent,
   CollectionsSectionComponent,
-  DockSectionComponent,
   InstructionDocumentSectionComponent,
   InstructionSectionComponent,
   InstructionsSectionComponent,
   InstructionTaskSectionComponent,
+  LeftDockSectionComponent,
+  RightDockSectionComponent,
 } from '../sections';
 import { InstructionApplicationSectionComponent } from '../sections/instruction-application-section.component';
 import { BoardStore } from '../stores';
@@ -31,10 +33,16 @@ import { BoardStore } from '../stores';
   template: `
     <pg-board-section></pg-board-section>
 
-    <pg-dock-section
+    <pg-left-dock-section class="fixed bottom-0 left-0"></pg-left-dock-section>
+
+    <pg-right-dock-section
+      class="fixed bottom-0 right-0"
+    ></pg-right-dock-section>
+
+    <pg-center-dock-section
       *ngIf="(selected$ | ngrxPush) === null"
       class="fixed bottom-0 -translate-x-1/2 left-1/2"
-    ></pg-dock-section>
+    ></pg-center-dock-section>
 
     <pg-instruction-document-section
       class="fixed bottom-0 -translate-x-1/2 left-1/2"
@@ -85,7 +93,9 @@ import { BoardStore } from '../stores';
     DialogModule,
     PushModule,
     BoardSectionComponent,
-    DockSectionComponent,
+    CenterDockSectionComponent,
+    LeftDockSectionComponent,
+    RightDockSectionComponent,
     CollectionsSectionComponent,
     InstructionsSectionComponent,
     ApplicationsSectionComponent,

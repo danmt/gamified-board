@@ -125,8 +125,6 @@ const populateInstructionApplication = (
       (application) => application.id === instructionApplication.applicationId
     ) ?? null;
 
-  console.log({ applications, instructionApplication });
-
   if (application === null) {
     throw new Error(
       `Application ${instructionApplication.id} has an reference to an unknown application.`
