@@ -350,6 +350,7 @@ interface ViewModel {
   isApplicationsSectionOpen: boolean;
   activeId: Option<string>;
   selectedId: Option<string>;
+  hoveredId: Option<string>;
   slots: Option<{
     id: string;
     kind: 'collection' | 'instruction' | 'application';
@@ -368,6 +369,7 @@ const initialState: ViewModel = {
   isApplicationsSectionOpen: false,
   activeId: null,
   selectedId: null,
+  hoveredId: null,
   slots: [null, null, null, null, null, null, null, null, null, null],
 };
 
@@ -391,6 +393,7 @@ export class BoardStore
   );
 
   readonly workspaceId$ = this.select(({ workspaceId }) => workspaceId);
+  readonly hoveredId$ = this.select(({ hoveredId }) => hoveredId);
   readonly workspace$ = this.select(({ workspace }) => workspace);
   readonly currentApplicationId$ = this.select(
     ({ currentApplicationId }) => currentApplicationId
@@ -803,6 +806,11 @@ export class BoardStore
       selectedId,
     })
   );
+
+  readonly setHoveredId = this.updater<Option<string>>((state, hoveredId) => ({
+    ...state,
+    hoveredId,
+  }));
 
   readonly toggleIsCollectionsSectionOpen = this.updater<void>((state) => ({
     ...state,

@@ -155,7 +155,7 @@ export class CollectionsSectionComponent {
   }
 
   onDragStart(event: CdkDragStart) {
-    this._isDragging.next(event.source.data);
+    this._isDragging.next(event.source.data.id);
   }
 
   onDragEnd() {

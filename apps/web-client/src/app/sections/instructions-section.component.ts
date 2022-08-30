@@ -127,6 +127,7 @@ export class InstructionsSectionComponent {
   readonly instructions$ = this._boardStore.instructions$;
 
   onActivateInstruction(instructionId: string) {
+    console.log('alo');
     this._boardStore.setActiveId(instructionId);
   }
 
@@ -172,7 +173,7 @@ export class InstructionsSectionComponent {
   }
 
   onDragStart(event: CdkDragStart) {
-    this._isDragging.next(event.source.data);
+    this._isDragging.next(event.source.data.id);
   }
 
   onDragEnd() {
