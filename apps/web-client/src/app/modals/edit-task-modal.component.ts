@@ -94,7 +94,7 @@ export class EditTaskModalDirective {
         </button>
 
         <h1 class="text-center text-3xl mb-4 bp-font-game">
-          {{ task === null ? 'Create' : 'Update' }} task
+          {{ task === null ? 'CREATE' : 'UPDATE' }} TASK
         </h1>
 
         <form [formGroup]="form" (ngSubmit)="onSubmit()">
@@ -130,8 +130,11 @@ export class EditTaskModalDirective {
           </div>
 
           <div class="flex justify-center items-center mt-4">
-            <button type="submit" class="px-4 py-2 border-blue-500 border">
-              {{ task === null ? 'Send' : 'Save' }}
+            <button
+              type="submit"
+              class="bp-button-futuristic text-black bp-font-game"
+            >
+              {{ task === null ? 'SEND' : 'SAVE' }}
             </button>
           </div>
         </form>

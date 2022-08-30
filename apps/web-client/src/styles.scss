@@ -302,14 +302,21 @@ body,
   padding: 7px;
 }
 
-.bp-button-metal {
+.bp-button-futuristic {
   background-color: transparent;
-  background-image: url('./assets/skins/dock/button.png');
+  background-image: url('./assets/skins/dock/button-normal.png');
   background-repeat: no-repeat;
-  color: white;
-  width: 115px;
-  height: 47px;
+  width: 229px;
+  height: 69px;
   font-size: 24px;
+}
+
+.bp-button-futuristic:hover {
+  background-image: url('./assets/skins/dock/button-hover.png');
+}
+
+.bp-button-futuristic:active {
+  background-image: url('./assets/skins/dock/button-active.png');
 }
 
 .bp-button-close {
@@ -323,10 +330,6 @@ body,
 
 .bp-button-close:hover {
   background-image: url('./assets/skins/dock/close_button_hover.png');
-}
-
-.bp-button-metal:active {
-  background-image: url('./assets/skins/dock/button_pressed.png');
 }
 
 // SCROLL BAR
