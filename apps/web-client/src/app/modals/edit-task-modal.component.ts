@@ -54,7 +54,7 @@ export class EditTaskModalDirective {
   selector: 'pg-edit-task-modal',
   template: `
     <div
-      class="px-4 pt-8 pb-4 bp-bg-futuristic shadow-xl relative text-white min-w-[400px] min-h-[300px]"
+      class="px-6 pt-8 pb-4 bp-bg-futuristic shadow-xl relative text-white min-w-[400px] min-h-[300px]"
     >
       <!-- corners-->
       <div
@@ -98,38 +98,44 @@ export class EditTaskModalDirective {
         </h1>
 
         <form [formGroup]="form" (ngSubmit)="onSubmit()">
-          <div>
-            <label class="block" for="task-id-input">Task ID</label>
-            <input
-              class="block border-b-2 border-black bg-transparent"
-              id="task-id-input"
-              type="text"
-              formControlName="id"
-              [readonly]="task !== null"
-            />
-            <p *ngIf="task === null">
+          <div class="mb-4">
+            <label class="block bp-font-game text-xl" for="task-id-input"
+              >Task ID</label
+            >
+            <div class="flex">
+              <input
+                class="bp-input-futuristic p-4 outline-0"
+                id="task-id-input"
+                type="text"
+                formControlName="id"
+                [readonly]="task !== null"
+              />
+              <button
+                *ngIf="task === null"
+                type="button"
+                (click)="idControl.setValue(onGenerateId())"
+              >
+                Generate
+              </button>
+            </div>
+            <p class="bp-font-game" *ngIf="task === null">
               Hint: The ID cannot be changed afterwards.
             </p>
-            <button
-              *ngIf="task === null"
-              type="button"
-              (click)="idControl.setValue(onGenerateId())"
-            >
-              Generate
-            </button>
           </div>
 
-          <div>
-            <label class="block" for="task-name-input"> Task name </label>
+          <div class="mb-4">
+            <label class="block bp-font-game text-xl" for="task-name-input">
+              Task name
+            </label>
             <input
-              class="block border-b-2 border-black bg-transparent"
+              class="bp-input-futuristic p-4 outline-0"
               id="task-name-input"
               type="text"
               formControlName="name"
             />
           </div>
 
-          <div class="flex justify-center items-center mt-4">
+          <div class="flex justify-center items-center mt-10">
             <button
               type="submit"
               class="bp-button-futuristic text-black bp-font-game"

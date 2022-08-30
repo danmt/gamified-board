@@ -295,11 +295,16 @@ body,
   box-shadow: -1px 4px 15px -4px rgba(0, 0, 0, 0.8);
 }
 
-.bp-input-metal {
-  background-image: url('./assets/skins/dock/input_metal_background.png');
-  background-repeat: repeat;
-  width: 100%;
-  padding: 7px;
+.bp-input-futuristic {
+  background-image: url('./assets/skins/dock/input-futuristic.png');
+  background-repeat: no-repeat;
+  width: 278px;
+  height: 60px;
+  background-color: transparent;
+}
+
+.bp-input-futuristic:read-only {
+  background-image: url('./assets/skins/dock/input-futuristic-read-only.png');
 }
 
 .bp-button-futuristic {
