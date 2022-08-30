@@ -105,6 +105,14 @@ import { Option } from '../utils';
           </div>
         </div>
       </div>
+
+      <div class="flex items-end relative" style="top: -75px; z-index: 100;">
+        <div class="bp-skin-metal-corner-left-bottom"></div>
+        <div class="bp-skin-metal-border-bottom flex-1"></div>
+        <div
+          class="bp-skin-metal-detail-2 absolute -bottom-3 z-20 right-0"
+        ></div>
+      </div>
     </div>
   `,
   standalone: true,

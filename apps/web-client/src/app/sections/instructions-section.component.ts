@@ -98,6 +98,11 @@ import { Option } from '../utils';
           </div>
         </div>
       </div>
+      <div class="flex items-end relative" style="top: -75px; z-index: 100;">
+        <div class="bp-skin-metal-detail absolute -bottom-3 z-20"></div>
+        <div class="bp-skin-metal-border-bottom flex-1"></div>
+        <div class="bp-skin-metal-corner-right-bottom"></div>
+      </div>
     </div>
   `,
   standalone: true,
