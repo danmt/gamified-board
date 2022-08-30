@@ -5,12 +5,22 @@ import { BoardStore } from '../stores';
 @Component({
   selector: 'pg-left-dock-section',
   template: `
-    <div class="p-4 bg-gray-700 flex gap-4 justify-center items-start">
-      left dock
+    <div
+      class="py-4 px-6 bp-bg-futuristic items-start relative text-white bp-font-game"
+    >
+      <div class="flex absolute -top-4 left-0" style="width: calc(100% + 15px)">
+        <div class="bp-skin-metal-border flex-1 z-10"></div>
+        <div class="bp-skin-metal-corner-right-top z-10"></div>
+      </div>
 
-      <button (click)="onToggleInstructionsSection()">instructions</button>
-
-      <button (click)="onToggleApplicationsSection()">applications</button>
+      <div class="flex gap-4 justify-center text-xl">
+        <button class="z-10" (click)="onToggleInstructionsSection()">
+          instructions
+        </button>
+        <button class="z-10" (click)="onToggleApplicationsSection()">
+          applications
+        </button>
+      </div>
     </div>
   `,
   standalone: true,
