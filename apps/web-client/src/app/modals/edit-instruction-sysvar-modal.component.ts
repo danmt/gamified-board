@@ -18,32 +18,35 @@ import {
 import { v4 as uuid } from 'uuid';
 import { Option } from '../utils';
 
-export interface EditTaskData {
+export interface EditInstructionSysvarData {
   id: string;
   name: string;
 }
 
-@Directive({ selector: '[pgEditTaskModal]', standalone: true })
-export class EditTaskModalDirective {
+@Directive({ selector: '[pgEditInstructionSysvarModal]', standalone: true })
+export class EditInstructionSysvarModalDirective {
   private readonly _dialog = inject(Dialog);
 
-  @Input() task: Option<EditTaskData> = null;
-  @Output() createTask = new EventEmitter<EditTaskData>();
-  @Output() updateTask = new EventEmitter<EditTaskData>();
+  @Input() instructionSysvar: Option<EditInstructionSysvarData> = null;
+  @Output() createInstructionSysvar =
+    new EventEmitter<EditInstructionSysvarData>();
+  @Output() updateInstructionSysvar =
+    new EventEmitter<EditInstructionSysvarData>();
   @HostListener('click', []) onClick() {
     this._dialog
-      .open<EditTaskData, Option<EditTaskData>, EditTaskModalComponent>(
-        EditTaskModalComponent,
-        {
-          data: this.task,
-        }
-      )
-      .closed.subscribe((taskData) => {
-        if (taskData !== undefined) {
-          if (this.task === null) {
-            this.createTask.emit(taskData);
+      .open<
+        EditInstructionSysvarData,
+        Option<EditInstructionSysvarData>,
+        EditInstructionSysvarModalComponent
+      >(EditInstructionSysvarModalComponent, {
+        data: this.instructionSysvar,
+      })
+      .closed.subscribe((instructionSysvarData) => {
+        if (instructionSysvarData !== undefined) {
+          if (this.instructionSysvar === null) {
+            this.createInstructionSysvar.emit(instructionSysvarData);
           } else {
-            this.updateTask.emit(taskData);
+            this.updateInstructionSysvar.emit(instructionSysvarData);
           }
         }
       });
@@ -51,7 +54,7 @@ export class EditTaskModalDirective {
 }
 
 @Component({
-  selector: 'pg-edit-task-modal',
+  selector: 'pg-edit-instruction-sysvar-modal',
   template: `
     <div class="px-4 pt-8 pb-4 bg-white shadow-xl relative">
       <button
@@ -67,7 +70,7 @@ export class EditTaskModalDirective {
 
       <form [formGroup]="form" (ngSubmit)="onSubmit()">
         <div>
-          <label class="block" for="task-id-input">Task ID</label>
+          <label class="block" for="task-id-input">Sysvar ID</label>
           <input
             class="block border-b-2 border-black"
             id="task-id-input"
@@ -88,7 +91,7 @@ export class EditTaskModalDirective {
         </div>
 
         <div>
-          <label class="block" for="task-name-input"> Task name </label>
+          <label class="block" for="task-name-input"> Sysvar name </label>
           <input
             class="block border-b-2 border-black"
             id="task-name-input"
@@ -108,12 +111,14 @@ export class EditTaskModalDirective {
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
 })
-export class EditTaskModalComponent {
+export class EditInstructionSysvarModalComponent {
   private readonly _dialogRef =
-    inject<DialogRef<EditTaskData, EditTaskModalComponent>>(DialogRef);
+    inject<
+      DialogRef<EditInstructionSysvarData, EditInstructionSysvarModalComponent>
+    >(DialogRef);
   private readonly _formBuilder = inject(FormBuilder);
 
-  readonly task = inject<Option<EditTaskData>>(DIALOG_DATA);
+  readonly task = inject<Option<EditInstructionSysvarData>>(DIALOG_DATA);
   readonly form = this._formBuilder.group({
     id: this._formBuilder.control<string>(this.task?.id ?? '', {
       validators: [Validators.required],

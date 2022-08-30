@@ -2,6 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import {
   collectionData,
   collectionGroup,
+  deleteDoc,
   doc,
   docData,
   DocumentData,
@@ -11,7 +12,7 @@ import {
   Firestore,
   orderBy,
   query,
-  runTransaction,
+  setDoc,
   startAt,
   updateDoc,
 } from '@angular/fire/firestore';
@@ -100,44 +101,32 @@ export class ApplicationApiService {
     name: string,
     thumbnailUrl: string
   ) {
+    const workspaceRef = doc(this._firestore, `workspaces/${workspaceId}`);
+    const newApplicationRef = doc(
+      this._firestore,
+      `applications/${newApplicationId}`
+    );
+
     return defer(() =>
       from(
-        runTransaction(this._firestore, async (transaction) => {
-          const workspaceRef = doc(
-            this._firestore,
-            `workspaces/${workspaceId}`
-          );
-          const newApplicationRef = doc(
-            this._firestore,
-            `applications/${newApplicationId}`
-          );
-          const newWorkspaceApplicationRef = doc(
-            this._firestore,
-            `workspaces/${workspaceId}/applications/${newApplicationId}`
-          );
-
-          // create the new application
-          transaction.set(newApplicationRef, {
-            name,
-            thumbnailUrl,
-            workspaceRef,
-          });
-
-          // push application to workspace applications
-          transaction.set(newWorkspaceApplicationRef, {
-            applicationRef: newApplicationRef,
-          });
-
-          return {};
+        setDoc(newApplicationRef, {
+          name,
+          thumbnailUrl,
+          workspaceRef,
         })
       )
     );
   }
 
   updateApplication(applicationId: string, name: string, thumbnailUrl: string) {
+    const applicationRef = doc(
+      this._firestore,
+      `applications/${applicationId}`
+    );
+
     return defer(() =>
       from(
-        updateDoc(doc(this._firestore, `applications/${applicationId}`), {
+        updateDoc(applicationRef, {
           name,
           thumbnailUrl,
         })
@@ -145,28 +134,12 @@ export class ApplicationApiService {
     );
   }
 
-  deleteApplication(applicationId: string, workspaceId: string) {
-    return defer(() =>
-      from(
-        runTransaction(this._firestore, async (transaction) => {
-          const applicationRef = doc(
-            this._firestore,
-            `applications/${applicationId}`
-          );
-          const workspaceApplicationRef = doc(
-            this._firestore,
-            `workspaces/${workspaceId}/applications/${applicationId}`
-          );
-
-          // delete application
-          transaction.delete(applicationRef);
-
-          // remove application from workspace applications
-          transaction.delete(workspaceApplicationRef);
-
-          return {};
-        })
-      )
+  deleteApplication(applicationId: string) {
+    const applicationRef = doc(
+      this._firestore,
+      `applications/${applicationId}`
     );
+
+    return defer(() => from(deleteDoc(applicationRef)));
   }
 }

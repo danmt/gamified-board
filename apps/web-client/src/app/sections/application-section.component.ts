@@ -18,8 +18,6 @@ import { ApplicationView, BoardStore } from '../stores';
 
       {{ selected?.name }}
 
-      <ng-container *ngIf="currentApplicationId$ | ngrxPush"></ng-container>
-
       <button
         *ngIf="(currentApplicationId$ | ngrxPush) === selected.id"
         (click)="onUpdateApplication(selected.id, selected)"
@@ -29,7 +27,7 @@ import { ApplicationView, BoardStore } from '../stores';
 
       <button
         *ngIf="(currentApplicationId$ | ngrxPush) === selected.id"
-        (click)="onDeleteApplication(selected.workspaceId, selected.id)"
+        (click)="onDeleteApplication(selected.id)"
       >
         x
       </button>
@@ -46,6 +44,10 @@ export class ApplicationSectionComponent {
   readonly currentApplicationId$ = this._boardStore.currentApplicationId$;
   readonly selected$ = this._boardStore.selected$.pipe(
     map((selected) => {
+      if (selected !== null && 'collections' in selected) {
+        selected;
+      }
+
       if (selected === null || !('collections' in selected)) {
         return null;
       }
@@ -81,10 +83,10 @@ export class ApplicationSectionComponent {
       .subscribe();
   }
 
-  onDeleteApplication(workspaceId: string, applicationId: string) {
+  onDeleteApplication(applicationId: string) {
     if (confirm('Are you sure? This action cannot be reverted.')) {
       this._applicationApiService
-        .deleteApplication(workspaceId, applicationId)
+        .deleteApplication(applicationId)
         .subscribe(() => this._boardStore.setSelectedId(null));
     }
   }

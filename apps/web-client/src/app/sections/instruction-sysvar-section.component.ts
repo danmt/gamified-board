@@ -4,32 +4,34 @@ import { Component, inject, ViewContainerRef } from '@angular/core';
 import { PushModule } from '@ngrx/component';
 import { concatMap, EMPTY, map } from 'rxjs';
 import {
-  EditInstructionTaskData,
-  EditInstructionTaskModalComponent,
+  EditInstructionSysvarData,
+  EditInstructionSysvarModalComponent,
 } from '../modals';
-import { InstructionTaskApiService } from '../services';
-import { BoardStore, InstructionTaskView } from '../stores';
+import { InstructionSysvarApiService } from '../services';
+import { BoardStore, InstructionSysvarView } from '../stores';
 
 @Component({
-  selector: 'pg-instruction-task-section',
+  selector: 'pg-instruction-sysvar-section',
   template: `
     <div
       *ngIf="selected$ | ngrxPush as selected"
       class="p-4 bg-gray-700 flex gap-4 justify-center items-start"
     >
-      <img [src]="selected?.instruction?.thumbnailUrl" />
+      <img [src]="selected?.sysvar?.thumbnailUrl" />
 
       {{ selected?.name }}
 
       <button
         (click)="
-          onUpdateInstructionTask(selected.ownerId, selected.id, selected)
+          onUpdateInstructionSysvar(selected.ownerId, selected.id, selected)
         "
       >
         edit
       </button>
 
-      <button (click)="onDeleteInstructionTask(selected.ownerId, selected.id)">
+      <button
+        (click)="onDeleteInstructionSysvar(selected.ownerId, selected.id)"
+      >
         x
       </button>
     </div>
@@ -37,17 +39,17 @@ import { BoardStore, InstructionTaskView } from '../stores';
   standalone: true,
   imports: [CommonModule, PushModule],
 })
-export class InstructionTaskSectionComponent {
+export class InstructionSysvarSectionComponent {
   private readonly _dialog = inject(Dialog);
   private readonly _boardStore = inject(BoardStore);
   private readonly _viewContainerRef = inject(ViewContainerRef);
-  private readonly _instructionTaskApiService = inject(
-    InstructionTaskApiService
+  private readonly _instructionSysvarApiService = inject(
+    InstructionSysvarApiService
   );
 
   readonly selected$ = this._boardStore.selected$.pipe(
     map((selected) => {
-      if (selected === null || !('instruction' in selected)) {
+      if (selected === null || !('sysvar' in selected)) {
         return null;
       }
 
@@ -55,42 +57,42 @@ export class InstructionTaskSectionComponent {
     })
   );
 
-  onUpdateInstructionTask(
+  onUpdateInstructionSysvar(
     instructionId: string,
-    taskId: string,
-    task: InstructionTaskView
+    sysvarId: string,
+    sysvar: InstructionSysvarView
   ) {
     this._dialog
       .open<
-        EditInstructionTaskData,
-        EditInstructionTaskData,
-        EditInstructionTaskModalComponent
-      >(EditInstructionTaskModalComponent, {
-        data: task,
+        EditInstructionSysvarData,
+        EditInstructionSysvarData,
+        EditInstructionSysvarModalComponent
+      >(EditInstructionSysvarModalComponent, {
+        data: sysvar,
         viewContainerRef: this._viewContainerRef,
       })
       .closed.pipe(
-        concatMap((taskData) => {
-          if (taskData === undefined) {
+        concatMap((sysvarData) => {
+          if (sysvarData === undefined) {
             return EMPTY;
           }
 
           this._boardStore.setActiveId(null);
 
-          return this._instructionTaskApiService.updateInstructionTask(
+          return this._instructionSysvarApiService.updateInstructionSysvar(
             instructionId,
-            taskId,
-            taskData.name
+            sysvarId,
+            sysvarData.name
           );
         })
       )
       .subscribe();
   }
 
-  onDeleteInstructionTask(instructionId: string, taskId: string) {
+  onDeleteInstructionSysvar(instructionId: string, sysvarId: string) {
     if (confirm('Are you sure? This action cannot be reverted.')) {
-      this._instructionTaskApiService
-        .deleteInstructionTask(instructionId, taskId)
+      this._instructionSysvarApiService
+        .deleteInstructionSysvar(instructionId, sysvarId)
         .subscribe(() => this._boardStore.setSelectedId(null));
     }
   }

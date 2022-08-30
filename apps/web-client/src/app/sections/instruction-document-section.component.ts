@@ -4,9 +4,9 @@ import { Component, inject, ViewContainerRef } from '@angular/core';
 import { PushModule } from '@ngrx/component';
 import { concatMap, EMPTY, map } from 'rxjs';
 import {
-  EditDocumentData,
-  EditDocumentModalComponent,
-  EditDocumentSubmitPayload,
+  EditInstructionDocumentData,
+  EditInstructionDocumentModalComponent,
+  EditInstructionDocumentSubmitPayload,
 } from '../modals';
 import { InstructionDocumentApiService } from '../services';
 import { BoardStore, InstructionDocumentView } from '../stores';
@@ -65,10 +65,10 @@ export class InstructionDocumentSectionComponent {
   ) {
     this._dialog
       .open<
-        EditDocumentSubmitPayload,
-        EditDocumentData,
-        EditDocumentModalComponent
-      >(EditDocumentModalComponent, {
+        EditInstructionDocumentSubmitPayload,
+        EditInstructionDocumentData,
+        EditInstructionDocumentModalComponent
+      >(EditInstructionDocumentModalComponent, {
         data: { document, instructionId },
         viewContainerRef: this._viewContainerRef,
       })

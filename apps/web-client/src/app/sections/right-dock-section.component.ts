@@ -8,6 +8,8 @@ import { BoardStore } from '../stores';
     <div class="p-4 bg-gray-700 flex gap-4 justify-center items-start">
       right dock
 
+      <button (click)="onToggleSysvarsSection()">sysvars</button>
+
       <button (click)="onToggleCollectionsSection()">collections</button>
     </div>
   `,
@@ -23,6 +25,10 @@ import { BoardStore } from '../stores';
 })
 export class RightDockSectionComponent {
   private readonly _boardStore = inject(BoardStore);
+
+  onToggleSysvarsSection() {
+    this._boardStore.toggleIsSysvarsSectionOpen();
+  }
 
   onToggleCollectionsSection() {
     this._boardStore.toggleIsCollectionsSectionOpen();

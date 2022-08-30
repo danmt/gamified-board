@@ -1,15 +1,17 @@
 import { inject, Injectable } from '@angular/core';
 import {
+  deleteDoc,
   doc,
   docData,
   Firestore,
-  runTransaction,
+  setDoc,
   updateDoc,
 } from '@angular/fire/firestore';
 import { combineLatest, defer, from, map, Observable, of } from 'rxjs';
 import { Entity } from '../utils';
 import { InstructionApplicationDto } from './instruction-application-api.service';
 import { InstructionDocumentDto } from './instruction-document-api.service';
+import { InstructionSysvarDto } from './instruction-sysvar-api.service';
 import { InstructionTaskDto } from './instruction-task-api.service';
 
 export type InstructionArgumentDto = Entity<{
@@ -27,6 +29,7 @@ export type InstructionDto = Entity<{
   applications: InstructionApplicationDto[];
   tasks: InstructionTaskDto[];
   arguments: InstructionArgumentDto[];
+  sysvars: InstructionSysvarDto[];
 }>;
 
 @Injectable({ providedIn: 'root' })
@@ -43,8 +46,9 @@ export class InstructionApiService {
         applicationId: instruction['applicationRef'].id,
         documents: instruction['documents'] ?? [],
         applications: instruction['applications'] ?? [],
-        tasks: instruction['tasks'],
+        tasks: instruction['tasks'] ?? [],
         arguments: instruction['arguments'] ?? [],
+        sysvars: instruction['sysvars'] ?? [],
       }))
     );
   }
@@ -59,25 +63,13 @@ export class InstructionApiService {
     );
   }
 
-  deleteInstruction(applicationId: string, instructionId: string) {
-    return defer(() =>
-      from(
-        runTransaction(this._firestore, async (transaction) => {
-          const applicationInstructionRef = doc(
-            this._firestore,
-            `applications/${applicationId}/instructions/${instructionId}`
-          );
-          const instructionRef = doc(
-            this._firestore,
-            `instructions/${instructionId}`
-          );
-          transaction.delete(applicationInstructionRef);
-          transaction.delete(instructionRef);
-
-          return {};
-        })
-      )
+  deleteInstruction(instructionId: string) {
+    const instructionRef = doc(
+      this._firestore,
+      `instructions/${instructionId}`
     );
+
+    return defer(() => from(deleteDoc(instructionRef)));
   }
 
   createInstruction(
@@ -88,43 +80,28 @@ export class InstructionApiService {
     thumbnailUrl: string,
     args: InstructionArgumentDto[]
   ) {
+    const workspaceRef = doc(this._firestore, `workspaces/${workspaceId}`);
+    const applicationRef = doc(
+      this._firestore,
+      `applications/${applicationId}`
+    );
+    const newInstructionRef = doc(
+      this._firestore,
+      `instructions/${newInstructionId}`
+    );
+
     return defer(() =>
       from(
-        runTransaction(this._firestore, async (transaction) => {
-          const workspaceRef = doc(
-            this._firestore,
-            `workspaces/${workspaceId}`
-          );
-          const applicationRef = doc(
-            this._firestore,
-            `applications/${applicationId}`
-          );
-          const newInstructionRef = doc(
-            this._firestore,
-            `instructions/${newInstructionId}`
-          );
-          const newApplicationInstructionRef = doc(
-            this._firestore,
-            `applications/${applicationId}/instructions/${newInstructionId}`
-          );
-
-          // create the new instruction
-          transaction.set(newInstructionRef, {
-            name,
-            applicationRef,
-            workspaceRef,
-            thumbnailUrl,
-            tasksOrder: [],
-            documents: [],
-            arguments: args,
-          });
-
-          // push instruction to application instructions
-          transaction.set(newApplicationInstructionRef, {
-            instructionRef: newInstructionRef,
-          });
-
-          return {};
+        setDoc(newInstructionRef, {
+          name,
+          applicationRef,
+          workspaceRef,
+          thumbnailUrl,
+          tasks: [],
+          sysvars: [],
+          applications: [],
+          documents: [],
+          arguments: args,
         })
       )
     );
@@ -136,9 +113,14 @@ export class InstructionApiService {
     thumbnailUrl: string,
     args: InstructionArgumentDto[]
   ) {
+    const instructionRef = doc(
+      this._firestore,
+      `instructions/${instructionId}`
+    );
+
     return defer(() =>
       from(
-        updateDoc(doc(this._firestore, `instructions/${instructionId}`), {
+        updateDoc(instructionRef, {
           name,
           thumbnailUrl,
           arguments: args,

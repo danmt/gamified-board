@@ -165,12 +165,6 @@ export class InstructionsSectionComponent {
       .subscribe();
   }
 
-  onDeleteInstruction(applicationId: string, instructionId: string) {
-    this._instructionApiService
-      .deleteInstruction(applicationId, instructionId)
-      .subscribe(() => this._boardStore.setSelectedId(null));
-  }
-
   onDragStart(event: CdkDragStart) {
     this._isDragging.next(event.source.data.id);
   }

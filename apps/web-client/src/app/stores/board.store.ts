@@ -14,13 +14,15 @@ import {
   withLatestFrom,
 } from 'rxjs';
 import {
-  EditDocumentData,
-  EditDocumentModalComponent,
-  EditDocumentSubmitPayload,
   EditInstructionApplicationData,
   EditInstructionApplicationModalComponent,
-  EditTaskData,
-  EditTaskModalComponent,
+  EditInstructionDocumentData,
+  EditInstructionDocumentModalComponent,
+  EditInstructionDocumentSubmitPayload,
+  EditInstructionSysvarData,
+  EditInstructionSysvarModalComponent,
+  EditInstructionTaskData,
+  EditInstructionTaskModalComponent,
 } from '../modals';
 import { IdlStructField, PluginsService } from '../plugins';
 import {
@@ -33,8 +35,12 @@ import {
   InstructionDocumentApiService,
   InstructionDocumentDto,
   InstructionDto,
+  InstructionSysvarApiService,
+  InstructionSysvarDto,
   InstructionTaskApiService,
   InstructionTaskDto,
+  SysvarApiService,
+  SysvarDto,
   WorkspaceApiService,
   WorkspaceDto,
 } from '../services';
@@ -74,6 +80,11 @@ export type CollectionView = Entity<{
   attributes: CollectionAttributeDto[];
 }>;
 
+export type SysvarView = Entity<{
+  name: string;
+  thumbnailUrl: string;
+}>;
+
 export type InstructionDocumentView = Entity<{
   name: string;
   method: string;
@@ -99,6 +110,7 @@ export type InstructionView = Entity<{
   documents: InstructionDocumentView[];
   tasks: InstructionTaskView[];
   applications: InstructionApplicationView[];
+  sysvars: InstructionSysvarView[];
 }>;
 
 export type InstructionTaskView = Entity<{
@@ -107,14 +119,11 @@ export type InstructionTaskView = Entity<{
   instruction: InstructionView;
 }>;
 
-export interface EntryView {
-  id: string;
+export type InstructionSysvarView = Entity<{
   name: string;
-  tasks: InstructionTaskView[];
-  documents: InstructionDocumentView[];
-  arguments: InstructionArgumentDto[];
-  applications: InstructionApplicationView[];
-}
+  ownerId: string;
+  sysvar: SysvarView;
+}>;
 
 const populateInstructionApplication = (
   instructionApplication: InstructionApplicationDto,
@@ -271,7 +280,8 @@ const populateInstructionTask = (
   task: InstructionTaskDto,
   instructions: InstructionDto[],
   applications: ApplicationDto[],
-  collections: CollectionDto[]
+  collections: CollectionDto[],
+  sysvars: SysvarDto[]
 ): InstructionTaskView => {
   const instruction =
     instructions.find(({ id }) => id === task.instructionId) ?? null;
@@ -291,10 +301,32 @@ const populateInstructionTask = (
       applications,
       collections,
       instructions,
+      sysvars,
       {
         ignoreTasks: true,
       }
     ),
+  };
+};
+
+const populateInstructionSysvar = (
+  instructionSysvar: InstructionSysvarDto,
+  sysvars: SysvarView[]
+): InstructionSysvarView => {
+  const sysvar =
+    sysvars.find((sysvar) => sysvar.id === instructionSysvar.sysvarId) ?? null;
+
+  if (sysvar === null) {
+    throw new Error(
+      `Sysvar ${instructionSysvar.id} has an reference to an unknown sysvar.`
+    );
+  }
+
+  return {
+    id: instructionSysvar.id,
+    name: instructionSysvar.name,
+    ownerId: instructionSysvar.ownerId,
+    sysvar,
   };
 };
 
@@ -303,6 +335,7 @@ const populateInstruction = (
   applications: ApplicationDto[],
   collections: CollectionDto[],
   instructions: InstructionDto[],
+  sysvars: SysvarDto[],
   options?: {
     ignoreTasks: boolean;
   }
@@ -316,6 +349,9 @@ const populateInstruction = (
     arguments: instruction.arguments,
     applications: instruction.applications.map((instructionApplication) =>
       populateInstructionApplication(instructionApplication, applications)
+    ),
+    sysvars: instruction.sysvars.map((instructionSysvar) =>
+      populateInstructionSysvar(instructionSysvar, sysvars)
     ),
     documents: instruction.documents.map((document) =>
       populateInstructionDocument(
@@ -332,7 +368,8 @@ const populateInstruction = (
             instructionTask,
             instructions,
             applications,
-            collections
+            collections,
+            sysvars
           )
         ),
   };
@@ -345,15 +382,17 @@ interface ViewModel {
   applications: Option<ApplicationDto[]>;
   collections: Option<CollectionDto[]>;
   instructions: Option<InstructionDto[]>;
+  sysvars: Option<SysvarDto[]>;
   isCollectionsSectionOpen: boolean;
   isInstructionsSectionOpen: boolean;
   isApplicationsSectionOpen: boolean;
+  isSysvarsSectionOpen: boolean;
   activeId: Option<string>;
   selectedId: Option<string>;
   hoveredId: Option<string>;
   slots: Option<{
     id: string;
-    kind: 'collection' | 'instruction' | 'application';
+    kind: 'collection' | 'instruction' | 'application' | 'sysvar';
   }>[];
 }
 
@@ -364,9 +403,11 @@ const initialState: ViewModel = {
   applications: null,
   collections: null,
   instructions: null,
+  sysvars: null,
   isCollectionsSectionOpen: false,
   isInstructionsSectionOpen: false,
   isApplicationsSectionOpen: false,
+  isSysvarsSectionOpen: false,
   activeId: null,
   selectedId: null,
   hoveredId: null,
@@ -382,6 +423,7 @@ export class BoardStore
   private readonly _viewContainerRef = inject(ViewContainerRef);
   private readonly _pluginsService = inject(PluginsService);
   private readonly _workspaceApiService = inject(WorkspaceApiService);
+  private readonly _sysvarApiService = inject(SysvarApiService);
   private readonly _instructionTaskApiService = inject(
     InstructionTaskApiService
   );
@@ -390,6 +432,9 @@ export class BoardStore
   );
   private readonly _instructionApplicationApiService = inject(
     InstructionApplicationApiService
+  );
+  private readonly _instructionSysvarApiService = inject(
+    InstructionSysvarApiService
   );
 
   readonly workspaceId$ = this.select(({ workspaceId }) => workspaceId);
@@ -407,18 +452,26 @@ export class BoardStore
   readonly isApplicationsSectionOpen$ = this.select(
     ({ isApplicationsSectionOpen }) => isApplicationsSectionOpen
   );
+  readonly isSysvarsSectionOpen$ = this.select(
+    ({ isSysvarsSectionOpen }) => isSysvarsSectionOpen
+  );
   readonly collections$: Observable<Option<CollectionView[]>> = this.select(
     ({ collections }) => collections
+  );
+  readonly sysvars$: Observable<Option<SysvarView[]>> = this.select(
+    ({ sysvars }) => sysvars
   );
   readonly instructions$: Observable<Option<InstructionView[]>> = this.select(
     this.select(({ applications }) => applications),
     this.select(({ instructions }) => instructions),
     this.collections$,
-    (applications, instructions, collections) => {
+    this.sysvars$,
+    (applications, instructions, collections, sysvars) => {
       if (
         applications === null ||
         instructions === null ||
-        collections === null
+        collections === null ||
+        sysvars === null
       ) {
         return null;
       }
@@ -428,7 +481,8 @@ export class BoardStore
           instruction,
           applications,
           collections,
-          instructions
+          instructions,
+          sysvars
         )
       );
     }
@@ -473,17 +527,19 @@ export class BoardStore
     (currentApplication) => currentApplication?.instructions ?? []
   );
   readonly slots$: Observable<
-    Option<InstructionView | CollectionView | ApplicationView>[]
+    Option<InstructionView | CollectionView | ApplicationView | SysvarView>[]
   > = this.select(
     this.applications$,
     this.instructions$,
     this.collections$,
+    this.sysvars$,
     this.select(({ slots }) => slots),
-    (applications, instructions, collections, slots) => {
+    (applications, instructions, collections, sysvars, slots) => {
       if (
         instructions === null ||
         collections === null ||
         applications === null ||
+        sysvars === null ||
         slots === null
       ) {
         return [];
@@ -515,20 +571,28 @@ export class BoardStore
               null
             );
           }
+
+          case 'sysvar': {
+            return sysvars.find((sysvar) => sysvar.id === slot.id) ?? null;
+          }
         }
       });
     }
   );
-  readonly active$ = this.select(
+  readonly active$: Observable<
+    Option<ApplicationView | CollectionView | InstructionView | SysvarView>
+  > = this.select(
     this.applications$,
     this.instructions$,
     this.collections$,
+    this.sysvars$,
     this.select(({ activeId }) => activeId),
-    (applications, instructions, collections, activeId) => {
+    (applications, instructions, collections, sysvars, activeId) => {
       if (
         applications === null ||
         instructions === null ||
         collections === null ||
+        sysvars === null ||
         activeId === null
       ) {
         return null;
@@ -538,20 +602,34 @@ export class BoardStore
         applications.find((application) => application.id === activeId) ??
         instructions.find((instruction) => instruction.id === activeId) ??
         collections.find((collection) => collection.id === activeId) ??
+        sysvars.find((sysvar) => sysvar.id === activeId) ??
         null
       );
     }
   );
-  readonly selected$ = this.select(
+  readonly selected$: Observable<
+    Option<
+      | ApplicationView
+      | CollectionView
+      | InstructionView
+      | SysvarView
+      | InstructionApplicationView
+      | InstructionDocumentView
+      | InstructionTaskView
+      | InstructionSysvarView
+    >
+  > = this.select(
     this.applications$,
     this.instructions$,
     this.collections$,
+    this.sysvars$,
     this.select(({ selectedId }) => selectedId),
-    (applications, instructions, collections, selectedId) => {
+    (applications, instructions, collections, sysvars, selectedId) => {
       if (
         applications === null ||
         instructions === null ||
         collections === null ||
+        sysvars === null ||
         selectedId === null
       ) {
         return null;
@@ -561,6 +639,7 @@ export class BoardStore
         applications.find((application) => application.id === selectedId) ??
         instructions.find((instruction) => instruction.id === selectedId) ??
         collections.find((collection) => collection.id === selectedId) ??
+        sysvars.find((sysvar) => sysvar.id === selectedId) ??
         instructions
           .reduce<InstructionDocumentView[]>(
             (all, instruction) => all.concat(instruction.documents),
@@ -579,6 +658,12 @@ export class BoardStore
             []
           )
           .find((application) => application.id === selectedId) ??
+        instructions
+          .reduce<InstructionSysvarView[]>(
+            (all, instruction) => all.concat(instruction.sysvars),
+            []
+          )
+          .find((sysvar) => sysvar.id === selectedId) ??
         null
       );
     }
@@ -602,7 +687,7 @@ export class BoardStore
     index: number;
     data: Option<{
       id: string;
-      kind: 'instruction' | 'collection' | 'application';
+      kind: 'instruction' | 'collection' | 'application' | 'sysvar';
     }>;
   }>((state, { index, data }) => {
     return {
@@ -646,6 +731,7 @@ export class BoardStore
   readonly toggleIsCollectionsSectionOpen = this.updater<void>((state) => ({
     ...state,
     isCollectionsSectionOpen: !state.isCollectionsSectionOpen,
+    isSysvarsSectionOpen: false,
   }));
 
   readonly toggleIsInstructionsSectionOpen = this.updater<void>((state) => ({
@@ -660,17 +746,25 @@ export class BoardStore
     isInstructionsSectionOpen: false,
   }));
 
+  readonly toggleIsSysvarsSectionOpen = this.updater<void>((state) => ({
+    ...state,
+    isSysvarsSectionOpen: !state.isSysvarsSectionOpen,
+    isCollectionsSectionOpen: false,
+  }));
+
   readonly closeActiveOrSelected = this.updater<void>((state) => {
     if (
       state.isCollectionsSectionOpen ||
       state.isInstructionsSectionOpen ||
-      state.isApplicationsSectionOpen
+      state.isApplicationsSectionOpen ||
+      state.isSysvarsSectionOpen
     ) {
       return {
         ...state,
         isCollectionsSectionOpen: false,
         isInstructionsSectionOpen: false,
         isApplicationsSectionOpen: false,
+        isSysvarsSectionOpen: false,
       };
     } else if (state.activeId !== null) {
       return {
@@ -857,6 +951,7 @@ export class BoardStore
                               documents: [],
                               tasks: [],
                               applications: [],
+                              sysvars: [],
                               arguments: args.map((arg) => {
                                 if (typeof arg.type === 'string') {
                                   return {
@@ -921,6 +1016,17 @@ export class BoardStore
     })
   );
 
+  private readonly _loadSysvars$ = this.effect<void>(
+    switchMap(() =>
+      this._sysvarApiService.getAllSysvars().pipe(
+        tapResponse(
+          (sysvars) => this.patchState({ sysvars }),
+          (error) => this._handleError(error)
+        )
+      )
+    )
+  );
+
   readonly useActive = this.effect<string>(
     switchMap((instructionId) => {
       return of(instructionId).pipe(
@@ -959,9 +1065,11 @@ export class BoardStore
           } else if ('documents' in active) {
             // instruction
             return this._dialog
-              .open<EditTaskData, Option<EditTaskData>, EditTaskModalComponent>(
-                EditTaskModalComponent
-              )
+              .open<
+                EditInstructionTaskData,
+                Option<EditInstructionTaskData>,
+                EditInstructionTaskModalComponent
+              >(EditInstructionTaskModalComponent)
               .closed.pipe(
                 concatMap((taskData) => {
                   if (taskData === undefined) {
@@ -976,14 +1084,14 @@ export class BoardStore
                   );
                 })
               );
-          } else {
+          } else if ('attributes' in active) {
             // collection
             return this._dialog
               .open<
-                EditDocumentSubmitPayload,
-                EditDocumentData,
-                EditDocumentModalComponent
-              >(EditDocumentModalComponent, {
+                EditInstructionDocumentSubmitPayload,
+                EditInstructionDocumentData,
+                EditInstructionDocumentModalComponent
+              >(EditInstructionDocumentModalComponent, {
                 data: {
                   document: null,
                   instructionId,
@@ -1008,6 +1116,28 @@ export class BoardStore
                   );
                 })
               );
+          } else {
+            // sysvar
+            return this._dialog
+              .open<
+                EditInstructionSysvarData,
+                EditInstructionSysvarData,
+                EditInstructionSysvarModalComponent
+              >(EditInstructionSysvarModalComponent)
+              .closed.pipe(
+                concatMap((documentData) => {
+                  if (documentData === undefined) {
+                    return EMPTY;
+                  }
+
+                  return this._instructionSysvarApiService.createInstructionSysvar(
+                    instructionId,
+                    documentData.id,
+                    documentData.name,
+                    active.id
+                  );
+                })
+              );
           }
         })
       );
@@ -1023,6 +1153,7 @@ export class BoardStore
     this._loadApplications$(this.workspaceId$);
     this._loadCollections$(this.workspaceId$);
     this._loadInstructions$(this.workspaceId$);
+    this._loadSysvars$();
   }
 
   private _handleError(error: unknown) {

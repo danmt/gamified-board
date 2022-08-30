@@ -21,9 +21,12 @@ import {
   InstructionDocumentSectionComponent,
   InstructionSectionComponent,
   InstructionsSectionComponent,
+  InstructionSysvarSectionComponent,
   InstructionTaskSectionComponent,
   LeftDockSectionComponent,
   RightDockSectionComponent,
+  SysvarSectionComponent,
+  SysvarsSectionComponent,
 } from '../sections';
 import { InstructionApplicationSectionComponent } from '../sections/instruction-application-section.component';
 import { BoardStore } from '../stores';
@@ -56,6 +59,10 @@ import { BoardStore } from '../stores';
       class="fixed bottom-0 -translate-x-1/2 left-1/2"
     ></pg-instruction-application-section>
 
+    <pg-instruction-sysvar-section
+      class="fixed bottom-0 -translate-x-1/2 left-1/2"
+    ></pg-instruction-sysvar-section>
+
     <pg-collection-section
       class="fixed bottom-0 -translate-x-1/2 left-1/2"
     ></pg-collection-section>
@@ -68,11 +75,21 @@ import { BoardStore } from '../stores';
       class="fixed bottom-0 -translate-x-1/2 left-1/2"
     ></pg-application-section>
 
+    <pg-sysvar-section
+      class="fixed bottom-0 -translate-x-1/2 left-1/2"
+    ></pg-sysvar-section>
+
     <pg-collections-section
       *ngIf="isCollectionsSectionOpen$ | ngrxPush"
       class="fixed right-0 top-24"
       style="width: 300px; height: 500px"
     ></pg-collections-section>
+
+    <pg-sysvars-section
+      *ngIf="isSysvarsSectionOpen$ | ngrxPush"
+      class="fixed right-0 top-24"
+      style="width: 300px; height: 500px"
+    ></pg-sysvars-section>
 
     <pg-instructions-section
       *ngIf="isInstructionsSectionOpen$ | ngrxPush"
@@ -103,8 +120,11 @@ import { BoardStore } from '../stores';
     InstructionDocumentSectionComponent,
     InstructionTaskSectionComponent,
     InstructionApplicationSectionComponent,
+    InstructionSysvarSectionComponent,
     CollectionSectionComponent,
     InstructionSectionComponent,
+    SysvarsSectionComponent,
+    SysvarSectionComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [provideComponentStore(BoardStore)],
@@ -120,6 +140,7 @@ export class BoardPageComponent implements OnInit {
     this._boardStore.isInstructionsSectionOpen$;
   readonly isApplicationsSectionOpen$ =
     this._boardStore.isApplicationsSectionOpen$;
+  readonly isSysvarsSectionOpen$ = this._boardStore.isSysvarsSectionOpen$;
 
   @HostBinding('class') class = 'block relative min-h-screen min-w-screen';
 

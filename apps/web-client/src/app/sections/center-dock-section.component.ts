@@ -139,7 +139,10 @@ export class CenterDockSectionComponent {
     event: CdkDragDrop<
       unknown,
       unknown,
-      { id: string; kind: 'collection' | 'instruction' | 'application' }
+      {
+        id: string;
+        kind: 'collection' | 'instruction' | 'application' | 'sysvar';
+      }
     >
   ) {
     if (!event.isPointerOverContainer) {
@@ -148,7 +151,8 @@ export class CenterDockSectionComponent {
     } else if (
       event.previousContainer.id.includes('collections') ||
       event.previousContainer.id.includes('instructions') ||
-      event.previousContainer.id.includes('applications')
+      event.previousContainer.id.includes('applications') ||
+      event.previousContainer.id.includes('sysvars')
     ) {
       const [, newIndex] = event.container.id.split('slot-');
       this._boardStore.setSlot({
