@@ -27,11 +27,11 @@ import {
   ApplicationDto,
   CollectionAttributeDto,
   CollectionDto,
-  DocumentApiService,
-  DocumentDto,
   InstructionApplicationApiService,
   InstructionApplicationDto,
   InstructionArgumentDto,
+  InstructionDocumentApiService,
+  InstructionDocumentDto,
   InstructionDto,
   InstructionTaskApiService,
   InstructionTaskDto,
@@ -47,7 +47,7 @@ export type ArgumentReferenceView = {
 
 export type DocumentReferenceView = {
   kind: 'document';
-  document: DocumentDto;
+  document: InstructionDocumentDto;
   attribute: CollectionAttributeDto;
 };
 
@@ -74,7 +74,7 @@ export type CollectionView = Entity<{
   attributes: CollectionAttributeDto[];
 }>;
 
-export type DocumentView = Entity<{
+export type InstructionDocumentView = Entity<{
   name: string;
   method: string;
   ownerId: string;
@@ -96,12 +96,12 @@ export type InstructionView = Entity<{
   applicationId: string;
   workspaceId: string;
   arguments: InstructionArgumentDto[];
-  documents: DocumentView[];
-  tasks: TaskView[];
+  documents: InstructionDocumentView[];
+  tasks: InstructionTaskView[];
   applications: InstructionApplicationView[];
 }>;
 
-export type TaskView = Entity<{
+export type InstructionTaskView = Entity<{
   name: string;
   ownerId: string;
   instruction: InstructionView;
@@ -110,8 +110,8 @@ export type TaskView = Entity<{
 export interface EntryView {
   id: string;
   name: string;
-  tasks: TaskView[];
-  documents: DocumentView[];
+  tasks: InstructionTaskView[];
+  documents: InstructionDocumentView[];
   arguments: InstructionArgumentDto[];
   applications: InstructionApplicationView[];
 }
@@ -140,11 +140,11 @@ const populateInstructionApplication = (
 };
 
 const populateInstructionDocument = (
-  document: DocumentDto,
-  documents: DocumentDto[],
+  document: InstructionDocumentDto,
+  documents: InstructionDocumentDto[],
   args: InstructionArgumentDto[],
   collections: CollectionDto[]
-): DocumentView => {
+): InstructionDocumentView => {
   const collection =
     collections.find((collection) => collection.id === document.collectionId) ??
     null;
@@ -272,9 +272,7 @@ const populateInstructionTask = (
   instructions: InstructionDto[],
   applications: ApplicationDto[],
   collections: CollectionDto[]
-): TaskView => {
-  console.log({ task, instructions, applications, collections });
-
+): InstructionTaskView => {
   const instruction =
     instructions.find(({ id }) => id === task.instructionId) ?? null;
 
@@ -347,18 +345,11 @@ interface ViewModel {
   applications: Option<ApplicationDto[]>;
   collections: Option<CollectionDto[]>;
   instructions: Option<InstructionDto[]>;
-  selectedDocumentId: Option<string>;
-  selectedTaskId: Option<string>;
-  selectedCollectionId: Option<string>;
-  selectedInstructionId: Option<string>;
-  selectedApplicationId: Option<string>;
-  activeCollectionId: Option<string>;
-  activeInstructionId: Option<string>;
-  activeApplicationId: Option<string>;
   isCollectionsSectionOpen: boolean;
   isInstructionsSectionOpen: boolean;
   isApplicationsSectionOpen: boolean;
   activeId: Option<string>;
+  selectedId: Option<string>;
   slots: Option<{
     id: string;
     kind: 'collection' | 'instruction' | 'application';
@@ -372,18 +363,11 @@ const initialState: ViewModel = {
   applications: null,
   collections: null,
   instructions: null,
-  selectedDocumentId: null,
-  selectedTaskId: null,
-  selectedApplicationId: null,
-  selectedCollectionId: null,
-  selectedInstructionId: null,
-  activeApplicationId: null,
-  activeCollectionId: null,
-  activeInstructionId: null,
   isCollectionsSectionOpen: false,
   isInstructionsSectionOpen: false,
   isApplicationsSectionOpen: false,
   activeId: null,
+  selectedId: null,
   slots: [null, null, null, null, null, null, null, null, null, null],
 };
 
@@ -399,7 +383,9 @@ export class BoardStore
   private readonly _instructionTaskApiService = inject(
     InstructionTaskApiService
   );
-  private readonly _documentApiService = inject(DocumentApiService);
+  private readonly _instructionDocumentApiService = inject(
+    InstructionDocumentApiService
+  );
   private readonly _instructionApplicationApiService = inject(
     InstructionApplicationApiService
   );
@@ -699,53 +685,6 @@ export class BoardStore
       });
     }
   );
-  readonly selectedInstruction$: Observable<Option<InstructionView>> =
-    this.select(
-      this.currentApplication$,
-      this.select(({ selectedInstructionId }) => selectedInstructionId),
-      (currentApplication, selectedInstructionId) => {
-        if (currentApplication === null || selectedInstructionId === null) {
-          return null;
-        }
-
-        return (
-          currentApplication.instructions?.find(
-            (instruction) => instruction.id === selectedInstructionId
-          ) ?? null
-        );
-      }
-    );
-  readonly selectedCollection$: Observable<Option<CollectionView>> =
-    this.select(
-      this.collections$,
-      this.select(({ selectedCollectionId }) => selectedCollectionId),
-      (collections, selectedCollectionId) => {
-        if (collections === null || selectedCollectionId === null) {
-          return null;
-        }
-
-        return (
-          collections?.find(
-            (collection) => collection.id === selectedCollectionId
-          ) ?? null
-        );
-      }
-    );
-  readonly selectedApplication$ = this.select(
-    this.applications$,
-    this.select(({ selectedApplicationId }) => selectedApplicationId),
-    (applications, selectedApplicationId) => {
-      if (applications === null || selectedApplicationId === null) {
-        return null;
-      }
-
-      return (
-        applications?.find(
-          (application) => application.id === selectedApplicationId
-        ) ?? null
-      );
-    }
-  );
   readonly active$ = this.select(
     this.applications$,
     this.instructions$,
@@ -769,38 +708,43 @@ export class BoardStore
       );
     }
   );
-  readonly selectedTask$ = this.select(
-    this.currentApplicationInstructions$,
-    this.select(({ selectedTaskId }) => selectedTaskId),
-    (currentApplicationInstructions, selectedTaskId) => {
-      if (currentApplicationInstructions === null || selectedTaskId === null) {
-        return null;
-      }
-
-      return (
-        currentApplicationInstructions
-          .find(({ tasks }) => tasks.some((task) => task.id === selectedTaskId))
-          ?.tasks.find((task) => task.id === selectedTaskId) ?? null
-      );
-    }
-  );
-  readonly selectedDocument$ = this.select(
-    this.currentApplicationInstructions$,
-    this.select(({ selectedDocumentId }) => selectedDocumentId),
-    (currentApplicationInstructions, selectedDocumentId) => {
+  readonly selected$ = this.select(
+    this.applications$,
+    this.instructions$,
+    this.collections$,
+    this.select(({ selectedId }) => selectedId),
+    (applications, instructions, collections, selectedId) => {
       if (
-        currentApplicationInstructions === null ||
-        selectedDocumentId === null
+        applications === null ||
+        instructions === null ||
+        collections === null ||
+        selectedId === null
       ) {
         return null;
       }
 
       return (
-        currentApplicationInstructions
-          .find(({ documents }) =>
-            documents.some((document) => document.id === selectedDocumentId)
+        applications.find((application) => application.id === selectedId) ??
+        instructions.find((instruction) => instruction.id === selectedId) ??
+        collections.find((collection) => collection.id === selectedId) ??
+        instructions
+          .reduce<InstructionDocumentView[]>(
+            (all, instruction) => all.concat(instruction.documents),
+            []
           )
-          ?.documents.find((document) => document.id === selectedDocumentId) ??
+          .find((document) => document.id === selectedId) ??
+        instructions
+          .reduce<InstructionTaskView[]>(
+            (all, instruction) => all.concat(instruction.tasks),
+            []
+          )
+          .find((task) => task.id === selectedId) ??
+        instructions
+          .reduce<InstructionApplicationView[]>(
+            (all, instruction) => all.concat(instruction.applications),
+            []
+          )
+          .find((application) => application.id === selectedId) ??
         null
       );
     }
@@ -817,43 +761,6 @@ export class BoardStore
     (state, currentApplicationId) => ({
       ...state,
       currentApplicationId,
-    })
-  );
-
-  readonly setSelectedTaskId = this.updater<Option<string>>(
-    (state, selectedTaskId) => ({
-      ...state,
-      selectedTaskId,
-      selectedDocumentId: null,
-    })
-  );
-
-  readonly setSelectedDocumentId = this.updater<Option<string>>(
-    (state, selectedDocumentId) => ({
-      ...state,
-      selectedDocumentId,
-      selectedTaskId: null,
-    })
-  );
-
-  readonly setSelectedCollectionId = this.updater<Option<string>>(
-    (state, selectedCollectionId) => ({
-      ...state,
-      selectedCollectionId,
-    })
-  );
-
-  readonly setSelectedInstructionId = this.updater<Option<string>>(
-    (state, selectedInstructionId) => ({
-      ...state,
-      selectedInstructionId,
-    })
-  );
-
-  readonly setSelectedApplicationId = this.updater<Option<string>>(
-    (state, selectedApplicationId) => ({
-      ...state,
-      selectedApplicationId,
     })
   );
 
@@ -890,6 +797,13 @@ export class BoardStore
     activeId,
   }));
 
+  readonly setSelectedId = this.updater<Option<string>>(
+    (state, selectedId) => ({
+      ...state,
+      selectedId,
+    })
+  );
+
   readonly toggleIsCollectionsSectionOpen = this.updater<void>((state) => ({
     ...state,
     isCollectionsSectionOpen: !state.isCollectionsSectionOpen,
@@ -924,15 +838,10 @@ export class BoardStore
         ...state,
         activeId: null,
       };
-    } else if (state.selectedDocumentId !== null) {
+    } else if (state.selectedId !== null) {
       return {
         ...state,
-        selectedDocumentId: null,
-      };
-    } else if (state.selectedTaskId !== null) {
-      return {
-        ...state,
-        selectedTaskId: null,
+        selectedId: null,
       };
     } else {
       return state;
@@ -1002,45 +911,6 @@ export class BoardStore
             (error) => this._handleError(error)
           )
         );
-    })
-  );
-
-  readonly deleteSelected = this.effect<void>(
-    switchMap(() => {
-      return of(null).pipe(
-        withLatestFrom(this.selectedTask$, this.selectedDocument$),
-        concatMap(([, selectedTask, selectedDocument]) => {
-          if (selectedTask !== null) {
-            if (confirm('Are you sure? This action cannot be reverted.')) {
-              return this._instructionTaskApiService
-                .deleteInstructionTask(selectedTask.ownerId, selectedTask.id)
-                .pipe(
-                  tapResponse(
-                    () => this.patchState({ selectedTaskId: null }),
-                    (error) => this._handleError(error)
-                  )
-                );
-            } else {
-              return EMPTY;
-            }
-          } else if (selectedDocument !== null) {
-            if (confirm('Are you sure? This action cannot be reverted.')) {
-              return this._documentApiService
-                .deleteDocument(selectedDocument.ownerId, selectedDocument.id)
-                .pipe(
-                  tapResponse(
-                    () => this.patchState({ selectedDocumentId: null }),
-                    (error) => this._handleError(error)
-                  )
-                );
-            } else {
-              return EMPTY;
-            }
-          } else {
-            return EMPTY;
-          }
-        })
-      );
     })
   );
 
@@ -1119,7 +989,7 @@ export class BoardStore
                     return EMPTY;
                   }
 
-                  return this._documentApiService.createDocument(
+                  return this._instructionDocumentApiService.createInstructionDocument(
                     instructionId,
                     documentData.id,
                     documentData.name,

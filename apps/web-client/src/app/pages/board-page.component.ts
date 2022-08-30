@@ -1,4 +1,4 @@
-import { Dialog, DialogModule } from '@angular/cdk/dialog';
+import { DialogModule } from '@angular/cdk/dialog';
 import { moveItemInArray } from '@angular/cdk/drag-drop';
 import { CommonModule } from '@angular/common';
 import {
@@ -7,43 +7,33 @@ import {
   HostBinding,
   inject,
   OnInit,
-  ViewContainerRef,
 } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { LetModule, PushModule } from '@ngrx/component';
 import { provideComponentStore } from '@ngrx/component-store';
-import { concatMap, EMPTY, map } from 'rxjs';
-import {
-  HotKey,
-  MainDockComponent,
-  RowComponent,
-  SelectedDocumentDockComponent,
-  SelectedTaskDockComponent,
-} from '../components';
+import { map } from 'rxjs';
+import { HotKey, MainDockComponent, RowComponent } from '../components';
 import {
   CursorScrollDirective,
   FollowCursorDirective,
   KeyboardListenerDirective,
 } from '../directives';
-import {
-  EditDocumentData,
-  EditDocumentModalComponent,
-  EditDocumentSubmitPayload,
-  EditTaskData,
-  EditTaskModalComponent,
-} from '../modals';
 import { BoardItemDropListsPipe } from '../pipes';
 import {
+  ApplicationSectionComponent,
   ApplicationsSectionComponent,
+  CollectionSectionComponent,
   CollectionsSectionComponent,
+  InstructionDocumentSectionComponent,
+  InstructionSectionComponent,
   InstructionsSectionComponent,
+  InstructionTaskSectionComponent,
 } from '../sections';
 import {
-  DocumentApiService,
-  InstructionApiService,
+  InstructionDocumentApiService,
   InstructionTaskApiService,
 } from '../services';
-import { BoardStore, DocumentView, EntryView, TaskView } from '../stores';
+import { BoardStore, EntryView } from '../stores';
 import { Entity, Option } from '../utils';
 
 @Component({
@@ -106,10 +96,7 @@ import { Entity, Option } from '../utils';
     </div>
 
     <pg-main-dock
-      *ngIf="
-        (selectedTask$ | ngrxPush) === null &&
-        (selectedDocument$ | ngrxPush) === null
-      "
+      *ngIf="(selected$ | ngrxPush) === null"
       class="fixed bottom-0 z-10 -translate-x-1/2 left-1/2"
       [slots]="(slots$ | ngrxPush) ?? null"
       [hotkeys]="hotkeys"
@@ -120,29 +107,25 @@ import { Entity, Option } from '../utils';
       (updateSlot)="onUpdateSlot($event.index, $event.data)"
     ></pg-main-dock>
 
-    <pg-selected-document-dock
-      *ngIf="selectedDocument$ | ngrxPush as selectedDocument"
-      [selected]="selectedDocument"
+    <pg-instruction-document-section
       class="fixed bottom-0 z-10 -translate-x-1/2 left-1/2"
-      (updateDocument)="
-        onUpdateDocument(
-          selectedDocument.ownerId,
-          selectedDocument.id,
-          selectedDocument
-        )
-      "
-      (clearSelectedDocument)="onSelectDocument(null)"
-    ></pg-selected-document-dock>
+    ></pg-instruction-document-section>
 
-    <pg-selected-task-dock
-      *ngIf="selectedTask$ | ngrxPush as selectedTask"
-      [selected]="selectedTask"
+    <pg-instruction-task-section
       class="fixed bottom-0 z-10 -translate-x-1/2 left-1/2"
-      (updateTask)="
-        onUpdateTask(selectedTask.ownerId, selectedTask.id, selectedTask)
-      "
-      (clearSelectedTask)="onSelectTask(null)"
-    ></pg-selected-task-dock>
+    ></pg-instruction-task-section>
+
+    <pg-collection-section
+      class="fixed bottom-0 z-10 -translate-x-1/2 left-1/2"
+    ></pg-collection-section>
+
+    <pg-instruction-section
+      class="fixed bottom-0 z-10 -translate-x-1/2 left-1/2"
+    ></pg-instruction-section>
+
+    <pg-application-section
+      class="fixed bottom-0 z-10 -translate-x-1/2 left-1/2"
+    ></pg-application-section>
 
     <pg-collections-section
       *ngIf="isCollectionsSectionOpen$ | ngrxPush"
@@ -201,8 +184,6 @@ import { Entity, Option } from '../utils';
     RouterModule,
     DialogModule,
     MainDockComponent,
-    SelectedTaskDockComponent,
-    SelectedDocumentDockComponent,
     RowComponent,
     PushModule,
     LetModule,
@@ -213,20 +194,24 @@ import { Entity, Option } from '../utils';
     CollectionsSectionComponent,
     InstructionsSectionComponent,
     ApplicationsSectionComponent,
+    ApplicationSectionComponent,
+    InstructionDocumentSectionComponent,
+    InstructionTaskSectionComponent,
+    CollectionSectionComponent,
+    InstructionSectionComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [provideComponentStore(BoardStore)],
 })
 export class BoardPageComponent implements OnInit {
-  private readonly _dialog = inject(Dialog);
   private readonly _activatedRoute = inject(ActivatedRoute);
   private readonly _instructionTaskApiService = inject(
     InstructionTaskApiService
   );
-  private readonly _documentApiService = inject(DocumentApiService);
-  private readonly _instructionApiService = inject(InstructionApiService);
+  private readonly _instructionDocumentApiService = inject(
+    InstructionDocumentApiService
+  );
   private readonly _boardStore = inject(BoardStore);
-  private readonly _viewContainerRef = inject(ViewContainerRef);
 
   readonly workspaceId$ = this._activatedRoute.paramMap.pipe(
     map((paramMap) => paramMap.get('workspaceId'))
@@ -236,8 +221,7 @@ export class BoardPageComponent implements OnInit {
   );
   readonly currentApplicationInstructions$ =
     this._boardStore.currentApplicationInstructions$;
-  readonly selectedTask$ = this._boardStore.selectedTask$;
-  readonly selectedDocument$ = this._boardStore.selectedDocument$;
+  readonly selected$ = this._boardStore.selected$;
   readonly slots$ = this._boardStore.slots$;
   readonly active$ = this._boardStore.active$;
   readonly isCollectionsSectionOpen$ =
@@ -336,8 +320,8 @@ export class BoardPageComponent implements OnInit {
 
     moveItemInArray(documentsOrder, previousIndex, newIndex);
 
-    this._documentApiService
-      .updateDocumentsOrder(instructionId, documentsOrder)
+    this._instructionDocumentApiService
+      .updateInstructionDocumentsOrder(instructionId, documentsOrder)
       .subscribe();
   }
 
@@ -347,8 +331,8 @@ export class BoardPageComponent implements OnInit {
     documentId: string,
     newIndex: number
   ) {
-    this._documentApiService
-      .transferDocument(
+    this._instructionDocumentApiService
+      .transferInstructionDocument(
         previousInstructionId,
         newInstructionId,
         documentId,
@@ -397,80 +381,15 @@ export class BoardPageComponent implements OnInit {
   }
 
   onSelectDocument(documentId: Option<string>) {
-    this._boardStore.setSelectedDocumentId(documentId);
-  }
-
-  onUpdateDocument(
-    instructionId: string,
-    documentId: string,
-    document: DocumentView
-  ) {
-    this._dialog
-      .open<
-        EditDocumentSubmitPayload,
-        EditDocumentData,
-        EditDocumentModalComponent
-      >(EditDocumentModalComponent, {
-        data: { document, instructionId },
-        viewContainerRef: this._viewContainerRef,
-      })
-      .closed.pipe(
-        concatMap((documentData) => {
-          if (documentData === undefined) {
-            return EMPTY;
-          }
-
-          this._boardStore.setActiveId(null);
-
-          return this._documentApiService.updateDocument(
-            instructionId,
-            documentId,
-            documentData.name,
-            documentData.method,
-            documentData.seeds,
-            documentData.bump,
-            documentData.payer
-          );
-        })
-      )
-      .subscribe();
+    this._boardStore.setSelectedId(documentId);
   }
 
   onSelectTask(taskId: Option<string>) {
-    this._boardStore.setSelectedTaskId(taskId);
-  }
-
-  onUpdateTask(instructionId: string, taskId: string, task: TaskView) {
-    this._dialog
-      .open<EditTaskData, Option<EditTaskData>, EditTaskModalComponent>(
-        EditTaskModalComponent,
-        { data: task }
-      )
-      .closed.pipe(
-        concatMap((taskData) => {
-          if (taskData === undefined) {
-            return EMPTY;
-          }
-
-          this._boardStore.setActiveId(null);
-
-          return this._instructionTaskApiService.updateInstructionTask(
-            instructionId,
-            taskId,
-            taskData.name
-          );
-        })
-      )
-      .subscribe();
+    this._boardStore.setSelectedId(taskId);
   }
 
   onKeyDown(event: KeyboardEvent) {
     switch (event.key) {
-      case 'Delete': {
-        this._boardStore.deleteSelected();
-
-        break;
-      }
       case 'Escape': {
         this._boardStore.closeActiveOrSelected();
 

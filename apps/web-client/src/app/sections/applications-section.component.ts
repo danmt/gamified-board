@@ -78,25 +78,6 @@ import { Option } from '../utils';
           </div>
         </div>
       </div>
-
-      <div
-        class="w-full h-32 p-4 bg-black bg-opacity-25 overflow-auto"
-        *ngrxLet="selectedApplication$; let application"
-      >
-        {{ application?.name }}
-
-        <a
-          class="underline"
-          *ngIf="
-            application !== null &&
-            application.workspaceId === (workspaceId$ | ngrxPush) &&
-            application.id !== (currentApplicationId$ | ngrxPush)
-          "
-          [routerLink]="['/board', application.workspaceId, application.id]"
-        >
-          view
-        </a>
-      </div>
     </div>
   `,
   standalone: true,
@@ -114,7 +95,6 @@ export class ApplicationsSectionComponent {
 
   private readonly _isDragging = new BehaviorSubject<Option<string>>(null);
   readonly isDragging$ = this._isDragging.asObservable();
-  readonly selectedApplication$ = this._boardStore.selectedApplication$;
   readonly workspaceId$ = this._boardStore.workspaceId$;
   readonly currentApplicationId$ = this._boardStore.currentApplicationId$;
   readonly applications$ = this._boardStore.applications$;
@@ -124,7 +104,7 @@ export class ApplicationsSectionComponent {
   }
 
   onSelectApplication(applicationId: string) {
-    this._boardStore.setSelectedApplicationId(applicationId);
+    this._boardStore.setSelectedId(applicationId);
   }
 
   onDragStart(event: CdkDragStart) {

@@ -104,75 +104,6 @@ import { Option } from '../utils';
           </div>
         </div>
       </div>
-
-      <div
-        class="w-full h-32 p-4 bg-black bg-opacity-25 overflow-auto"
-        *ngrxLet="selectedInstruction$; let instruction"
-      >
-        {{ instruction?.name }}
-
-        <div>
-          <p>Instruction arguments</p>
-          <div class="flex gap-2 flex-wrap">
-            <div
-              *ngFor="let arg of instruction?.arguments"
-              class="border-2 border-black p-1 text-xs"
-            >
-              {{ arg.name }} - {{ arg.type }}
-            </div>
-          </div>
-        </div>
-
-        <button
-          *ngIf="
-            instruction !== null &&
-            instruction.applicationId !== null &&
-            instruction.applicationId === (currentApplicationId$ | ngrxPush)
-          "
-          pgEditInstructionModal
-          [instruction]="instruction"
-          (updateInstruction)="
-            onUpdateInstruction(
-              instruction.id,
-              $event.name,
-              $event.thumbnailUrl,
-              $event.arguments
-            )
-          "
-        >
-          edit
-        </button>
-
-        <button
-          *ngIf="
-            instruction !== null &&
-            instruction.applicationId !== null &&
-            instruction.applicationId === (currentApplicationId$ | ngrxPush)
-          "
-          class="rounded-full bg-slate-400 w-8 h-8"
-          (click)="
-            onDeleteInstruction(instruction.applicationId, instruction.id)
-          "
-        >
-          x
-        </button>
-
-        <a
-          class="underline"
-          *ngIf="
-            instruction !== null &&
-            instruction.workspaceId === (workspaceId$ | ngrxPush) &&
-            instruction.applicationId !== (currentApplicationId$ | ngrxPush)
-          "
-          [routerLink]="[
-            '/board',
-            instruction.workspaceId,
-            instruction.applicationId
-          ]"
-        >
-          view
-        </a>
-      </div>
     </div>
   `,
   standalone: true,
@@ -191,7 +122,6 @@ export class InstructionsSectionComponent {
 
   private readonly _isDragging = new BehaviorSubject<Option<string>>(null);
   readonly isDragging$ = this._isDragging.asObservable();
-  readonly selectedInstruction$ = this._boardStore.selectedInstruction$;
   readonly workspaceId$ = this._boardStore.workspaceId$;
   readonly currentApplicationId$ = this._boardStore.currentApplicationId$;
   readonly instructions$ = this._boardStore.instructions$;
@@ -201,7 +131,7 @@ export class InstructionsSectionComponent {
   }
 
   onSelectInstruction(instructionId: string) {
-    this._boardStore.setSelectedInstructionId(instructionId);
+    this._boardStore.setSelectedId(instructionId);
   }
 
   onCreateInstruction(
@@ -238,7 +168,7 @@ export class InstructionsSectionComponent {
   onDeleteInstruction(applicationId: string, instructionId: string) {
     this._instructionApiService
       .deleteInstruction(applicationId, instructionId)
-      .subscribe(() => this._boardStore.setSelectedInstructionId(null));
+      .subscribe(() => this._boardStore.setSelectedId(null));
   }
 
   onDragStart(event: CdkDragStart) {

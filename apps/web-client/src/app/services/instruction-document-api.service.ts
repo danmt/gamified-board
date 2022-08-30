@@ -21,7 +21,7 @@ export type Value = {
   value: string;
 };
 
-export type DocumentDto = Entity<{
+export type InstructionDocumentDto = Entity<{
   name: string;
   method: string;
   ownerId: string;
@@ -32,10 +32,10 @@ export type DocumentDto = Entity<{
 }>;
 
 @Injectable({ providedIn: 'root' })
-export class DocumentApiService {
+export class InstructionDocumentApiService {
   private readonly _firestore = inject(Firestore);
 
-  transferDocument(
+  transferInstructionDocument(
     previousInstructionId: string,
     newInstructionId: string,
     documentId: string,
@@ -59,31 +59,31 @@ export class DocumentApiService {
           );
           const newInstruction = await transaction.get(newInstructionRef);
 
-          const previousInstructionDocuments = (previousInstruction.data()?.[
+          const previousInstructionInstructionDocuments =
+            (previousInstruction.data()?.['documents'] ??
+              []) as InstructionDocumentDto[];
+          const newInstructionInstructionDocuments = (newInstruction.data()?.[
             'documents'
-          ] ?? []) as DocumentDto[];
-          const newInstructionDocuments = (newInstruction.data()?.[
-            'documents'
-          ] ?? []) as DocumentDto[];
+          ] ?? []) as InstructionDocumentDto[];
           const document =
-            previousInstructionDocuments.find(
+            previousInstructionInstructionDocuments.find(
               (document) => document.id === documentId
             ) ?? null;
 
           if (document === null) {
-            throw new Error('Document not found');
+            throw new Error('InstructionDocument not found');
           }
 
           transaction.update(previousInstructionRef, {
-            documents: previousInstructionDocuments.filter(
-              (document: DocumentDto) => document.id !== documentId
+            documents: previousInstructionInstructionDocuments.filter(
+              (document: InstructionDocumentDto) => document.id !== documentId
             ),
           });
           transaction.update(newInstructionRef, {
             documents: [
-              ...newInstructionDocuments.slice(0, newIndex),
+              ...newInstructionInstructionDocuments.slice(0, newIndex),
               document,
-              ...newInstructionDocuments.slice(newIndex + 1),
+              ...newInstructionInstructionDocuments.slice(newIndex + 1),
             ],
           });
 
@@ -93,7 +93,7 @@ export class DocumentApiService {
     );
   }
 
-  deleteDocument(instructionId: string, documentId: string) {
+  deleteInstructionDocument(instructionId: string, documentId: string) {
     return defer(() =>
       from(
         runTransaction(this._firestore, async (transaction) => {
@@ -108,7 +108,7 @@ export class DocumentApiService {
             documents: instruction
               .data()
               ?.['documents'].filter(
-                (document: DocumentDto) => document.id !== documentId
+                (document: InstructionDocumentDto) => document.id !== documentId
               ),
           });
 
@@ -118,7 +118,7 @@ export class DocumentApiService {
     );
   }
 
-  updateDocument(
+  updateInstructionDocument(
     instructionId: string,
     documentId: string,
     name: string,
@@ -137,13 +137,13 @@ export class DocumentApiService {
 
           const instruction = await transaction.get(instructionRef);
           const documents = (instruction.data()?.['documents'] ??
-            []) as DocumentDto[];
+            []) as InstructionDocumentDto[];
           const documentIndex = documents.findIndex(
             (document) => document.id === documentId
           );
 
           if (documentIndex === -1) {
-            throw new Error('Document not found');
+            throw new Error('InstructionDocument not found');
           }
 
           transaction.update(instructionRef, {
@@ -167,9 +167,9 @@ export class DocumentApiService {
     );
   }
 
-  createDocument(
+  createInstructionDocument(
     ownerId: string,
-    newDocumentId: string,
+    newInstructionDocumentId: string,
     name: string,
     method: string,
     collectionId: string,
@@ -194,7 +194,7 @@ export class DocumentApiService {
                 ? instructionData['documents']
                 : []),
               {
-                id: newDocumentId,
+                id: newInstructionDocumentId,
                 name,
                 method,
                 ownerId,
@@ -212,7 +212,7 @@ export class DocumentApiService {
     );
   }
 
-  updateDocumentsOrder(ownerId: string, documentsOrder: string[]) {
+  updateInstructionDocumentsOrder(ownerId: string, documentsOrder: string[]) {
     return defer(() =>
       from(
         runTransaction(this._firestore, async (transaction) => {
@@ -223,7 +223,7 @@ export class DocumentApiService {
 
           const instruction = await transaction.get(instructionRef);
           const documents = (instruction.data()?.['documents'] ??
-            []) as DocumentDto[];
+            []) as InstructionDocumentDto[];
 
           transaction.update(instructionRef, {
             documents: documentsOrder.map((documentId) => {
