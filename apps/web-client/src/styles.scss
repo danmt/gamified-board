@@ -138,6 +138,32 @@ body,
   background-repeat: no-repeat;
   height: 140px;
   width: 145px;
+
+  left: -36px;
+  top: -15px;
+}
+
+.bp-skin-dock-detail-right {
+  background-image: url('./assets/skins/dock/dock-detail-2.png');
+  background-repeat: no-repeat;
+  height: 140px;
+  width: 145px;
+
+  right: -40px;
+  top: -15px;
+}
+
+.bp-skin-dock-detail-center {
+  background-image: url('./assets/skins/dock/dock-detail-center.png');
+  background-repeat: no-repeat;
+  height: 77px;
+  width: 381px;
+
+  top: -52px;
+  z-index: 70;
+  left: 0px;
+  right: 0px;
+  margin: 0 auto;
 }
 
 .bp-skin-title-box {
