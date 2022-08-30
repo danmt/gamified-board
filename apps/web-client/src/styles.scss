@@ -51,7 +51,7 @@ body,
   width: 145px;
 
   left: -36px;
-  top: -15px;
+  top: -12px;
 }
 
 .bp-skin-dock-detail-right {
@@ -61,7 +61,7 @@ body,
   width: 145px;
 
   right: -40px;
-  top: -15px;
+  top: -12px;
 }
 
 .bp-skin-dock-detail-center {
@@ -179,7 +179,7 @@ body,
   background-image: url('./assets/skins/dock/input-futuristic.png');
   background-repeat: no-repeat;
   width: 278px;
-  height: 60px;
+  height: 54px;
   background-color: transparent;
 }
 
@@ -202,6 +202,30 @@ body,
 
 .bp-button-futuristic:active {
   background-image: url('./assets/skins/dock/button-active.png');
+}
+
+.bp-button-close-futuristic {
+  background-color: transparent;
+  background-image: url('./assets/skins/dock/close-button.png');
+  background-repeat: no-repeat;
+  width: 39px;
+  height: 35px;
+}
+
+.bp-button-close-futuristic:hover {
+  background-image: url('./assets/skins/dock/close-button-hover.png');
+}
+
+.bp-button-generate-futuristic {
+  background-color: transparent;
+  background-image: url('./assets/skins/dock/generate-button.png');
+  background-repeat: no-repeat;
+  width: 39px;
+  height: 35px;
+}
+
+.bp-button-generate-futuristic:hover {
+  background-image: url('./assets/skins/dock/generate-button-hover.png');
 }
 
 // SCROLL BAR

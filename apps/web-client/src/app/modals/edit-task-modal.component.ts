@@ -86,23 +86,22 @@ export class EditTaskModalDirective {
 
       <!-- modal content -->
       <div>
-        <button
-          class="absolute top-2 right-2 rounded-full border border-black leading-none w-6 h-6"
-          (click)="onClose()"
-        >
-          x
-        </button>
-
-        <h1 class="text-center text-3xl mb-4 bp-font-game">
-          {{ task === null ? 'CREATE' : 'UPDATE' }} TASK
-        </h1>
+        <div class="flex justify-between w-full">
+          <h1 class="text-center text-3xl mb-4 bp-font-game">
+            {{ task === null ? 'CREATE' : 'UPDATE' }} TASK
+          </h1>
+          <button
+            class="bp-button-close-futuristic z-20 outline-0"
+            (click)="onClose()"
+          ></button>
+        </div>
 
         <form [formGroup]="form" (ngSubmit)="onSubmit()">
           <div class="mb-4">
             <label class="block bp-font-game text-xl" for="task-id-input"
               >Task ID</label
             >
-            <div class="flex">
+            <div class="flex items-center justify-between w-full">
               <input
                 class="bp-input-futuristic p-4 outline-0"
                 id="task-id-input"
@@ -113,10 +112,9 @@ export class EditTaskModalDirective {
               <button
                 *ngIf="task === null"
                 type="button"
+                class="bp-button-generate-futuristic"
                 (click)="idControl.setValue(onGenerateId())"
-              >
-                Generate
-              </button>
+              ></button>
             </div>
             <p class="bp-font-game" *ngIf="task === null">
               Hint: The ID cannot be changed afterwards.
