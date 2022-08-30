@@ -33,12 +33,16 @@ import { Option } from '../utils';
               id="instructions-section"
               cdkDropList
               [cdkDropListConnectedTo]="[
-                'instruction-slot-0',
-                'instruction-slot-1',
-                'instruction-slot-2',
-                'instruction-slot-3',
-                'instruction-slot-4',
-                'instruction-slot-5'
+                'slot-0',
+                'slot-1',
+                'slot-2',
+                'slot-3',
+                'slot-4',
+                'slot-5',
+                'slot-6',
+                'slot-7',
+                'slot-8',
+                'slot-9'
               ]"
               [cdkDropListData]="instructions"
               cdkDropListSortingDisabled

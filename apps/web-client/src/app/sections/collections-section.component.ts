@@ -40,12 +40,16 @@ import { Option } from '../utils';
               id="collections-section"
               cdkDropList
               [cdkDropListConnectedTo]="[
-                'collection-slot-0',
-                'collection-slot-1',
-                'collection-slot-2',
-                'collection-slot-3',
-                'collection-slot-4',
-                'collection-slot-5'
+                'slot-0',
+                'slot-1',
+                'slot-2',
+                'slot-3',
+                'slot-4',
+                'slot-5',
+                'slot-6',
+                'slot-7',
+                'slot-8',
+                'slot-9'
               ]"
               [cdkDropListData]="collections"
               cdkDropListSortingDisabled
@@ -71,7 +75,7 @@ import { Option } from '../utils';
 
                 <div
                   cdkDrag
-                  [cdkDragData]="collection.id"
+                  [cdkDragData]="{ id: collection.id, kind: 'collection' }"
                   (click)="onSelectCollection(collection.id)"
                   (dblclick)="onActivateCollection(collection.id)"
                   (cdkDragStarted)="onDragStart($event)"
