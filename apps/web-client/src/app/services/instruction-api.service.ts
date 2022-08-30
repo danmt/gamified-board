@@ -8,8 +8,8 @@ import {
 } from '@angular/fire/firestore';
 import { combineLatest, defer, from, map, Observable, of } from 'rxjs';
 import { Entity } from '../utils';
-import { DocumentDto } from './document-api.service';
 import { InstructionApplicationDto } from './instruction-application-api.service';
+import { InstructionDocumentDto } from './instruction-document-api.service';
 import { InstructionTaskDto } from './instruction-task-api.service';
 
 export type InstructionArgumentDto = Entity<{
@@ -23,7 +23,7 @@ export type InstructionDto = Entity<{
   thumbnailUrl: string;
   applicationId: string;
   workspaceId: string;
-  documents: DocumentDto[];
+  documents: InstructionDocumentDto[];
   applications: InstructionApplicationDto[];
   tasks: InstructionTaskDto[];
   arguments: InstructionArgumentDto[];

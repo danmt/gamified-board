@@ -96,85 +96,7 @@ import { Option } from '../utils';
               </div>
             </div>
           </div>
-
-          <div
-            class="w-full h-32 p-4 relative"
-            *ngrxLet="selectedInstruction$; let instruction"
-          >
-            <div class="bp-skin-metal-divider -left-3.5"></div>
-            {{ instruction?.name }}
-
-            <div>
-              <p class="bp-font-game text-2xl text-white mt-4">
-                Instruction arguments
-              </p>
-              <div class="flex gap-2 flex-wrap">
-                <div
-                  *ngFor="let arg of instruction?.arguments"
-                  class="border-2 border-black p-1 text-xs"
-                >
-                  {{ arg.name }} - {{ arg.type }}
-                </div>
-              </div>
-            </div>
-
-            <button
-              *ngIf="
-                instruction !== null &&
-                instruction.applicationId !== null &&
-                instruction.applicationId === (currentApplicationId$ | ngrxPush)
-              "
-              pgEditInstructionModal
-              [instruction]="instruction"
-              (updateInstruction)="
-                onUpdateInstruction(
-                  instruction.id,
-                  $event.name,
-                  $event.thumbnailUrl,
-                  $event.arguments
-                )
-              "
-            >
-              edit
-            </button>
-
-            <button
-              *ngIf="
-                instruction !== null &&
-                instruction.applicationId !== null &&
-                instruction.applicationId === (currentApplicationId$ | ngrxPush)
-              "
-              class="rounded-full bg-slate-400 w-8 h-8"
-              (click)="
-                onDeleteInstruction(instruction.applicationId, instruction.id)
-              "
-            >
-              x
-            </button>
-
-            <a
-              class="underline"
-              *ngIf="
-                instruction !== null &&
-                instruction.workspaceId === (workspaceId$ | ngrxPush) &&
-                instruction.applicationId !== (currentApplicationId$ | ngrxPush)
-              "
-              [routerLink]="[
-                '/board',
-                instruction.workspaceId,
-                instruction.applicationId
-              ]"
-            >
-              view
-            </a>
-          </div>
         </div>
-      </div>
-
-      <div class="flex items-end relative" style="top: -75px; z-index: 100;">
-        <div class="bp-skin-metal-detail absolute -bottom-3 z-20"></div>
-        <div class="bp-skin-metal-border-bottom flex-1"></div>
-        <div class="bp-skin-metal-corner-right-bottom"></div>
       </div>
     </div>
   `,
@@ -194,17 +116,17 @@ export class InstructionsSectionComponent {
 
   private readonly _isDragging = new BehaviorSubject<Option<string>>(null);
   readonly isDragging$ = this._isDragging.asObservable();
-  readonly selectedInstruction$ = this._boardStore.selectedInstruction$;
   readonly workspaceId$ = this._boardStore.workspaceId$;
   readonly currentApplicationId$ = this._boardStore.currentApplicationId$;
   readonly instructions$ = this._boardStore.instructions$;
 
   onActivateInstruction(instructionId: string) {
+    console.log('alo');
     this._boardStore.setActiveId(instructionId);
   }
 
   onSelectInstruction(instructionId: string) {
-    this._boardStore.setSelectedInstructionId(instructionId);
+    this._boardStore.setSelectedId(instructionId);
   }
 
   onCreateInstruction(
@@ -241,11 +163,11 @@ export class InstructionsSectionComponent {
   onDeleteInstruction(applicationId: string, instructionId: string) {
     this._instructionApiService
       .deleteInstruction(applicationId, instructionId)
-      .subscribe(() => this._boardStore.setSelectedInstructionId(null));
+      .subscribe(() => this._boardStore.setSelectedId(null));
   }
 
   onDragStart(event: CdkDragStart) {
-    this._isDragging.next(event.source.data);
+    this._isDragging.next(event.source.data.id);
   }
 
   onDragEnd() {

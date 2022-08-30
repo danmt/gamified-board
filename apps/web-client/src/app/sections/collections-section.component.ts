@@ -103,91 +103,7 @@ import { Option } from '../utils';
               </div>
             </div>
           </div>
-
-          <div
-            class="w-full h-32 px-4 relative"
-            *ngrxLet="selectedCollection$; let collection"
-          >
-            <div class="bp-skin-metal-divider left-1"></div>
-            <div class=" h-32 overflow-y-auto pb-6 pl-4">
-              {{ collection?.name }}
-
-              <div>
-                <p class="bp-font-game text-2xl text-white mt-4 ml-4">
-                  Collection arguments
-                </p>
-                <div class="flex gap-2 flex-wrap">
-                  <div
-                    *ngFor="let attribute of collection?.attributes"
-                    class="border-2 border-black p-1 text-xs"
-                  >
-                    {{ attribute.name }} - {{ attribute.type }}
-                  </div>
-                </div>
-              </div>
-
-              <button
-                *ngIf="
-                  collection !== null &&
-                  collection.applicationId !== null &&
-                  collection.applicationId ===
-                    (currentApplicationId$ | ngrxPush)
-                "
-                pgEditCollectionModal
-                [collection]="collection"
-                (updateCollection)="
-                  onUpdateCollection(
-                    collection.id,
-                    $event.name,
-                    $event.thumbnailUrl,
-                    $event.attributes
-                  )
-                "
-              >
-                edit
-              </button>
-
-              <button
-                *ngIf="
-                  collection !== null &&
-                  collection.applicationId !== null &&
-                  collection.applicationId ===
-                    (currentApplicationId$ | ngrxPush)
-                "
-                class="rounded-full bg-slate-400 w-8 h-8"
-                (click)="
-                  onDeleteCollection(collection.applicationId, collection.id)
-                "
-              >
-                x
-              </button>
-
-              <a
-                class="underline"
-                *ngIf="
-                  collection !== null &&
-                  collection.workspaceId === (workspaceId$ | ngrxPush) &&
-                  collection.applicationId !==
-                    (currentApplicationId$ | ngrxPush)
-                "
-                [routerLink]="[
-                  '/board',
-                  collection.workspaceId,
-                  collection.applicationId
-                ]"
-              >
-                view
-              </a>
-            </div>
-          </div>
         </div>
-      </div>
-      <div class="flex items-end relative" style="top: -75px; z-index: 100;">
-        <div class="bp-skin-metal-corner-left-bottom"></div>
-        <div class="bp-skin-metal-border-bottom flex-1"></div>
-        <div
-          class="bp-skin-metal-detail-2 absolute -bottom-3 z-20 right-0"
-        ></div>
       </div>
     </div>
   `,
@@ -207,7 +123,6 @@ export class CollectionsSectionComponent {
 
   private readonly _isDragging = new BehaviorSubject<Option<string>>(null);
   readonly isDragging$ = this._isDragging.asObservable();
-  readonly selectedCollection$ = this._boardStore.selectedCollection$;
   readonly workspaceId$ = this._boardStore.workspaceId$;
   readonly currentApplicationId$ = this._boardStore.currentApplicationId$;
   readonly collections$ = this._boardStore.collections$;
@@ -217,7 +132,7 @@ export class CollectionsSectionComponent {
   }
 
   onSelectCollection(collectionId: string) {
-    this._boardStore.setSelectedCollectionId(collectionId);
+    this._boardStore.setSelectedId(collectionId);
   }
 
   onCreateCollection(
@@ -240,25 +155,8 @@ export class CollectionsSectionComponent {
       .subscribe();
   }
 
-  onUpdateCollection(
-    collectionId: string,
-    collectionName: string,
-    thumbnailUrl: string,
-    attributes: { id: string; name: string; type: string; isOption: boolean }[]
-  ) {
-    this._collectionApiService
-      .updateCollection(collectionId, collectionName, thumbnailUrl, attributes)
-      .subscribe();
-  }
-
-  onDeleteCollection(applicationId: string, collectionId: string) {
-    this._collectionApiService
-      .deleteCollection(applicationId, collectionId)
-      .subscribe(() => this._boardStore.setSelectedCollectionId(null));
-  }
-
   onDragStart(event: CdkDragStart) {
-    this._isDragging.next(event.source.data);
+    this._isDragging.next(event.source.data.id);
   }
 
   onDragEnd() {

@@ -8,12 +8,8 @@ import {
   Input,
   Output,
 } from '@angular/core';
+import { BoardItemDropListsPipe } from '../pipes';
 import { Entity, Option } from '../utils';
-
-interface Active {
-  id: string;
-  thumbnailUrl: string;
-}
 
 interface Instruction {
   id: string;
@@ -38,8 +34,9 @@ interface Instruction {
   selector: 'pg-row',
   template: `
     <div
-      *ngIf="instruction !== null"
+      *ngIf="pgInstruction !== null"
       class="text-2xl text-white uppercase relative h-full flex gap-4"
+      [ngClass]="{ 'border-blue-500': pgIsHovered }"
       (click)="onUseActive()"
     >
       <ng-content></ng-content>
@@ -48,24 +45,23 @@ interface Instruction {
         <p>Documents</p>
 
         <div
-          [id]="instruction.id + '-document'"
+          [id]="pgInstruction.id + '-document'"
           cdkDropList
-          [cdkDropListConnectedTo]="documentsDropLists"
+          [cdkDropListConnectedTo]="
+            pgInstructions | pgBoardItemDropLists: 'document'
+          "
           cdkDropListOrientation="horizontal"
           (cdkDropListDropped)="onCollectionDropped($event)"
           class="flex gap-2 flex-1"
         >
           <div
-            *ngFor="let document of instruction.documents; trackBy: trackBy"
+            *ngFor="let document of pgInstruction.documents; trackBy: trackBy"
             cdkDrag
             [cdkDragData]="document.id"
             class="bg-gray-800 relative w-11 h-11"
             style="padding: 0.12rem"
           >
-            <button
-              class="w-full h-full"
-              (click)="onSelectDocument(document.id)"
-            >
+            <button class="w-full h-full" (click)="onSelect(document.id)">
               <img
                 class="w-full h-full"
                 [src]="document.collection.thumbnailUrl"
@@ -96,21 +92,23 @@ interface Instruction {
         <p>Tasks</p>
 
         <div
-          [id]="instruction.id + '-task'"
+          [id]="pgInstruction.id + '-task'"
           cdkDropList
-          [cdkDropListConnectedTo]="tasksDropLists"
+          [cdkDropListConnectedTo]="
+            pgInstructions | pgBoardItemDropLists: 'task'
+          "
           cdkDropListOrientation="horizontal"
           (cdkDropListDropped)="onInstructionDropped($event)"
           class="flex gap-2 flex-1"
         >
           <div
-            *ngFor="let task of instruction.tasks; trackBy: trackBy"
+            *ngFor="let task of pgInstruction.tasks; trackBy: trackBy"
             cdkDrag
             [cdkDragData]="task.id"
             class="bg-gray-800 relative w-11 h-11"
             style="padding: 0.12rem"
           >
-            <button class="w-full h-full" (click)="onSelectTask(task.id)">
+            <button class="w-full h-full" (click)="onSelect(task.id)">
               <img
                 class="w-full h-full"
                 [src]="task.instruction.thumbnailUrl"
@@ -141,16 +139,18 @@ interface Instruction {
         <p>Applications</p>
 
         <div
-          [id]="instruction.id + '-application'"
+          [id]="pgInstruction.id + '-application'"
           cdkDropList
-          [cdkDropListConnectedTo]="applicationsDropLists"
+          [cdkDropListConnectedTo]="
+            pgInstructions | pgBoardItemDropLists: 'application'
+          "
           cdkDropListOrientation="horizontal"
           (cdkDropListDropped)="onApplicationDropped($event)"
           class="flex gap-2 flex-1"
         >
           <div
             *ngFor="
-              let instructionApplication of instruction.applications;
+              let instructionApplication of pgInstruction.applications;
               trackBy: trackBy
             "
             cdkDrag
@@ -160,7 +160,7 @@ interface Instruction {
           >
             <button
               class="w-full h-full"
-              (click)="onSelectApplication(instructionApplication.id)"
+              (click)="onSelect(instructionApplication.id)"
             >
               <img
                 class="w-full h-full"
@@ -190,45 +190,40 @@ interface Instruction {
     </div>
   `,
   standalone: true,
-  imports: [CommonModule, DragDropModule],
+  imports: [CommonModule, DragDropModule, BoardItemDropListsPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RowComponent {
-  @Input() active: Option<Active> = null;
-  @Input() instruction: Option<Instruction> = null;
-  @Input() documentsDropLists: string[] = [];
-  @Input() tasksDropLists: string[] = [];
-  @Input() applicationsDropLists: string[] = [];
-  @Output() useActive = new EventEmitter();
-  @Output() selectTask = new EventEmitter<string>();
-  @Output() selectDocument = new EventEmitter<string>();
-  @Output() selectApplication = new EventEmitter<string>();
-
-  @Output() moveDocument = new EventEmitter<{
+  @Input() pgInstructions: Option<Instruction[]> = null;
+  @Input() pgInstruction: Option<Instruction> = null;
+  @Input() pgIsHovered = false;
+  @Output() pgUseActive = new EventEmitter();
+  @Output() pgSelect = new EventEmitter<string>();
+  @Output() pgMoveDocument = new EventEmitter<{
     previousIndex: number;
     newIndex: number;
   }>();
-  @Output() transferDocument = new EventEmitter<{
+  @Output() pgTransferDocument = new EventEmitter<{
     previousInstructionId: string;
     newInstructionId: string;
     documentId: string;
     newIndex: number;
   }>();
-  @Output() moveTask = new EventEmitter<{
+  @Output() pgMoveTask = new EventEmitter<{
     previousIndex: number;
     newIndex: number;
   }>();
-  @Output() transferTask = new EventEmitter<{
+  @Output() pgTransferTask = new EventEmitter<{
     previousInstructionId: string;
     newInstructionId: string;
     instructionTaskId: string;
     newIndex: number;
   }>();
-  @Output() moveApplication = new EventEmitter<{
+  @Output() pgMoveApplication = new EventEmitter<{
     previousIndex: number;
     newIndex: number;
   }>();
-  @Output() transferApplication = new EventEmitter<{
+  @Output() pgTransferApplication = new EventEmitter<{
     previousInstructionId: string;
     newInstructionId: string;
     instructionApplicationId: string;
@@ -237,16 +232,8 @@ export class RowComponent {
 
   @HostBinding('class') class = 'block w-full h-64 border-2 bg-bp-bricks';
 
-  onSelectTask(taskId: string) {
-    this.selectTask.emit(taskId);
-  }
-
-  onSelectDocument(documentId: string) {
-    this.selectDocument.emit(documentId);
-  }
-
-  onSelectApplication(applicationId: string) {
-    this.selectApplication.emit(applicationId);
+  onSelect(selectId: string) {
+    this.pgSelect.emit(selectId);
   }
 
   trackBy(index: number): number {
@@ -255,7 +242,7 @@ export class RowComponent {
 
   onCollectionDropped(event: CdkDragDrop<unknown, unknown, string>) {
     if (event.container.id === event.previousContainer.id) {
-      this.moveDocument.emit({
+      this.pgMoveDocument.emit({
         previousIndex: event.previousIndex,
         newIndex: event.currentIndex,
       });
@@ -264,7 +251,7 @@ export class RowComponent {
         event.previousContainer.id.split('-document')[0];
       const newInstructionId = event.container.id.split('-document')[0];
 
-      this.transferDocument.emit({
+      this.pgTransferDocument.emit({
         previousInstructionId,
         newInstructionId,
         documentId: event.item.data,
@@ -275,7 +262,7 @@ export class RowComponent {
 
   onInstructionDropped(event: CdkDragDrop<unknown, unknown, string>) {
     if (event.container.id === event.previousContainer.id) {
-      this.moveTask.emit({
+      this.pgMoveTask.emit({
         previousIndex: event.previousIndex,
         newIndex: event.currentIndex,
       });
@@ -283,7 +270,7 @@ export class RowComponent {
       const previousInstructionId =
         event.previousContainer.id.split('-task')[0];
       const newInstructionId = event.container.id.split('-task')[0];
-      this.transferTask.emit({
+      this.pgTransferTask.emit({
         previousInstructionId,
         newInstructionId,
         instructionTaskId: event.item.data,
@@ -294,7 +281,7 @@ export class RowComponent {
 
   onApplicationDropped(event: CdkDragDrop<unknown, unknown, string>) {
     if (event.container.id === event.previousContainer.id) {
-      this.moveApplication.emit({
+      this.pgMoveApplication.emit({
         previousIndex: event.previousIndex,
         newIndex: event.currentIndex,
       });
@@ -302,7 +289,7 @@ export class RowComponent {
       const previousInstructionId =
         event.previousContainer.id.split('-application')[0];
       const newInstructionId = event.container.id.split('-application')[0];
-      this.transferApplication.emit({
+      this.pgTransferApplication.emit({
         previousInstructionId,
         newInstructionId,
         instructionApplicationId: event.item.data,
@@ -312,6 +299,6 @@ export class RowComponent {
   }
 
   onUseActive() {
-    this.useActive.emit();
+    this.pgUseActive.emit();
   }
 }
