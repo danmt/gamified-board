@@ -17,7 +17,7 @@ import { BoardStore, InstructionSignerView } from '../stores';
       *ngIf="selected$ | ngrxPush as selected"
       class="p-4 bg-gray-700 flex gap-4 justify-center items-start"
     >
-      <img [src]="'asd'" />
+      <img src="assets/generic/signer.png" />
 
       {{ selected?.name }}
 

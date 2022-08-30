@@ -6,6 +6,7 @@ import { IdlInstruction, PluginInterface } from '../../types';
 export class AssociatedTokenPlugin implements PluginInterface {
   private readonly program = Spl.associatedToken({} as AnchorProvider);
   readonly namespace = 'solana';
+  readonly id = this.program.programId.toBase58();
   readonly name = this.program.idl.name;
   readonly instructions = this.program.idl.instructions;
   readonly accounts = [];

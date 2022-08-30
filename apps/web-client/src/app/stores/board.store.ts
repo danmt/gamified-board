@@ -685,7 +685,7 @@ export class BoardStore
           return {
             id: 'signer',
             kind: 'signer' as const,
-            thumbnailUrl: 'asd',
+            thumbnailUrl: 'assets/generic/signer.png',
           };
       }
     }
@@ -896,7 +896,7 @@ export class BoardStore
                     id: plugin.name,
                     name: plugin.name,
                     workspaceId: plugin.namespace,
-                    thumbnailUrl: `assets/plugins/${plugin.namespace}/${plugin.name}/thumbnail.png`,
+                    thumbnailUrl: `assets/plugins/${plugin.namespace}/${plugin.name}/application.png`,
                   }))
                 ),
               }),

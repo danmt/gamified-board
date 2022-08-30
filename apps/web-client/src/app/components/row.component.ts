@@ -274,18 +274,18 @@ interface Instruction {
               class="w-full h-full"
               (click)="onSelect(instructionSigner.id)"
             >
-              <img class="w-full h-full" [src]="'signer'" />
+              <img class="w-full h-full" src="assets/generic/signer.png" />
             </button>
 
             <div *cdkDragPreview class="bg-gray-500 p-1 w-12 h-12 rounded-md">
-              <img class="w-full h-full" [src]="'signer'" />
+              <img class="w-full h-full" src="assets/generic/signer.png" />
             </div>
 
             <div
               *cdkDragPlaceholder=""
               class="bg-yellow-500 p-1 w-12 h-12 rounded-md"
             >
-              <img class="w-full h-full" [src]="'signer'" />
+              <img class="w-full h-full" src="assets/generic/signer.png" />
             </div>
           </div>
         </div>

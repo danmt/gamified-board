@@ -383,32 +383,6 @@ export class BoardSectionComponent {
 
         break;
       }
-
-      case 'n': {
-        this._boardStore.toggleIsApplicationsSectionOpen();
-
-        break;
-      }
-      case 'm': {
-        this._boardStore.toggleIsInstructionsSectionOpen();
-
-        break;
-      }
-      case ',': {
-        this._boardStore.setActive({ id: 'signer', kind: 'signer' });
-
-        break;
-      }
-      case '.': {
-        this._boardStore.toggleIsCollectionsSectionOpen();
-
-        break;
-      }
-      case '-': {
-        this._boardStore.toggleIsSysvarsSectionOpen();
-
-        break;
-      }
     }
   }
 

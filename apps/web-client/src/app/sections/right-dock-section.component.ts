@@ -1,20 +1,73 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
+import { LetModule, PushModule } from '@ngrx/component';
+import { SquareButtonComponent } from '../components';
+import { KeyboardListenerDirective } from '../directives';
 import { BoardStore } from '../stores';
 
 @Component({
   selector: 'pg-right-dock-section',
   template: `
-    <div class="p-4 bg-gray-700 flex gap-4 justify-center items-start">
-      <button (click)="onActivateSigner()">signer</button>
+    <div
+      class="p-4 bg-gray-700 flex gap-4 justify-center items-start"
+      pgKeyboardListener
+      (pgKeyDown)="onKeyDown($event)"
+    >
+      <div class="bg-gray-800 relative" style="width: 2.89rem; height: 2.89rem">
+        <span
+          class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase w-3 h-3"
+          style="font-size: 0.5rem; line-height: 0.5rem"
+        >
+          ,
+        </span>
 
-      <button (click)="onToggleSysvarsSection()">sysvars</button>
+        <pg-square-button
+          *ngrxLet="active$; let active"
+          [pgIsActive]="active?.kind === 'signer'"
+          pgThumbnailUrl="assets/generic/signer.png"
+          (pgActivated)="onActivateSigner()"
+        ></pg-square-button>
+      </div>
 
-      <button (click)="onToggleCollectionsSection()">collections</button>
+      <div class="bg-gray-800 relative" style="width: 2.89rem; height: 2.89rem">
+        <span
+          class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase w-3 h-3"
+          style="font-size: 0.5rem; line-height: 0.5rem"
+        >
+          .
+        </span>
+
+        <pg-square-button
+          [pgIsActive]="(isCollectionsSectionOpen$ | ngrxPush) ?? false"
+          pgThumbnailUrl="assets/generic/collection.png"
+          (pgActivated)="onToggleCollectionsSection()"
+        ></pg-square-button>
+      </div>
+
+      <div class="bg-gray-800 relative" style="width: 2.89rem; height: 2.89rem">
+        <span
+          class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase w-3 h-3"
+          style="font-size: 0.5rem; line-height: 0.5rem"
+        >
+          -
+        </span>
+
+        <pg-square-button
+          [pgIsActive]="(isSysvarsSectionOpen$ | ngrxPush) ?? false"
+          pgThumbnailUrl="assets/generic/sysvar.png"
+          (pgActivated)="onToggleSysvarsSection()"
+        ></pg-square-button>
+      </div>
     </div>
   `,
   standalone: true,
-  imports: [CommonModule],
+  imports: [
+    CommonModule,
+    LetModule,
+    PushModule,
+    KeyboardListenerDirective,
+    SquareButtonComponent,
+  ],
   styles: [
     `
       .cdk-drop-list-dragging:hover {
@@ -26,6 +79,11 @@ import { BoardStore } from '../stores';
 export class RightDockSectionComponent {
   private readonly _boardStore = inject(BoardStore);
 
+  readonly active$ = this._boardStore.active$;
+  readonly isSysvarsSectionOpen$ = this._boardStore.isSysvarsSectionOpen$;
+  readonly isCollectionsSectionOpen$ =
+    this._boardStore.isCollectionsSectionOpen$;
+
   onActivateSigner() {
     this._boardStore.setActive({ id: 'signer', kind: 'signer' });
   }
@@ -36,5 +94,25 @@ export class RightDockSectionComponent {
 
   onToggleCollectionsSection() {
     this._boardStore.toggleIsCollectionsSectionOpen();
+  }
+
+  onKeyDown(event: KeyboardEvent) {
+    switch (event.key) {
+      case ',': {
+        this._boardStore.setActive({ id: 'signer', kind: 'signer' });
+
+        break;
+      }
+      case '.': {
+        this._boardStore.toggleIsCollectionsSectionOpen();
+
+        break;
+      }
+      case '-': {
+        this._boardStore.toggleIsSysvarsSectionOpen();
+
+        break;
+      }
+    }
   }
 }
