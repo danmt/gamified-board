@@ -53,56 +53,89 @@ export class EditTaskModalDirective {
 @Component({
   selector: 'pg-edit-task-modal',
   template: `
-    <div class="px-4 pt-8 pb-4 bg-white shadow-xl relative">
-      <button
-        class="absolute top-2 right-2 rounded-full border border-black leading-none w-6 h-6"
-        (click)="onClose()"
-      >
-        x
-      </button>
+    <div
+      class="px-4 pt-8 pb-4 bp-bg-futuristic shadow-xl relative text-white min-w-[400px] min-h-[300px]"
+    >
+      <!-- corners-->
+      <div
+        class="bp-skin-metal-corner-left-top absolute -left-4 -top-4 z-20"
+      ></div>
+      <div
+        class="bp-skin-metal-corner-right-top absolute -right-4 -top-4 z-20"
+      ></div>
+      <div
+        class="bp-skin-metal-corner-left-bottom absolute -left-4 -bottom-4 z-20"
+      ></div>
+      <div
+        class="bp-skin-metal-corner-right-bottom absolute -right-4 -bottom-4 z-20"
+      ></div>
 
-      <h1 class="text-center text-xl mb-4">
-        {{ task === null ? 'Create' : 'Update' }} task
-      </h1>
+      <!-- borders -->
+      <div
+        class="bp-skin-metal-border-right absolute -right-4 h-5/6 top-0 bottom-0 my-auto mx-0 z-10"
+      ></div>
+      <div
+        class="bp-skin-metal-border-left absolute -left-4 h-5/6 top-0 bottom-0 my-auto mx-0 z-10"
+      ></div>
+      <div
+        class="bp-skin-metal-border-bottom absolute -bottom-4 w-5/6 left-0 right-0 mx-auto my-0 z-10"
+      ></div>
+      <div
+        class="bp-skin-metal-border absolute -top-4 w-5/6 left-0 right-0 mx-auto my-0 z-10"
+      ></div>
 
-      <form [formGroup]="form" (ngSubmit)="onSubmit()">
-        <div>
-          <label class="block" for="task-id-input">Task ID</label>
-          <input
-            class="block border-b-2 border-black"
-            id="task-id-input"
-            type="text"
-            formControlName="id"
-            [readonly]="task !== null"
-          />
-          <p *ngIf="task === null">
-            Hint: The ID cannot be changed afterwards.
-          </p>
-          <button
-            *ngIf="task === null"
-            type="button"
-            (click)="idControl.setValue(onGenerateId())"
-          >
-            Generate
-          </button>
-        </div>
+      <!-- modal content -->
+      <div>
+        <button
+          class="absolute top-2 right-2 rounded-full border border-black leading-none w-6 h-6"
+          (click)="onClose()"
+        >
+          x
+        </button>
 
-        <div>
-          <label class="block" for="task-name-input"> Task name </label>
-          <input
-            class="block border-b-2 border-black"
-            id="task-name-input"
-            type="text"
-            formControlName="name"
-          />
-        </div>
+        <h1 class="text-center text-3xl mb-4 bp-font-game">
+          {{ task === null ? 'Create' : 'Update' }} task
+        </h1>
 
-        <div class="flex justify-center items-center mt-4">
-          <button type="submit" class="px-4 py-2 border-blue-500 border">
-            {{ task === null ? 'Send' : 'Save' }}
-          </button>
-        </div>
-      </form>
+        <form [formGroup]="form" (ngSubmit)="onSubmit()">
+          <div>
+            <label class="block" for="task-id-input">Task ID</label>
+            <input
+              class="block border-b-2 border-black bg-transparent"
+              id="task-id-input"
+              type="text"
+              formControlName="id"
+              [readonly]="task !== null"
+            />
+            <p *ngIf="task === null">
+              Hint: The ID cannot be changed afterwards.
+            </p>
+            <button
+              *ngIf="task === null"
+              type="button"
+              (click)="idControl.setValue(onGenerateId())"
+            >
+              Generate
+            </button>
+          </div>
+
+          <div>
+            <label class="block" for="task-name-input"> Task name </label>
+            <input
+              class="block border-b-2 border-black bg-transparent"
+              id="task-name-input"
+              type="text"
+              formControlName="name"
+            />
+          </div>
+
+          <div class="flex justify-center items-center mt-4">
+            <button type="submit" class="px-4 py-2 border-blue-500 border">
+              {{ task === null ? 'Send' : 'Save' }}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   `,
   standalone: true,
