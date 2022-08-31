@@ -51,7 +51,6 @@ body,
   width: 145px;
 
   left: -36px;
-  top: -12px;
 }
 
 .bp-skin-dock-detail-right {
@@ -61,7 +60,6 @@ body,
   width: 145px;
 
   right: -40px;
-  top: -12px;
 }
 
 .bp-skin-dock-detail-center {
@@ -163,6 +161,13 @@ body,
   background-repeat: no-repeat;
   height: 92px;
   width: 92px;
+}
+
+.bp-skin-dock-icon-border {
+  background-image: url('./assets/skins/dock/dock-icon-border.png');
+  background-repeat: no-repeat;
+  height: 50px;
+  width: 50px;
 }
 
 .custom-style-1 {

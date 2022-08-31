@@ -17,9 +17,9 @@ import { Entity, Option } from '../utils';
   selector: 'pg-center-dock-section',
   template: `
     <div
-      class="pt-8 pb-10 px-10 bp-bg-futuristic flex gap-4 justify-center items-start relative"
+      class="bp-bg-futuristic flex justify-center items-center relative"
       *ngrxLet="slots$; let slots"
-      style="width: 615px; height: 126px"
+      style="width: 615px; height: 136px"
     >
       <div class="flex">
         <div
@@ -46,7 +46,7 @@ import { Entity, Option } from '../utils';
       >
         <div
           cdkDropListGroup
-          class="flex gap-2 mb-2 z-50"
+          class="flex gap-3 mb-2 z-50"
           *ngrxLet="active$; let active"
         >
           <div
@@ -54,18 +54,22 @@ import { Entity, Option } from '../utils';
             [id]="'slot-' + i"
             cdkDropList
             (cdkDropListDropped)="onDropped($event)"
-            class="bg-yellow-800 relative"
+            class="relative"
             style="width: 2.89rem; height: 2.89rem"
           >
             <ng-container *ngrxLet="hotkeys$; let hotkeys">
               <span
                 *ngIf="i | pgSlotHotkey: hotkeys as hotkey"
-                class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
+                class="absolute left-1 top-0.5 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
                 style="font-size: 0.5rem; line-height: 0.5rem"
               >
                 {{ hotkey }}
               </span>
             </ng-container>
+
+            <div
+              class="bp-skin-dock-icon-border absolute -top-0.5 -left-0.5"
+            ></div>
 
             <div cdkDrag [cdkDragData]="slot?.id">
               <pg-square-button
