@@ -48,7 +48,7 @@ interface Value {
   type: string;
 }
 
-export interface EditDocumentData {
+export interface EditInstructionDocumentData {
   document: Option<{
     id: string;
     name: string;
@@ -65,7 +65,7 @@ type SeedOutput =
   | { kind: 'argument'; argumentId: string }
   | { value: string; type: string };
 
-export interface EditDocumentSubmitPayload {
+export interface EditInstructionDocumentSubmitPayload {
   id: string;
   name: string;
   method: string;
@@ -78,7 +78,7 @@ export interface EditDocumentSubmitPayload {
 }
 
 @Component({
-  selector: 'pg-edit-document-modal',
+  selector: 'pg-edit-instruction-document-modal',
   template: `
     <div class="px-4 pt-8 pb-4 bg-white shadow-xl relative">
       <button
@@ -381,13 +381,16 @@ export interface EditDocumentSubmitPayload {
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, DragDropModule],
 })
-export class EditDocumentModalComponent {
+export class EditInstructionDocumentModalComponent {
   private readonly _dialogRef =
-    inject<DialogRef<EditDocumentSubmitPayload, EditDocumentModalComponent>>(
-      DialogRef
-    );
+    inject<
+      DialogRef<
+        EditInstructionDocumentSubmitPayload,
+        EditInstructionDocumentModalComponent
+      >
+    >(DialogRef);
   private readonly _formBuilder = inject(FormBuilder);
-  private readonly _data = inject<EditDocumentData>(DIALOG_DATA);
+  private readonly _data = inject<EditInstructionDocumentData>(DIALOG_DATA);
   private readonly _boardStore = inject(BoardStore);
 
   readonly document = this._data.document;

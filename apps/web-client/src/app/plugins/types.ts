@@ -34,6 +34,7 @@ export interface IdlInstruction {
 
 export interface PluginInterface {
   namespace: string;
+  id: string;
   name: string;
   instructions: IdlInstruction[];
   accounts: IdlAccount[];

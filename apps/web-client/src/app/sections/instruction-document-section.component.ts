@@ -4,9 +4,9 @@ import { Component, inject, ViewContainerRef } from '@angular/core';
 import { PushModule } from '@ngrx/component';
 import { concatMap, EMPTY, map } from 'rxjs';
 import {
-  EditDocumentData,
-  EditDocumentModalComponent,
-  EditDocumentSubmitPayload,
+  EditInstructionDocumentData,
+  EditInstructionDocumentModalComponent,
+  EditInstructionDocumentSubmitPayload,
 } from '../modals';
 import { InstructionDocumentApiService } from '../services';
 import { BoardStore, InstructionDocumentView } from '../stores';
@@ -50,7 +50,7 @@ export class InstructionDocumentSectionComponent {
 
   readonly selected$ = this._boardStore.selected$.pipe(
     map((selected) => {
-      if (selected === null || !('collection' in selected)) {
+      if (selected === null || selected.kind !== 'instructionDocument') {
         return null;
       }
 
@@ -65,10 +65,10 @@ export class InstructionDocumentSectionComponent {
   ) {
     this._dialog
       .open<
-        EditDocumentSubmitPayload,
-        EditDocumentData,
-        EditDocumentModalComponent
-      >(EditDocumentModalComponent, {
+        EditInstructionDocumentSubmitPayload,
+        EditInstructionDocumentData,
+        EditInstructionDocumentModalComponent
+      >(EditInstructionDocumentModalComponent, {
         data: { document, instructionId },
         viewContainerRef: this._viewContainerRef,
       })
@@ -78,7 +78,7 @@ export class InstructionDocumentSectionComponent {
             return EMPTY;
           }
 
-          this._boardStore.setActiveId(null);
+          this._boardStore.setActive(null);
 
           return this._instructionDocumentApiService.updateInstructionDocument(
             instructionId,

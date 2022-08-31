@@ -1,9 +1,10 @@
 import { inject, Injectable } from '@angular/core';
 import {
+  deleteDoc,
   doc,
   docData,
   Firestore,
-  runTransaction,
+  setDoc,
   updateDoc,
 } from '@angular/fire/firestore';
 import { combineLatest, defer, from, map, Observable, of } from 'rxjs';
@@ -50,25 +51,10 @@ export class CollectionApiService {
     );
   }
 
-  deleteCollection(applicationId: string, collectionId: string) {
-    return defer(() =>
-      from(
-        runTransaction(this._firestore, async (transaction) => {
-          const applicationCollectionRef = doc(
-            this._firestore,
-            `applications/${applicationId}/collections/${collectionId}`
-          );
-          const collectionRef = doc(
-            this._firestore,
-            `collections/${collectionId}`
-          );
-          transaction.delete(applicationCollectionRef);
-          transaction.delete(collectionRef);
+  deleteCollection(collectionId: string) {
+    const collectionRef = doc(this._firestore, `collections/${collectionId}`);
 
-          return {};
-        })
-      )
-    );
+    return defer(() => from(deleteDoc(collectionRef)));
   }
 
   createCollection(
@@ -79,41 +65,24 @@ export class CollectionApiService {
     thumbnailUrl: string,
     attributes: CollectionAttributeDto[]
   ) {
+    const workspaceRef = doc(this._firestore, `workspaces/${workspaceId}`);
+    const applicationRef = doc(
+      this._firestore,
+      `applications/${applicationId}`
+    );
+    const newCollectionRef = doc(
+      this._firestore,
+      `collections/${newCollectionId}`
+    );
+
     return defer(() =>
       from(
-        runTransaction(this._firestore, async (transaction) => {
-          const workspaceRef = doc(
-            this._firestore,
-            `workspaces/${workspaceId}`
-          );
-          const applicationRef = doc(
-            this._firestore,
-            `applications/${applicationId}`
-          );
-          const newCollectionRef = doc(
-            this._firestore,
-            `collections/${newCollectionId}`
-          );
-          const newApplicationCollectionRef = doc(
-            this._firestore,
-            `applications/${applicationId}/collections/${newCollectionId}`
-          );
-
-          // create the new collection
-          transaction.set(newCollectionRef, {
-            name,
-            applicationRef,
-            workspaceRef,
-            thumbnailUrl,
-            attributes,
-          });
-
-          // push collection to application collections
-          transaction.set(newApplicationCollectionRef, {
-            collectionRef: newCollectionRef,
-          });
-
-          return {};
+        setDoc(newCollectionRef, {
+          name,
+          applicationRef,
+          workspaceRef,
+          thumbnailUrl,
+          attributes,
         })
       )
     );
@@ -125,9 +94,11 @@ export class CollectionApiService {
     thumbnailUrl: string,
     attributes: CollectionAttributeDto[]
   ) {
+    const collectionRef = doc(this._firestore, `collections/${collectionId}`);
+
     return defer(() =>
       from(
-        updateDoc(doc(this._firestore, `collections/${collectionId}`), {
+        updateDoc(collectionRef, {
           name,
           thumbnailUrl,
           attributes,

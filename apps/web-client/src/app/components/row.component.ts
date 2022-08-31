@@ -28,6 +28,12 @@ interface Instruction {
       thumbnailUrl: string;
     };
   }>[];
+  sysvars: Entity<{
+    sysvar: {
+      thumbnailUrl: string;
+    };
+  }>[];
+  signers: Entity<unknown>[];
 }
 
 @Component({
@@ -187,6 +193,103 @@ interface Instruction {
           </div>
         </div>
       </div>
+
+      <div class="flex flex-col">
+        <p>Sysvars</p>
+
+        <div
+          [id]="pgInstruction.id + '-sysvar'"
+          cdkDropList
+          [cdkDropListConnectedTo]="
+            pgInstructions | pgBoardItemDropLists: 'sysvar'
+          "
+          cdkDropListOrientation="horizontal"
+          (cdkDropListDropped)="onSysvarDropped($event)"
+          class="flex gap-2 flex-1"
+        >
+          <div
+            *ngFor="
+              let instructionSysvar of pgInstruction.sysvars;
+              trackBy: trackBy
+            "
+            cdkDrag
+            [cdkDragData]="instructionSysvar.id"
+            class="bg-gray-800 relative w-11 h-11"
+            style="padding: 0.12rem"
+          >
+            <button
+              class="w-full h-full"
+              (click)="onSelect(instructionSysvar.id)"
+            >
+              <img
+                class="w-full h-full"
+                [src]="instructionSysvar.sysvar.thumbnailUrl"
+              />
+            </button>
+
+            <div *cdkDragPreview class="bg-gray-500 p-1 w-12 h-12 rounded-md">
+              <img
+                class="w-full h-full"
+                [src]="instructionSysvar.sysvar.thumbnailUrl"
+              />
+            </div>
+
+            <div
+              *cdkDragPlaceholder=""
+              class="bg-yellow-500 p-1 w-12 h-12 rounded-md"
+            >
+              <img
+                class="w-full h-full"
+                [src]="instructionSysvar.sysvar.thumbnailUrl"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex flex-col">
+        <p>Signers</p>
+
+        <div
+          [id]="pgInstruction.id + '-signer'"
+          cdkDropList
+          [cdkDropListConnectedTo]="
+            pgInstructions | pgBoardItemDropLists: 'signer'
+          "
+          cdkDropListOrientation="horizontal"
+          (cdkDropListDropped)="onSignerDropped($event)"
+          class="flex gap-2 flex-1"
+        >
+          <div
+            *ngFor="
+              let instructionSigner of pgInstruction.signers;
+              trackBy: trackBy
+            "
+            cdkDrag
+            [cdkDragData]="instructionSigner.id"
+            class="bg-gray-800 relative w-11 h-11"
+            style="padding: 0.12rem"
+          >
+            <button
+              class="w-full h-full"
+              (click)="onSelect(instructionSigner.id)"
+            >
+              <img class="w-full h-full" src="assets/generic/signer.png" />
+            </button>
+
+            <div *cdkDragPreview class="bg-gray-500 p-1 w-12 h-12 rounded-md">
+              <img class="w-full h-full" src="assets/generic/signer.png" />
+            </div>
+
+            <div
+              *cdkDragPlaceholder=""
+              class="bg-yellow-500 p-1 w-12 h-12 rounded-md"
+            >
+              <img class="w-full h-full" src="assets/generic/signer.png" />
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   `,
   standalone: true,
@@ -227,6 +330,26 @@ export class RowComponent {
     previousInstructionId: string;
     newInstructionId: string;
     instructionApplicationId: string;
+    newIndex: number;
+  }>();
+  @Output() pgMoveSysvar = new EventEmitter<{
+    previousIndex: number;
+    newIndex: number;
+  }>();
+  @Output() pgTransferSysvar = new EventEmitter<{
+    previousInstructionId: string;
+    newInstructionId: string;
+    instructionSysvarId: string;
+    newIndex: number;
+  }>();
+  @Output() pgMoveSigner = new EventEmitter<{
+    previousIndex: number;
+    newIndex: number;
+  }>();
+  @Output() pgTransferSigner = new EventEmitter<{
+    previousInstructionId: string;
+    newInstructionId: string;
+    instructionSignerId: string;
     newIndex: number;
   }>();
 
@@ -293,6 +416,44 @@ export class RowComponent {
         previousInstructionId,
         newInstructionId,
         instructionApplicationId: event.item.data,
+        newIndex: event.currentIndex,
+      });
+    }
+  }
+
+  onSysvarDropped(event: CdkDragDrop<unknown, unknown, string>) {
+    if (event.container.id === event.previousContainer.id) {
+      this.pgMoveSysvar.emit({
+        previousIndex: event.previousIndex,
+        newIndex: event.currentIndex,
+      });
+    } else {
+      const previousInstructionId =
+        event.previousContainer.id.split('-sysvar')[0];
+      const newInstructionId = event.container.id.split('-sysvar')[0];
+      this.pgTransferSysvar.emit({
+        previousInstructionId,
+        newInstructionId,
+        instructionSysvarId: event.item.data,
+        newIndex: event.currentIndex,
+      });
+    }
+  }
+
+  onSignerDropped(event: CdkDragDrop<unknown, unknown, string>) {
+    if (event.container.id === event.previousContainer.id) {
+      this.pgMoveSigner.emit({
+        previousIndex: event.previousIndex,
+        newIndex: event.currentIndex,
+      });
+    } else {
+      const previousInstructionId =
+        event.previousContainer.id.split('-signer')[0];
+      const newInstructionId = event.container.id.split('-signer')[0];
+      this.pgTransferSigner.emit({
+        previousInstructionId,
+        newInstructionId,
+        instructionSignerId: event.item.data,
         newIndex: event.currentIndex,
       });
     }

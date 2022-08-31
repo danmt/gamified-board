@@ -18,32 +18,33 @@ import {
 import { v4 as uuid } from 'uuid';
 import { Option } from '../utils';
 
-export interface EditTaskData {
+export interface EditInstructionTaskData {
   id: string;
   name: string;
 }
 
-@Directive({ selector: '[pgEditTaskModal]', standalone: true })
-export class EditTaskModalDirective {
+@Directive({ selector: '[pgEditInstructionTaskModal]', standalone: true })
+export class EditInstructionTaskModalDirective {
   private readonly _dialog = inject(Dialog);
 
-  @Input() task: Option<EditTaskData> = null;
-  @Output() createTask = new EventEmitter<EditTaskData>();
-  @Output() updateTask = new EventEmitter<EditTaskData>();
+  @Input() instructionTask: Option<EditInstructionTaskData> = null;
+  @Output() createInstructionTask = new EventEmitter<EditInstructionTaskData>();
+  @Output() updateInstructionTask = new EventEmitter<EditInstructionTaskData>();
   @HostListener('click', []) onClick() {
     this._dialog
-      .open<EditTaskData, Option<EditTaskData>, EditTaskModalComponent>(
-        EditTaskModalComponent,
-        {
-          data: this.task,
-        }
-      )
-      .closed.subscribe((taskData) => {
-        if (taskData !== undefined) {
-          if (this.task === null) {
-            this.createTask.emit(taskData);
+      .open<
+        EditInstructionTaskData,
+        Option<EditInstructionTaskData>,
+        EditInstructionTaskModalComponent
+      >(EditInstructionTaskModalComponent, {
+        data: this.instructionTask,
+      })
+      .closed.subscribe((instructionTaskData) => {
+        if (instructionTaskData !== undefined) {
+          if (this.instructionTask === null) {
+            this.createInstructionTask.emit(instructionTaskData);
           } else {
-            this.updateTask.emit(taskData);
+            this.updateInstructionTask.emit(instructionTaskData);
           }
         }
       });
@@ -51,7 +52,7 @@ export class EditTaskModalDirective {
 }
 
 @Component({
-  selector: 'pg-edit-task-modal',
+  selector: 'pg-edit-instruction-task-modal',
   template: `
     <div
       class="px-6 pt-8 pb-4 bp-bg-futuristic shadow-xl relative text-white min-w-[400px] min-h-[300px]"
@@ -148,12 +149,14 @@ export class EditTaskModalDirective {
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
 })
-export class EditTaskModalComponent {
+export class EditInstructionTaskModalComponent {
   private readonly _dialogRef =
-    inject<DialogRef<EditTaskData, EditTaskModalComponent>>(DialogRef);
+    inject<
+      DialogRef<EditInstructionTaskData, EditInstructionTaskModalComponent>
+    >(DialogRef);
   private readonly _formBuilder = inject(FormBuilder);
 
-  readonly task = inject<Option<EditTaskData>>(DIALOG_DATA);
+  readonly task = inject<Option<EditInstructionTaskData>>(DIALOG_DATA);
   readonly form = this._formBuilder.group({
     id: this._formBuilder.control<string>(this.task?.id ?? '', {
       validators: [Validators.required],

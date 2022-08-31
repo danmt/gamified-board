@@ -133,6 +133,8 @@ export class WorkspaceApiService {
               workspaceId,
               applicationId: data['applicationRef'].id,
               applications: data['applications'] ?? [],
+              sysvars: data['sysvars'] ?? [],
+              signers: data['signers'] ?? [],
             };
           },
           toFirestore: (it) => it,

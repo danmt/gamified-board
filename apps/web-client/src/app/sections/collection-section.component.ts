@@ -18,8 +18,6 @@ import { BoardStore, CollectionView } from '../stores';
 
       {{ selected?.name }}
 
-      <ng-container *ngIf="currentApplicationId$ | ngrxPush"></ng-container>
-
       <button
         *ngIf="(currentApplicationId$ | ngrxPush) === selected.applicationId"
         (click)="onUpdateCollection(selected.id, selected)"
@@ -29,7 +27,7 @@ import { BoardStore, CollectionView } from '../stores';
 
       <button
         *ngIf="(currentApplicationId$ | ngrxPush) === selected.applicationId"
-        (click)="onDeleteCollection(selected.applicationId, selected.id)"
+        (click)="onDeleteCollection(selected.id)"
       >
         x
       </button>
@@ -46,7 +44,7 @@ export class CollectionSectionComponent {
   readonly currentApplicationId$ = this._boardStore.currentApplicationId$;
   readonly selected$ = this._boardStore.selected$.pipe(
     map((selected) => {
-      if (selected === null || !('attributes' in selected)) {
+      if (selected === null || selected.kind !== 'collection') {
         return null;
       }
 
@@ -69,7 +67,7 @@ export class CollectionSectionComponent {
             return EMPTY;
           }
 
-          this._boardStore.setActiveId(null);
+          this._boardStore.setActive(null);
 
           return this._collectionApiService.updateCollection(
             collectionId,
@@ -82,10 +80,10 @@ export class CollectionSectionComponent {
       .subscribe();
   }
 
-  onDeleteCollection(applicationId: string, collectionId: string) {
+  onDeleteCollection(collectionId: string) {
     if (confirm('Are you sure? This action cannot be reverted.')) {
       this._collectionApiService
-        .deleteCollection(applicationId, collectionId)
+        .deleteCollection(collectionId)
         .subscribe(() => this._boardStore.setSelectedId(null));
     }
   }

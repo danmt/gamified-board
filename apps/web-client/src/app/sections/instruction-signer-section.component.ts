@@ -4,32 +4,34 @@ import { Component, inject, ViewContainerRef } from '@angular/core';
 import { PushModule } from '@ngrx/component';
 import { concatMap, EMPTY, map } from 'rxjs';
 import {
-  EditInstructionTaskData,
-  EditInstructionTaskModalComponent,
+  EditInstructionSignerData,
+  EditInstructionSignerModalComponent,
 } from '../modals';
-import { InstructionTaskApiService } from '../services';
-import { BoardStore, InstructionTaskView } from '../stores';
+import { InstructionSignerApiService } from '../services';
+import { BoardStore, InstructionSignerView } from '../stores';
 
 @Component({
-  selector: 'pg-instruction-task-section',
+  selector: 'pg-instruction-signer-section',
   template: `
     <div
       *ngIf="selected$ | ngrxPush as selected"
       class="p-4 bg-gray-700 flex gap-4 justify-center items-start"
     >
-      <img [src]="selected?.instruction?.thumbnailUrl" />
+      <img src="assets/generic/signer.png" />
 
       {{ selected?.name }}
 
       <button
         (click)="
-          onUpdateInstructionTask(selected.ownerId, selected.id, selected)
+          onUpdateInstructionSigner(selected.ownerId, selected.id, selected)
         "
       >
         edit
       </button>
 
-      <button (click)="onDeleteInstructionTask(selected.ownerId, selected.id)">
+      <button
+        (click)="onDeleteInstructionSigner(selected.ownerId, selected.id)"
+      >
         x
       </button>
     </div>
@@ -37,17 +39,17 @@ import { BoardStore, InstructionTaskView } from '../stores';
   standalone: true,
   imports: [CommonModule, PushModule],
 })
-export class InstructionTaskSectionComponent {
+export class InstructionSignerSectionComponent {
   private readonly _dialog = inject(Dialog);
   private readonly _boardStore = inject(BoardStore);
   private readonly _viewContainerRef = inject(ViewContainerRef);
-  private readonly _instructionTaskApiService = inject(
-    InstructionTaskApiService
+  private readonly _instructionSignerApiService = inject(
+    InstructionSignerApiService
   );
 
   readonly selected$ = this._boardStore.selected$.pipe(
     map((selected) => {
-      if (selected === null || selected.kind !== 'instructionTask') {
+      if (selected === null || selected.kind !== 'instructionSigner') {
         return null;
       }
 
@@ -55,42 +57,42 @@ export class InstructionTaskSectionComponent {
     })
   );
 
-  onUpdateInstructionTask(
+  onUpdateInstructionSigner(
     instructionId: string,
-    taskId: string,
-    task: InstructionTaskView
+    signerId: string,
+    signer: InstructionSignerView
   ) {
     this._dialog
       .open<
-        EditInstructionTaskData,
-        EditInstructionTaskData,
-        EditInstructionTaskModalComponent
-      >(EditInstructionTaskModalComponent, {
-        data: task,
+        EditInstructionSignerData,
+        EditInstructionSignerData,
+        EditInstructionSignerModalComponent
+      >(EditInstructionSignerModalComponent, {
+        data: signer,
         viewContainerRef: this._viewContainerRef,
       })
       .closed.pipe(
-        concatMap((taskData) => {
-          if (taskData === undefined) {
+        concatMap((signerData) => {
+          if (signerData === undefined) {
             return EMPTY;
           }
 
           this._boardStore.setActive(null);
 
-          return this._instructionTaskApiService.updateInstructionTask(
+          return this._instructionSignerApiService.updateInstructionSigner(
             instructionId,
-            taskId,
-            taskData.name
+            signerId,
+            signerData.name
           );
         })
       )
       .subscribe();
   }
 
-  onDeleteInstructionTask(instructionId: string, taskId: string) {
+  onDeleteInstructionSigner(instructionId: string, signerId: string) {
     if (confirm('Are you sure? This action cannot be reverted.')) {
-      this._instructionTaskApiService
-        .deleteInstructionTask(instructionId, taskId)
+      this._instructionSignerApiService
+        .deleteInstructionSigner(instructionId, signerId)
         .subscribe(() => this._boardStore.setSelectedId(null));
     }
   }

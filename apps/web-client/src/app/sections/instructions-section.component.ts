@@ -126,7 +126,7 @@ export class InstructionsSectionComponent {
   readonly instructions$ = this._boardStore.instructions$;
 
   onActivateInstruction(instructionId: string) {
-    this._boardStore.setActiveId(instructionId);
+    this._boardStore.setActive({ id: instructionId, kind: 'instruction' });
   }
 
   onSelectInstruction(instructionId: string) {
@@ -162,12 +162,6 @@ export class InstructionsSectionComponent {
     this._instructionApiService
       .updateInstruction(instructionId, instructionName, thumbnailUrl, args)
       .subscribe();
-  }
-
-  onDeleteInstruction(applicationId: string, instructionId: string) {
-    this._instructionApiService
-      .deleteInstruction(applicationId, instructionId)
-      .subscribe(() => this._boardStore.setSelectedId(null));
   }
 
   onDragStart(event: CdkDragStart) {

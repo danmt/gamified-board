@@ -111,12 +111,7 @@ import { Option } from '../utils';
           <button
             *ngIf="selectedApplication$ | ngrxPush as selectedApplication"
             class="border border-blue-500"
-            (click)="
-              onDeleteApplication(
-                selectedApplication.id,
-                selectedApplication.workspaceId
-              )
-            "
+            (click)="onDeleteApplication(selectedApplication.id)"
           >
             Delete application
           </button>
@@ -251,9 +246,7 @@ export class LobbyPageComponent implements OnInit {
       .subscribe();
   }
 
-  onDeleteApplication(applicationId: string, workspaceId: string) {
-    this._applicationApiService
-      .deleteApplication(applicationId, workspaceId)
-      .subscribe();
+  onDeleteApplication(applicationId: string) {
+    this._applicationApiService.deleteApplication(applicationId).subscribe();
   }
 }

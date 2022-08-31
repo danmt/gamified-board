@@ -136,7 +136,7 @@ export class CollectionsSectionComponent {
   readonly collections$ = this._boardStore.collections$;
 
   onActivateCollection(collectionId: string) {
-    this._boardStore.setActiveId(collectionId);
+    this._boardStore.setActive({ id: collectionId, kind: 'collection' });
   }
 
   onSelectCollection(collectionId: string) {

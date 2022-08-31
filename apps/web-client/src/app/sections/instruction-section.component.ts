@@ -18,8 +18,6 @@ import { BoardStore, InstructionView } from '../stores';
 
       {{ selected?.name }}
 
-      <ng-container *ngIf="currentApplicationId$ | ngrxPush"></ng-container>
-
       <button
         *ngIf="(currentApplicationId$ | ngrxPush) === selected.applicationId"
         (click)="onUpdateInstruction(selected.id, selected)"
@@ -29,7 +27,7 @@ import { BoardStore, InstructionView } from '../stores';
 
       <button
         *ngIf="(currentApplicationId$ | ngrxPush) === selected.applicationId"
-        (click)="onDeleteInstruction(selected.applicationId, selected.id)"
+        (click)="onDeleteInstruction(selected.id)"
       >
         x
       </button>
@@ -46,7 +44,7 @@ export class InstructionSectionComponent {
   readonly currentApplicationId$ = this._boardStore.currentApplicationId$;
   readonly selected$ = this._boardStore.selected$.pipe(
     map((selected) => {
-      if (selected === null || !('arguments' in selected)) {
+      if (selected === null || selected.kind !== 'instruction') {
         return null;
       }
 
@@ -69,7 +67,7 @@ export class InstructionSectionComponent {
             return EMPTY;
           }
 
-          this._boardStore.setActiveId(null);
+          this._boardStore.setActive(null);
 
           return this._instructionApiService.updateInstruction(
             instructionId,
@@ -82,10 +80,10 @@ export class InstructionSectionComponent {
       .subscribe();
   }
 
-  onDeleteInstruction(applicationId: string, instructionId: string) {
+  onDeleteInstruction(instructionId: string) {
     if (confirm('Are you sure? This action cannot be reverted.')) {
       this._instructionApiService
-        .deleteInstruction(applicationId, instructionId)
+        .deleteInstruction(instructionId)
         .subscribe(() => this._boardStore.setSelectedId(null));
     }
   }
