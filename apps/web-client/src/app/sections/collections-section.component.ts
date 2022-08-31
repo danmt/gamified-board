@@ -26,7 +26,7 @@ import { Option } from '../utils';
               *ngIf="currentApplicationId$ | ngrxPush as applicationId"
             >
               <button
-                class="rounded-full bg-slate-400 w-8 h-8"
+                class="bp-button-add-futuristic z-20"
                 pgEditCollectionModal
                 (createCollection)="
                   onCreateCollection(
@@ -38,9 +38,7 @@ import { Option } from '../utils';
                     $event.attributes
                   )
                 "
-              >
-                +
-              </button>
+              ></button>
             </ng-container>
           </ng-container>
         </div>
@@ -55,7 +53,7 @@ import { Option } from '../utils';
         ></div>
         <div>
           <div
-            class="flex-1 px-4 pt-4 pb-10 overflow-auto bp-skin-metal-body ml-4"
+            class="flex-1 pl-6 pr-4 pt-4 pb-10 overflow-auto bp-skin-metal-body ml-4"
           >
             <div
               *ngrxLet="collections$; let collections"
@@ -75,7 +73,7 @@ import { Option } from '../utils';
               ]"
               [cdkDropListData]="collections"
               cdkDropListSortingDisabled
-              class="flex flex-wrap gap-2"
+              class="flex flex-wrap gap-4"
             >
               <div
                 *ngFor="let collection of collections; trackBy: trackBy"
@@ -87,7 +85,7 @@ import { Option } from '../utils';
                   <div
                     class="w-full h-full absolute z-20 bg-black bg-opacity-50"
                   ></div>
-                  <div class="bg-yellow-500 p-0.5 w-11 h-11">
+                  <div class="bg-green-800 p-0.5 w-11 h-11">
                     <img
                       class="w-full h-full object-cover"
                       [src]="collection.thumbnailUrl"
@@ -103,7 +101,7 @@ import { Option } from '../utils';
                   (cdkDragStarted)="onDragStart($event)"
                   (cdkDragEnded)="onDragEnd()"
                 >
-                  <div class="bg-yellow-500 p-0.5 w-11 h-11">
+                  <div class="bg-green-800 p-0.5 w-11 h-11">
                     <img
                       class="w-full h-full object-cover"
                       [src]="collection.thumbnailUrl"

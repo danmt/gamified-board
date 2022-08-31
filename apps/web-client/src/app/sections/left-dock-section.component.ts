@@ -9,7 +9,7 @@ import { BoardStore } from '../stores';
   selector: 'pg-left-dock-section',
   template: `
     <div
-      class="py-4 pl-6 pr-10 bp-bg-futuristic flex gap-4 justify-center items-start relative text-white bp-font-game"
+      class="pt-4 pb-2 pl-6 pr-10 bp-bg-futuristic flex gap-4 justify-center items-start relative text-white bp-font-game"
       pgKeyboardListener
       (pgKeyDown)="onKeyDown($event)"
     >

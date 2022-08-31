@@ -216,6 +216,18 @@ body,
   background-image: url('./assets/skins/dock/close-button-hover.png');
 }
 
+.bp-button-add-futuristic {
+  background-color: transparent;
+  background-image: url('./assets/skins/dock/add-button.png');
+  background-repeat: no-repeat;
+  width: 39px;
+  height: 35px;
+}
+
+.bp-button-add-futuristic:hover {
+  background-image: url('./assets/skins/dock/add-button-hover.png');
+}
+
 .bp-button-generate-futuristic {
   background-color: transparent;
   background-image: url('./assets/skins/dock/generate-button.png');

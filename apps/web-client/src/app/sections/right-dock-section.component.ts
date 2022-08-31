@@ -8,7 +8,7 @@ import { BoardStore } from '../stores';
 @Component({
   selector: 'pg-right-dock-section',
   template: `<div
-    class="py-4 pr-6 pl-10 bp-bg-futuristic flex gap-4 justify-center items-start relative text-white bp-font-game"
+    class="pt-4 pb-2 pr-6 pl-10 bp-bg-futuristic flex gap-4 justify-center items-start relative text-white bp-font-game"
     pgKeyboardListener
     (pgKeyDown)="onKeyDown($event)"
   >
