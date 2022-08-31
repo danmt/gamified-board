@@ -9,7 +9,7 @@ import { BoardStore } from '../stores';
   selector: 'pg-left-dock-section',
   template: `
     <div
-      class="py-4 px-6 bp-bg-futuristic items-start relative text-white bp-font-game"
+      class="py-4 pl-6 pr-10 bp-bg-futuristic flex gap-4 justify-center items-start relative text-white bp-font-game"
       pgKeyboardListener
       (pgKeyDown)="onKeyDown($event)"
     >
@@ -17,7 +17,10 @@ import { BoardStore } from '../stores';
         <div class="bp-skin-metal-border flex-1 z-10"></div>
         <div class="bp-skin-metal-corner-right-top z-10"></div>
       </div>
-      <div class="bg-gray-800 relative" style="width: 2.89rem; height: 2.89rem">
+      <div
+        class="bg-gray-800 relative z-30"
+        style="width: 2.89rem; height: 2.89rem"
+      >
         <span
           class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase w-3 h-3"
           style="font-size: 0.5rem; line-height: 0.5rem"
@@ -32,7 +35,10 @@ import { BoardStore } from '../stores';
         ></pg-square-button>
       </div>
 
-      <div class="bg-gray-800 relative" style="width: 2.89rem; height: 2.89rem">
+      <div
+        class="bg-gray-800 relative z-30"
+        style="width: 2.89rem; height: 2.89rem"
+      >
         <span
           class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase w-3 h-3"
           style="font-size: 0.5rem; line-height: 0.5rem"
