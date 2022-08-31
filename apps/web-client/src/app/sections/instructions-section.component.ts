@@ -16,8 +16,32 @@ import { Option } from '../utils';
       <div class="flex relative" style="height:78px">
         <div class="bp-skin-metal-detail absolute -top-2.5 z-20"></div>
         <div class="bp-skin-metal-border flex-1 z-10"></div>
-        <div class="absolute w-full bp-skin-title-box">
-          <h1 class="bp-font-game text-3xl px-4 mt-6">Instructions</h1>
+        <div
+          class="absolute w-full bp-skin-title-box flex items-center justify-between pr-12 pl-6"
+        >
+          <h1 class="bp-font-game text-3xl">Instructions</h1>
+          <ng-container *ngIf="workspaceId$ | ngrxPush as workspaceId">
+            <ng-container
+              *ngIf="currentApplicationId$ | ngrxPush as applicationId"
+            >
+              <button
+                class="rounded-full bg-slate-400 w-8 h-8 z-20"
+                pgEditInstructionModal
+                (createInstruction)="
+                  onCreateInstruction(
+                    workspaceId,
+                    applicationId,
+                    $event.id,
+                    $event.name,
+                    $event.thumbnailUrl,
+                    $event.arguments
+                  )
+                "
+              >
+                +
+              </button>
+            </ng-container>
+          </ng-container>
         </div>
         <div class="bp-skin-metal-corner-right-top z-10"></div>
       </div>

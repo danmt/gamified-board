@@ -13,19 +13,41 @@ import { Option } from '../utils';
   selector: 'pg-collections-section',
   template: `
     <div class="flex flex-col relative mt-10 z-40">
-      <div class="flex relative" style="height:78px">
+      <header class="flex relative" style="height:78px">
         <div class="bp-skin-metal-corner-left-top z-10"></div>
         <div class="bp-skin-metal-border flex-1 z-10"></div>
-        <div class="absolute w-full bp-skin-title-box flipped">
-          <h1 class="bp-font-game text-3xl px-4 mt-6 text-right flipped">
-            <!-- hack -->
-            Collections
-          </h1>
+        <div
+          class="absolute w-full bp-skin-title-box flex items-center justify-between pl-12 pr-8 ml-1.5"
+        >
+          <h1 class="bp-font-game text-3xl">Collections</h1>
+
+          <ng-container *ngIf="workspaceId$ | ngrxPush as workspaceId">
+            <ng-container
+              *ngIf="currentApplicationId$ | ngrxPush as applicationId"
+            >
+              <button
+                class="rounded-full bg-slate-400 w-8 h-8"
+                pgEditCollectionModal
+                (createCollection)="
+                  onCreateCollection(
+                    workspaceId,
+                    applicationId,
+                    $event.id,
+                    $event.name,
+                    $event.thumbnailUrl,
+                    $event.attributes
+                  )
+                "
+              >
+                +
+              </button>
+            </ng-container>
+          </ng-container>
         </div>
         <div
           class="bp-skin-metal-detail-2 absolute -top-2.5 z-20 right-0"
         ></div>
-      </div>
+      </header>
 
       <div class="relative bp-bg-futuristic">
         <div

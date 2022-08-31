@@ -15,8 +15,10 @@ import { Option } from '../utils';
       <div class="flex relative" style="height:78px">
         <div class="bp-skin-metal-detail absolute -top-2.5 z-20"></div>
         <div class="bp-skin-metal-border flex-1 z-10"></div>
-        <div class="absolute w-full bp-skin-title-box">
-          <h1 class="bp-font-game text-3xl px-4 mt-6">Applications</h1>
+        <div
+          class="absolute w-full bp-skin-title-box flex items-center justify-between pr-12 pl-6"
+        >
+          <h1 class="bp-font-game text-3xl">Applications</h1>
         </div>
         <div class="bp-skin-metal-corner-right-top z-10"></div>
       </div>
