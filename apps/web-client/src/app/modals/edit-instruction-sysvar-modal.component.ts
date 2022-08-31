@@ -16,37 +16,52 @@ import {
   Validators,
 } from '@angular/forms';
 import { v4 as uuid } from 'uuid';
-import { Option } from '../utils';
+import { Entity, Option } from '../utils';
+
+export type InstructionSysvar = Entity<{
+  name: string;
+}>;
 
 export interface EditInstructionSysvarData {
-  id: string;
-  name: string;
+  instructionSysvar: Option<InstructionSysvar>;
 }
+
+export type EditInstructionSysvarSubmitPayload = InstructionSysvar;
 
 @Directive({ selector: '[pgEditInstructionSysvarModal]', standalone: true })
 export class EditInstructionSysvarModalDirective {
   private readonly _dialog = inject(Dialog);
 
-  @Input() instructionSysvar: Option<EditInstructionSysvarData> = null;
-  @Output() createInstructionSysvar =
-    new EventEmitter<EditInstructionSysvarData>();
-  @Output() updateInstructionSysvar =
-    new EventEmitter<EditInstructionSysvarData>();
+  @Input() pgInstructionSysvar: Option<InstructionSysvar> = null;
+
+  @Output() pgCreateInstructionSysvar =
+    new EventEmitter<EditInstructionSysvarSubmitPayload>();
+  @Output() pgUpdateInstructionSysvar =
+    new EventEmitter<EditInstructionSysvarSubmitPayload>();
+  @Output() pgOpenModal = new EventEmitter();
+  @Output() pgCloseModal = new EventEmitter();
+
   @HostListener('click', []) onClick() {
+    this.pgOpenModal.emit();
+
     this._dialog
       .open<
+        EditInstructionSysvarSubmitPayload,
         EditInstructionSysvarData,
-        Option<EditInstructionSysvarData>,
         EditInstructionSysvarModalComponent
       >(EditInstructionSysvarModalComponent, {
-        data: this.instructionSysvar,
+        data: {
+          instructionSysvar: this.pgInstructionSysvar,
+        },
       })
       .closed.subscribe((instructionSysvarData) => {
+        this.pgCloseModal.emit();
+
         if (instructionSysvarData !== undefined) {
-          if (this.instructionSysvar === null) {
-            this.createInstructionSysvar.emit(instructionSysvarData);
+          if (this.pgInstructionSysvar === null) {
+            this.pgCreateInstructionSysvar.emit(instructionSysvarData);
           } else {
-            this.updateInstructionSysvar.emit(instructionSysvarData);
+            this.pgUpdateInstructionSysvar.emit(instructionSysvarData);
           }
         }
       });
@@ -114,11 +129,15 @@ export class EditInstructionSysvarModalDirective {
 export class EditInstructionSysvarModalComponent {
   private readonly _dialogRef =
     inject<
-      DialogRef<EditInstructionSysvarData, EditInstructionSysvarModalComponent>
+      DialogRef<
+        EditInstructionSysvarSubmitPayload,
+        EditInstructionSysvarModalComponent
+      >
     >(DialogRef);
   private readonly _formBuilder = inject(FormBuilder);
+  private readonly _data = inject<EditInstructionSysvarData>(DIALOG_DATA);
 
-  readonly sysvar = inject<Option<EditInstructionSysvarData>>(DIALOG_DATA);
+  readonly sysvar = this._data.instructionSysvar;
   readonly form = this._formBuilder.group({
     id: this._formBuilder.control<string>(this.sysvar?.id ?? '', {
       validators: [Validators.required],

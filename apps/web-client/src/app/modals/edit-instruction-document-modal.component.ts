@@ -1,11 +1,19 @@
-import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
+import { Dialog, DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 import {
   CdkDragDrop,
   DragDropModule,
   moveItemInArray,
 } from '@angular/cdk/drag-drop';
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import {
+  Component,
+  Directive,
+  EventEmitter,
+  HostListener,
+  inject,
+  Input,
+  Output,
+} from '@angular/core';
 import {
   FormArray,
   FormBuilder,
@@ -14,10 +22,9 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { combineLatest, map, of } from 'rxjs';
+import { Observable } from 'rxjs';
 import { v4 as uuid } from 'uuid';
-import { BoardStore } from '../stores';
-import { isNotNull, Option } from '../utils';
+import { Entity, isNotNull, Option } from '../utils';
 
 interface ArgumentReference {
   kind: 'argument';
@@ -48,16 +55,19 @@ interface Value {
   type: string;
 }
 
+type InstructionDocument = Entity<{
+  name: string;
+  method: string;
+  seeds: Option<Reference | Value>[];
+  bump: Option<Reference>;
+  payer: Option<DocumentReference>;
+}>;
+
 export interface EditInstructionDocumentData {
-  document: Option<{
-    id: string;
-    name: string;
-    method: string;
-    seeds: Option<Reference | Value>[];
-    bump: Option<Reference>;
-    payer: Option<DocumentReference>;
-  }>;
-  instructionId: string;
+  instructionDocument: Option<InstructionDocument>;
+  argumentReferences$: Observable<ArgumentReference[]>;
+  attributeReferences$: Observable<DocumentReference[]>;
+  bumpReferences$: Observable<Reference[]>;
 }
 
 type SeedOutput =
@@ -77,6 +87,66 @@ export interface EditInstructionDocumentSubmitPayload {
   payer: Option<{ kind: 'document'; documentId: string; attributeId: string }>;
 }
 
+@Directive({ selector: '[pgEditInstructionDocumentModal]', standalone: true })
+export class EditInstructionDocumentModalDirective {
+  private readonly _dialog = inject(Dialog);
+
+  @Input() pgInstructionDocument: Option<InstructionDocument> = null;
+  @Input() pgArgumentReferences$: Option<Observable<ArgumentReference[]>> =
+    null;
+  @Input() pgAttributeReferences$: Option<Observable<DocumentReference[]>> =
+    null;
+  @Input() pgBumpReferences$: Option<Observable<Reference[]>> = null;
+
+  @Output() pgCreateInstructionDocument =
+    new EventEmitter<EditInstructionDocumentSubmitPayload>();
+  @Output() pgUpdateInstructionDocument =
+    new EventEmitter<EditInstructionDocumentSubmitPayload>();
+  @Output() pgOpenModal = new EventEmitter();
+  @Output() pgCloseModal = new EventEmitter();
+
+  @HostListener('click', []) onClick() {
+    if (this.pgArgumentReferences$ === null) {
+      throw new Error('pgArgumentReferences$ is missing.');
+    }
+
+    if (this.pgAttributeReferences$ === null) {
+      throw new Error('pgAttributeReferences$ is missing.');
+    }
+
+    if (this.pgBumpReferences$ === null) {
+      throw new Error('pgBumpReferences$ is missing.');
+    }
+
+    this.pgOpenModal.emit();
+
+    this._dialog
+      .open<
+        EditInstructionDocumentSubmitPayload,
+        EditInstructionDocumentData,
+        EditInstructionDocumentModalComponent
+      >(EditInstructionDocumentModalComponent, {
+        data: {
+          instructionDocument: this.pgInstructionDocument,
+          argumentReferences$: this.pgArgumentReferences$,
+          attributeReferences$: this.pgAttributeReferences$,
+          bumpReferences$: this.pgBumpReferences$,
+        },
+      })
+      .closed.subscribe((instructionDocumentData) => {
+        this.pgCloseModal.emit();
+
+        if (instructionDocumentData !== undefined) {
+          if (this.pgInstructionDocument === null) {
+            this.pgCreateInstructionDocument.emit(instructionDocumentData);
+          } else {
+            this.pgUpdateInstructionDocument.emit(instructionDocumentData);
+          }
+        }
+      });
+  }
+}
+
 @Component({
   selector: 'pg-edit-instruction-document-modal',
   template: `
@@ -89,7 +159,7 @@ export interface EditInstructionDocumentSubmitPayload {
       </button>
 
       <h1 class="text-center text-xl mb-4">
-        {{ document === null ? 'Create' : 'Update' }} document
+        {{ instructionDocument === null ? 'Create' : 'Update' }} document
       </h1>
 
       <form
@@ -104,13 +174,13 @@ export interface EditInstructionDocumentSubmitPayload {
             id="document-id-input"
             type="text"
             formControlName="id"
-            [readonly]="document !== null"
+            [readonly]="instructionDocument !== null"
           />
-          <p *ngIf="document === null">
+          <p *ngIf="instructionDocument === null">
             Hint: The ID cannot be changed afterwards.
           </p>
           <button
-            *ngIf="document === null"
+            *ngIf="instructionDocument === null"
             type="button"
             (click)="idControl.setValue(onGenerateId())"
           >
@@ -372,7 +442,7 @@ export interface EditInstructionDocumentSubmitPayload {
 
         <div class="flex justify-center items-center mt-4">
           <button type="submit" class="px-4 py-2 border-blue-500 border">
-            {{ document === null ? 'Send' : 'Save' }}
+            {{ instructionDocument === null ? 'Send' : 'Save' }}
           </button>
         </div>
       </form>
@@ -391,26 +461,33 @@ export class EditInstructionDocumentModalComponent {
     >(DialogRef);
   private readonly _formBuilder = inject(FormBuilder);
   private readonly _data = inject<EditInstructionDocumentData>(DIALOG_DATA);
-  private readonly _boardStore = inject(BoardStore);
 
-  readonly document = this._data.document;
-  readonly instructionId = this._data.instructionId;
+  readonly instructionDocument = this._data.instructionDocument;
+  readonly argumentReferences$ = this._data.argumentReferences$;
+  readonly attributeReferences$ = this._data.attributeReferences$;
+  readonly bumpReferences$ = this._data.bumpReferences$;
   readonly form = this._formBuilder.group({
-    id: this._formBuilder.control<string>(this.document?.id ?? '', {
+    id: this._formBuilder.control<string>(this.instructionDocument?.id ?? '', {
       validators: [Validators.required],
       nonNullable: true,
     }),
-    name: this._formBuilder.control<string>(this.document?.name ?? '', {
-      validators: [Validators.required],
-      nonNullable: true,
-    }),
-    method: this._formBuilder.control<string>(this.document?.method ?? 'read', {
-      validators: [Validators.required],
-      nonNullable: true,
-    }),
-    seeds: this.document?.seeds
+    name: this._formBuilder.control<string>(
+      this.instructionDocument?.name ?? '',
+      {
+        validators: [Validators.required],
+        nonNullable: true,
+      }
+    ),
+    method: this._formBuilder.control<string>(
+      this.instructionDocument?.method ?? 'read',
+      {
+        validators: [Validators.required],
+        nonNullable: true,
+      }
+    ),
+    seeds: this.instructionDocument?.seeds
       ? this._formBuilder.array(
-          this.document.seeds.map((seed) => {
+          this.instructionDocument.seeds.map((seed) => {
             if (seed === null) {
               return this._formBuilder.group({
                 kind: this._formBuilder.control<'invalid'>('invalid'),
@@ -482,7 +559,7 @@ export class EditInstructionDocumentModalComponent {
             };
           }
       >
-    >(this.document?.bump ?? null),
+    >(this.instructionDocument?.bump ?? null),
     payer: this._formBuilder.control<
       Option<{
         document: {
@@ -494,64 +571,8 @@ export class EditInstructionDocumentModalComponent {
           name: string;
         };
       }>
-    >(this.document?.payer ?? null),
+    >(this.instructionDocument?.payer ?? null),
   });
-  readonly argumentReferences$ = combineLatest([
-    this._boardStore.currentApplicationInstructions$,
-    of(this._data.instructionId),
-  ]).pipe(
-    map(([boardInstructions, instructionId]) => {
-      const instruction =
-        boardInstructions?.find(({ id }) => id === instructionId) ?? null;
-
-      if (instruction === null) {
-        return null;
-      }
-
-      return instruction.arguments.map((argument) => ({
-        kind: 'argument' as const,
-        argument,
-      }));
-    })
-  );
-  readonly attributeReferences$ = combineLatest([
-    this._boardStore.currentApplicationInstructions$,
-    of(this._data.instructionId),
-  ]).pipe(
-    map(([boardInstructions, instructionId]) => {
-      const instruction =
-        boardInstructions?.find(({ id }) => id === instructionId) ?? null;
-
-      if (instruction === null) {
-        return null;
-      }
-
-      return instruction.documents.reduce<DocumentReference[]>(
-        (attributes, document) => [
-          ...attributes,
-          ...document.collection.attributes.map((attribute) => ({
-            kind: 'document' as const,
-            attribute,
-            document,
-          })),
-        ],
-        []
-      );
-    })
-  );
-  readonly bumpReferences$ = combineLatest([
-    this.argumentReferences$,
-    this.attributeReferences$,
-  ]).pipe(
-    map(([argumentReferences, attributeReferences]) => [
-      ...(argumentReferences?.filter(
-        (argumentReference) => argumentReference.argument.type === 'u8'
-      ) ?? []),
-      ...(attributeReferences?.filter(
-        (attributeReference) => attributeReference.attribute.type === 'u8'
-      ) ?? []),
-    ])
-  );
 
   get idControl() {
     return this.form.get('id') as FormControl<string>;

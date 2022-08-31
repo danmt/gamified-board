@@ -1,11 +1,14 @@
-import { Dialog } from '@angular/cdk/dialog';
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
-import { PushModule } from '@ngrx/component';
-import { concatMap, EMPTY, map } from 'rxjs';
-import { EditCollectionData, EditCollectionModalComponent } from '../modals';
+import { LetModule, PushModule } from '@ngrx/component';
+import { map } from 'rxjs';
+import { SquareButtonComponent } from '../components';
+import {
+  EditCollectionModalDirective,
+  EditCollectionSubmitPayload,
+} from '../modals';
 import { CollectionApiService } from '../services';
-import { BoardStore, CollectionView } from '../stores';
+import { BoardStore } from '../stores';
 
 @Component({
   selector: 'pg-collection-section',
@@ -18,26 +21,59 @@ import { BoardStore, CollectionView } from '../stores';
 
       {{ selected?.name }}
 
-      <button
+      <div
+        class="bg-gray-800 relative"
+        style="width: 2.89rem; height: 2.89rem"
         *ngIf="(currentApplicationId$ | ngrxPush) === selected.applicationId"
-        (click)="onUpdateCollection(selected.id, selected)"
       >
-        edit
-      </button>
+        <span
+          class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase w-3 h-3"
+          style="font-size: 0.5rem; line-height: 0.5rem"
+        >
+          q
+        </span>
 
-      <button
+        <pg-square-button
+          [pgIsActive]="isEditing"
+          pgThumbnailUrl="assets/generic/signer.png"
+          pgEditCollectionModal
+          [pgCollection]="selected"
+          (pgOpenModal)="isEditing = true"
+          (pgCloseModal)="isEditing = false"
+          (pgUpdateCollection)="onUpdateCollection(selected.id, selected)"
+        ></pg-square-button>
+      </div>
+
+      <div
+        class="bg-gray-800 relative"
+        style="width: 2.89rem; height: 2.89rem"
         *ngIf="(currentApplicationId$ | ngrxPush) === selected.applicationId"
-        (click)="onDeleteCollection(selected.id)"
       >
-        x
-      </button>
+        <span
+          class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase w-3 h-3"
+          style="font-size: 0.5rem; line-height: 0.5rem"
+        >
+          w
+        </span>
+
+        <pg-square-button
+          [pgIsActive]="false"
+          pgThumbnailUrl="assets/generic/signer.png"
+          (click)="onDeleteCollection(selected.id)"
+        ></pg-square-button>
+      </div>
     </div>
   `,
   standalone: true,
-  imports: [CommonModule, PushModule],
+  imports: [
+    CommonModule,
+    PushModule,
+    LetModule,
+    SquareButtonComponent,
+    EditCollectionModalDirective,
+  ],
 })
 export class CollectionSectionComponent {
-  private readonly _dialog = inject(Dialog);
   private readonly _boardStore = inject(BoardStore);
   private readonly _collectionApiService = inject(CollectionApiService);
 
@@ -52,39 +88,32 @@ export class CollectionSectionComponent {
     })
   );
 
-  onUpdateCollection(collectionId: string, collection: CollectionView) {
-    this._dialog
-      .open<
-        EditCollectionData,
-        EditCollectionData,
-        EditCollectionModalComponent
-      >(EditCollectionModalComponent, {
-        data: collection,
-      })
-      .closed.pipe(
-        concatMap((collectionData) => {
-          if (collectionData === undefined) {
-            return EMPTY;
-          }
+  isEditing = false;
+  isDeleting = false;
 
-          this._boardStore.setActive(null);
-
-          return this._collectionApiService.updateCollection(
-            collectionId,
-            collectionData.name,
-            collectionData.thumbnailUrl,
-            collectionData.attributes
-          );
-        })
+  onUpdateCollection(
+    collectionId: string,
+    collectionData: EditCollectionSubmitPayload
+  ) {
+    this._collectionApiService
+      .updateCollection(
+        collectionId,
+        collectionData.name,
+        collectionData.thumbnailUrl,
+        collectionData.attributes
       )
       .subscribe();
   }
 
   onDeleteCollection(collectionId: string) {
+    this.isDeleting = true;
+
     if (confirm('Are you sure? This action cannot be reverted.')) {
       this._collectionApiService
         .deleteCollection(collectionId)
         .subscribe(() => this._boardStore.setSelectedId(null));
     }
+
+    this.isDeleting = false;
   }
 }

@@ -16,36 +16,51 @@ import {
   Validators,
 } from '@angular/forms';
 import { v4 as uuid } from 'uuid';
-import { Option } from '../utils';
+import { Entity, Option } from '../utils';
 
-export interface EditApplicationData {
-  id: string;
+export type Application = Entity<{
   name: string;
   thumbnailUrl: string;
+}>;
+
+export interface EditApplicationData {
+  application: Option<Application>;
 }
+
+export type EditApplicationSubmitPayload = Application;
 
 @Directive({ selector: '[pgEditApplicationModal]', standalone: true })
 export class EditApplicationModalDirective {
   private readonly _dialog = inject(Dialog);
 
-  @Input() application: Option<EditApplicationData> = null;
-  @Output() createApplication = new EventEmitter<EditApplicationData>();
-  @Output() updateApplication = new EventEmitter<EditApplicationData>();
+  @Input() pgApplication: Option<Application> = null;
+
+  @Output() pgCreateApplication =
+    new EventEmitter<EditApplicationSubmitPayload>();
+  @Output() pgUpdateApplication =
+    new EventEmitter<EditApplicationSubmitPayload>();
+  @Output() pgOpenModal = new EventEmitter();
+  @Output() pgCloseModal = new EventEmitter();
+
   @HostListener('click', []) onClick() {
+    this.pgOpenModal.emit();
+
     this._dialog
       .open<
+        EditApplicationSubmitPayload,
         EditApplicationData,
-        Option<EditApplicationData>,
         EditApplicationModalComponent
       >(EditApplicationModalComponent, {
-        data: this.application,
+        data: { application: this.pgApplication },
       })
       .closed.subscribe((applicationData) => {
+        this.pgCloseModal.emit();
+
         if (applicationData !== undefined) {
-          if (this.application === null) {
-            this.createApplication.emit(applicationData);
+          if (this.pgApplication === null) {
+            this.pgCreateApplication.emit(applicationData);
           } else {
-            this.updateApplication.emit(applicationData);
+            this.pgUpdateApplication.emit(applicationData);
           }
         }
       });
@@ -126,12 +141,13 @@ export class EditApplicationModalDirective {
 })
 export class EditApplicationModalComponent {
   private readonly _dialogRef =
-    inject<DialogRef<EditApplicationData, EditApplicationModalComponent>>(
-      DialogRef
-    );
+    inject<
+      DialogRef<EditApplicationSubmitPayload, EditApplicationModalComponent>
+    >(DialogRef);
   private readonly _formBuilder = inject(FormBuilder);
+  private readonly _data = inject<EditApplicationData>(DIALOG_DATA);
 
-  readonly application = inject<Option<EditApplicationData>>(DIALOG_DATA);
+  readonly application = this._data.application;
   readonly form = this._formBuilder.group({
     id: this._formBuilder.control<string>(this.application?.id ?? '', {
       validators: [Validators.required],

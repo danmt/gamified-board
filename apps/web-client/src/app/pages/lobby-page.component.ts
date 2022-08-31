@@ -30,7 +30,7 @@ import { Option } from '../utils';
           <button
             class="border border-blue-500"
             pgEditWorkspaceModal
-            (createWorkspace)="
+            (pgCreateWorkspace)="
               onCreateWorkspace(userId, $event.id, $event.name)
             "
           >
@@ -40,10 +40,10 @@ import { Option } from '../utils';
             *ngIf="selectedWorkspace$ | ngrxPush as selectedWorkspace"
             class="border border-blue-500"
             pgEditWorkspaceModal
-            (updateWorkspace)="
+            (pgUpdateWorkspace)="
               onUpdateWorkspace(selectedWorkspace.id, $event.name)
             "
-            [workspace]="selectedWorkspace"
+            [pgWorkspace]="selectedWorkspace"
           >
             Update workspace
           </button>
@@ -82,7 +82,7 @@ import { Option } from '../utils';
             *ngIf="selectedWorkspace$ | ngrxPush as selectedWorkspace"
             class="border border-blue-500"
             pgEditApplicationModal
-            (createApplication)="
+            (pgCreateApplication)="
               onCreateApplication(
                 selectedWorkspace.id,
                 $event.id,
@@ -97,14 +97,14 @@ import { Option } from '../utils';
             *ngIf="selectedApplication$ | ngrxPush as selectedApplication"
             class="border border-blue-500"
             pgEditApplicationModal
-            (updateApplication)="
+            (pgUpdateApplication)="
               onUpdateApplication(
                 selectedApplication.id,
                 $event.name,
                 $event.thumbnailUrl
               )
             "
-            [application]="selectedApplication"
+            [pgApplication]="selectedApplication"
           >
             Update application
           </button>

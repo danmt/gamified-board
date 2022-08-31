@@ -23,37 +23,52 @@ import {
   Validators,
 } from '@angular/forms';
 import { v4 as uuid } from 'uuid';
-import { Option } from '../utils';
+import { Entity, Option } from '../utils';
 
-export interface EditCollectionData {
-  id: string;
+export type Collection = Entity<{
   name: string;
   thumbnailUrl: string;
-  attributes: { id: string; name: string; type: string; isOption: boolean }[];
+  attributes: Entity<{ name: string; type: string; isOption: boolean }>[];
+}>;
+
+export interface EditCollectionData {
+  collection: Option<Collection>;
 }
+
+export type EditCollectionSubmitPayload = Collection;
 
 @Directive({ selector: '[pgEditCollectionModal]', standalone: true })
 export class EditCollectionModalDirective {
   private readonly _dialog = inject(Dialog);
 
-  @Input() collection: Option<EditCollectionData> = null;
-  @Output() createCollection = new EventEmitter<EditCollectionData>();
-  @Output() updateCollection = new EventEmitter<EditCollectionData>();
+  @Input() pgCollection: Option<Collection> = null;
+
+  @Output() pgCreateCollection =
+    new EventEmitter<EditCollectionSubmitPayload>();
+  @Output() pgUpdateCollection =
+    new EventEmitter<EditCollectionSubmitPayload>();
+  @Output() pgOpenModal = new EventEmitter();
+  @Output() pgCloseModal = new EventEmitter();
+
   @HostListener('click', []) onClick() {
+    this.pgOpenModal.emit();
+
     this._dialog
       .open<
+        EditCollectionSubmitPayload,
         EditCollectionData,
-        Option<EditCollectionData>,
         EditCollectionModalComponent
       >(EditCollectionModalComponent, {
-        data: this.collection,
+        data: { collection: this.pgCollection },
       })
       .closed.subscribe((collectionData) => {
+        this.pgCloseModal.emit();
+
         if (collectionData !== undefined) {
-          if (this.collection === null) {
-            this.createCollection.emit(collectionData);
+          if (this.pgCollection === null) {
+            this.pgCreateCollection.emit(collectionData);
           } else {
-            this.updateCollection.emit(collectionData);
+            this.pgUpdateCollection.emit(collectionData);
           }
         }
       });
@@ -248,12 +263,13 @@ export class EditCollectionModalDirective {
 })
 export class EditCollectionModalComponent {
   private readonly _dialogRef =
-    inject<DialogRef<EditCollectionData, EditCollectionModalComponent>>(
-      DialogRef
-    );
+    inject<
+      DialogRef<EditCollectionSubmitPayload, EditCollectionModalComponent>
+    >(DialogRef);
   private readonly _formBuilder = inject(FormBuilder);
+  private readonly _data = inject<EditCollectionData>(DIALOG_DATA);
 
-  readonly collection = inject<Option<EditCollectionData>>(DIALOG_DATA);
+  readonly collection = this._data.collection;
   readonly form = this._formBuilder.group({
     id: this._formBuilder.control<string>(this.collection?.id ?? '', {
       validators: [Validators.required],

@@ -16,35 +16,52 @@ import {
   Validators,
 } from '@angular/forms';
 import { v4 as uuid } from 'uuid';
-import { Option } from '../utils';
+import { Entity, Option } from '../utils';
+
+export type InstructionTask = Entity<{
+  name: string;
+}>;
 
 export interface EditInstructionTaskData {
-  id: string;
-  name: string;
+  instructionTask: Option<InstructionTask>;
 }
+
+export type EditInstructionTaskSubmitPayload = InstructionTask;
 
 @Directive({ selector: '[pgEditInstructionTaskModal]', standalone: true })
 export class EditInstructionTaskModalDirective {
   private readonly _dialog = inject(Dialog);
 
-  @Input() instructionTask: Option<EditInstructionTaskData> = null;
-  @Output() createInstructionTask = new EventEmitter<EditInstructionTaskData>();
-  @Output() updateInstructionTask = new EventEmitter<EditInstructionTaskData>();
+  @Input() pgInstructionTask: Option<InstructionTask> = null;
+
+  @Output() pgCreateInstructionTask =
+    new EventEmitter<EditInstructionTaskSubmitPayload>();
+  @Output() pgUpdateInstructionTask =
+    new EventEmitter<EditInstructionTaskSubmitPayload>();
+  @Output() pgOpenModal = new EventEmitter();
+  @Output() pgCloseModal = new EventEmitter();
+
   @HostListener('click', []) onClick() {
+    this.pgOpenModal.emit();
+
     this._dialog
       .open<
+        EditInstructionTaskSubmitPayload,
         EditInstructionTaskData,
-        Option<EditInstructionTaskData>,
         EditInstructionTaskModalComponent
       >(EditInstructionTaskModalComponent, {
-        data: this.instructionTask,
+        data: {
+          instructionTask: this.pgInstructionTask,
+        },
       })
       .closed.subscribe((instructionTaskData) => {
+        this.pgCloseModal.emit();
+
         if (instructionTaskData !== undefined) {
-          if (this.instructionTask === null) {
-            this.createInstructionTask.emit(instructionTaskData);
+          if (this.pgInstructionTask === null) {
+            this.pgCreateInstructionTask.emit(instructionTaskData);
           } else {
-            this.updateInstructionTask.emit(instructionTaskData);
+            this.pgUpdateInstructionTask.emit(instructionTaskData);
           }
         }
       });
@@ -63,7 +80,7 @@ export class EditInstructionTaskModalDirective {
       </button>
 
       <h1 class="text-center text-xl mb-4">
-        {{ task === null ? 'Create' : 'Update' }} task
+        {{ instructionTask === null ? 'Create' : 'Update' }} task
       </h1>
 
       <form [formGroup]="form" (ngSubmit)="onSubmit()">
@@ -74,13 +91,13 @@ export class EditInstructionTaskModalDirective {
             id="task-id-input"
             type="text"
             formControlName="id"
-            [readonly]="task !== null"
+            [readonly]="instructionTask !== null"
           />
-          <p *ngIf="task === null">
+          <p *ngIf="instructionTask === null">
             Hint: The ID cannot be changed afterwards.
           </p>
           <button
-            *ngIf="task === null"
+            *ngIf="instructionTask === null"
             type="button"
             (click)="idControl.setValue(onGenerateId())"
           >
@@ -100,7 +117,7 @@ export class EditInstructionTaskModalDirective {
 
         <div class="flex justify-center items-center mt-4">
           <button type="submit" class="px-4 py-2 border-blue-500 border">
-            {{ task === null ? 'Send' : 'Save' }}
+            {{ instructionTask === null ? 'Send' : 'Save' }}
           </button>
         </div>
       </form>
@@ -112,17 +129,21 @@ export class EditInstructionTaskModalDirective {
 export class EditInstructionTaskModalComponent {
   private readonly _dialogRef =
     inject<
-      DialogRef<EditInstructionTaskData, EditInstructionTaskModalComponent>
+      DialogRef<
+        EditInstructionTaskSubmitPayload,
+        EditInstructionTaskModalComponent
+      >
     >(DialogRef);
   private readonly _formBuilder = inject(FormBuilder);
+  private readonly _data = inject<EditInstructionTaskData>(DIALOG_DATA);
 
-  readonly task = inject<Option<EditInstructionTaskData>>(DIALOG_DATA);
+  readonly instructionTask = this._data.instructionTask;
   readonly form = this._formBuilder.group({
-    id: this._formBuilder.control<string>(this.task?.id ?? '', {
+    id: this._formBuilder.control<string>(this.instructionTask?.id ?? '', {
       validators: [Validators.required],
       nonNullable: true,
     }),
-    name: this._formBuilder.control<string>(this.task?.name ?? '', {
+    name: this._formBuilder.control<string>(this.instructionTask?.name ?? '', {
       validators: [Validators.required],
       nonNullable: true,
     }),

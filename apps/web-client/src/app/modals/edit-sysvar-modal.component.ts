@@ -17,35 +17,48 @@ import {
   Validators,
 } from '@angular/forms';
 import { v4 as uuid } from 'uuid';
-import { Option } from '../utils';
+import { Entity, Option } from '../utils';
 
-export interface EditSysvarData {
-  id: string;
+export type Sysvar = Entity<{
   name: string;
   thumbnailUrl: string;
+}>;
+
+export interface EditSysvarData {
+  sysvar: Option<Sysvar>;
 }
+
+export type EditSysvarSubmitPayload = Sysvar;
 
 @Directive({ selector: '[pgEditSysvarModal]', standalone: true })
 export class EditSysvarModalDirective {
   private readonly _dialog = inject(Dialog);
 
-  @Input() sysvar: Option<EditSysvarData> = null;
-  @Output() createSysvar = new EventEmitter<EditSysvarData>();
-  @Output() updateSysvar = new EventEmitter<EditSysvarData>();
+  @Input() pgSysvar: Option<Sysvar> = null;
+
+  @Output() pgCreateSysvar = new EventEmitter<EditSysvarSubmitPayload>();
+  @Output() pgUpdateSysvar = new EventEmitter<EditSysvarSubmitPayload>();
+  @Output() pgOpenModal = new EventEmitter();
+  @Output() pgCloseModal = new EventEmitter();
+
   @HostListener('click', []) onClick() {
+    this.pgOpenModal.emit();
+
     this._dialog
-      .open<EditSysvarData, Option<EditSysvarData>, EditSysvarModalComponent>(
+      .open<EditSysvarSubmitPayload, EditSysvarData, EditSysvarModalComponent>(
         EditSysvarModalComponent,
         {
-          data: this.sysvar,
+          data: { sysvar: this.pgSysvar },
         }
       )
       .closed.subscribe((sysvarData) => {
+        this.pgCloseModal.emit();
+
         if (sysvarData !== undefined) {
-          if (this.sysvar === null) {
-            this.createSysvar.emit(sysvarData);
+          if (this.pgSysvar === null) {
+            this.pgCreateSysvar.emit(sysvarData);
           } else {
-            this.updateSysvar.emit(sysvarData);
+            this.pgUpdateSysvar.emit(sysvarData);
           }
         }
       });
@@ -128,10 +141,13 @@ export class EditSysvarModalDirective {
 })
 export class EditSysvarModalComponent {
   private readonly _dialogRef =
-    inject<DialogRef<EditSysvarData, EditSysvarModalComponent>>(DialogRef);
+    inject<DialogRef<EditSysvarSubmitPayload, EditSysvarModalComponent>>(
+      DialogRef
+    );
   private readonly _formBuilder = inject(FormBuilder);
+  private readonly _data = inject<EditSysvarData>(DIALOG_DATA);
 
-  readonly sysvar = inject<Option<EditSysvarData>>(DIALOG_DATA);
+  readonly sysvar = this._data.sysvar;
   readonly form = this._formBuilder.group({
     id: this._formBuilder.control<string>(this.sysvar?.id ?? '', {
       validators: [Validators.required],

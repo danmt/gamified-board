@@ -1,7 +1,15 @@
-import { DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
+import { Dialog, DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import {
+  Component,
+  Directive,
+  EventEmitter,
+  HostListener,
+  inject,
+  Input,
+  Output,
+} from '@angular/core';
 import {
   FormBuilder,
   FormControl,
@@ -9,10 +17,63 @@ import {
   Validators,
 } from '@angular/forms';
 import { v4 as uuid } from 'uuid';
+import { Entity, Option } from '../utils';
+
+export type InstructionApplication = Entity<{
+  name: string;
+}>;
 
 export interface EditInstructionApplicationData {
-  id: string;
-  name: string;
+  instructionApplication: Option<InstructionApplication>;
+}
+
+export type EditInstructionApplicationSubmitPayload = InstructionApplication;
+
+@Directive({
+  selector: '[pgEditInstructionApplicationModal]',
+  standalone: true,
+})
+export class EditInstructionApplicationModalDirective {
+  private readonly _dialog = inject(Dialog);
+
+  @Input() pgInstructionApplication: Option<InstructionApplication> = null;
+
+  @Output() pgCreateInstructionApplication =
+    new EventEmitter<EditInstructionApplicationSubmitPayload>();
+  @Output() pgUpdateInstructionApplication =
+    new EventEmitter<EditInstructionApplicationSubmitPayload>();
+  @Output() pgOpenModal = new EventEmitter();
+  @Output() pgCloseModal = new EventEmitter();
+
+  @HostListener('click', []) onClick() {
+    this.pgOpenModal.emit();
+
+    this._dialog
+      .open<
+        EditInstructionApplicationSubmitPayload,
+        EditInstructionApplicationData,
+        EditInstructionApplicationModalComponent
+      >(EditInstructionApplicationModalComponent, {
+        data: {
+          instructionApplication: this.pgInstructionApplication,
+        },
+      })
+      .closed.subscribe((instructionApplicationData) => {
+        this.pgCloseModal.emit();
+
+        if (instructionApplicationData !== undefined) {
+          if (this.pgInstructionApplication === null) {
+            this.pgCreateInstructionApplication.emit(
+              instructionApplicationData
+            );
+          } else {
+            this.pgUpdateInstructionApplication.emit(
+              instructionApplicationData
+            );
+          }
+        }
+      });
+  }
 }
 
 @Component({
@@ -85,14 +146,14 @@ export class EditInstructionApplicationModalComponent {
   private readonly _dialogRef =
     inject<
       DialogRef<
-        EditInstructionApplicationData,
+        EditInstructionApplicationSubmitPayload,
         EditInstructionApplicationModalComponent
       >
     >(DialogRef);
   private readonly _formBuilder = inject(FormBuilder);
   private readonly _data = inject<EditInstructionApplicationData>(DIALOG_DATA);
 
-  readonly instructionApplication = this._data;
+  readonly instructionApplication = this._data.instructionApplication;
   readonly form = this._formBuilder.group({
     id: this._formBuilder.control<string>(
       this.instructionApplication?.id ?? '',

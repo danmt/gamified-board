@@ -1,5 +1,5 @@
 import { Dialog } from '@angular/cdk/dialog';
-import { inject, Injectable, ViewContainerRef } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import {
   ComponentStore,
   OnStoreInit,
@@ -16,15 +16,19 @@ import {
 import {
   EditInstructionApplicationData,
   EditInstructionApplicationModalComponent,
+  EditInstructionApplicationSubmitPayload,
   EditInstructionDocumentData,
   EditInstructionDocumentModalComponent,
   EditInstructionDocumentSubmitPayload,
   EditInstructionSignerData,
   EditInstructionSignerModalComponent,
+  EditInstructionSignerSubmitPayload,
   EditInstructionSysvarData,
   EditInstructionSysvarModalComponent,
+  EditInstructionSysvarSubmitPayload,
   EditInstructionTaskData,
   EditInstructionTaskModalComponent,
+  EditInstructionTaskSubmitPayload,
 } from '../modals';
 import { IdlStructField, PluginsService } from '../plugins';
 import {
@@ -181,6 +185,77 @@ const populateCollection = (collection: CollectionDto): CollectionView => {
   };
 };
 
+const populateBump = (
+  document: InstructionDocumentDto,
+  documents: InstructionDocumentDto[],
+  args: InstructionArgumentDto[],
+  collections: CollectionDto[]
+) => {
+  const bump = document.bump;
+
+  if (bump === null) {
+    return null;
+  }
+
+  if (bump.kind === 'document') {
+    const documentId = bump.documentId;
+    const attributeId = bump.attributeId;
+
+    const bumpDocument = documents.find(({ id }) => id === documentId) ?? null;
+    const collection =
+      collections.find(({ id }) => id === bumpDocument?.collectionId) ?? null;
+    const attribute =
+      collection?.attributes.find(({ id }) => id === attributeId) ?? null;
+
+    return bumpDocument !== null && attribute !== null
+      ? {
+          kind: 'document' as const,
+          document: bumpDocument,
+          attribute,
+        }
+      : null;
+  } else {
+    const argumentId = bump.argumentId;
+    const argument = args.find(({ id }) => id === argumentId) ?? null;
+
+    return argument !== null
+      ? {
+          kind: 'argument' as const,
+          argument,
+        }
+      : null;
+  }
+};
+
+const populatePayer = (
+  document: InstructionDocumentDto,
+  documents: InstructionDocumentDto[],
+  collections: CollectionDto[]
+) => {
+  const payer = document.payer;
+
+  if (payer === null) {
+    return null;
+  }
+
+  const documentId = payer.documentId;
+  const attributeId = payer.attributeId;
+
+  const payerDocument = documents.find(({ id }) => id === documentId) ?? null;
+  const collection =
+    collections.find(({ id }) => id === payerDocument?.collectionId) ?? null;
+  const attribute =
+    collection?.attributes.find(({ id }) => id === attributeId) ?? null;
+
+  return payerDocument !== null && attribute !== null
+    ? {
+        kind: 'document' as const,
+        document: payerDocument,
+        attribute,
+      }
+    : null;
+};
+
 const populateInstructionDocument = (
   document: InstructionDocumentDto,
   documents: InstructionDocumentDto[],
@@ -197,67 +272,12 @@ const populateInstructionDocument = (
     );
   }
 
-  let bump: Option<ReferenceView> = null;
-
-  if (document.bump?.kind === 'document') {
-    const documentId = document.bump.documentId;
-    const attributeId = document.bump.attributeId;
-
-    const bumpDocument = documents.find(({ id }) => id === documentId) ?? null;
-    const collection =
-      collections.find(({ id }) => id === bumpDocument?.collectionId) ?? null;
-    const attribute =
-      collection?.attributes.find(({ id }) => id === attributeId) ?? null;
-
-    bump =
-      bumpDocument !== null && attribute !== null
-        ? {
-            kind: 'document' as const,
-            document: bumpDocument,
-            attribute,
-          }
-        : null;
-  } else if (document.bump?.kind === 'argument') {
-    const argumentId = document.bump.argumentId;
-    const argument = args.find(({ id }) => id === argumentId) ?? null;
-
-    bump =
-      argument !== null
-        ? {
-            kind: 'argument' as const,
-            argument,
-          }
-        : null;
-  }
-
-  let payer: Option<ReferenceView> = null;
-
-  if (document.payer !== null) {
-    const documentId = document.payer.documentId;
-    const attributeId = document.payer.attributeId;
-
-    const payerDocument = documents.find(({ id }) => id === documentId) ?? null;
-    const collection =
-      collections.find(({ id }) => id === payerDocument?.collectionId) ?? null;
-    const attribute =
-      collection?.attributes.find(({ id }) => id === attributeId) ?? null;
-
-    payer =
-      payerDocument !== null && attribute !== null
-        ? {
-            kind: 'document',
-            document: payerDocument,
-            attribute,
-          }
-        : null;
-  }
-
   return {
     id: document.id,
     name: document.name,
     method: document.method,
     ownerId: document.ownerId,
-    payer,
+    payer: populatePayer(document, documents, collections),
     seeds:
       document.seeds
         ?.map<Option<ReferenceView | ValueView>>((seed) => {
@@ -304,7 +324,7 @@ const populateInstructionDocument = (
           }
         })
         .filter(isNotNull) ?? [],
-    bump,
+    bump: populateBump(document, documents, args, collections),
     collection: populateCollection(collection),
     kind: 'instructionDocument',
   };
@@ -484,7 +504,6 @@ export class BoardStore
   implements OnStoreInit
 {
   private readonly _dialog = inject(Dialog);
-  private readonly _viewContainerRef = inject(ViewContainerRef);
   private readonly _pluginsService = inject(PluginsService);
   private readonly _workspaceApiService = inject(WorkspaceApiService);
   private readonly _sysvarApiService = inject(SysvarApiService);
@@ -1128,10 +1147,12 @@ export class BoardStore
             // application
             return this._dialog
               .open<
-                EditInstructionApplicationData,
+                EditInstructionApplicationSubmitPayload,
                 EditInstructionApplicationData,
                 EditInstructionApplicationModalComponent
-              >(EditInstructionApplicationModalComponent)
+              >(EditInstructionApplicationModalComponent, {
+                data: { instructionApplication: null },
+              })
               .closed.pipe(
                 concatMap((instructionApplicationData) => {
                   if (instructionApplicationData === undefined) {
@@ -1150,10 +1171,12 @@ export class BoardStore
             // instruction
             return this._dialog
               .open<
+                EditInstructionTaskSubmitPayload,
                 EditInstructionTaskData,
-                Option<EditInstructionTaskData>,
                 EditInstructionTaskModalComponent
-              >(EditInstructionTaskModalComponent)
+              >(EditInstructionTaskModalComponent, {
+                data: { instructionTask: null },
+              })
               .closed.pipe(
                 concatMap((taskData) => {
                   if (taskData === undefined) {
@@ -1170,6 +1193,86 @@ export class BoardStore
               );
           } else if (active.kind === 'collection') {
             // collection
+            const argumentReferences$ = this.select(
+              this.currentApplicationInstructions$,
+              (instructions) => {
+                const instruction =
+                  instructions?.find(({ id }) => id === instructionId) ?? null;
+
+                if (instruction === null) {
+                  return [];
+                }
+
+                return instruction.arguments.map((argument) => ({
+                  kind: 'argument' as const,
+                  argument: {
+                    id: argument.id,
+                    name: argument.name,
+                    type: argument.type,
+                  },
+                }));
+              }
+            );
+
+            const attributeReferences$ = this.select(
+              this.currentApplicationInstructions$,
+              (instructions) => {
+                const instruction =
+                  instructions?.find(({ id }) => id === instructionId) ?? null;
+
+                if (instruction === null) {
+                  return [];
+                }
+
+                return instruction.documents.reduce<
+                  {
+                    kind: 'document';
+                    attribute: {
+                      id: string;
+                      name: string;
+                      type: string;
+                    };
+                    document: {
+                      id: string;
+                      name: string;
+                    };
+                  }[]
+                >(
+                  (attributes, document) =>
+                    attributes.concat(
+                      document.collection.attributes.map((attribute) => ({
+                        kind: 'document' as const,
+                        attribute: {
+                          id: attribute.id,
+                          name: attribute.name,
+                          type: attribute.type,
+                        },
+                        document: {
+                          id: document.id,
+                          name: document.name,
+                        },
+                      }))
+                    ),
+                  []
+                );
+              }
+            );
+
+            const bumpReferences$ = this.select(
+              argumentReferences$,
+              attributeReferences$,
+              (argumentReferences, attributeReferences) => [
+                ...(argumentReferences?.filter(
+                  (argumentReference) =>
+                    argumentReference.argument.type === 'u8'
+                ) ?? []),
+                ...(attributeReferences?.filter(
+                  (attributeReference) =>
+                    attributeReference.attribute.type === 'u8'
+                ) ?? []),
+              ]
+            );
+
             return this._dialog
               .open<
                 EditInstructionDocumentSubmitPayload,
@@ -1177,10 +1280,11 @@ export class BoardStore
                 EditInstructionDocumentModalComponent
               >(EditInstructionDocumentModalComponent, {
                 data: {
-                  document: null,
-                  instructionId,
+                  instructionDocument: null,
+                  argumentReferences$,
+                  attributeReferences$,
+                  bumpReferences$,
                 },
-                viewContainerRef: this._viewContainerRef,
               })
               .closed.pipe(
                 concatMap((documentData) => {
@@ -1204,10 +1308,12 @@ export class BoardStore
             // sysvar
             return this._dialog
               .open<
-                EditInstructionSysvarData,
+                EditInstructionSysvarSubmitPayload,
                 EditInstructionSysvarData,
                 EditInstructionSysvarModalComponent
-              >(EditInstructionSysvarModalComponent)
+              >(EditInstructionSysvarModalComponent, {
+                data: { instructionSysvar: null },
+              })
               .closed.pipe(
                 concatMap((documentData) => {
                   if (documentData === undefined) {
@@ -1226,7 +1332,7 @@ export class BoardStore
             // signer
             return this._dialog
               .open<
-                EditInstructionSignerData,
+                EditInstructionSignerSubmitPayload,
                 EditInstructionSignerData,
                 EditInstructionSignerModalComponent
               >(EditInstructionSignerModalComponent)

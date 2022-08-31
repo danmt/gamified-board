@@ -23,37 +23,52 @@ import {
   Validators,
 } from '@angular/forms';
 import { v4 as uuid } from 'uuid';
-import { Option } from '../utils';
+import { Entity, Option } from '../utils';
 
-export interface EditInstructionData {
-  id: string;
+export type Instruction = Entity<{
   name: string;
   thumbnailUrl: string;
-  arguments: { id: string; name: string; type: string; isOption: boolean }[];
+  arguments: Entity<{ name: string; type: string; isOption: boolean }>[];
+}>;
+
+export interface EditInstructionData {
+  instruction: Option<Instruction>;
 }
+
+export type EditInstructionSubmitPayload = Instruction;
 
 @Directive({ selector: '[pgEditInstructionModal]', standalone: true })
 export class EditInstructionModalDirective {
   private readonly _dialog = inject(Dialog);
 
-  @Input() instruction: Option<EditInstructionData> = null;
-  @Output() createInstruction = new EventEmitter<EditInstructionData>();
-  @Output() updateInstruction = new EventEmitter<EditInstructionData>();
+  @Input() pgInstruction: Option<Instruction> = null;
+
+  @Output() pgCreateInstruction =
+    new EventEmitter<EditInstructionSubmitPayload>();
+  @Output() pgUpdateInstruction =
+    new EventEmitter<EditInstructionSubmitPayload>();
+  @Output() pgOpenModal = new EventEmitter();
+  @Output() pgCloseModal = new EventEmitter();
+
   @HostListener('click', []) onClick() {
+    this.pgOpenModal.emit();
+
     this._dialog
       .open<
+        EditInstructionSubmitPayload,
         EditInstructionData,
-        Option<EditInstructionData>,
         EditInstructionModalComponent
       >(EditInstructionModalComponent, {
-        data: this.instruction,
+        data: { instruction: this.pgInstruction },
       })
       .closed.subscribe((instructionData) => {
+        this.pgCloseModal.emit();
+
         if (instructionData !== undefined) {
-          if (this.instruction === null) {
-            this.createInstruction.emit(instructionData);
+          if (this.pgInstruction === null) {
+            this.pgCreateInstruction.emit(instructionData);
           } else {
-            this.updateInstruction.emit(instructionData);
+            this.pgUpdateInstruction.emit(instructionData);
           }
         }
       });
@@ -249,12 +264,13 @@ export class EditInstructionModalDirective {
 })
 export class EditInstructionModalComponent {
   private readonly _dialogRef =
-    inject<DialogRef<EditInstructionData, EditInstructionModalComponent>>(
-      DialogRef
-    );
+    inject<
+      DialogRef<EditInstructionSubmitPayload, EditInstructionModalComponent>
+    >(DialogRef);
   private readonly _formBuilder = inject(FormBuilder);
+  private readonly _data = inject<EditInstructionData>(DIALOG_DATA);
 
-  readonly instruction = inject<Option<EditInstructionData>>(DIALOG_DATA);
+  readonly instruction = this._data.instruction;
   readonly form = this._formBuilder.group({
     id: this._formBuilder.control<string>(this.instruction?.id ?? '', {
       validators: [Validators.required],

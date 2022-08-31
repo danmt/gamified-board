@@ -1,14 +1,14 @@
-import { Dialog } from '@angular/cdk/dialog';
 import { CommonModule } from '@angular/common';
-import { Component, inject, ViewContainerRef } from '@angular/core';
-import { PushModule } from '@ngrx/component';
-import { concatMap, EMPTY, map } from 'rxjs';
+import { Component, inject } from '@angular/core';
+import { LetModule, PushModule } from '@ngrx/component';
+import { map } from 'rxjs';
+import { SquareButtonComponent } from '../components';
 import {
-  EditInstructionSignerData,
-  EditInstructionSignerModalComponent,
+  EditInstructionSignerModalDirective,
+  EditInstructionSignerSubmitPayload,
 } from '../modals';
 import { InstructionSignerApiService } from '../services';
-import { BoardStore, InstructionSignerView } from '../stores';
+import { BoardStore } from '../stores';
 
 @Component({
   selector: 'pg-instruction-signer-section',
@@ -21,28 +21,54 @@ import { BoardStore, InstructionSignerView } from '../stores';
 
       {{ selected?.name }}
 
-      <button
-        (click)="
-          onUpdateInstructionSigner(selected.ownerId, selected.id, selected)
-        "
-      >
-        edit
-      </button>
+      <div class="bg-gray-800 relative" style="width: 2.89rem; height: 2.89rem">
+        <span
+          class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase w-3 h-3"
+          style="font-size: 0.5rem; line-height: 0.5rem"
+        >
+          q
+        </span>
 
-      <button
-        (click)="onDeleteInstructionSigner(selected.ownerId, selected.id)"
-      >
-        x
-      </button>
+        <pg-square-button
+          [pgIsActive]="isEditing"
+          pgThumbnailUrl="assets/generic/signer.png"
+          pgEditInstructionSignerModal
+          [pgInstructionSigner]="selected"
+          (pgOpenModal)="isEditing = true"
+          (pgCloseModal)="isEditing = false"
+          (pgUpdateInstructionSigner)="
+            onUpdateInstructionSigner(selected.ownerId, selected.id, $event)
+          "
+        ></pg-square-button>
+      </div>
+
+      <div class="bg-gray-800 relative" style="width: 2.89rem; height: 2.89rem">
+        <span
+          class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase w-3 h-3"
+          style="font-size: 0.5rem; line-height: 0.5rem"
+        >
+          w
+        </span>
+
+        <pg-square-button
+          [pgIsActive]="false"
+          pgThumbnailUrl="assets/generic/signer.png"
+          (click)="onDeleteInstructionSigner(selected.ownerId, selected.id)"
+        ></pg-square-button>
+      </div>
     </div>
   `,
   standalone: true,
-  imports: [CommonModule, PushModule],
+  imports: [
+    CommonModule,
+    PushModule,
+    LetModule,
+    SquareButtonComponent,
+    EditInstructionSignerModalDirective,
+  ],
 })
 export class InstructionSignerSectionComponent {
-  private readonly _dialog = inject(Dialog);
   private readonly _boardStore = inject(BoardStore);
-  private readonly _viewContainerRef = inject(ViewContainerRef);
   private readonly _instructionSignerApiService = inject(
     InstructionSignerApiService
   );
@@ -57,43 +83,32 @@ export class InstructionSignerSectionComponent {
     })
   );
 
+  isEditing = false;
+  isDeleting = false;
+
   onUpdateInstructionSigner(
     instructionId: string,
-    signerId: string,
-    signer: InstructionSignerView
+    instructionSignerId: string,
+    instructionSignerData: EditInstructionSignerSubmitPayload
   ) {
-    this._dialog
-      .open<
-        EditInstructionSignerData,
-        EditInstructionSignerData,
-        EditInstructionSignerModalComponent
-      >(EditInstructionSignerModalComponent, {
-        data: signer,
-        viewContainerRef: this._viewContainerRef,
-      })
-      .closed.pipe(
-        concatMap((signerData) => {
-          if (signerData === undefined) {
-            return EMPTY;
-          }
-
-          this._boardStore.setActive(null);
-
-          return this._instructionSignerApiService.updateInstructionSigner(
-            instructionId,
-            signerId,
-            signerData.name
-          );
-        })
+    this._instructionSignerApiService
+      .updateInstructionSigner(
+        instructionId,
+        instructionSignerId,
+        instructionSignerData.name
       )
       .subscribe();
   }
 
   onDeleteInstructionSigner(instructionId: string, signerId: string) {
+    this.isDeleting = true;
+
     if (confirm('Are you sure? This action cannot be reverted.')) {
       this._instructionSignerApiService
         .deleteInstructionSigner(instructionId, signerId)
         .subscribe(() => this._boardStore.setSelectedId(null));
     }
+
+    this.isDeleting = false;
   }
 }

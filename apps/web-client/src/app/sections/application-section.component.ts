@@ -1,11 +1,15 @@
 import { Dialog } from '@angular/cdk/dialog';
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
-import { PushModule } from '@ngrx/component';
-import { concatMap, EMPTY, map } from 'rxjs';
-import { EditApplicationData, EditApplicationModalComponent } from '../modals';
+import { LetModule, PushModule } from '@ngrx/component';
+import { map } from 'rxjs';
+import { SquareButtonComponent } from '../components';
+import {
+  EditApplicationModalDirective,
+  EditApplicationSubmitPayload,
+} from '../modals';
 import { ApplicationApiService } from '../services';
-import { ApplicationView, BoardStore } from '../stores';
+import { BoardStore } from '../stores';
 
 @Component({
   selector: 'pg-application-section',
@@ -18,23 +22,57 @@ import { ApplicationView, BoardStore } from '../stores';
 
       {{ selected?.name }}
 
-      <button
+      <div
+        class="bg-gray-800 relative"
+        style="width: 2.89rem; height: 2.89rem"
         *ngIf="(currentApplicationId$ | ngrxPush) === selected.id"
-        (click)="onUpdateApplication(selected.id, selected)"
       >
-        edit
-      </button>
+        <span
+          class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase w-3 h-3"
+          style="font-size: 0.5rem; line-height: 0.5rem"
+        >
+          q
+        </span>
 
-      <button
+        <pg-square-button
+          [pgIsActive]="isEditing"
+          pgThumbnailUrl="assets/generic/signer.png"
+          pgEditApplicationModal
+          [pgApplication]="selected"
+          (pgOpenModal)="isEditing = true"
+          (pgCloseModal)="isEditing = false"
+          (pgUpdateApplication)="onUpdateApplication(selected.id, selected)"
+        ></pg-square-button>
+      </div>
+
+      <div
+        class="bg-gray-800 relative"
+        style="width: 2.89rem; height: 2.89rem"
         *ngIf="(currentApplicationId$ | ngrxPush) === selected.id"
-        (click)="onDeleteApplication(selected.id)"
       >
-        x
-      </button>
+        <span
+          class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase w-3 h-3"
+          style="font-size: 0.5rem; line-height: 0.5rem"
+        >
+          w
+        </span>
+
+        <pg-square-button
+          [pgIsActive]="false"
+          pgThumbnailUrl="assets/generic/signer.png"
+          (click)="onDeleteApplication(selected.id)"
+        ></pg-square-button>
+      </div>
     </div>
   `,
   standalone: true,
-  imports: [CommonModule, PushModule],
+  imports: [
+    CommonModule,
+    PushModule,
+    LetModule,
+    SquareButtonComponent,
+    EditApplicationModalDirective,
+  ],
 })
 export class ApplicationSectionComponent {
   private readonly _dialog = inject(Dialog);
@@ -52,38 +90,31 @@ export class ApplicationSectionComponent {
     })
   );
 
-  onUpdateApplication(applicationId: string, application: ApplicationView) {
-    this._dialog
-      .open<
-        EditApplicationData,
-        EditApplicationData,
-        EditApplicationModalComponent
-      >(EditApplicationModalComponent, {
-        data: application,
-      })
-      .closed.pipe(
-        concatMap((applicationData) => {
-          if (applicationData === undefined) {
-            return EMPTY;
-          }
+  isEditing = false;
+  isDeleting = false;
 
-          this._boardStore.setActive(null);
-
-          return this._applicationApiService.updateApplication(
-            applicationId,
-            applicationData.name,
-            applicationData.thumbnailUrl
-          );
-        })
+  onUpdateApplication(
+    applicationId: string,
+    applicationData: EditApplicationSubmitPayload
+  ) {
+    this._applicationApiService
+      .updateApplication(
+        applicationId,
+        applicationData.name,
+        applicationData.thumbnailUrl
       )
       .subscribe();
   }
 
   onDeleteApplication(applicationId: string) {
+    this.isDeleting = true;
+
     if (confirm('Are you sure? This action cannot be reverted.')) {
       this._applicationApiService
         .deleteApplication(applicationId)
         .subscribe(() => this._boardStore.setSelectedId(null));
     }
+
+    this.isDeleting = false;
   }
 }

@@ -17,35 +17,50 @@ import {
   Validators,
 } from '@angular/forms';
 import { v4 as uuid } from 'uuid';
-import { Option } from '../utils';
+import { Entity, Option } from '../utils';
+
+export type Workspace = Entity<{
+  name: string;
+}>;
 
 export interface EditWorkspaceData {
-  id: string;
-  name: string;
+  workspace: Option<Workspace>;
 }
+
+export type EditWorkspaceSubmitPayload = Workspace;
 
 @Directive({ selector: '[pgEditWorkspaceModal]', standalone: true })
 export class EditWorkspaceModalDirective {
   private readonly _dialog = inject(Dialog);
 
-  @Input() workspace: Option<EditWorkspaceData> = null;
-  @Output() createWorkspace = new EventEmitter<EditWorkspaceData>();
-  @Output() updateWorkspace = new EventEmitter<EditWorkspaceData>();
+  @Input() pgWorkspace: Option<Workspace> = null;
+
+  @Output() pgCreateWorkspace = new EventEmitter<EditWorkspaceSubmitPayload>();
+  @Output() pgUpdateWorkspace = new EventEmitter<EditWorkspaceSubmitPayload>();
+  @Output() pgOpenModal = new EventEmitter();
+  @Output() pgCloseModal = new EventEmitter();
+
   @HostListener('click', []) onClick() {
+    this.pgOpenModal.emit();
+
     this._dialog
       .open<
+        EditWorkspaceSubmitPayload,
         EditWorkspaceData,
-        Option<EditWorkspaceData>,
         EditWorkspaceModalComponent
       >(EditWorkspaceModalComponent, {
-        data: this.workspace,
+        data: {
+          workspace: this.pgWorkspace,
+        },
       })
       .closed.subscribe((workspaceData) => {
+        this.pgCloseModal.emit();
+
         if (workspaceData !== undefined) {
-          if (this.workspace === null) {
-            this.createWorkspace.emit(workspaceData);
+          if (this.pgWorkspace === null) {
+            this.pgCreateWorkspace.emit(workspaceData);
           } else {
-            this.updateWorkspace.emit(workspaceData);
+            this.pgUpdateWorkspace.emit(workspaceData);
           }
         }
       });
@@ -112,12 +127,13 @@ export class EditWorkspaceModalDirective {
 })
 export class EditWorkspaceModalComponent {
   private readonly _dialogRef =
-    inject<DialogRef<EditWorkspaceData, EditWorkspaceModalComponent>>(
+    inject<DialogRef<EditWorkspaceSubmitPayload, EditWorkspaceModalComponent>>(
       DialogRef
     );
   private readonly _formBuilder = inject(FormBuilder);
+  private readonly _data = inject<EditWorkspaceData>(DIALOG_DATA);
 
-  readonly workspace = inject<Option<EditWorkspaceData>>(DIALOG_DATA);
+  readonly workspace = this._data.workspace;
   readonly form = this._formBuilder.group({
     id: this._formBuilder.control<string>(this.workspace?.id ?? '', {
       validators: [Validators.required],

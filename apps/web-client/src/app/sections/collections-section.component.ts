@@ -23,7 +23,7 @@ import { Option } from '../utils';
             <button
               class="rounded-full bg-slate-400 w-8 h-8"
               pgEditCollectionModal
-              (createCollection)="
+              (pgCreateCollection)="
                 onCreateCollection(
                   workspaceId,
                   applicationId,

@@ -1,14 +1,14 @@
-import { Dialog } from '@angular/cdk/dialog';
 import { CommonModule } from '@angular/common';
-import { Component, inject, ViewContainerRef } from '@angular/core';
-import { PushModule } from '@ngrx/component';
-import { concatMap, EMPTY, map } from 'rxjs';
+import { Component, inject } from '@angular/core';
+import { LetModule, PushModule } from '@ngrx/component';
+import { map } from 'rxjs';
+import { SquareButtonComponent } from '../components';
 import {
-  EditInstructionSysvarData,
-  EditInstructionSysvarModalComponent,
+  EditInstructionSysvarModalDirective,
+  EditInstructionSysvarSubmitPayload,
 } from '../modals';
 import { InstructionSysvarApiService } from '../services';
-import { BoardStore, InstructionSysvarView } from '../stores';
+import { BoardStore } from '../stores';
 
 @Component({
   selector: 'pg-instruction-sysvar-section',
@@ -21,28 +21,54 @@ import { BoardStore, InstructionSysvarView } from '../stores';
 
       {{ selected?.name }}
 
-      <button
-        (click)="
-          onUpdateInstructionSysvar(selected.ownerId, selected.id, selected)
-        "
-      >
-        edit
-      </button>
+      <div class="bg-gray-800 relative" style="width: 2.89rem; height: 2.89rem">
+        <span
+          class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase w-3 h-3"
+          style="font-size: 0.5rem; line-height: 0.5rem"
+        >
+          q
+        </span>
 
-      <button
-        (click)="onDeleteInstructionSysvar(selected.ownerId, selected.id)"
-      >
-        x
-      </button>
+        <pg-square-button
+          [pgIsActive]="isEditing"
+          pgThumbnailUrl="assets/generic/signer.png"
+          pgEditInstructionSysvarModal
+          [pgInstructionSysvar]="selected"
+          (pgOpenModal)="isEditing = true"
+          (pgCloseModal)="isEditing = false"
+          (pgUpdateInstructionSysvar)="
+            onUpdateInstructionSysvar(selected.ownerId, selected.id, $event)
+          "
+        ></pg-square-button>
+      </div>
+
+      <div class="bg-gray-800 relative" style="width: 2.89rem; height: 2.89rem">
+        <span
+          class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase w-3 h-3"
+          style="font-size: 0.5rem; line-height: 0.5rem"
+        >
+          w
+        </span>
+
+        <pg-square-button
+          [pgIsActive]="false"
+          pgThumbnailUrl="assets/generic/signer.png"
+          (click)="onDeleteInstructionSysvar(selected.ownerId, selected.id)"
+        ></pg-square-button>
+      </div>
     </div>
   `,
   standalone: true,
-  imports: [CommonModule, PushModule],
+  imports: [
+    CommonModule,
+    PushModule,
+    LetModule,
+    SquareButtonComponent,
+    EditInstructionSysvarModalDirective,
+  ],
 })
 export class InstructionSysvarSectionComponent {
-  private readonly _dialog = inject(Dialog);
   private readonly _boardStore = inject(BoardStore);
-  private readonly _viewContainerRef = inject(ViewContainerRef);
   private readonly _instructionSysvarApiService = inject(
     InstructionSysvarApiService
   );
@@ -57,43 +83,32 @@ export class InstructionSysvarSectionComponent {
     })
   );
 
+  isEditing = false;
+  isDeleting = false;
+
   onUpdateInstructionSysvar(
     instructionId: string,
-    sysvarId: string,
-    sysvar: InstructionSysvarView
+    instructionSysvarId: string,
+    instructionSysvarData: EditInstructionSysvarSubmitPayload
   ) {
-    this._dialog
-      .open<
-        EditInstructionSysvarData,
-        EditInstructionSysvarData,
-        EditInstructionSysvarModalComponent
-      >(EditInstructionSysvarModalComponent, {
-        data: sysvar,
-        viewContainerRef: this._viewContainerRef,
-      })
-      .closed.pipe(
-        concatMap((sysvarData) => {
-          if (sysvarData === undefined) {
-            return EMPTY;
-          }
-
-          this._boardStore.setActive(null);
-
-          return this._instructionSysvarApiService.updateInstructionSysvar(
-            instructionId,
-            sysvarId,
-            sysvarData.name
-          );
-        })
+    this._instructionSysvarApiService
+      .updateInstructionSysvar(
+        instructionId,
+        instructionSysvarId,
+        instructionSysvarData.name
       )
       .subscribe();
   }
 
   onDeleteInstructionSysvar(instructionId: string, sysvarId: string) {
+    this.isDeleting = true;
+
     if (confirm('Are you sure? This action cannot be reverted.')) {
       this._instructionSysvarApiService
         .deleteInstructionSysvar(instructionId, sysvarId)
         .subscribe(() => this._boardStore.setSelectedId(null));
     }
+
+    this.isDeleting = false;
   }
 }
