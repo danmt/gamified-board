@@ -16,6 +16,10 @@ import {
   Validators,
 } from '@angular/forms';
 import { v4 as uuid } from 'uuid';
+import {
+  KeyboardListenerDirective,
+  StopKeydownPropagationDirective,
+} from '../directives';
 import { Entity, Option } from '../utils';
 
 export type InstructionSigner = Entity<{
@@ -27,7 +31,19 @@ export interface EditInstructionSignerData {
   instructionSigner: Option<InstructionSigner>;
 }
 
-export type EditInstructionSignerSubmitPayload = InstructionSigner;
+export type EditInstructionSignerSubmit = InstructionSigner;
+
+export const openEditInstructionSignerModal = (
+  dialog: Dialog,
+  data: EditInstructionSignerData
+) =>
+  dialog.open<
+    EditInstructionSignerSubmit,
+    EditInstructionSignerData,
+    EditInstructionSignerModalComponent
+  >(EditInstructionSignerModalComponent, {
+    data,
+  });
 
 @Directive({ selector: '[pgEditInstructionSignerModal]', standalone: true })
 export class EditInstructionSignerModalDirective {
@@ -36,41 +52,40 @@ export class EditInstructionSignerModalDirective {
   @Input() pgInstructionSigner: Option<InstructionSigner> = null;
 
   @Output() pgCreateInstructionSigner =
-    new EventEmitter<EditInstructionSignerSubmitPayload>();
+    new EventEmitter<EditInstructionSignerSubmit>();
   @Output() pgUpdateInstructionSigner =
-    new EventEmitter<EditInstructionSignerSubmitPayload>();
+    new EventEmitter<EditInstructionSignerSubmit>();
   @Output() pgOpenModal = new EventEmitter();
   @Output() pgCloseModal = new EventEmitter();
 
   @HostListener('click', []) onClick() {
     this.pgOpenModal.emit();
 
-    this._dialog
-      .open<
-        EditInstructionSignerSubmitPayload,
-        EditInstructionSignerData,
-        EditInstructionSignerModalComponent
-      >(EditInstructionSignerModalComponent, {
-        data: { instructionSigner: this.pgInstructionSigner },
-      })
-      .closed.subscribe((instructionSignerData) => {
-        this.pgCloseModal.emit();
+    openEditInstructionSignerModal(this._dialog, {
+      instructionSigner: this.pgInstructionSigner,
+    }).closed.subscribe((instructionSignerData) => {
+      this.pgCloseModal.emit();
 
-        if (instructionSignerData !== undefined) {
-          if (this.pgInstructionSigner === null) {
-            this.pgCreateInstructionSigner.emit(instructionSignerData);
-          } else {
-            this.pgUpdateInstructionSigner.emit(instructionSignerData);
-          }
+      if (instructionSignerData !== undefined) {
+        if (this.pgInstructionSigner === null) {
+          this.pgCreateInstructionSigner.emit(instructionSignerData);
+        } else {
+          this.pgUpdateInstructionSigner.emit(instructionSignerData);
         }
-      });
+      }
+    });
   }
 }
 
 @Component({
   selector: 'pg-edit-instruction-signer-modal',
   template: `
-    <div class="px-4 pt-8 pb-4 bg-white shadow-xl relative">
+    <div
+      class="px-4 pt-8 pb-4 bg-white shadow-xl relative"
+      pgStopKeydownPropagation
+      pgKeyboardListener
+      (keydown)="onKeyDown($event)"
+    >
       <button
         class="absolute top-2 right-2 rounded-full border border-black leading-none w-6 h-6"
         (click)="onClose()"
@@ -132,13 +147,18 @@ export class EditInstructionSignerModalDirective {
     </div>
   `,
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    StopKeydownPropagationDirective,
+    KeyboardListenerDirective,
+  ],
 })
 export class EditInstructionSignerModalComponent {
   private readonly _dialogRef =
     inject<
       DialogRef<
-        EditInstructionSignerSubmitPayload,
+        EditInstructionSignerSubmit,
         EditInstructionSignerModalComponent
       >
     >(DialogRef);
@@ -190,6 +210,12 @@ export class EditInstructionSignerModalComponent {
         name,
         saveChanges,
       });
+    }
+  }
+
+  onKeyDown(event: KeyboardEvent) {
+    if (event.code === 'Escape') {
+      this._dialogRef.close();
     }
   }
 

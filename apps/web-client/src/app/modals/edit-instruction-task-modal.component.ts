@@ -16,6 +16,10 @@ import {
   Validators,
 } from '@angular/forms';
 import { v4 as uuid } from 'uuid';
+import {
+  KeyboardListenerDirective,
+  StopKeydownPropagationDirective,
+} from '../directives';
 import { Entity, Option } from '../utils';
 
 export type InstructionTask = Entity<{
@@ -26,7 +30,19 @@ export interface EditInstructionTaskData {
   instructionTask: Option<InstructionTask>;
 }
 
-export type EditInstructionTaskSubmitPayload = InstructionTask;
+export type EditInstructionTaskSubmit = InstructionTask;
+
+export const openEditInstructionTaskModal = (
+  dialog: Dialog,
+  data: EditInstructionTaskData
+) =>
+  dialog.open<
+    EditInstructionTaskSubmit,
+    EditInstructionTaskData,
+    EditInstructionTaskModalComponent
+  >(EditInstructionTaskModalComponent, {
+    data,
+  });
 
 @Directive({ selector: '[pgEditInstructionTaskModal]', standalone: true })
 export class EditInstructionTaskModalDirective {
@@ -35,43 +51,40 @@ export class EditInstructionTaskModalDirective {
   @Input() pgInstructionTask: Option<InstructionTask> = null;
 
   @Output() pgCreateInstructionTask =
-    new EventEmitter<EditInstructionTaskSubmitPayload>();
+    new EventEmitter<EditInstructionTaskSubmit>();
   @Output() pgUpdateInstructionTask =
-    new EventEmitter<EditInstructionTaskSubmitPayload>();
+    new EventEmitter<EditInstructionTaskSubmit>();
   @Output() pgOpenModal = new EventEmitter();
   @Output() pgCloseModal = new EventEmitter();
 
   @HostListener('click', []) onClick() {
     this.pgOpenModal.emit();
 
-    this._dialog
-      .open<
-        EditInstructionTaskSubmitPayload,
-        EditInstructionTaskData,
-        EditInstructionTaskModalComponent
-      >(EditInstructionTaskModalComponent, {
-        data: {
-          instructionTask: this.pgInstructionTask,
-        },
-      })
-      .closed.subscribe((instructionTaskData) => {
-        this.pgCloseModal.emit();
+    openEditInstructionTaskModal(this._dialog, {
+      instructionTask: this.pgInstructionTask,
+    }).closed.subscribe((instructionTaskData) => {
+      this.pgCloseModal.emit();
 
-        if (instructionTaskData !== undefined) {
-          if (this.pgInstructionTask === null) {
-            this.pgCreateInstructionTask.emit(instructionTaskData);
-          } else {
-            this.pgUpdateInstructionTask.emit(instructionTaskData);
-          }
+      if (instructionTaskData !== undefined) {
+        if (this.pgInstructionTask === null) {
+          this.pgCreateInstructionTask.emit(instructionTaskData);
+        } else {
+          this.pgUpdateInstructionTask.emit(instructionTaskData);
         }
-      });
+      }
+    });
   }
 }
 
 @Component({
   selector: 'pg-edit-instruction-task-modal',
   template: `
-    <div class="px-4 pt-8 pb-4 bg-white shadow-xl relative">
+    <div
+      class="px-4 pt-8 pb-4 bg-white shadow-xl relative"
+      pgStopKeydownPropagation
+      pgKeyboardListener
+      (keydown)="onKeyDown($event)"
+    >
       <button
         class="absolute top-2 right-2 rounded-full border border-black leading-none w-6 h-6"
         (click)="onClose()"
@@ -124,15 +137,17 @@ export class EditInstructionTaskModalDirective {
     </div>
   `,
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    StopKeydownPropagationDirective,
+    KeyboardListenerDirective,
+  ],
 })
 export class EditInstructionTaskModalComponent {
   private readonly _dialogRef =
     inject<
-      DialogRef<
-        EditInstructionTaskSubmitPayload,
-        EditInstructionTaskModalComponent
-      >
+      DialogRef<EditInstructionTaskSubmit, EditInstructionTaskModalComponent>
     >(DialogRef);
   private readonly _formBuilder = inject(FormBuilder);
   private readonly _data = inject<EditInstructionTaskData>(DIALOG_DATA);
@@ -166,6 +181,12 @@ export class EditInstructionTaskModalComponent {
         id,
         name,
       });
+    }
+  }
+
+  onKeyDown(event: KeyboardEvent) {
+    if (event.code === 'Escape') {
+      this._dialogRef.close();
     }
   }
 

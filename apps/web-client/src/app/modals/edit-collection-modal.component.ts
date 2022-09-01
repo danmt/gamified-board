@@ -23,6 +23,10 @@ import {
   Validators,
 } from '@angular/forms';
 import { v4 as uuid } from 'uuid';
+import {
+  KeyboardListenerDirective,
+  StopKeydownPropagationDirective,
+} from '../directives';
 import { Entity, Option } from '../utils';
 
 export type Collection = Entity<{
@@ -35,7 +39,19 @@ export interface EditCollectionData {
   collection: Option<Collection>;
 }
 
-export type EditCollectionSubmitPayload = Collection;
+export type EditCollectionSubmit = Collection;
+
+export const openEditCollectionModal = (
+  dialog: Dialog,
+  data: EditCollectionData
+) =>
+  dialog.open<
+    EditCollectionSubmit,
+    EditCollectionData,
+    EditCollectionModalComponent
+  >(EditCollectionModalComponent, {
+    data,
+  });
 
 @Directive({ selector: '[pgEditCollectionModal]', standalone: true })
 export class EditCollectionModalDirective {
@@ -43,42 +59,39 @@ export class EditCollectionModalDirective {
 
   @Input() pgCollection: Option<Collection> = null;
 
-  @Output() pgCreateCollection =
-    new EventEmitter<EditCollectionSubmitPayload>();
-  @Output() pgUpdateCollection =
-    new EventEmitter<EditCollectionSubmitPayload>();
+  @Output() pgCreateCollection = new EventEmitter<EditCollectionSubmit>();
+  @Output() pgUpdateCollection = new EventEmitter<EditCollectionSubmit>();
   @Output() pgOpenModal = new EventEmitter();
   @Output() pgCloseModal = new EventEmitter();
 
   @HostListener('click', []) onClick() {
     this.pgOpenModal.emit();
 
-    this._dialog
-      .open<
-        EditCollectionSubmitPayload,
-        EditCollectionData,
-        EditCollectionModalComponent
-      >(EditCollectionModalComponent, {
-        data: { collection: this.pgCollection },
-      })
-      .closed.subscribe((collectionData) => {
-        this.pgCloseModal.emit();
+    openEditCollectionModal(this._dialog, {
+      collection: this.pgCollection,
+    }).closed.subscribe((collectionData) => {
+      this.pgCloseModal.emit();
 
-        if (collectionData !== undefined) {
-          if (this.pgCollection === null) {
-            this.pgCreateCollection.emit(collectionData);
-          } else {
-            this.pgUpdateCollection.emit(collectionData);
-          }
+      if (collectionData !== undefined) {
+        if (this.pgCollection === null) {
+          this.pgCreateCollection.emit(collectionData);
+        } else {
+          this.pgUpdateCollection.emit(collectionData);
         }
-      });
+      }
+    });
   }
 }
 
 @Component({
   selector: 'pg-edit-collection-modal',
   template: `
-    <div class="px-4 pt-8 pb-4 bg-white shadow-xl relative">
+    <div
+      class="px-4 pt-8 pb-4 bg-white shadow-xl relative"
+      pgStopKeydownPropagation
+      pgKeyboardListener
+      (keydown)="onKeyDown($event)"
+    >
       <button
         class="absolute top-2 right-2 rounded-full border border-black leading-none w-6 h-6"
         (click)="onClose()"
@@ -259,13 +272,19 @@ export class EditCollectionModalDirective {
     </div>
   `,
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, DragDropModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    DragDropModule,
+    StopKeydownPropagationDirective,
+    KeyboardListenerDirective,
+  ],
 })
 export class EditCollectionModalComponent {
   private readonly _dialogRef =
-    inject<
-      DialogRef<EditCollectionSubmitPayload, EditCollectionModalComponent>
-    >(DialogRef);
+    inject<DialogRef<EditCollectionSubmit, EditCollectionModalComponent>>(
+      DialogRef
+    );
   private readonly _formBuilder = inject(FormBuilder);
   private readonly _data = inject<EditCollectionData>(DIALOG_DATA);
 
@@ -427,6 +446,12 @@ export class EditCollectionModalComponent {
 
   onClose() {
     this._dialogRef.close();
+  }
+
+  onKeyDown(event: KeyboardEvent) {
+    if (event.code === 'Escape') {
+      this._dialogRef.close();
+    }
   }
 
   onGenerateId() {

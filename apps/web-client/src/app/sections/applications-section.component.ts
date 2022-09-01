@@ -4,6 +4,7 @@ import { Component, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { LetModule, PushModule } from '@ngrx/component';
 import { BehaviorSubject } from 'rxjs';
+import { DefaultImageDirective } from '../directives';
 import { EditApplicationModalDirective } from '../modals';
 import { BoardStore } from '../stores';
 import { Option } from '../utils';
@@ -47,6 +48,7 @@ import { Option } from '../utils';
                 <img
                   class="w-full h-full object-cover"
                   [src]="application.thumbnailUrl"
+                  pgDefaultImage="assets/generic/application.png"
                 />
               </div>
             </ng-container>
@@ -63,6 +65,7 @@ import { Option } from '../utils';
                 <img
                   class="w-full h-full object-cover"
                   [src]="application.thumbnailUrl"
+                  pgDefaultImage="assets/generic/application.png"
                 />
               </div>
 
@@ -70,6 +73,7 @@ import { Option } from '../utils';
                 <img
                   class="w-full h-full object-cover"
                   [src]="application.thumbnailUrl"
+                  pgDefaultImage="assets/generic/application.png"
                 />
               </div>
 
@@ -88,6 +92,7 @@ import { Option } from '../utils';
     LetModule,
     RouterModule,
     EditApplicationModalDirective,
+    DefaultImageDirective,
   ],
 })
 export class ApplicationsSectionComponent {

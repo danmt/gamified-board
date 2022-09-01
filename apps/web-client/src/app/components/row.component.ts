@@ -8,6 +8,7 @@ import {
   Input,
   Output,
 } from '@angular/core';
+import { DefaultImageDirective } from '../directives';
 import { BoardItemDropListsPipe } from '../pipes';
 import { Entity, Option } from '../utils';
 
@@ -71,6 +72,7 @@ interface Instruction {
               <img
                 class="w-full h-full"
                 [src]="document.collection.thumbnailUrl"
+                pgDefaultImage="assets/generic/instruction-document.png"
               />
             </button>
 
@@ -78,6 +80,7 @@ interface Instruction {
               <img
                 class="w-full h-full"
                 [src]="document.collection.thumbnailUrl"
+                pgDefaultImage="assets/generic/instruction-document.png"
               />
             </div>
 
@@ -88,6 +91,7 @@ interface Instruction {
               <img
                 class="w-full h-full"
                 [src]="document.collection.thumbnailUrl"
+                pgDefaultImage="assets/generic/instruction-document.png"
               />
             </div>
           </div>
@@ -118,6 +122,7 @@ interface Instruction {
               <img
                 class="w-full h-full"
                 [src]="task.instruction.thumbnailUrl"
+                pgDefaultImage="assets/generic/instruction-task.png"
               />
             </button>
 
@@ -125,6 +130,7 @@ interface Instruction {
               <img
                 class="w-full h-full"
                 [src]="task.instruction.thumbnailUrl"
+                pgDefaultImage="assets/generic/instruction-task.png"
               />
             </div>
 
@@ -135,6 +141,7 @@ interface Instruction {
               <img
                 class="w-full h-full"
                 [src]="task.instruction.thumbnailUrl"
+                pgDefaultImage="assets/generic/instruction-task.png"
               />
             </div>
           </div>
@@ -171,6 +178,7 @@ interface Instruction {
               <img
                 class="w-full h-full"
                 [src]="instructionApplication.application.thumbnailUrl"
+                pgDefaultImage="assets/generic/instruction-application.png"
               />
             </button>
 
@@ -178,6 +186,7 @@ interface Instruction {
               <img
                 class="w-full h-full"
                 [src]="instructionApplication.application.thumbnailUrl"
+                pgDefaultImage="assets/generic/instruction-application.png"
               />
             </div>
 
@@ -188,6 +197,7 @@ interface Instruction {
               <img
                 class="w-full h-full"
                 [src]="instructionApplication.application.thumbnailUrl"
+                pgDefaultImage="assets/generic/instruction-application.png"
               />
             </div>
           </div>
@@ -224,6 +234,7 @@ interface Instruction {
               <img
                 class="w-full h-full"
                 [src]="instructionSysvar.sysvar.thumbnailUrl"
+                pgDefaultImage="assets/generic/instruction-sysvar.png"
               />
             </button>
 
@@ -231,6 +242,7 @@ interface Instruction {
               <img
                 class="w-full h-full"
                 [src]="instructionSysvar.sysvar.thumbnailUrl"
+                pgDefaultImage="assets/generic/instruction-sysvar.png"
               />
             </div>
 
@@ -241,6 +253,7 @@ interface Instruction {
               <img
                 class="w-full h-full"
                 [src]="instructionSysvar.sysvar.thumbnailUrl"
+                pgDefaultImage="assets/generic/instruction-sysvar.png"
               />
             </div>
           </div>
@@ -293,7 +306,12 @@ interface Instruction {
     </div>
   `,
   standalone: true,
-  imports: [CommonModule, DragDropModule, BoardItemDropListsPipe],
+  imports: [
+    CommonModule,
+    DragDropModule,
+    BoardItemDropListsPipe,
+    DefaultImageDirective,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RowComponent {

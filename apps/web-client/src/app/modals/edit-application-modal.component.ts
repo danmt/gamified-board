@@ -16,6 +16,10 @@ import {
   Validators,
 } from '@angular/forms';
 import { v4 as uuid } from 'uuid';
+import {
+  KeyboardListenerDirective,
+  StopKeydownPropagationDirective,
+} from '../directives';
 import { Entity, Option } from '../utils';
 
 export type Application = Entity<{
@@ -27,50 +31,62 @@ export interface EditApplicationData {
   application: Option<Application>;
 }
 
-export type EditApplicationSubmitPayload = Application;
+export type EditApplicationSubmit = Application;
 
-@Directive({ selector: '[pgEditApplicationModal]', standalone: true })
+export const openEditApplicationModal = (
+  dialog: Dialog,
+  data: EditApplicationData
+) =>
+  dialog.open<
+    EditApplicationSubmit,
+    EditApplicationData,
+    EditApplicationModalComponent
+  >(EditApplicationModalComponent, {
+    data,
+  });
+
+@Directive({
+  selector: '[pgEditApplicationModal]',
+  standalone: true,
+})
 export class EditApplicationModalDirective {
   private readonly _dialog = inject(Dialog);
 
   @Input() pgApplication: Option<Application> = null;
 
-  @Output() pgCreateApplication =
-    new EventEmitter<EditApplicationSubmitPayload>();
-  @Output() pgUpdateApplication =
-    new EventEmitter<EditApplicationSubmitPayload>();
+  @Output() pgCreateApplication = new EventEmitter<EditApplicationSubmit>();
+  @Output() pgUpdateApplication = new EventEmitter<EditApplicationSubmit>();
   @Output() pgOpenModal = new EventEmitter();
   @Output() pgCloseModal = new EventEmitter();
 
   @HostListener('click', []) onClick() {
     this.pgOpenModal.emit();
 
-    this._dialog
-      .open<
-        EditApplicationSubmitPayload,
-        EditApplicationData,
-        EditApplicationModalComponent
-      >(EditApplicationModalComponent, {
-        data: { application: this.pgApplication },
-      })
-      .closed.subscribe((applicationData) => {
-        this.pgCloseModal.emit();
+    openEditApplicationModal(this._dialog, {
+      application: this.pgApplication,
+    }).closed.subscribe((applicationData) => {
+      this.pgCloseModal.emit();
 
-        if (applicationData !== undefined) {
-          if (this.pgApplication === null) {
-            this.pgCreateApplication.emit(applicationData);
-          } else {
-            this.pgUpdateApplication.emit(applicationData);
-          }
+      if (applicationData !== undefined) {
+        if (this.pgApplication === null) {
+          this.pgCreateApplication.emit(applicationData);
+        } else {
+          this.pgUpdateApplication.emit(applicationData);
         }
-      });
+      }
+    });
   }
 }
 
 @Component({
   selector: 'pg-edit-application-modal',
   template: `
-    <div class="px-4 pt-8 pb-4 bg-white shadow-xl relative">
+    <div
+      class="px-4 pt-8 pb-4 bg-white shadow-xl relative"
+      pgStopKeydownPropagation
+      pgKeyboardListener
+      (keydown)="onKeyDown($event)"
+    >
       <button
         class="absolute top-2 right-2 rounded-full border border-black leading-none w-6 h-6"
         (click)="onClose()"
@@ -137,13 +153,18 @@ export class EditApplicationModalDirective {
     </div>
   `,
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    StopKeydownPropagationDirective,
+    KeyboardListenerDirective,
+  ],
 })
 export class EditApplicationModalComponent {
   private readonly _dialogRef =
-    inject<
-      DialogRef<EditApplicationSubmitPayload, EditApplicationModalComponent>
-    >(DialogRef);
+    inject<DialogRef<EditApplicationSubmit, EditApplicationModalComponent>>(
+      DialogRef
+    );
   private readonly _formBuilder = inject(FormBuilder);
   private readonly _data = inject<EditApplicationData>(DIALOG_DATA);
 
@@ -194,6 +215,12 @@ export class EditApplicationModalComponent {
 
   onClose() {
     this._dialogRef.close();
+  }
+
+  onKeyDown(event: KeyboardEvent) {
+    if (event.code === 'Escape') {
+      this._dialogRef.close();
+    }
   }
 
   onGenerateId() {

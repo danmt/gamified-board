@@ -1,65 +1,101 @@
+import { Dialog } from '@angular/cdk/dialog';
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { LetModule, PushModule } from '@ngrx/component';
-import { combineLatest, map } from 'rxjs';
+import { combineLatest, concatMap, EMPTY, map, of, tap } from 'rxjs';
 import { SquareButtonComponent } from '../components';
 import {
+  DefaultImageDirective,
+  KeyboardListenerDirective,
+} from '../directives';
+import {
+  ConfirmModalDirective,
   EditInstructionDocumentModalDirective,
-  EditInstructionDocumentSubmitPayload,
+  EditInstructionDocumentSubmit,
+  openConfirmModal,
+  openEditInstructionDocumentModal,
 } from '../modals';
+import { SlotHotkeyPipe } from '../pipes';
 import { InstructionDocumentApiService } from '../services';
-import { BoardStore } from '../stores';
+import { BoardStore, InstructionDocumentView } from '../stores';
+
+interface HotKey {
+  slot: number;
+  key: string;
+  code: string;
+}
 
 @Component({
   selector: 'pg-instruction-document-section',
   template: `
-    <div
-      *ngIf="selected$ | ngrxPush as selected"
-      class="p-4 bg-gray-700 flex gap-4 justify-center items-start"
-    >
-      <img [src]="selected?.collection?.thumbnailUrl" />
+    <ng-container *ngrxLet="hotkeys$; let hotkeys">
+      <div
+        *ngIf="selected$ | ngrxPush as selected"
+        class="p-4 bg-gray-700 flex gap-4 justify-center items-start"
+        pgKeyboardListener
+        (pgKeyDown)="onKeyDown(hotkeys, selected, $event)"
+      >
+        <img
+          [src]="selected?.collection?.thumbnailUrl"
+          pgDefaultImage="assets/generic/instruction-document.png"
+        />
 
-      {{ selected?.name }}
+        {{ selected?.name }}
 
-      <div class="bg-gray-800 relative" style="width: 2.89rem; height: 2.89rem">
-        <span
-          class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase w-3 h-3"
-          style="font-size: 0.5rem; line-height: 0.5rem"
+        <div
+          class="bg-gray-800 relative"
+          style="width: 2.89rem; height: 2.89rem"
         >
-          q
-        </span>
+          <span
+            *ngIf="0 | pgSlotHotkey: hotkeys as hotkey"
+            class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
+            style="font-size: 0.5rem; line-height: 0.5rem"
+          >
+            {{ hotkey }}
+          </span>
 
-        <pg-square-button
-          [pgIsActive]="isEditing"
-          pgThumbnailUrl="assets/generic/signer.png"
-          pgEditInstructionDocumentModal
-          [pgInstructionDocument]="selected"
-          [pgArgumentReferences$]="argumentReferences$"
-          [pgAttributeReferences$]="attributeReferences$"
-          [pgBumpReferences$]="bumpReferences$"
-          (pgOpenModal)="isEditing = true"
-          (pgCloseModal)="isEditing = false"
-          (pgUpdateInstructionDocument)="
-            onUpdateInstructionDocument(selected.ownerId, selected.id, $event)
-          "
-        ></pg-square-button>
-      </div>
+          <pg-square-button
+            [pgIsActive]="isEditing"
+            pgThumbnailUrl="assets/generic/instruction-document.png"
+            pgEditInstructionDocumentModal
+            [pgInstructionDocument]="selected"
+            [pgArgumentReferences$]="argumentReferences$"
+            [pgAttributeReferences$]="attributeReferences$"
+            [pgBumpReferences$]="bumpReferences$"
+            (pgOpenModal)="isEditing = true"
+            (pgCloseModal)="isEditing = false"
+            (pgUpdateInstructionDocument)="
+              onUpdateInstructionDocument(selected.ownerId, selected.id, $event)
+            "
+          ></pg-square-button>
+        </div>
 
-      <div class="bg-gray-800 relative" style="width: 2.89rem; height: 2.89rem">
-        <span
-          class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase w-3 h-3"
-          style="font-size: 0.5rem; line-height: 0.5rem"
+        <div
+          class="bg-gray-800 relative"
+          style="width: 2.89rem; height: 2.89rem"
         >
-          w
-        </span>
+          <span
+            *ngIf="1 | pgSlotHotkey: hotkeys as hotkey"
+            class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
+            style="font-size: 0.5rem; line-height: 0.5rem"
+          >
+            {{ hotkey }}
+          </span>
 
-        <pg-square-button
-          [pgIsActive]="false"
-          pgThumbnailUrl="assets/generic/signer.png"
-          (click)="onDeleteInstructionDocument(selected.ownerId, selected.id)"
-        ></pg-square-button>
+          <pg-square-button
+            [pgIsActive]="isDeleting"
+            pgThumbnailUrl="assets/generic/instruction-document.png"
+            pgConfirmModal
+            pgMessage="Are you sure? This action cannot be reverted."
+            (pgConfirm)="
+              onDeleteInstructionDocument(selected.ownerId, selected.id)
+            "
+            (pgOpenModal)="isDeleting = true"
+            (pgCloseModal)="isDeleting = false"
+          ></pg-square-button>
+        </div>
       </div>
-    </div>
+    </ng-container>
   `,
   standalone: true,
   imports: [
@@ -67,10 +103,15 @@ import { BoardStore } from '../stores';
     PushModule,
     LetModule,
     SquareButtonComponent,
+    SlotHotkeyPipe,
     EditInstructionDocumentModalDirective,
+    KeyboardListenerDirective,
+    ConfirmModalDirective,
+    DefaultImageDirective,
   ],
 })
 export class InstructionDocumentSectionComponent {
+  private readonly _dialog = inject(Dialog);
   private readonly _boardStore = inject(BoardStore);
   private readonly _instructionDocumentApiService = inject(
     InstructionDocumentApiService
@@ -163,6 +204,18 @@ export class InstructionDocumentSectionComponent {
       ) ?? []),
     ])
   );
+  readonly hotkeys$ = of([
+    {
+      slot: 0,
+      code: 'KeyQ',
+      key: 'q',
+    },
+    {
+      slot: 1,
+      code: 'KeyW',
+      key: 'w',
+    },
+  ]);
 
   isEditing = false;
   isDeleting = false;
@@ -170,7 +223,7 @@ export class InstructionDocumentSectionComponent {
   onUpdateInstructionDocument(
     instructionId: string,
     instructionDocumentId: string,
-    instructionDocumentData: EditInstructionDocumentSubmitPayload
+    instructionDocumentData: EditInstructionDocumentSubmit
   ) {
     this._instructionDocumentApiService
       .updateInstructionDocument(
@@ -186,14 +239,84 @@ export class InstructionDocumentSectionComponent {
   }
 
   onDeleteInstructionDocument(instructionId: string, documentId: string) {
-    this.isDeleting = true;
+    this._instructionDocumentApiService
+      .deleteInstructionDocument(instructionId, documentId)
+      .subscribe(() => this._boardStore.setSelectedId(null));
+  }
 
-    if (confirm('Are you sure? This action cannot be reverted.')) {
-      this._instructionDocumentApiService
-        .deleteInstructionDocument(instructionId, documentId)
-        .subscribe(() => this._boardStore.setSelectedId(null));
+  onKeyDown(
+    hotkeys: HotKey[],
+    instructionDocument: InstructionDocumentView,
+    event: KeyboardEvent
+  ) {
+    const hotkey = hotkeys.find(({ code }) => code === event.code) ?? null;
+
+    if (hotkey !== null) {
+      switch (hotkey.slot) {
+        case 0: {
+          this.isEditing = true;
+
+          openEditInstructionDocumentModal(this._dialog, {
+            instructionDocument,
+            argumentReferences$: this.argumentReferences$,
+            attributeReferences$: this.attributeReferences$,
+            bumpReferences$: this.bumpReferences$,
+          })
+            .closed.pipe(
+              concatMap((instructionDocumentData) => {
+                this.isEditing = false;
+
+                if (instructionDocumentData === undefined) {
+                  return EMPTY;
+                }
+
+                return this._instructionDocumentApiService.updateInstructionDocument(
+                  instructionDocument.ownerId,
+                  instructionDocument.id,
+                  instructionDocumentData.name,
+                  instructionDocumentData.method,
+                  instructionDocumentData.seeds,
+                  instructionDocumentData.bump,
+                  instructionDocumentData.payer
+                );
+              })
+            )
+            .subscribe();
+
+          break;
+        }
+
+        case 1: {
+          this.isDeleting = true;
+
+          openConfirmModal(this._dialog, {
+            message: 'Are you sure? This action cannot be reverted.',
+          })
+            .closed.pipe(
+              concatMap((confirmData) => {
+                this.isDeleting = false;
+
+                if (confirmData === undefined || !confirmData) {
+                  return EMPTY;
+                }
+
+                return this._instructionDocumentApiService
+                  .deleteInstructionDocument(
+                    instructionDocument.ownerId,
+                    instructionDocument.id
+                  )
+                  .pipe(tap(() => this._boardStore.setSelectedId(null)));
+              })
+            )
+            .subscribe();
+
+          break;
+        }
+
+        default: {
+          break;
+        }
+      }
     }
-
-    this.isDeleting = false;
   }
 }

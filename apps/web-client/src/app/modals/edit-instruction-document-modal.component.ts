@@ -24,6 +24,10 @@ import {
 } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { v4 as uuid } from 'uuid';
+import {
+  KeyboardListenerDirective,
+  StopKeydownPropagationDirective,
+} from '../directives';
 import { Entity, isNotNull, Option } from '../utils';
 
 interface ArgumentReference {
@@ -75,7 +79,7 @@ type SeedOutput =
   | { kind: 'argument'; argumentId: string }
   | { value: string; type: string };
 
-export interface EditInstructionDocumentSubmitPayload {
+export interface EditInstructionDocumentSubmit {
   id: string;
   name: string;
   method: string;
@@ -86,6 +90,18 @@ export interface EditInstructionDocumentSubmitPayload {
   seeds: SeedOutput[];
   payer: Option<{ kind: 'document'; documentId: string; attributeId: string }>;
 }
+
+export const openEditInstructionDocumentModal = (
+  dialog: Dialog,
+  data: EditInstructionDocumentData
+) =>
+  dialog.open<
+    EditInstructionDocumentSubmit,
+    EditInstructionDocumentData,
+    EditInstructionDocumentModalComponent
+  >(EditInstructionDocumentModalComponent, {
+    data,
+  });
 
 @Directive({ selector: '[pgEditInstructionDocumentModal]', standalone: true })
 export class EditInstructionDocumentModalDirective {
@@ -99,9 +115,9 @@ export class EditInstructionDocumentModalDirective {
   @Input() pgBumpReferences$: Option<Observable<Reference[]>> = null;
 
   @Output() pgCreateInstructionDocument =
-    new EventEmitter<EditInstructionDocumentSubmitPayload>();
+    new EventEmitter<EditInstructionDocumentSubmit>();
   @Output() pgUpdateInstructionDocument =
-    new EventEmitter<EditInstructionDocumentSubmitPayload>();
+    new EventEmitter<EditInstructionDocumentSubmit>();
   @Output() pgOpenModal = new EventEmitter();
   @Output() pgCloseModal = new EventEmitter();
 
@@ -120,37 +136,34 @@ export class EditInstructionDocumentModalDirective {
 
     this.pgOpenModal.emit();
 
-    this._dialog
-      .open<
-        EditInstructionDocumentSubmitPayload,
-        EditInstructionDocumentData,
-        EditInstructionDocumentModalComponent
-      >(EditInstructionDocumentModalComponent, {
-        data: {
-          instructionDocument: this.pgInstructionDocument,
-          argumentReferences$: this.pgArgumentReferences$,
-          attributeReferences$: this.pgAttributeReferences$,
-          bumpReferences$: this.pgBumpReferences$,
-        },
-      })
-      .closed.subscribe((instructionDocumentData) => {
-        this.pgCloseModal.emit();
+    openEditInstructionDocumentModal(this._dialog, {
+      instructionDocument: this.pgInstructionDocument,
+      argumentReferences$: this.pgArgumentReferences$,
+      attributeReferences$: this.pgAttributeReferences$,
+      bumpReferences$: this.pgBumpReferences$,
+    }).closed.subscribe((instructionDocumentData) => {
+      this.pgCloseModal.emit();
 
-        if (instructionDocumentData !== undefined) {
-          if (this.pgInstructionDocument === null) {
-            this.pgCreateInstructionDocument.emit(instructionDocumentData);
-          } else {
-            this.pgUpdateInstructionDocument.emit(instructionDocumentData);
-          }
+      if (instructionDocumentData !== undefined) {
+        if (this.pgInstructionDocument === null) {
+          this.pgCreateInstructionDocument.emit(instructionDocumentData);
+        } else {
+          this.pgUpdateInstructionDocument.emit(instructionDocumentData);
         }
-      });
+      }
+    });
   }
 }
 
 @Component({
   selector: 'pg-edit-instruction-document-modal',
   template: `
-    <div class="px-4 pt-8 pb-4 bg-white shadow-xl relative">
+    <div
+      class="px-4 pt-8 pb-4 bg-white shadow-xl relative"
+      pgStopKeydownPropagation
+      pgKeyboardListener
+      (keydown)="onKeyDown($event)"
+    >
       <button
         class="absolute top-2 right-2 rounded-full border border-black leading-none w-6 h-6"
         (click)="onClose()"
@@ -449,13 +462,19 @@ export class EditInstructionDocumentModalDirective {
     </div>
   `,
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, DragDropModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    DragDropModule,
+    StopKeydownPropagationDirective,
+    KeyboardListenerDirective,
+  ],
 })
 export class EditInstructionDocumentModalComponent {
   private readonly _dialogRef =
     inject<
       DialogRef<
-        EditInstructionDocumentSubmitPayload,
+        EditInstructionDocumentSubmit,
         EditInstructionDocumentModalComponent
       >
     >(DialogRef);
@@ -913,6 +932,12 @@ export class EditInstructionDocumentModalComponent {
         bump1.document.id === bump2.document.id &&
         bump1.attribute.id === bump2.attribute.id)
     );
+  }
+
+  onKeyDown(event: KeyboardEvent) {
+    if (event.code === 'Escape') {
+      this._dialogRef.close();
+    }
   }
 
   onGenerateId() {

@@ -4,6 +4,7 @@ import { Component, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { LetModule, PushModule } from '@ngrx/component';
 import { BehaviorSubject } from 'rxjs';
+import { DefaultImageDirective } from '../directives';
 import { EditCollectionModalDirective } from '../modals';
 import { CollectionApiService } from '../services';
 import { BoardStore } from '../stores';
@@ -73,6 +74,7 @@ import { Option } from '../utils';
                 <img
                   class="w-full h-full object-cover"
                   [src]="collection.thumbnailUrl"
+                  pgDefaultImage="assets/generic/collection.png"
                 />
               </div>
             </ng-container>
@@ -89,6 +91,7 @@ import { Option } from '../utils';
                 <img
                   class="w-full h-full object-cover"
                   [src]="collection.thumbnailUrl"
+                  pgDefaultImage="assets/generic/collection.png"
                 />
               </div>
 
@@ -96,6 +99,7 @@ import { Option } from '../utils';
                 <img
                   class="w-full h-full object-cover"
                   [src]="collection.thumbnailUrl"
+                  pgDefaultImage="assets/generic/collection.png"
                 />
               </div>
 
@@ -114,6 +118,7 @@ import { Option } from '../utils';
     LetModule,
     RouterModule,
     EditCollectionModalDirective,
+    DefaultImageDirective,
   ],
 })
 export class CollectionsSectionComponent {

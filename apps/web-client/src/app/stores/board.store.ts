@@ -14,21 +14,11 @@ import {
   withLatestFrom,
 } from 'rxjs';
 import {
-  EditInstructionApplicationData,
-  EditInstructionApplicationModalComponent,
-  EditInstructionApplicationSubmitPayload,
-  EditInstructionDocumentData,
-  EditInstructionDocumentModalComponent,
-  EditInstructionDocumentSubmitPayload,
-  EditInstructionSignerData,
-  EditInstructionSignerModalComponent,
-  EditInstructionSignerSubmitPayload,
-  EditInstructionSysvarData,
-  EditInstructionSysvarModalComponent,
-  EditInstructionSysvarSubmitPayload,
-  EditInstructionTaskData,
-  EditInstructionTaskModalComponent,
-  EditInstructionTaskSubmitPayload,
+  openEditInstructionApplicationModal,
+  openEditInstructionDocumentModal,
+  openEditInstructionSignerModal,
+  openEditInstructionSysvarModal,
+  openEditInstructionTaskModal,
 } from '../modals';
 import { IdlStructField, PluginsService } from '../plugins';
 import {
@@ -1145,52 +1135,40 @@ export class BoardStore
 
           if (active.kind === 'application') {
             // application
-            return this._dialog
-              .open<
-                EditInstructionApplicationSubmitPayload,
-                EditInstructionApplicationData,
-                EditInstructionApplicationModalComponent
-              >(EditInstructionApplicationModalComponent, {
-                data: { instructionApplication: null },
-              })
-              .closed.pipe(
-                concatMap((instructionApplicationData) => {
-                  if (instructionApplicationData === undefined) {
-                    return EMPTY;
-                  }
+            return openEditInstructionApplicationModal(this._dialog, {
+              instructionApplication: null,
+            }).closed.pipe(
+              concatMap((instructionApplicationData) => {
+                if (instructionApplicationData === undefined) {
+                  return EMPTY;
+                }
 
-                  return this._instructionApplicationApiService.createInstructionApplication(
-                    instructionId,
-                    instructionApplicationData.id,
-                    instructionApplicationData.name,
-                    active.id
-                  );
-                })
-              );
+                return this._instructionApplicationApiService.createInstructionApplication(
+                  instructionId,
+                  instructionApplicationData.id,
+                  instructionApplicationData.name,
+                  active.id
+                );
+              })
+            );
           } else if (active.kind === 'instruction') {
             // instruction
-            return this._dialog
-              .open<
-                EditInstructionTaskSubmitPayload,
-                EditInstructionTaskData,
-                EditInstructionTaskModalComponent
-              >(EditInstructionTaskModalComponent, {
-                data: { instructionTask: null },
-              })
-              .closed.pipe(
-                concatMap((taskData) => {
-                  if (taskData === undefined) {
-                    return EMPTY;
-                  }
+            return openEditInstructionTaskModal(this._dialog, {
+              instructionTask: null,
+            }).closed.pipe(
+              concatMap((taskData) => {
+                if (taskData === undefined) {
+                  return EMPTY;
+                }
 
-                  return this._instructionTaskApiService.createInstructionTask(
-                    instructionId,
-                    taskData.id,
-                    taskData.name,
-                    active.id
-                  );
-                })
-              );
+                return this._instructionTaskApiService.createInstructionTask(
+                  instructionId,
+                  taskData.id,
+                  taskData.name,
+                  active.id
+                );
+              })
+            );
           } else if (active.kind === 'collection') {
             // collection
             const argumentReferences$ = this.select(
@@ -1273,83 +1251,65 @@ export class BoardStore
               ]
             );
 
-            return this._dialog
-              .open<
-                EditInstructionDocumentSubmitPayload,
-                EditInstructionDocumentData,
-                EditInstructionDocumentModalComponent
-              >(EditInstructionDocumentModalComponent, {
-                data: {
-                  instructionDocument: null,
-                  argumentReferences$,
-                  attributeReferences$,
-                  bumpReferences$,
-                },
-              })
-              .closed.pipe(
-                concatMap((documentData) => {
-                  if (documentData === undefined) {
-                    return EMPTY;
-                  }
+            return openEditInstructionDocumentModal(this._dialog, {
+              instructionDocument: null,
+              argumentReferences$,
+              attributeReferences$,
+              bumpReferences$,
+            }).closed.pipe(
+              concatMap((documentData) => {
+                if (documentData === undefined) {
+                  return EMPTY;
+                }
 
-                  return this._instructionDocumentApiService.createInstructionDocument(
-                    instructionId,
-                    documentData.id,
-                    documentData.name,
-                    documentData.method,
-                    active.id,
-                    documentData.seeds,
-                    documentData.bump,
-                    documentData.payer
-                  );
-                })
-              );
+                return this._instructionDocumentApiService.createInstructionDocument(
+                  instructionId,
+                  documentData.id,
+                  documentData.name,
+                  documentData.method,
+                  active.id,
+                  documentData.seeds,
+                  documentData.bump,
+                  documentData.payer
+                );
+              })
+            );
           } else if (active.kind === 'sysvar') {
             // sysvar
-            return this._dialog
-              .open<
-                EditInstructionSysvarSubmitPayload,
-                EditInstructionSysvarData,
-                EditInstructionSysvarModalComponent
-              >(EditInstructionSysvarModalComponent, {
-                data: { instructionSysvar: null },
-              })
-              .closed.pipe(
-                concatMap((documentData) => {
-                  if (documentData === undefined) {
-                    return EMPTY;
-                  }
+            return openEditInstructionSysvarModal(this._dialog, {
+              instructionSysvar: null,
+            }).closed.pipe(
+              concatMap((documentData) => {
+                if (documentData === undefined) {
+                  return EMPTY;
+                }
 
-                  return this._instructionSysvarApiService.createInstructionSysvar(
-                    instructionId,
-                    documentData.id,
-                    documentData.name,
-                    active.id
-                  );
-                })
-              );
+                return this._instructionSysvarApiService.createInstructionSysvar(
+                  instructionId,
+                  documentData.id,
+                  documentData.name,
+                  active.id
+                );
+              })
+            );
           } else {
             // signer
-            return this._dialog
-              .open<
-                EditInstructionSignerSubmitPayload,
-                EditInstructionSignerData,
-                EditInstructionSignerModalComponent
-              >(EditInstructionSignerModalComponent)
-              .closed.pipe(
-                concatMap((signerData) => {
-                  if (signerData === undefined) {
-                    return EMPTY;
-                  }
+            return openEditInstructionSignerModal(this._dialog, {
+              instructionSigner: null,
+            }).closed.pipe(
+              concatMap((signerData) => {
+                if (signerData === undefined) {
+                  return EMPTY;
+                }
 
-                  return this._instructionSignerApiService.createInstructionSigner(
-                    instructionId,
-                    signerData.id,
-                    signerData.name,
-                    signerData.saveChanges
-                  );
-                })
-              );
+                return this._instructionSignerApiService.createInstructionSigner(
+                  instructionId,
+                  signerData.id,
+                  signerData.name,
+                  signerData.saveChanges
+                );
+              })
+            );
           }
         })
       );

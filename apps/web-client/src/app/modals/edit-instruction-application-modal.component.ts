@@ -1,5 +1,4 @@
 import { Dialog, DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
-import { DragDropModule } from '@angular/cdk/drag-drop';
 import { CommonModule } from '@angular/common';
 import {
   Component,
@@ -17,6 +16,10 @@ import {
   Validators,
 } from '@angular/forms';
 import { v4 as uuid } from 'uuid';
+import {
+  KeyboardListenerDirective,
+  StopKeydownPropagationDirective,
+} from '../directives';
 import { Entity, Option } from '../utils';
 
 export type InstructionApplication = Entity<{
@@ -27,7 +30,19 @@ export interface EditInstructionApplicationData {
   instructionApplication: Option<InstructionApplication>;
 }
 
-export type EditInstructionApplicationSubmitPayload = InstructionApplication;
+export type EditInstructionApplicationSubmit = InstructionApplication;
+
+export const openEditInstructionApplicationModal = (
+  dialog: Dialog,
+  data: EditInstructionApplicationData
+) =>
+  dialog.open<
+    EditInstructionApplicationSubmit,
+    EditInstructionApplicationData,
+    EditInstructionApplicationModalComponent
+  >(EditInstructionApplicationModalComponent, {
+    data,
+  });
 
 @Directive({
   selector: '[pgEditInstructionApplicationModal]',
@@ -39,47 +54,40 @@ export class EditInstructionApplicationModalDirective {
   @Input() pgInstructionApplication: Option<InstructionApplication> = null;
 
   @Output() pgCreateInstructionApplication =
-    new EventEmitter<EditInstructionApplicationSubmitPayload>();
+    new EventEmitter<EditInstructionApplicationSubmit>();
   @Output() pgUpdateInstructionApplication =
-    new EventEmitter<EditInstructionApplicationSubmitPayload>();
+    new EventEmitter<EditInstructionApplicationSubmit>();
   @Output() pgOpenModal = new EventEmitter();
   @Output() pgCloseModal = new EventEmitter();
 
   @HostListener('click', []) onClick() {
     this.pgOpenModal.emit();
 
-    this._dialog
-      .open<
-        EditInstructionApplicationSubmitPayload,
-        EditInstructionApplicationData,
-        EditInstructionApplicationModalComponent
-      >(EditInstructionApplicationModalComponent, {
-        data: {
-          instructionApplication: this.pgInstructionApplication,
-        },
-      })
-      .closed.subscribe((instructionApplicationData) => {
-        this.pgCloseModal.emit();
+    openEditInstructionApplicationModal(this._dialog, {
+      instructionApplication: this.pgInstructionApplication,
+    }).closed.subscribe((instructionApplicationData) => {
+      this.pgCloseModal.emit();
 
-        if (instructionApplicationData !== undefined) {
-          if (this.pgInstructionApplication === null) {
-            this.pgCreateInstructionApplication.emit(
-              instructionApplicationData
-            );
-          } else {
-            this.pgUpdateInstructionApplication.emit(
-              instructionApplicationData
-            );
-          }
+      if (instructionApplicationData !== undefined) {
+        if (this.pgInstructionApplication === null) {
+          this.pgCreateInstructionApplication.emit(instructionApplicationData);
+        } else {
+          this.pgUpdateInstructionApplication.emit(instructionApplicationData);
         }
-      });
+      }
+    });
   }
 }
 
 @Component({
   selector: 'pg-edit-instruction-application-modal',
   template: `
-    <div class="px-4 pt-8 pb-4 bg-white shadow-xl relative">
+    <div
+      class="px-4 pt-8 pb-4 bg-white shadow-xl relative"
+      pgStopKeydownPropagation
+      pgKeyboardListener
+      (keydown)="onKeyDown($event)"
+    >
       <button
         class="absolute top-2 right-2 rounded-full border border-black leading-none w-6 h-6"
         (click)="onClose()"
@@ -140,13 +148,18 @@ export class EditInstructionApplicationModalDirective {
     </div>
   `,
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, DragDropModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    StopKeydownPropagationDirective,
+    KeyboardListenerDirective,
+  ],
 })
 export class EditInstructionApplicationModalComponent {
   private readonly _dialogRef =
     inject<
       DialogRef<
-        EditInstructionApplicationSubmitPayload,
+        EditInstructionApplicationSubmit,
         EditInstructionApplicationModalComponent
       >
     >(DialogRef);
@@ -188,6 +201,12 @@ export class EditInstructionApplicationModalComponent {
         id,
         name,
       });
+    }
+  }
+
+  onKeyDown(event: KeyboardEvent) {
+    if (event.code === 'Escape') {
+      this._dialogRef.close();
     }
   }
 

@@ -16,6 +16,10 @@ import {
   Validators,
 } from '@angular/forms';
 import { v4 as uuid } from 'uuid';
+import {
+  KeyboardListenerDirective,
+  StopKeydownPropagationDirective,
+} from '../directives';
 import { Entity, Option } from '../utils';
 
 export type InstructionSysvar = Entity<{
@@ -26,7 +30,19 @@ export interface EditInstructionSysvarData {
   instructionSysvar: Option<InstructionSysvar>;
 }
 
-export type EditInstructionSysvarSubmitPayload = InstructionSysvar;
+export type EditInstructionSysvarSubmit = InstructionSysvar;
+
+export const openEditInstructionSysvarModal = (
+  dialog: Dialog,
+  data: EditInstructionSysvarData
+) =>
+  dialog.open<
+    EditInstructionSysvarSubmit,
+    EditInstructionSysvarData,
+    EditInstructionSysvarModalComponent
+  >(EditInstructionSysvarModalComponent, {
+    data,
+  });
 
 @Directive({ selector: '[pgEditInstructionSysvarModal]', standalone: true })
 export class EditInstructionSysvarModalDirective {
@@ -35,43 +51,40 @@ export class EditInstructionSysvarModalDirective {
   @Input() pgInstructionSysvar: Option<InstructionSysvar> = null;
 
   @Output() pgCreateInstructionSysvar =
-    new EventEmitter<EditInstructionSysvarSubmitPayload>();
+    new EventEmitter<EditInstructionSysvarSubmit>();
   @Output() pgUpdateInstructionSysvar =
-    new EventEmitter<EditInstructionSysvarSubmitPayload>();
+    new EventEmitter<EditInstructionSysvarSubmit>();
   @Output() pgOpenModal = new EventEmitter();
   @Output() pgCloseModal = new EventEmitter();
 
   @HostListener('click', []) onClick() {
     this.pgOpenModal.emit();
 
-    this._dialog
-      .open<
-        EditInstructionSysvarSubmitPayload,
-        EditInstructionSysvarData,
-        EditInstructionSysvarModalComponent
-      >(EditInstructionSysvarModalComponent, {
-        data: {
-          instructionSysvar: this.pgInstructionSysvar,
-        },
-      })
-      .closed.subscribe((instructionSysvarData) => {
-        this.pgCloseModal.emit();
+    openEditInstructionSysvarModal(this._dialog, {
+      instructionSysvar: this.pgInstructionSysvar,
+    }).closed.subscribe((instructionSysvarData) => {
+      this.pgCloseModal.emit();
 
-        if (instructionSysvarData !== undefined) {
-          if (this.pgInstructionSysvar === null) {
-            this.pgCreateInstructionSysvar.emit(instructionSysvarData);
-          } else {
-            this.pgUpdateInstructionSysvar.emit(instructionSysvarData);
-          }
+      if (instructionSysvarData !== undefined) {
+        if (this.pgInstructionSysvar === null) {
+          this.pgCreateInstructionSysvar.emit(instructionSysvarData);
+        } else {
+          this.pgUpdateInstructionSysvar.emit(instructionSysvarData);
         }
-      });
+      }
+    });
   }
 }
 
 @Component({
   selector: 'pg-edit-instruction-sysvar-modal',
   template: `
-    <div class="px-4 pt-8 pb-4 bg-white shadow-xl relative">
+    <div
+      class="px-4 pt-8 pb-4 bg-white shadow-xl relative"
+      pgStopKeydownPropagation
+      pgKeyboardListener
+      (keydown)="onKeyDown($event)"
+    >
       <button
         class="absolute top-2 right-2 rounded-full border border-black leading-none w-6 h-6"
         (click)="onClose()"
@@ -124,13 +137,18 @@ export class EditInstructionSysvarModalDirective {
     </div>
   `,
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    StopKeydownPropagationDirective,
+    KeyboardListenerDirective,
+  ],
 })
 export class EditInstructionSysvarModalComponent {
   private readonly _dialogRef =
     inject<
       DialogRef<
-        EditInstructionSysvarSubmitPayload,
+        EditInstructionSysvarSubmit,
         EditInstructionSysvarModalComponent
       >
     >(DialogRef);
@@ -166,6 +184,12 @@ export class EditInstructionSysvarModalComponent {
         id,
         name,
       });
+    }
+  }
+
+  onKeyDown(event: KeyboardEvent) {
+    if (event.code === 'Escape') {
+      this._dialogRef.close();
     }
   }
 

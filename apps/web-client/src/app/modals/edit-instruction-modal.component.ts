@@ -23,6 +23,10 @@ import {
   Validators,
 } from '@angular/forms';
 import { v4 as uuid } from 'uuid';
+import {
+  KeyboardListenerDirective,
+  StopKeydownPropagationDirective,
+} from '../directives';
 import { Entity, Option } from '../utils';
 
 export type Instruction = Entity<{
@@ -35,7 +39,19 @@ export interface EditInstructionData {
   instruction: Option<Instruction>;
 }
 
-export type EditInstructionSubmitPayload = Instruction;
+export type EditInstructionSubmit = Instruction;
+
+export const openEditInstructionModal = (
+  dialog: Dialog,
+  data: EditInstructionData
+) =>
+  dialog.open<
+    EditInstructionSubmit,
+    EditInstructionData,
+    EditInstructionModalComponent
+  >(EditInstructionModalComponent, {
+    data,
+  });
 
 @Directive({ selector: '[pgEditInstructionModal]', standalone: true })
 export class EditInstructionModalDirective {
@@ -43,42 +59,39 @@ export class EditInstructionModalDirective {
 
   @Input() pgInstruction: Option<Instruction> = null;
 
-  @Output() pgCreateInstruction =
-    new EventEmitter<EditInstructionSubmitPayload>();
-  @Output() pgUpdateInstruction =
-    new EventEmitter<EditInstructionSubmitPayload>();
+  @Output() pgCreateInstruction = new EventEmitter<EditInstructionSubmit>();
+  @Output() pgUpdateInstruction = new EventEmitter<EditInstructionSubmit>();
   @Output() pgOpenModal = new EventEmitter();
   @Output() pgCloseModal = new EventEmitter();
 
   @HostListener('click', []) onClick() {
     this.pgOpenModal.emit();
 
-    this._dialog
-      .open<
-        EditInstructionSubmitPayload,
-        EditInstructionData,
-        EditInstructionModalComponent
-      >(EditInstructionModalComponent, {
-        data: { instruction: this.pgInstruction },
-      })
-      .closed.subscribe((instructionData) => {
-        this.pgCloseModal.emit();
+    openEditInstructionModal(this._dialog, {
+      instruction: this.pgInstruction,
+    }).closed.subscribe((instructionData) => {
+      this.pgCloseModal.emit();
 
-        if (instructionData !== undefined) {
-          if (this.pgInstruction === null) {
-            this.pgCreateInstruction.emit(instructionData);
-          } else {
-            this.pgUpdateInstruction.emit(instructionData);
-          }
+      if (instructionData !== undefined) {
+        if (this.pgInstruction === null) {
+          this.pgCreateInstruction.emit(instructionData);
+        } else {
+          this.pgUpdateInstruction.emit(instructionData);
         }
-      });
+      }
+    });
   }
 }
 
 @Component({
   selector: 'pg-edit-instruction-modal',
   template: `
-    <div class="px-4 pt-8 pb-4 bg-white shadow-xl relative">
+    <div
+      class="px-4 pt-8 pb-4 bg-white shadow-xl relative"
+      pgStopKeydownPropagation
+      pgKeyboardListener
+      (keydown)="onKeyDown($event)"
+    >
       <button
         class="absolute top-2 right-2 rounded-full border border-black leading-none w-6 h-6"
         (click)="onClose()"
@@ -260,13 +273,19 @@ export class EditInstructionModalDirective {
     </div>
   `,
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, DragDropModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    DragDropModule,
+    StopKeydownPropagationDirective,
+    KeyboardListenerDirective,
+  ],
 })
 export class EditInstructionModalComponent {
   private readonly _dialogRef =
-    inject<
-      DialogRef<EditInstructionSubmitPayload, EditInstructionModalComponent>
-    >(DialogRef);
+    inject<DialogRef<EditInstructionSubmit, EditInstructionModalComponent>>(
+      DialogRef
+    );
   private readonly _formBuilder = inject(FormBuilder);
   private readonly _data = inject<EditInstructionData>(DIALOG_DATA);
 
@@ -421,6 +440,12 @@ export class EditInstructionModalComponent {
         thumbnailUrl,
         arguments: args,
       });
+    }
+  }
+
+  onKeyDown(event: KeyboardEvent) {
+    if (event.code === 'Escape') {
+      this._dialogRef.close();
     }
   }
 

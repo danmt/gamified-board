@@ -13,7 +13,7 @@ import { SlotHotkeyPipe } from '../pipes';
 import { BoardStore } from '../stores';
 import { Entity, Option } from '../utils';
 
-export interface HotKey {
+interface HotKey {
   slot: number;
   key: string;
   code: string;
@@ -196,11 +196,6 @@ export class CenterDockSectionComponent {
     hotkeys: HotKey[],
     event: KeyboardEvent
   ) {
-    console.log({
-      hotkeys,
-      event,
-    });
-
     if (slots !== null) {
       const hotkey = hotkeys.find(({ code }) => code === event.code) ?? null;
 

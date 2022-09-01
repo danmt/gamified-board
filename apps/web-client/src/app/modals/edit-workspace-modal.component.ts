@@ -17,6 +17,10 @@ import {
   Validators,
 } from '@angular/forms';
 import { v4 as uuid } from 'uuid';
+import {
+  KeyboardListenerDirective,
+  StopKeydownPropagationDirective,
+} from '../directives';
 import { Entity, Option } from '../utils';
 
 export type Workspace = Entity<{
@@ -27,7 +31,19 @@ export interface EditWorkspaceData {
   workspace: Option<Workspace>;
 }
 
-export type EditWorkspaceSubmitPayload = Workspace;
+export type EditWorkspaceSubmit = Workspace;
+
+export const openEditWorkspaceModal = (
+  dialog: Dialog,
+  data: EditWorkspaceData
+) =>
+  dialog.open<
+    EditWorkspaceSubmit,
+    EditWorkspaceData,
+    EditWorkspaceModalComponent
+  >(EditWorkspaceModalComponent, {
+    data,
+  });
 
 @Directive({ selector: '[pgEditWorkspaceModal]', standalone: true })
 export class EditWorkspaceModalDirective {
@@ -35,42 +51,39 @@ export class EditWorkspaceModalDirective {
 
   @Input() pgWorkspace: Option<Workspace> = null;
 
-  @Output() pgCreateWorkspace = new EventEmitter<EditWorkspaceSubmitPayload>();
-  @Output() pgUpdateWorkspace = new EventEmitter<EditWorkspaceSubmitPayload>();
+  @Output() pgCreateWorkspace = new EventEmitter<EditWorkspaceSubmit>();
+  @Output() pgUpdateWorkspace = new EventEmitter<EditWorkspaceSubmit>();
   @Output() pgOpenModal = new EventEmitter();
   @Output() pgCloseModal = new EventEmitter();
 
   @HostListener('click', []) onClick() {
     this.pgOpenModal.emit();
 
-    this._dialog
-      .open<
-        EditWorkspaceSubmitPayload,
-        EditWorkspaceData,
-        EditWorkspaceModalComponent
-      >(EditWorkspaceModalComponent, {
-        data: {
-          workspace: this.pgWorkspace,
-        },
-      })
-      .closed.subscribe((workspaceData) => {
-        this.pgCloseModal.emit();
+    openEditWorkspaceModal(this._dialog, {
+      workspace: this.pgWorkspace,
+    }).closed.subscribe((workspaceData) => {
+      this.pgCloseModal.emit();
 
-        if (workspaceData !== undefined) {
-          if (this.pgWorkspace === null) {
-            this.pgCreateWorkspace.emit(workspaceData);
-          } else {
-            this.pgUpdateWorkspace.emit(workspaceData);
-          }
+      if (workspaceData !== undefined) {
+        if (this.pgWorkspace === null) {
+          this.pgCreateWorkspace.emit(workspaceData);
+        } else {
+          this.pgUpdateWorkspace.emit(workspaceData);
         }
-      });
+      }
+    });
   }
 }
 
 @Component({
   selector: 'pg-edit-workspace-modal',
   template: `
-    <div class="px-4 pt-8 pb-4 bg-white shadow-xl relative">
+    <div
+      class="px-4 pt-8 pb-4 bg-white shadow-xl relative"
+      pgStopKeydownPropagation
+      pgKeyboardListener
+      (keydown)="onKeyDown($event)"
+    >
       <button
         class="absolute top-2 right-2 rounded-full border border-black leading-none w-6 h-6"
         (click)="onClose()"
@@ -123,11 +136,16 @@ export class EditWorkspaceModalDirective {
     </div>
   `,
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    StopKeydownPropagationDirective,
+    KeyboardListenerDirective,
+  ],
 })
 export class EditWorkspaceModalComponent {
   private readonly _dialogRef =
-    inject<DialogRef<EditWorkspaceSubmitPayload, EditWorkspaceModalComponent>>(
+    inject<DialogRef<EditWorkspaceSubmit, EditWorkspaceModalComponent>>(
       DialogRef
     );
   private readonly _formBuilder = inject(FormBuilder);
@@ -162,6 +180,12 @@ export class EditWorkspaceModalComponent {
         id,
         name,
       });
+    }
+  }
+
+  onKeyDown(event: KeyboardEvent) {
+    if (event.code === 'Escape') {
+      this._dialogRef.close();
     }
   }
 
