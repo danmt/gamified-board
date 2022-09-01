@@ -4,6 +4,7 @@ import { Component, HostBinding, inject } from '@angular/core';
 import { PushModule } from '@ngrx/component';
 import { ActiveComponent, RowComponent } from '../components';
 import {
+  CursorScrollDirective,
   FollowCursorDirective,
   KeyboardListenerDirective,
 } from '../directives';
@@ -134,6 +135,7 @@ import { Entity, Option } from '../utils';
     PushModule,
     KeyboardListenerDirective,
     FollowCursorDirective,
+    CursorScrollDirective,
     RowComponent,
     ActiveComponent,
   ],
