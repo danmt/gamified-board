@@ -16,46 +16,77 @@ import {
   Validators,
 } from '@angular/forms';
 import { v4 as uuid } from 'uuid';
-import { Option } from '../utils';
+import {
+  KeyboardListenerDirective,
+  StopKeydownPropagationDirective,
+} from '../directives';
+import { Entity, Option } from '../utils';
 
-export interface EditApplicationData {
-  id: string;
+export type Application = Entity<{
   name: string;
   thumbnailUrl: string;
+}>;
+
+export interface EditApplicationData {
+  application: Option<Application>;
 }
 
-@Directive({ selector: '[pgEditApplicationModal]', standalone: true })
+export type EditApplicationSubmit = Application;
+
+export const openEditApplicationModal = (
+  dialog: Dialog,
+  data: EditApplicationData
+) =>
+  dialog.open<
+    EditApplicationSubmit,
+    EditApplicationData,
+    EditApplicationModalComponent
+  >(EditApplicationModalComponent, {
+    data,
+  });
+
+@Directive({
+  selector: '[pgEditApplicationModal]',
+  standalone: true,
+})
 export class EditApplicationModalDirective {
   private readonly _dialog = inject(Dialog);
 
-  @Input() application: Option<EditApplicationData> = null;
-  @Output() createApplication = new EventEmitter<EditApplicationData>();
-  @Output() updateApplication = new EventEmitter<EditApplicationData>();
+  @Input() pgApplication: Option<Application> = null;
+
+  @Output() pgCreateApplication = new EventEmitter<EditApplicationSubmit>();
+  @Output() pgUpdateApplication = new EventEmitter<EditApplicationSubmit>();
+  @Output() pgOpenModal = new EventEmitter();
+  @Output() pgCloseModal = new EventEmitter();
+
   @HostListener('click', []) onClick() {
-    this._dialog
-      .open<
-        EditApplicationData,
-        Option<EditApplicationData>,
-        EditApplicationModalComponent
-      >(EditApplicationModalComponent, {
-        data: this.application,
-      })
-      .closed.subscribe((applicationData) => {
-        if (applicationData !== undefined) {
-          if (this.application === null) {
-            this.createApplication.emit(applicationData);
-          } else {
-            this.updateApplication.emit(applicationData);
-          }
+    this.pgOpenModal.emit();
+
+    openEditApplicationModal(this._dialog, {
+      application: this.pgApplication,
+    }).closed.subscribe((applicationData) => {
+      this.pgCloseModal.emit();
+
+      if (applicationData !== undefined) {
+        if (this.pgApplication === null) {
+          this.pgCreateApplication.emit(applicationData);
+        } else {
+          this.pgUpdateApplication.emit(applicationData);
         }
-      });
+      }
+    });
   }
 }
 
 @Component({
   selector: 'pg-edit-application-modal',
   template: `
-    <div class="px-4 pt-8 pb-4 bg-white shadow-xl relative">
+    <div
+      class="px-4 pt-8 pb-4 bg-white shadow-xl relative"
+      pgStopKeydownPropagation
+      pgKeyboardListener
+      (keydown)="onKeyDown($event)"
+    >
       <button
         class="absolute top-2 right-2 rounded-full border border-black leading-none w-6 h-6"
         (click)="onClose()"
@@ -122,16 +153,22 @@ export class EditApplicationModalDirective {
     </div>
   `,
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    StopKeydownPropagationDirective,
+    KeyboardListenerDirective,
+  ],
 })
 export class EditApplicationModalComponent {
   private readonly _dialogRef =
-    inject<DialogRef<EditApplicationData, EditApplicationModalComponent>>(
+    inject<DialogRef<EditApplicationSubmit, EditApplicationModalComponent>>(
       DialogRef
     );
   private readonly _formBuilder = inject(FormBuilder);
+  private readonly _data = inject<EditApplicationData>(DIALOG_DATA);
 
-  readonly application = inject<Option<EditApplicationData>>(DIALOG_DATA);
+  readonly application = this._data.application;
   readonly form = this._formBuilder.group({
     id: this._formBuilder.control<string>(this.application?.id ?? '', {
       validators: [Validators.required],
@@ -178,6 +215,12 @@ export class EditApplicationModalComponent {
 
   onClose() {
     this._dialogRef.close();
+  }
+
+  onKeyDown(event: KeyboardEvent) {
+    if (event.code === 'Escape') {
+      this._dialogRef.close();
+    }
   }
 
   onGenerateId() {

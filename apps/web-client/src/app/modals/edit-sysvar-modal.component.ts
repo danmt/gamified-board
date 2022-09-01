@@ -1,5 +1,4 @@
 import { Dialog, DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
-import { DragDropModule } from '@angular/cdk/drag-drop';
 import { CommonModule } from '@angular/common';
 import {
   Component,
@@ -17,45 +16,70 @@ import {
   Validators,
 } from '@angular/forms';
 import { v4 as uuid } from 'uuid';
-import { Option } from '../utils';
+import {
+  KeyboardListenerDirective,
+  StopKeydownPropagationDirective,
+} from '../directives';
+import { Entity, Option } from '../utils';
 
-export interface EditSysvarData {
-  id: string;
+export type Sysvar = Entity<{
   name: string;
   thumbnailUrl: string;
+}>;
+
+export interface EditSysvarData {
+  sysvar: Option<Sysvar>;
 }
+
+export type EditSysvarSubmit = Sysvar;
+
+export const openEditSysvarModal = (dialog: Dialog, data: EditSysvarData) =>
+  dialog.open<EditSysvarSubmit, EditSysvarData, EditSysvarModalComponent>(
+    EditSysvarModalComponent,
+    {
+      data,
+    }
+  );
 
 @Directive({ selector: '[pgEditSysvarModal]', standalone: true })
 export class EditSysvarModalDirective {
   private readonly _dialog = inject(Dialog);
 
-  @Input() sysvar: Option<EditSysvarData> = null;
-  @Output() createSysvar = new EventEmitter<EditSysvarData>();
-  @Output() updateSysvar = new EventEmitter<EditSysvarData>();
+  @Input() pgSysvar: Option<Sysvar> = null;
+
+  @Output() pgCreateSysvar = new EventEmitter<EditSysvarSubmit>();
+  @Output() pgUpdateSysvar = new EventEmitter<EditSysvarSubmit>();
+  @Output() pgOpenModal = new EventEmitter();
+  @Output() pgCloseModal = new EventEmitter();
+
   @HostListener('click', []) onClick() {
-    this._dialog
-      .open<EditSysvarData, Option<EditSysvarData>, EditSysvarModalComponent>(
-        EditSysvarModalComponent,
-        {
-          data: this.sysvar,
+    this.pgOpenModal.emit();
+
+    openEditSysvarModal(this._dialog, {
+      sysvar: this.pgSysvar,
+    }).closed.subscribe((sysvarData) => {
+      this.pgCloseModal.emit();
+
+      if (sysvarData !== undefined) {
+        if (this.pgSysvar === null) {
+          this.pgCreateSysvar.emit(sysvarData);
+        } else {
+          this.pgUpdateSysvar.emit(sysvarData);
         }
-      )
-      .closed.subscribe((sysvarData) => {
-        if (sysvarData !== undefined) {
-          if (this.sysvar === null) {
-            this.createSysvar.emit(sysvarData);
-          } else {
-            this.updateSysvar.emit(sysvarData);
-          }
-        }
-      });
+      }
+    });
   }
 }
 
 @Component({
   selector: 'pg-edit-sysvar-modal',
   template: `
-    <div class="px-4 pt-8 pb-4 bg-white shadow-xl relative">
+    <div
+      class="px-4 pt-8 pb-4 bg-white shadow-xl relative"
+      pgStopKeydownPropagation
+      pgKeyboardListener
+      (keydown)="onKeyDown($event)"
+    >
       <button
         class="absolute top-2 right-2 rounded-full border border-black leading-none w-6 h-6"
         (click)="onClose()"
@@ -124,14 +148,20 @@ export class EditSysvarModalDirective {
     </div>
   `,
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, DragDropModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    StopKeydownPropagationDirective,
+    KeyboardListenerDirective,
+  ],
 })
 export class EditSysvarModalComponent {
   private readonly _dialogRef =
-    inject<DialogRef<EditSysvarData, EditSysvarModalComponent>>(DialogRef);
+    inject<DialogRef<EditSysvarSubmit, EditSysvarModalComponent>>(DialogRef);
   private readonly _formBuilder = inject(FormBuilder);
+  private readonly _data = inject<EditSysvarData>(DIALOG_DATA);
 
-  readonly sysvar = inject<Option<EditSysvarData>>(DIALOG_DATA);
+  readonly sysvar = this._data.sysvar;
   readonly form = this._formBuilder.group({
     id: this._formBuilder.control<string>(this.sysvar?.id ?? '', {
       validators: [Validators.required],
@@ -173,6 +203,12 @@ export class EditSysvarModalComponent {
         name,
         thumbnailUrl,
       });
+    }
+  }
+
+  onKeyDown(event: KeyboardEvent) {
+    if (event.code === 'Escape') {
+      this._dialogRef.close();
     }
   }
 

@@ -4,6 +4,7 @@ import { Component, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { LetModule, PushModule } from '@ngrx/component';
 import { BehaviorSubject } from 'rxjs';
+import { DefaultImageDirective } from '../directives';
 import { EditInstructionModalDirective } from '../modals';
 import { InstructionApiService } from '../services';
 import { BoardStore } from '../stores';
@@ -13,7 +14,7 @@ import { Option } from '../utils';
   selector: 'pg-instructions-section',
   template: `
     <div class="flex flex-col relative mt-10 z-40">
-      <div class="flex relative" style="height:78px">
+      <header class="flex relative" style="height:78px">
         <div class="bp-skin-metal-detail absolute -top-2.5 z-20"></div>
         <div class="bp-skin-metal-border flex-1 z-10"></div>
         <div
@@ -27,7 +28,7 @@ import { Option } from '../utils';
               <button
                 class="bp-button-add-futuristic z-20"
                 pgEditInstructionModal
-                (createInstruction)="
+                (pgCreateInstruction)="
                   onCreateInstruction(
                     workspaceId,
                     applicationId,
@@ -42,7 +43,7 @@ import { Option } from '../utils';
           </ng-container>
         </div>
         <div class="bp-skin-metal-corner-right-top z-10"></div>
-      </div>
+      </header>
 
       <div class="relative bp-bg-futuristic">
         <div
@@ -84,6 +85,7 @@ import { Option } from '../utils';
                     <img
                       class="w-full h-full object-cover"
                       [src]="instruction.thumbnailUrl"
+                      pgDefaultImage="assets/generic/instruction.png"
                     />
                   </div>
                 </ng-container>
@@ -100,6 +102,7 @@ import { Option } from '../utils';
                     <img
                       class="w-full h-full object-cover"
                       [src]="instruction.thumbnailUrl"
+                      pgDefaultImage="assets/generic/instruction.png"
                     />
                   </div>
 
@@ -110,6 +113,7 @@ import { Option } from '../utils';
                     <img
                       class="w-full h-full object-cover"
                       [src]="instruction.thumbnailUrl"
+                      pgDefaultImage="assets/generic/instruction.png"
                     />
                   </div>
 
@@ -135,6 +139,7 @@ import { Option } from '../utils';
     LetModule,
     RouterModule,
     EditInstructionModalDirective,
+    DefaultImageDirective,
   ],
 })
 export class InstructionsSectionComponent {

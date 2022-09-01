@@ -16,48 +16,76 @@ import {
   Validators,
 } from '@angular/forms';
 import { v4 as uuid } from 'uuid';
-import { Option } from '../utils';
+import {
+  KeyboardListenerDirective,
+  StopKeydownPropagationDirective,
+} from '../directives';
+import { Entity, Option } from '../utils';
 
-export interface EditInstructionSignerData {
-  id: string;
+export type InstructionSigner = Entity<{
   name: string;
   saveChanges: boolean;
+}>;
+
+export interface EditInstructionSignerData {
+  instructionSigner: Option<InstructionSigner>;
 }
+
+export type EditInstructionSignerSubmit = InstructionSigner;
+
+export const openEditInstructionSignerModal = (
+  dialog: Dialog,
+  data: EditInstructionSignerData
+) =>
+  dialog.open<
+    EditInstructionSignerSubmit,
+    EditInstructionSignerData,
+    EditInstructionSignerModalComponent
+  >(EditInstructionSignerModalComponent, {
+    data,
+  });
 
 @Directive({ selector: '[pgEditInstructionSignerModal]', standalone: true })
 export class EditInstructionSignerModalDirective {
   private readonly _dialog = inject(Dialog);
 
-  @Input() instructionSigner: Option<EditInstructionSignerData> = null;
-  @Output() createInstructionSigner =
-    new EventEmitter<EditInstructionSignerData>();
-  @Output() updateInstructionSigner =
-    new EventEmitter<EditInstructionSignerData>();
+  @Input() pgInstructionSigner: Option<InstructionSigner> = null;
+
+  @Output() pgCreateInstructionSigner =
+    new EventEmitter<EditInstructionSignerSubmit>();
+  @Output() pgUpdateInstructionSigner =
+    new EventEmitter<EditInstructionSignerSubmit>();
+  @Output() pgOpenModal = new EventEmitter();
+  @Output() pgCloseModal = new EventEmitter();
+
   @HostListener('click', []) onClick() {
-    this._dialog
-      .open<
-        EditInstructionSignerData,
-        Option<EditInstructionSignerData>,
-        EditInstructionSignerModalComponent
-      >(EditInstructionSignerModalComponent, {
-        data: this.instructionSigner,
-      })
-      .closed.subscribe((instructionSignerData) => {
-        if (instructionSignerData !== undefined) {
-          if (this.instructionSigner === null) {
-            this.createInstructionSigner.emit(instructionSignerData);
-          } else {
-            this.updateInstructionSigner.emit(instructionSignerData);
-          }
+    this.pgOpenModal.emit();
+
+    openEditInstructionSignerModal(this._dialog, {
+      instructionSigner: this.pgInstructionSigner,
+    }).closed.subscribe((instructionSignerData) => {
+      this.pgCloseModal.emit();
+
+      if (instructionSignerData !== undefined) {
+        if (this.pgInstructionSigner === null) {
+          this.pgCreateInstructionSigner.emit(instructionSignerData);
+        } else {
+          this.pgUpdateInstructionSigner.emit(instructionSignerData);
         }
-      });
+      }
+    });
   }
 }
 
 @Component({
   selector: 'pg-edit-instruction-signer-modal',
   template: `
-    <div class="px-4 pt-8 pb-4 bg-white shadow-xl relative">
+    <div
+      class="px-4 pt-8 pb-4 bg-white shadow-xl relative"
+      pgStopKeydownPropagation
+      pgKeyboardListener
+      (keydown)="onKeyDown($event)"
+    >
       <button
         class="absolute top-2 right-2 rounded-full border border-black leading-none w-6 h-6"
         (click)="onClose()"
@@ -66,7 +94,7 @@ export class EditInstructionSignerModalDirective {
       </button>
 
       <h1 class="text-center text-xl mb-4">
-        {{ signer === null ? 'Create' : 'Update' }} signer
+        {{ instructionSigner === null ? 'Create' : 'Update' }} signer
       </h1>
 
       <form [formGroup]="form" (ngSubmit)="onSubmit()">
@@ -77,13 +105,13 @@ export class EditInstructionSignerModalDirective {
             id="signer-id-input"
             type="text"
             formControlName="id"
-            [readonly]="signer !== null"
+            [readonly]="instructionSigner !== null"
           />
-          <p *ngIf="signer === null">
+          <p *ngIf="instructionSigner === null">
             Hint: The ID cannot be changed afterwards.
           </p>
           <button
-            *ngIf="signer === null"
+            *ngIf="instructionSigner === null"
             type="button"
             (click)="idControl.setValue(onGenerateId())"
           >
@@ -112,34 +140,46 @@ export class EditInstructionSignerModalDirective {
 
         <div class="flex justify-center items-center mt-4">
           <button type="submit" class="px-4 py-2 border-blue-500 border">
-            {{ signer === null ? 'Send' : 'Save' }}
+            {{ instructionSigner === null ? 'Send' : 'Save' }}
           </button>
         </div>
       </form>
     </div>
   `,
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    StopKeydownPropagationDirective,
+    KeyboardListenerDirective,
+  ],
 })
 export class EditInstructionSignerModalComponent {
   private readonly _dialogRef =
     inject<
-      DialogRef<EditInstructionSignerData, EditInstructionSignerModalComponent>
+      DialogRef<
+        EditInstructionSignerSubmit,
+        EditInstructionSignerModalComponent
+      >
     >(DialogRef);
   private readonly _formBuilder = inject(FormBuilder);
+  private readonly _data = inject<EditInstructionSignerData>(DIALOG_DATA);
 
-  readonly signer = inject<Option<EditInstructionSignerData>>(DIALOG_DATA);
+  readonly instructionSigner = this._data.instructionSigner;
   readonly form = this._formBuilder.group({
-    id: this._formBuilder.control<string>(this.signer?.id ?? '', {
+    id: this._formBuilder.control<string>(this.instructionSigner?.id ?? '', {
       validators: [Validators.required],
       nonNullable: true,
     }),
-    name: this._formBuilder.control<string>(this.signer?.name ?? '', {
-      validators: [Validators.required],
-      nonNullable: true,
-    }),
+    name: this._formBuilder.control<string>(
+      this.instructionSigner?.name ?? '',
+      {
+        validators: [Validators.required],
+        nonNullable: true,
+      }
+    ),
     saveChanges: this._formBuilder.control<boolean>(
-      this.signer?.saveChanges ?? false,
+      this.instructionSigner?.saveChanges ?? false,
       {
         validators: [Validators.required],
         nonNullable: true,
@@ -170,6 +210,12 @@ export class EditInstructionSignerModalComponent {
         name,
         saveChanges,
       });
+    }
+  }
+
+  onKeyDown(event: KeyboardEvent) {
+    if (event.code === 'Escape') {
+      this._dialogRef.close();
     }
   }
 

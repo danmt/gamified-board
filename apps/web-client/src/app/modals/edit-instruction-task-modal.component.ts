@@ -16,38 +16,63 @@ import {
   Validators,
 } from '@angular/forms';
 import { v4 as uuid } from 'uuid';
-import { Option } from '../utils';
+import {
+  KeyboardListenerDirective,
+  StopKeydownPropagationDirective,
+} from '../directives';
+import { Entity, Option } from '../utils';
+
+export type InstructionTask = Entity<{
+  name: string;
+}>;
 
 export interface EditInstructionTaskData {
-  id: string;
-  name: string;
+  instructionTask: Option<InstructionTask>;
 }
+
+export type EditInstructionTaskSubmit = InstructionTask;
+
+export const openEditInstructionTaskModal = (
+  dialog: Dialog,
+  data: EditInstructionTaskData
+) =>
+  dialog.open<
+    EditInstructionTaskSubmit,
+    EditInstructionTaskData,
+    EditInstructionTaskModalComponent
+  >(EditInstructionTaskModalComponent, {
+    data,
+  });
 
 @Directive({ selector: '[pgEditInstructionTaskModal]', standalone: true })
 export class EditInstructionTaskModalDirective {
   private readonly _dialog = inject(Dialog);
 
-  @Input() instructionTask: Option<EditInstructionTaskData> = null;
-  @Output() createInstructionTask = new EventEmitter<EditInstructionTaskData>();
-  @Output() updateInstructionTask = new EventEmitter<EditInstructionTaskData>();
+  @Input() pgInstructionTask: Option<InstructionTask> = null;
+
+  @Output() pgCreateInstructionTask =
+    new EventEmitter<EditInstructionTaskSubmit>();
+  @Output() pgUpdateInstructionTask =
+    new EventEmitter<EditInstructionTaskSubmit>();
+  @Output() pgOpenModal = new EventEmitter();
+  @Output() pgCloseModal = new EventEmitter();
+
   @HostListener('click', []) onClick() {
-    this._dialog
-      .open<
-        EditInstructionTaskData,
-        Option<EditInstructionTaskData>,
-        EditInstructionTaskModalComponent
-      >(EditInstructionTaskModalComponent, {
-        data: this.instructionTask,
-      })
-      .closed.subscribe((instructionTaskData) => {
-        if (instructionTaskData !== undefined) {
-          if (this.instructionTask === null) {
-            this.createInstructionTask.emit(instructionTaskData);
-          } else {
-            this.updateInstructionTask.emit(instructionTaskData);
-          }
+    this.pgOpenModal.emit();
+
+    openEditInstructionTaskModal(this._dialog, {
+      instructionTask: this.pgInstructionTask,
+    }).closed.subscribe((instructionTaskData) => {
+      this.pgCloseModal.emit();
+
+      if (instructionTaskData !== undefined) {
+        if (this.pgInstructionTask === null) {
+          this.pgCreateInstructionTask.emit(instructionTaskData);
+        } else {
+          this.pgUpdateInstructionTask.emit(instructionTaskData);
         }
-      });
+      }
+    });
   }
 }
 
@@ -56,6 +81,9 @@ export class EditInstructionTaskModalDirective {
   template: `
     <div
       class="px-6 pt-8 pb-4 bp-bg-futuristic shadow-xl relative text-white min-w-[400px] min-h-[300px]"
+      pgStopKeydownPropagation
+      pgKeyboardListener
+      (keydown)="onKeyDown($event)"
     >
       <!-- corners-->
       <div
@@ -89,7 +117,7 @@ export class EditInstructionTaskModalDirective {
       <div>
         <div class="flex justify-between w-full">
           <h1 class="text-center text-3xl mb-4 bp-font-game">
-            {{ task === null ? 'CREATE' : 'UPDATE' }} TASK
+            {{ instructionTask === null ? 'CREATE' : 'UPDATE' }} TASK
           </h1>
           <button
             class="bp-button-close-futuristic z-20 outline-0"
@@ -108,18 +136,17 @@ export class EditInstructionTaskModalDirective {
                 id="task-id-input"
                 type="text"
                 formControlName="id"
-                [readonly]="task !== null"
+                [readonly]="instructionTask !== null"
               />
+              <p *ngIf="instructionTask === null">
+                Hint: The ID cannot be changed afterwards.
+              </p>
               <button
-                *ngIf="task === null"
-                type="button"
+                *ngIf="instructionTask === null"
                 class="bp-button-generate-futuristic"
                 (click)="idControl.setValue(onGenerateId())"
               ></button>
             </div>
-            <p class="bp-font-game" *ngIf="task === null">
-              Hint: The ID cannot be changed afterwards.
-            </p>
           </div>
 
           <div class="mb-4">
@@ -127,7 +154,7 @@ export class EditInstructionTaskModalDirective {
               Task name
             </label>
             <input
-              class="bp-input-futuristic p-4 outline-0"
+              class="block border-b-2 border-black"
               id="task-name-input"
               type="text"
               formControlName="name"
@@ -139,7 +166,7 @@ export class EditInstructionTaskModalDirective {
               type="submit"
               class="bp-button-futuristic text-black bp-font-game"
             >
-              {{ task === null ? 'SEND' : 'SAVE' }}
+              {{ instructionTask === null ? 'SEND' : 'SAVE' }}
             </button>
           </div>
         </form>
@@ -147,22 +174,28 @@ export class EditInstructionTaskModalDirective {
     </div>
   `,
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    StopKeydownPropagationDirective,
+    KeyboardListenerDirective,
+  ],
 })
 export class EditInstructionTaskModalComponent {
   private readonly _dialogRef =
     inject<
-      DialogRef<EditInstructionTaskData, EditInstructionTaskModalComponent>
+      DialogRef<EditInstructionTaskSubmit, EditInstructionTaskModalComponent>
     >(DialogRef);
   private readonly _formBuilder = inject(FormBuilder);
+  private readonly _data = inject<EditInstructionTaskData>(DIALOG_DATA);
 
-  readonly task = inject<Option<EditInstructionTaskData>>(DIALOG_DATA);
+  readonly instructionTask = this._data.instructionTask;
   readonly form = this._formBuilder.group({
-    id: this._formBuilder.control<string>(this.task?.id ?? '', {
+    id: this._formBuilder.control<string>(this.instructionTask?.id ?? '', {
       validators: [Validators.required],
       nonNullable: true,
     }),
-    name: this._formBuilder.control<string>(this.task?.name ?? '', {
+    name: this._formBuilder.control<string>(this.instructionTask?.name ?? '', {
       validators: [Validators.required],
       nonNullable: true,
     }),
@@ -185,6 +218,12 @@ export class EditInstructionTaskModalComponent {
         id,
         name,
       });
+    }
+  }
+
+  onKeyDown(event: KeyboardEvent) {
+    if (event.code === 'Escape') {
+      this._dialogRef.close();
     }
   }
 

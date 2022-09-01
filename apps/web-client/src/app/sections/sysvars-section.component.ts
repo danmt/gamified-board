@@ -4,6 +4,7 @@ import { Component, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { LetModule, PushModule } from '@ngrx/component';
 import { BehaviorSubject } from 'rxjs';
+import { DefaultImageDirective } from '../directives';
 import { EditSysvarModalDirective } from '../modals';
 import { SysvarApiService } from '../services';
 import { BoardStore } from '../stores';
@@ -13,109 +14,116 @@ import { Option } from '../utils';
   selector: 'pg-sysvars-section',
   template: `
     <div class="flex flex-col relative mt-10 z-40">
-      <header class="flex relative" style="height:78px">
-        <div class="bp-skin-metal-corner-left-top z-10"></div>
-        <div class="bp-skin-metal-border flex-1 z-10"></div>
-        <div
-          class="absolute w-full bp-skin-title-box flex items-center justify-between pl-12 pr-8 ml-1.5"
-        >
-          <h1 class="bp-font-game text-3xl">Sysvars</h1>
-
-          <button
-            class="bp-button-add-futuristic z-20"
-            pgEditSysvarModal
-            (createSysvar)="
-              onCreateSysvar($event.id, $event.name, $event.thumbnailUrl)
-            "
-          ></button>
-        </div>
-        <div
-          class="bp-skin-metal-detail-2 absolute -top-2.5 z-20 right-0"
-        ></div>
-      </header>
-
-      <div class="relative bp-bg-futuristic">
-        <div
-          class="bp-skin-metal-border-left absolute left-0 h-full z-20"
-        ></div>
-        <div>
+      <div class="flex flex-col relative mt-10 z-40">
+        <header class="flex relative" style="height:78px">
+          <div class="bp-skin-metal-corner-left-top z-10"></div>
+          <div class="bp-skin-metal-border flex-1 z-10"></div>
           <div
-            class="flex-1 pl-6 pr-4 pt-4 pb-10 overflow-auto bp-skin-metal-body ml-4"
+            class="absolute w-full bp-skin-title-box flex items-center justify-between pl-12 pr-8 ml-1.5"
           >
+            <h1 class="bp-font-game text-3xl">Sysvars</h1>
+
+            <button
+              class="bp-button-add-futuristic z-20"
+              pgEditSysvarModal
+              (pgCreateSysvar)="
+                onCreateSysvar($event.id, $event.name, $event.thumbnailUrl)
+              "
+            ></button>
+          </div>
+          <div
+            class="bp-skin-metal-detail-2 absolute -top-2.5 z-20 right-0"
+          ></div>
+        </header>
+
+        <div class="relative bp-bg-futuristic">
+          <div
+            class="bp-skin-metal-border-left absolute left-0 h-full z-20"
+          ></div>
+          <div>
             <div
-              *ngrxLet="sysvars$; let sysvars"
-              id="sysvars-section"
-              cdkDropList
-              [cdkDropListConnectedTo]="[
-                'slot-0',
-                'slot-1',
-                'slot-2',
-                'slot-3',
-                'slot-4',
-                'slot-5',
-                'slot-6',
-                'slot-7',
-                'slot-8',
-                'slot-9'
-              ]"
-              [cdkDropListData]="sysvars"
-              cdkDropListSortingDisabled
-              class="flex flex-wrap gap-4"
+              class="flex-1 pl-6 pr-4 pt-4 pb-10 overflow-auto bp-skin-metal-body ml-4"
             >
               <div
-                *ngFor="let sysvar of sysvars; trackBy: trackBy"
-                class="relative"
+                *ngrxLet="sysvars$; let sysvars"
+                id="sysvars-section"
+                cdkDropList
+                [cdkDropListConnectedTo]="[
+                  'slot-0',
+                  'slot-1',
+                  'slot-2',
+                  'slot-3',
+                  'slot-4',
+                  'slot-5',
+                  'slot-6',
+                  'slot-7',
+                  'slot-8',
+                  'slot-9'
+                ]"
+                [cdkDropListData]="sysvars"
+                cdkDropListSortingDisabled
+                class="flex flex-wrap gap-4"
               >
-                <ng-container *ngIf="(isDragging$ | ngrxPush) === sysvar.id">
-                  <div
-                    class="w-full h-full absolute z-20 bg-black bg-opacity-50"
-                  ></div>
-                  <div class="bg-green-800 p-0.5 w-11 h-11">
-                    <img
-                      class="w-full h-full object-cover"
-                      [src]="sysvar.thumbnailUrl"
-                    />
-                  </div>
-                </ng-container>
-
                 <div
-                  cdkDrag
-                  [cdkDragData]="{ id: sysvar.id, kind: 'sysvar' }"
-                  (click)="onSelectSysvar(sysvar.id)"
-                  (dblclick)="onActivateSysvar(sysvar.id)"
-                  (cdkDragStarted)="onDragStart($event)"
-                  (cdkDragEnded)="onDragEnd()"
+                  *ngFor="let sysvar of sysvars; trackBy: trackBy"
+                  class="relative"
                 >
-                  <div class="bg-green-800 p-0.5 w-11 h-11">
-                    <img
-                      class="w-full h-full object-cover"
-                      [src]="sysvar.thumbnailUrl"
-                    />
-                  </div>
+                  <ng-container *ngIf="(isDragging$ | ngrxPush) === sysvar.id">
+                    <div
+                      class="w-full h-full absolute z-20 bg-black bg-opacity-50"
+                    ></div>
+                    <div class="bg-yellow-500 p-0.5 w-11 h-11">
+                      <img
+                        class="w-full h-full object-cover"
+                        [src]="sysvar.thumbnailUrl"
+                      />
+                    </div>
+                  </ng-container>
 
                   <div
-                    *cdkDragPreview
-                    class="bg-gray-500 p-1 w-12 h-12 rounded-md"
+                    cdkDrag
+                    [cdkDragData]="{ id: sysvar.id, kind: 'sysvar' }"
+                    (click)="onSelectSysvar(sysvar.id)"
+                    (dblclick)="onActivateSysvar(sysvar.id)"
+                    (cdkDragStarted)="onDragStart($event)"
+                    (cdkDragEnded)="onDragEnd()"
                   >
-                    <img
-                      class="w-full h-full object-cover"
-                      [src]="sysvar.thumbnailUrl"
-                    />
-                  </div>
+                    <div class="bg-green-500 p-0.5 w-11 h-11">
+                      <img
+                        class="w-full h-full object-cover"
+                        [src]="sysvar.thumbnailUrl"
+                        pgDefaultImage="assets/generic/sysvar.png"
+                      />
+                    </div>
 
-                  <div *cdkDragPlaceholder></div>
+                    <div
+                      *cdkDragPreview
+                      class="bg-gray-500 p-1 w-12 h-12 rounded-md"
+                    >
+                      <img
+                        class="w-full h-full object-cover"
+                        [src]="sysvar.thumbnailUrl"
+                        pgDefaultImage="assets/generic/sysvar.png"
+                      />
+                    </div>
+
+                    <div *cdkDragPlaceholder></div>
+                  </div>
                 </div>
               </div>
             </div>
+            <div
+              class="flex items-end relative"
+              style="top: -75px; z-index: 100;"
+            >
+              <div class="bp-skin-metal-corner-left-bottom"></div>
+              <div class="bp-skin-metal-border-bottom flex-1"></div>
+              <div
+                class="bp-skin-metal-detail-2 absolute -bottom-3 z-20 right-0"
+              ></div>
+            </div>
           </div>
         </div>
-      </div>
-      <div class="flex items-end relative" style="top: -75px; z-index: 100;">
-        <div class="bp-skin-metal-corner-left-bottom"></div>
-        <div class="bp-skin-metal-border-bottom flex-1"></div>
-        <div
-          class="bp-skin-metal-detail-2 absolute -bottom-3 z-20 right-0"
-        ></div>
       </div>
     </div>
   `,
@@ -127,6 +135,7 @@ import { Option } from '../utils';
     LetModule,
     RouterModule,
     EditSysvarModalDirective,
+    DefaultImageDirective,
   ],
 })
 export class SysvarsSectionComponent {

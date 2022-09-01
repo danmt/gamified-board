@@ -9,9 +9,15 @@ import {
   EditCollectionModalDirective,
   EditInstructionModalDirective,
 } from '../modals';
-import { HotKey, SlotHotkeyPipe } from '../pipes';
+import { SlotHotkeyPipe } from '../pipes';
 import { BoardStore } from '../stores';
 import { Entity, Option } from '../utils';
+
+interface HotKey {
+  slot: number;
+  key: string;
+  code: string;
+}
 
 @Component({
   selector: 'pg-center-dock-section',
@@ -117,42 +123,52 @@ export class CenterDockSectionComponent {
   readonly hotkeys$ = of([
     {
       slot: 0,
+      code: 'KeyQ',
       key: 'q',
     },
     {
       slot: 1,
+      code: 'KeyW',
       key: 'w',
     },
     {
       slot: 2,
+      code: 'KeyE',
       key: 'e',
     },
     {
       slot: 3,
+      code: 'KeyR',
       key: 'r',
     },
     {
       slot: 4,
+      code: 'KeyT',
       key: 't',
     },
     {
       slot: 5,
+      code: 'KeyA',
       key: 'a',
     },
     {
       slot: 6,
+      code: 'KeyS',
       key: 's',
     },
     {
       slot: 7,
+      code: 'KeyD',
       key: 'd',
     },
     {
       slot: 8,
+      code: 'KeyF',
       key: 'f',
     },
     {
       slot: 9,
+      code: 'KeyG',
       key: 'g',
     },
   ]);
@@ -204,7 +220,7 @@ export class CenterDockSectionComponent {
     event: KeyboardEvent
   ) {
     if (slots !== null) {
-      const hotkey = hotkeys.find(({ key }) => key === event.key) ?? null;
+      const hotkey = hotkeys.find(({ code }) => code === event.code) ?? null;
 
       if (hotkey !== null) {
         const slot = slots[hotkey.slot] ?? null;

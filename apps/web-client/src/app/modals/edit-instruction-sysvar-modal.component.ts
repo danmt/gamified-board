@@ -16,47 +16,75 @@ import {
   Validators,
 } from '@angular/forms';
 import { v4 as uuid } from 'uuid';
-import { Option } from '../utils';
+import {
+  KeyboardListenerDirective,
+  StopKeydownPropagationDirective,
+} from '../directives';
+import { Entity, Option } from '../utils';
+
+export type InstructionSysvar = Entity<{
+  name: string;
+}>;
 
 export interface EditInstructionSysvarData {
-  id: string;
-  name: string;
+  instructionSysvar: Option<InstructionSysvar>;
 }
+
+export type EditInstructionSysvarSubmit = InstructionSysvar;
+
+export const openEditInstructionSysvarModal = (
+  dialog: Dialog,
+  data: EditInstructionSysvarData
+) =>
+  dialog.open<
+    EditInstructionSysvarSubmit,
+    EditInstructionSysvarData,
+    EditInstructionSysvarModalComponent
+  >(EditInstructionSysvarModalComponent, {
+    data,
+  });
 
 @Directive({ selector: '[pgEditInstructionSysvarModal]', standalone: true })
 export class EditInstructionSysvarModalDirective {
   private readonly _dialog = inject(Dialog);
 
-  @Input() instructionSysvar: Option<EditInstructionSysvarData> = null;
-  @Output() createInstructionSysvar =
-    new EventEmitter<EditInstructionSysvarData>();
-  @Output() updateInstructionSysvar =
-    new EventEmitter<EditInstructionSysvarData>();
+  @Input() pgInstructionSysvar: Option<InstructionSysvar> = null;
+
+  @Output() pgCreateInstructionSysvar =
+    new EventEmitter<EditInstructionSysvarSubmit>();
+  @Output() pgUpdateInstructionSysvar =
+    new EventEmitter<EditInstructionSysvarSubmit>();
+  @Output() pgOpenModal = new EventEmitter();
+  @Output() pgCloseModal = new EventEmitter();
+
   @HostListener('click', []) onClick() {
-    this._dialog
-      .open<
-        EditInstructionSysvarData,
-        Option<EditInstructionSysvarData>,
-        EditInstructionSysvarModalComponent
-      >(EditInstructionSysvarModalComponent, {
-        data: this.instructionSysvar,
-      })
-      .closed.subscribe((instructionSysvarData) => {
-        if (instructionSysvarData !== undefined) {
-          if (this.instructionSysvar === null) {
-            this.createInstructionSysvar.emit(instructionSysvarData);
-          } else {
-            this.updateInstructionSysvar.emit(instructionSysvarData);
-          }
+    this.pgOpenModal.emit();
+
+    openEditInstructionSysvarModal(this._dialog, {
+      instructionSysvar: this.pgInstructionSysvar,
+    }).closed.subscribe((instructionSysvarData) => {
+      this.pgCloseModal.emit();
+
+      if (instructionSysvarData !== undefined) {
+        if (this.pgInstructionSysvar === null) {
+          this.pgCreateInstructionSysvar.emit(instructionSysvarData);
+        } else {
+          this.pgUpdateInstructionSysvar.emit(instructionSysvarData);
         }
-      });
+      }
+    });
   }
 }
 
 @Component({
   selector: 'pg-edit-instruction-sysvar-modal',
   template: `
-    <div class="px-4 pt-8 pb-4 bg-white shadow-xl relative">
+    <div
+      class="px-4 pt-8 pb-4 bg-white shadow-xl relative"
+      pgStopKeydownPropagation
+      pgKeyboardListener
+      (keydown)="onKeyDown($event)"
+    >
       <button
         class="absolute top-2 right-2 rounded-full border border-black leading-none w-6 h-6"
         (click)="onClose()"
@@ -109,16 +137,25 @@ export class EditInstructionSysvarModalDirective {
     </div>
   `,
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    StopKeydownPropagationDirective,
+    KeyboardListenerDirective,
+  ],
 })
 export class EditInstructionSysvarModalComponent {
   private readonly _dialogRef =
     inject<
-      DialogRef<EditInstructionSysvarData, EditInstructionSysvarModalComponent>
+      DialogRef<
+        EditInstructionSysvarSubmit,
+        EditInstructionSysvarModalComponent
+      >
     >(DialogRef);
   private readonly _formBuilder = inject(FormBuilder);
+  private readonly _data = inject<EditInstructionSysvarData>(DIALOG_DATA);
 
-  readonly sysvar = inject<Option<EditInstructionSysvarData>>(DIALOG_DATA);
+  readonly sysvar = this._data.instructionSysvar;
   readonly form = this._formBuilder.group({
     id: this._formBuilder.control<string>(this.sysvar?.id ?? '', {
       validators: [Validators.required],
@@ -147,6 +184,12 @@ export class EditInstructionSysvarModalComponent {
         id,
         name,
       });
+    }
+  }
+
+  onKeyDown(event: KeyboardEvent) {
+    if (event.code === 'Escape') {
+      this._dialogRef.close();
     }
   }
 
