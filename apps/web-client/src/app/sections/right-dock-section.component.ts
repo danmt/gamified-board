@@ -7,70 +7,77 @@ import { BoardStore } from '../stores';
 
 @Component({
   selector: 'pg-right-dock-section',
-  template: `<div
-    class="pt-4 pb-2 pr-6 pl-10 bp-bg-futuristic flex gap-4 justify-center items-start relative text-white bp-font-game"
-    pgKeyboardListener
-    (pgKeyDown)="onKeyDown($event)"
-  >
-    <div class="flex absolute -top-4 right-0" style="width: calc(100% + 15px)">
-      <div class="bp-skin-metal-corner-left-top z-10"></div>
-      <div class="bp-skin-metal-border flex-1 z-10"></div>
-    </div>
+  template: `
     <div
-      class="bg-gray-800 relative z-30"
-      style="width: 2.89rem; height: 2.89rem"
+      class="pt-4 pb-2 pr-6 pl-12 bp-bg-futuristic flex gap-4 justify-center items-start relative text-white bp-font-game"
+      pgKeyboardListener
+      (pgKeyDown)="onKeyDown($event)"
     >
-      <span
-        class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase w-3 h-3"
-        style="font-size: 0.5rem; line-height: 0.5rem"
+      <!-- top border design -->
+      <div
+        class="bp-skin-metal-corner-left-top absolute -top-2.5 -left-2.5 z-20"
+      ></div>
+      <div
+        class="bp-skin-metal-border absolute -top-2.5 w-5/6 left-16 right-0 mx-auto my-0 z-10"
+      ></div>
+
+      <!-- section content -->
+      <div
+        class="bg-gray-800 relative z-30"
+        style="width: 2.89rem; height: 2.89rem"
       >
-        ,
-      </span>
+        <span
+          class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase w-3 h-3"
+          style="font-size: 0.5rem; line-height: 0.5rem"
+        >
+          ,
+        </span>
 
-      <pg-square-button
-        *ngrxLet="active$; let active"
-        [pgIsActive]="active?.kind === 'signer'"
-        pgThumbnailUrl="assets/generic/signer.png"
-        (pgActivated)="onActivateSigner()"
-      ></pg-square-button>
-    </div>
+        <pg-square-button
+          *ngrxLet="active$; let active"
+          [pgIsActive]="active?.kind === 'signer'"
+          pgThumbnailUrl="assets/generic/signer.png"
+          (pgActivated)="onActivateSigner()"
+        ></pg-square-button>
+      </div>
 
-    <div
-      class="bg-gray-800 relative z-30"
-      style="width: 2.89rem; height: 2.89rem"
-    >
-      <span
-        class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase w-3 h-3"
-        style="font-size: 0.5rem; line-height: 0.5rem"
+      <div
+        class="bg-gray-800 relative z-30"
+        style="width: 2.89rem; height: 2.89rem"
       >
-        .
-      </span>
+        <span
+          class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase w-3 h-3"
+          style="font-size: 0.5rem; line-height: 0.5rem"
+        >
+          .
+        </span>
 
-      <pg-square-button
-        [pgIsActive]="(isCollectionsSectionOpen$ | ngrxPush) ?? false"
-        pgThumbnailUrl="assets/generic/collection.png"
-        (pgActivated)="onToggleCollectionsSection()"
-      ></pg-square-button>
-    </div>
+        <pg-square-button
+          [pgIsActive]="(isCollectionsSectionOpen$ | ngrxPush) ?? false"
+          pgThumbnailUrl="assets/generic/collection.png"
+          (pgActivated)="onToggleCollectionsSection()"
+        ></pg-square-button>
+      </div>
 
-    <div
-      class="bg-gray-800 relative z-30"
-      style="width: 2.89rem; height: 2.89rem"
-    >
-      <span
-        class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase w-3 h-3"
-        style="font-size: 0.5rem; line-height: 0.5rem"
+      <div
+        class="bg-gray-800 relative z-30"
+        style="width: 2.89rem; height: 2.89rem"
       >
-        -
-      </span>
+        <span
+          class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase w-3 h-3"
+          style="font-size: 0.5rem; line-height: 0.5rem"
+        >
+          -
+        </span>
 
-      <pg-square-button
-        [pgIsActive]="(isSysvarsSectionOpen$ | ngrxPush) ?? false"
-        pgThumbnailUrl="assets/generic/sysvar.png"
-        (pgActivated)="onToggleSysvarsSection()"
-      ></pg-square-button>
+        <pg-square-button
+          [pgIsActive]="(isSysvarsSectionOpen$ | ngrxPush) ?? false"
+          pgThumbnailUrl="assets/generic/sysvar.png"
+          (pgActivated)="onToggleSysvarsSection()"
+        ></pg-square-button>
+      </div>
     </div>
-  </div> `,
+  `,
   standalone: true,
   imports: [
     CommonModule,

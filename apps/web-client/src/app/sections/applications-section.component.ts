@@ -20,7 +20,7 @@ import { Option } from '../utils';
         class="bp-skin-metal-corner-right-top absolute -top-2.5 -right-2.5 z-20"
       ></div>
       <div
-        class="bp-skin-metal-border absolute -top-2.5 w-5/6 right-16 right-0 mx-auto my-0 z-10"
+        class="bp-skin-metal-border absolute -top-2.5 w-5/6 right-16 left-0 mx-auto my-0 z-10"
       ></div>
       <div class="bp-skin-metal-detail absolute -top-3 z-20 left-0"></div>
 
@@ -34,11 +34,11 @@ import { Option } from '../utils';
         class="bp-skin-metal-corner-right-bottom absolute -bottom-2.5 -right-2.5 z-20"
       ></div>
       <div
-        class="bp-skin-metal-border-bottom absolute -bottom-2.5 w-5/6 right-16 right-0 mx-auto my-0 z-10"
+        class="bp-skin-metal-border-bottom absolute -bottom-2.5 w-5/6 right-16 left-0 mx-auto my-0 z-10"
       ></div>
       <div class="bp-skin-metal-detail absolute -bottom-4 z-20 left-0"></div>
 
-      <!-- modal content -->
+      <!-- section content -->
       <header class="relative h-[80px]">
         <div
           class="flex relative w-full bp-skin-title-box flex items-center justify-between pl-6 pr-8 mr-1.5"

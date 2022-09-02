@@ -9,14 +9,19 @@ import { BoardStore } from '../stores';
   selector: 'pg-left-dock-section',
   template: `
     <div
-      class="pt-4 pb-2 pl-6 pr-10 bp-bg-futuristic flex gap-4 justify-center items-start relative text-white bp-font-game"
+      class="pt-4 pb-2 pl-6 pr-12 bp-bg-futuristic flex gap-4 justify-center items-start relative text-white bp-font-game"
       pgKeyboardListener
       (pgKeyDown)="onKeyDown($event)"
     >
-      <div class="flex absolute -top-4 left-0" style="width: calc(100% + 15px)">
-        <div class="bp-skin-metal-border flex-1 z-10"></div>
-        <div class="bp-skin-metal-corner-right-top z-10"></div>
-      </div>
+      <!-- top border design -->
+      <div
+        class="bp-skin-metal-corner-right-top absolute -top-2.5 -right-2.5 z-20"
+      ></div>
+      <div
+        class="bp-skin-metal-border absolute -top-2.5 w-5/6 right-16 left-0 mx-auto my-0 z-10"
+      ></div>
+
+      <!-- section content -->
       <div
         class="bg-gray-800 relative z-30"
         style="width: 2.89rem; height: 2.89rem"

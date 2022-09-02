@@ -39,7 +39,7 @@ import { Option } from '../utils';
       ></div>
       <div class="bp-skin-metal-detail-2 absolute -bottom-4 z-20 right-0"></div>
 
-      <!-- modal content -->
+      <!-- section content -->
       <header class="relative h-[80px]">
         <div
           class="flex absolute w-full bp-skin-title-box flex items-center justify-between pl-6 pr-8 ml-1.5"
