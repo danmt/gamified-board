@@ -40,12 +40,12 @@ body,
 }
 
 .bp-bg-futuristic {
-  background-image: url('./assets/skins/dock/repetead-background.png');
+  background-image: url('./assets/skins/futuristic/repetead-background.png');
   background-repeat: repeat;
 }
 
 .bp-skin-dock-detail-left {
-  background-image: url('./assets/skins/dock/dock-detail-1.png');
+  background-image: url('./assets/skins/futuristic/dock-detail-1.png');
   background-repeat: no-repeat;
   height: 140px;
   width: 145px;
@@ -54,7 +54,7 @@ body,
 }
 
 .bp-skin-dock-detail-right {
-  background-image: url('./assets/skins/dock/dock-detail-2.png');
+  background-image: url('./assets/skins/futuristic/dock-detail-2.png');
   background-repeat: no-repeat;
   height: 140px;
   width: 145px;
@@ -63,7 +63,7 @@ body,
 }
 
 .bp-skin-dock-detail-center {
-  background-image: url('./assets/skins/dock/dock-detail-center.png');
+  background-image: url('./assets/skins/futuristic/dock-detail-center.png');
   background-repeat: no-repeat;
   height: 77px;
   width: 381px;
@@ -76,86 +76,86 @@ body,
 }
 
 .bp-skin-title-box {
-  background-image: url('./assets/skins/dock/title-background.png');
+  background-image: url('./assets/skins/futuristic/title-background.png');
   background-repeat: no-repeat;
   height: 80px;
 }
 
 .bp-skin-detail-1 {
-  background-image: url('./assets/skins/dock/metal-details-1.png');
+  background-image: url('./assets/skins/futuristic/metal-details-1.png');
   background-repeat: no-repeat;
   width: 30px;
   height: 41px;
 }
 
 .bp-skin-detail-2 {
-  background-image: url('./assets/skins/dock/metal-details-2.png');
+  background-image: url('./assets/skins/futuristic/metal-details-2.png');
   background-repeat: no-repeat;
   width: 30px;
   height: 41px;
 }
 
 .bp-skin-metal-border-top {
-  background-image: url('./assets/skins/dock/top-line-repeat.png');
+  background-image: url('./assets/skins/futuristic/top-line-repeat.png');
   background-repeat: repeat;
   height: 17px;
 }
 
 .bp-skin-metal-border-bottom {
-  background-image: url('./assets/skins/dock/bottom-line-repeat.png');
+  background-image: url('./assets/skins/futuristic/bottom-line-repeat.png');
   background-repeat: repeat;
   height: 17px;
 }
 
 .bp-skin-metal-border-right {
-  background-image: url('./assets/skins/dock/right-line-repeat.png');
+  background-image: url('./assets/skins/futuristic/right-line-repeat.png');
   background-repeat: repeat;
   width: 17px;
 }
 
 .bp-skin-metal-border-left {
-  background-image: url('./assets/skins/dock/left-line-repeat.png');
+  background-image: url('./assets/skins/futuristic/left-line-repeat.png');
   background-repeat: repeat;
   width: 17px;
 }
 
 .bp-skin-metal-corner-right-top {
-  background-image: url('./assets/skins/dock/top-right-corner.png');
+  background-image: url('./assets/skins/futuristic/top-right-corner.png');
   background-repeat: no-repeat;
   height: 92px;
   width: 92px;
 }
 
 .bp-skin-metal-corner-left-top {
-  background-image: url('./assets/skins/dock/top-left-corner.png');
+  background-image: url('./assets/skins/futuristic/top-left-corner.png');
   background-repeat: no-repeat;
   height: 92px;
   width: 92px;
 }
 
 .bp-skin-metal-corner-right-bottom {
-  background-image: url('./assets/skins/dock/bottom-right-corner.png');
+  background-image: url('./assets/skins/futuristic/bottom-right-corner.png');
   background-repeat: no-repeat;
   height: 92px;
   width: 92px;
 }
 
 .bp-skin-metal-corner-left-bottom {
-  background-image: url('./assets/skins/dock/bottom-left-corner.png');
+  background-image: url('./assets/skins/futuristic/bottom-left-corner.png');
   background-repeat: no-repeat;
   height: 92px;
   width: 92px;
 }
 
 .bp-skin-dock-icon-border {
-  background-image: url('./assets/skins/dock/dock-icon-border.png');
+  background-image: url('./assets/skins/futuristic/dock-icon-border.png');
   background-repeat: no-repeat;
   height: 50px;
   width: 50px;
 }
 
 .bp-input-futuristic {
-  background-image: url('./assets/skins/dock/input-futuristic.png');
+  background-image: url('./assets/skins/futuristic/input-futuristic.png');
   background-repeat: no-repeat;
   width: 278px;
   height: 54px;
@@ -163,12 +163,12 @@ body,
 }
 
 .bp-input-futuristic:read-only {
-  background-image: url('./assets/skins/dock/input-futuristic-read-only.png');
+  background-image: url('./assets/skins/futuristic/input-futuristic-read-only.png');
 }
 
 .bp-button-futuristic {
   background-color: transparent;
-  background-image: url('./assets/skins/dock/button-normal.png');
+  background-image: url('./assets/skins/futuristic/button-normal.png');
   background-repeat: no-repeat;
   width: 229px;
   height: 69px;
@@ -176,47 +176,47 @@ body,
 }
 
 .bp-button-futuristic:hover {
-  background-image: url('./assets/skins/dock/button-hover.png');
+  background-image: url('./assets/skins/futuristic/button-hover.png');
 }
 
 .bp-button-futuristic:active {
-  background-image: url('./assets/skins/dock/button-active.png');
+  background-image: url('./assets/skins/futuristic/button-active.png');
 }
 
 .bp-button-close-futuristic {
   background-color: transparent;
-  background-image: url('./assets/skins/dock/close-button.png');
+  background-image: url('./assets/skins/futuristic/close-button.png');
   background-repeat: no-repeat;
   width: 39px;
   height: 35px;
 }
 
 .bp-button-close-futuristic:hover {
-  background-image: url('./assets/skins/dock/close-button-hover.png');
+  background-image: url('./assets/skins/futuristic/close-button-hover.png');
 }
 
 .bp-button-add-futuristic {
   background-color: transparent;
-  background-image: url('./assets/skins/dock/add-button.png');
+  background-image: url('./assets/skins/futuristic/add-button.png');
   background-repeat: no-repeat;
   width: 39px;
   height: 35px;
 }
 
 .bp-button-add-futuristic:hover {
-  background-image: url('./assets/skins/dock/add-button-hover.png');
+  background-image: url('./assets/skins/futuristic/add-button-hover.png');
 }
 
 .bp-button-generate-futuristic {
   background-color: transparent;
-  background-image: url('./assets/skins/dock/generate-button.png');
+  background-image: url('./assets/skins/futuristic/generate-button.png');
   background-repeat: no-repeat;
   width: 39px;
   height: 35px;
 }
 
 .bp-button-generate-futuristic:hover {
-  background-image: url('./assets/skins/dock/generate-button-hover.png');
+  background-image: url('./assets/skins/futuristic/generate-button-hover.png');
 }
 
 // SCROLL BAR
