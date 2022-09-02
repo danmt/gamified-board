@@ -138,15 +138,15 @@ export class EditInstructionTaskModalDirective {
                 formControlName="id"
                 [readonly]="instructionTask !== null"
               />
-              <p *ngIf="instructionTask === null">
-                Hint: The ID cannot be changed afterwards.
-              </p>
               <button
                 *ngIf="instructionTask === null"
                 class="bp-button-generate-futuristic"
                 (click)="idControl.setValue(onGenerateId())"
               ></button>
             </div>
+            <p *ngIf="instructionTask === null">
+              Hint: The ID cannot be changed afterwards.
+            </p>
           </div>
 
           <div class="mb-4">
@@ -154,7 +154,7 @@ export class EditInstructionTaskModalDirective {
               Task name
             </label>
             <input
-              class="block border-b-2 border-black"
+              class="bp-input-futuristic p-4 outline-0"
               id="task-name-input"
               type="text"
               formControlName="name"

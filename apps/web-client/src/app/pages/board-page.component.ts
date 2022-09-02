@@ -87,25 +87,21 @@ import { BoardStore } from '../stores';
     <pg-collections-section
       *ngIf="isCollectionsSectionOpen$ | ngrxPush"
       class="fixed right-0 top-24"
-      style="width: 300px; height: 500px"
     ></pg-collections-section>
 
     <pg-sysvars-section
       *ngIf="isSysvarsSectionOpen$ | ngrxPush"
       class="fixed right-0 top-24"
-      style="width: 300px; height: 500px"
     ></pg-sysvars-section>
 
     <pg-instructions-section
       *ngIf="isInstructionsSectionOpen$ | ngrxPush"
       class="fixed left-0 top-24"
-      style="width: 300px; height: 500px"
     ></pg-instructions-section>
 
     <pg-applications-section
       *ngIf="isApplicationsSectionOpen$ | ngrxPush"
       class="fixed left-0 top-24"
-      style="width: 300px; height: 500px"
     ></pg-applications-section>
   `,
   standalone: true,
