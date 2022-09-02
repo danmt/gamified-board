@@ -110,7 +110,7 @@ export class EditInstructionTaskModalDirective {
         class="bp-skin-metal-border-bottom absolute -bottom-4 w-5/6 left-0 right-0 mx-auto my-0 z-10"
       ></div>
       <div
-        class="bp-skin-metal-border absolute -top-4 w-5/6 left-0 right-0 mx-auto my-0 z-10"
+        class="bp-skin-metal-border-top absolute -top-4 w-5/6 left-0 right-0 mx-auto my-0 z-10"
       ></div>
 
       <!-- modal content -->

@@ -21,9 +21,9 @@ import { Option } from '../utils';
         class="bp-skin-metal-corner-left-top absolute -top-2.5 -left-2.5 z-20"
       ></div>
       <div
-        class="bp-skin-metal-border absolute -top-2.5 w-5/6 left-16 right-0 mx-auto my-0 z-10"
+        class="bp-skin-metal-border-top absolute -top-2.5 w-5/6 left-16 right-0 mx-auto my-0 z-10"
       ></div>
-      <div class="bp-skin-metal-detail-2 absolute -top-3 z-20 right-0"></div>
+      <div class="bp-skin-detail-2  absolute -top-3 z-20 right-0"></div>
 
       <!-- side border design -->
       <div
@@ -37,7 +37,7 @@ import { Option } from '../utils';
       <div
         class="bp-skin-metal-border-bottom absolute -bottom-2.5 w-5/6 left-16 right-0 mx-auto my-0 z-10"
       ></div>
-      <div class="bp-skin-metal-detail-2 absolute -bottom-4 z-20 right-0"></div>
+      <div class="bp-skin-detail-2  absolute -bottom-4 z-20 right-0"></div>
 
       <!-- section content -->
       <header class="relative h-[80px]">
@@ -70,7 +70,7 @@ import { Option } from '../utils';
       </header>
 
       <section
-        class="flex-1 pl-6 pr-4 pt-4 pb-10 overflow-auto bp-skin-metal-body ml-4"
+        class="flex-1 pl-6 pr-4 pt-4 pb-10 overflow-auto max-w-[280px] ml-2"
       >
         <div
           *ngrxLet="collections$; let collections"
@@ -90,7 +90,7 @@ import { Option } from '../utils';
           ]"
           [cdkDropListData]="collections"
           cdkDropListSortingDisabled
-          class="flex flex-wrap gap-2"
+          class="flex flex-wrap gap-4"
         >
           <div
             *ngFor="let collection of collections; trackBy: trackBy"

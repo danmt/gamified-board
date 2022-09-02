@@ -81,37 +81,21 @@ body,
   height: 80px;
 }
 
-.bp-skin-metal-divider {
-  background-image: url('./assets/skins/dock/divider-1.png');
-  background-repeat: no-repeat;
-  height: 66px;
-
-  position: absolute;
-  top: -35px;
-  width: calc(100% + 41px);
-}
-
-.bp-skin-metal-body {
-  height: 350px;
-  overflow-y: scroll;
-  width: 280px;
-}
-
-.bp-skin-metal-detail {
+.bp-skin-detail-1 {
   background-image: url('./assets/skins/dock/metal-details-1.png');
   background-repeat: no-repeat;
   width: 30px;
   height: 41px;
 }
 
-.bp-skin-metal-detail-2 {
+.bp-skin-detail-2 {
   background-image: url('./assets/skins/dock/metal-details-2.png');
   background-repeat: no-repeat;
   width: 30px;
   height: 41px;
 }
 
-.bp-skin-metal-border {
+.bp-skin-metal-border-top {
   background-image: url('./assets/skins/dock/top-line-repeat.png');
   background-repeat: repeat;
   height: 17px;
@@ -168,16 +152,6 @@ body,
   background-repeat: no-repeat;
   height: 50px;
   width: 50px;
-}
-
-.custom-style-1 {
-  padding-left: 17px;
-  width: 296px;
-}
-
-.custom-style-2 {
-  margin-left: 3px;
-  width: 280px;
 }
 
 .bp-input-futuristic {
@@ -264,14 +238,4 @@ body,
 /* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {
   background: #275045;
-}
-
-// Utilities (find tailwind analog)
-.flipped {
-  -moz-transform: scaleX(-1);
-  -o-transform: scaleX(-1);
-  -webkit-transform: scaleX(-1);
-  transform: scaleX(-1);
-  filter: FlipH;
-  -ms-filter: 'FlipH';
 }

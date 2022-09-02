@@ -20,9 +20,9 @@ import { Option } from '../utils';
         class="bp-skin-metal-corner-right-top absolute -top-2.5 -right-2.5 z-20"
       ></div>
       <div
-        class="bp-skin-metal-border absolute -top-2.5 w-5/6 right-16 left-0 mx-auto my-0 z-10"
+        class="bp-skin-metal-border-top absolute -top-2.5 w-5/6 right-16 left-0 mx-auto my-0 z-10"
       ></div>
-      <div class="bp-skin-metal-detail absolute -top-3 z-20 left-0"></div>
+      <div class="bp-skin-detail-1  absolute -top-3 z-20 left-0"></div>
 
       <!-- side border design -->
       <div
@@ -36,7 +36,7 @@ import { Option } from '../utils';
       <div
         class="bp-skin-metal-border-bottom absolute -bottom-2.5 w-5/6 right-16 left-0 mx-auto my-0 z-10"
       ></div>
-      <div class="bp-skin-metal-detail absolute -bottom-4 z-20 left-0"></div>
+      <div class="bp-skin-detail-1  absolute -bottom-4 z-20 left-0"></div>
 
       <!-- section content -->
       <header class="relative h-[80px]">
@@ -47,7 +47,7 @@ import { Option } from '../utils';
         </div>
       </header>
       <section
-        class="flex-1 pl-6 pr-4 pt-4 pb-10 overflow-auto bp-skin-metal-body mr-4"
+        class="flex-1 pl-6 pr-4 pt-4 pb-10 overflow-auto max-w-[280px] mr-4"
       >
         <div
           *ngrxLet="applications$; let applications"

@@ -33,7 +33,7 @@ interface HotKey {
           style="left: -16px; top: -14px;"
         ></div>
         <div
-          class="bp-skin-metal-border flex-1 z-20"
+          class="bp-skin-metal-border-top flex-1 z-20"
           style="width: 500px; position: absolute; top: -14px; left: 55px;"
         ></div>
         <div class="bp-skin-dock-detail-center absolute"></div>
