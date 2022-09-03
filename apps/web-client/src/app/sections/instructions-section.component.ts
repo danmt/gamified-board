@@ -13,35 +13,64 @@ import { Option } from '../utils';
 @Component({
   selector: 'pg-instructions-section',
   template: `
-    <div class="bg-gray-500 h-full flex flex-col gap-4">
-      <header class="flex items-center gap-2 mb-2 px-4 pt-4">
-        <h2>Instructions</h2>
+    <div
+      class="flex flex-col relative mt-10 z-40 bp-bg-futuristic min-w-[300px] min-h-[500px] max-h-[500px]"
+    >
+      <!-- top border design -->
+      <div
+        class="bp-skin-metal-corner-right-top absolute -top-2.5 -right-2.5 z-20"
+      ></div>
+      <div
+        class="bp-skin-metal-border-top absolute -top-2.5 w-5/6 right-16 right-0 mx-auto my-0 z-10"
+      ></div>
+      <div class="bp-skin-detail-1  absolute -top-3 z-20 left-0"></div>
 
-        <ng-container *ngIf="workspaceId$ | ngrxPush as workspaceId">
-          <ng-container
-            *ngIf="currentApplicationId$ | ngrxPush as applicationId"
-          >
-            <button
-              class="rounded-full bg-slate-400 w-8 h-8"
-              pgEditInstructionModal
-              (pgCreateInstruction)="
-                onCreateInstruction(
-                  workspaceId,
-                  applicationId,
-                  $event.id,
-                  $event.name,
-                  $event.thumbnailUrl,
-                  $event.arguments
-                )
-              "
+      <!-- side border design -->
+      <div
+        class="bp-skin-metal-border-right absolute -right-2.5 h-5/6 top-0 bottom-0 my-auto mx-0 z-10"
+      ></div>
+
+      <!-- bottom border design -->
+      <div
+        class="bp-skin-metal-corner-right-bottom absolute -bottom-2.5 -right-2.5 z-20"
+      ></div>
+      <div
+        class="bp-skin-metal-border-bottom absolute -bottom-2.5 w-5/6 right-16 right-0 mx-auto my-0 z-10"
+      ></div>
+      <div class="bp-skin-detail-1  absolute -bottom-4 z-20 left-0"></div>
+
+      <!-- section content -->
+      <header class="relative h-[80px]">
+        <div
+          class="flex relative w-full bp-skin-title-box flex items-center justify-between pl-6 pr-8 mr-1.5"
+        >
+          <h1 class="bp-font-game text-3xl">Instructions</h1>
+          <ng-container *ngIf="workspaceId$ | ngrxPush as workspaceId">
+            <ng-container
+              *ngIf="currentApplicationId$ | ngrxPush as applicationId"
             >
-              +
-            </button>
+              <button
+                class="bp-button-add-futuristic z-20"
+                pgEditInstructionModal
+                (pgCreateInstruction)="
+                  onCreateInstruction(
+                    workspaceId,
+                    applicationId,
+                    $event.id,
+                    $event.name,
+                    $event.thumbnailUrl,
+                    $event.arguments
+                  )
+                "
+              ></button>
+            </ng-container>
           </ng-container>
-        </ng-container>
+        </div>
       </header>
 
-      <div class="flex-1 px-4 overflow-auto">
+      <section
+        class="flex-1 pl-6 pr-4 pt-4 pb-10 overflow-auto max-w-[280px] mr-4"
+      >
         <div
           *ngrxLet="instructions$; let instructions"
           id="instructions-section"
@@ -60,7 +89,7 @@ import { Option } from '../utils';
           ]"
           [cdkDropListData]="instructions"
           cdkDropListSortingDisabled
-          class="flex flex-wrap gap-2"
+          class="flex flex-wrap gap-4"
         >
           <div
             *ngFor="let instruction of instructions; trackBy: trackBy"
@@ -70,7 +99,7 @@ import { Option } from '../utils';
               <div
                 class="w-full h-full absolute z-20 bg-black bg-opacity-50"
               ></div>
-              <div class="bg-yellow-500 p-0.5 w-11 h-11">
+              <div class="bg-green-800 p-0.5 w-11 h-11">
                 <img
                   class="w-full h-full object-cover"
                   [src]="instruction.thumbnailUrl"
@@ -87,7 +116,7 @@ import { Option } from '../utils';
               (cdkDragStarted)="onDragStart($event)"
               (cdkDragEnded)="onDragEnd()"
             >
-              <div class="bg-yellow-500 p-0.5 w-11 h-11">
+              <div class="bg-green-800 p-0.5 w-11 h-11">
                 <img
                   class="w-full h-full object-cover"
                   [src]="instruction.thumbnailUrl"
@@ -107,7 +136,7 @@ import { Option } from '../utils';
             </div>
           </div>
         </div>
-      </div>
+      </section>
     </div>
   `,
   standalone: true,

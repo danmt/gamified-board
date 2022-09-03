@@ -80,60 +80,97 @@ export class EditInstructionTaskModalDirective {
   selector: 'pg-edit-instruction-task-modal',
   template: `
     <div
-      class="px-4 pt-8 pb-4 bg-white shadow-xl relative"
+      class="px-6 pt-8 pb-4 bp-bg-futuristic shadow-xl relative text-white min-w-[400px] min-h-[300px]"
       pgStopKeydownPropagation
       pgKeyboardListener
       (keydown)="onKeyDown($event)"
     >
-      <button
-        class="absolute top-2 right-2 rounded-full border border-black leading-none w-6 h-6"
-        (click)="onClose()"
-      >
-        x
-      </button>
+      <!-- corners-->
+      <div
+        class="bp-skin-metal-corner-left-top absolute -left-4 -top-4 z-20"
+      ></div>
+      <div
+        class="bp-skin-metal-corner-right-top absolute -right-4 -top-4 z-20"
+      ></div>
+      <div
+        class="bp-skin-metal-corner-left-bottom absolute -left-4 -bottom-4 z-20"
+      ></div>
+      <div
+        class="bp-skin-metal-corner-right-bottom absolute -right-4 -bottom-4 z-20"
+      ></div>
 
-      <h1 class="text-center text-xl mb-4">
-        {{ instructionTask === null ? 'Create' : 'Update' }} task
-      </h1>
+      <!-- borders -->
+      <div
+        class="bp-skin-metal-border-right absolute -right-4 h-5/6 top-0 bottom-0 my-auto mx-0 z-10"
+      ></div>
+      <div
+        class="bp-skin-metal-border-left absolute -left-4 h-5/6 top-0 bottom-0 my-auto mx-0 z-10"
+      ></div>
+      <div
+        class="bp-skin-metal-border-bottom absolute -bottom-4 w-5/6 left-0 right-0 mx-auto my-0 z-10"
+      ></div>
+      <div
+        class="bp-skin-metal-border-top absolute -top-4 w-5/6 left-0 right-0 mx-auto my-0 z-10"
+      ></div>
 
-      <form [formGroup]="form" (ngSubmit)="onSubmit()">
-        <div>
-          <label class="block" for="task-id-input">Task ID</label>
-          <input
-            class="block border-b-2 border-black"
-            id="task-id-input"
-            type="text"
-            formControlName="id"
-            [readonly]="instructionTask !== null"
-          />
-          <p *ngIf="instructionTask === null">
-            Hint: The ID cannot be changed afterwards.
-          </p>
+      <!-- modal content -->
+      <div>
+        <div class="flex justify-between w-full">
+          <h1 class="text-center text-3xl mb-4 bp-font-game">
+            {{ instructionTask === null ? 'CREATE' : 'UPDATE' }} TASK
+          </h1>
           <button
-            *ngIf="instructionTask === null"
-            type="button"
-            (click)="idControl.setValue(onGenerateId())"
-          >
-            Generate
-          </button>
+            class="bp-button-close-futuristic z-20 outline-0"
+            (click)="onClose()"
+          ></button>
         </div>
 
-        <div>
-          <label class="block" for="task-name-input"> Task name </label>
-          <input
-            class="block border-b-2 border-black"
-            id="task-name-input"
-            type="text"
-            formControlName="name"
-          />
-        </div>
+        <form [formGroup]="form" (ngSubmit)="onSubmit()">
+          <div class="mb-4">
+            <label class="block bp-font-game text-xl" for="task-id-input"
+              >Task ID</label
+            >
+            <div class="flex items-center justify-between w-full">
+              <input
+                class="bp-input-futuristic p-4 outline-0"
+                id="task-id-input"
+                type="text"
+                formControlName="id"
+                [readonly]="instructionTask !== null"
+              />
+              <button
+                *ngIf="instructionTask === null"
+                class="bp-button-generate-futuristic"
+                (click)="idControl.setValue(onGenerateId())"
+              ></button>
+            </div>
+            <p *ngIf="instructionTask === null">
+              Hint: The ID cannot be changed afterwards.
+            </p>
+          </div>
 
-        <div class="flex justify-center items-center mt-4">
-          <button type="submit" class="px-4 py-2 border-blue-500 border">
-            {{ instructionTask === null ? 'Send' : 'Save' }}
-          </button>
-        </div>
-      </form>
+          <div class="mb-4">
+            <label class="block bp-font-game text-xl" for="task-name-input">
+              Task name
+            </label>
+            <input
+              class="bp-input-futuristic p-4 outline-0"
+              id="task-name-input"
+              type="text"
+              formControlName="name"
+            />
+          </div>
+
+          <div class="flex justify-center items-center mt-10">
+            <button
+              type="submit"
+              class="bp-button-futuristic text-black bp-font-game"
+            >
+              {{ instructionTask === null ? 'SEND' : 'SAVE' }}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   `,
   standalone: true,
