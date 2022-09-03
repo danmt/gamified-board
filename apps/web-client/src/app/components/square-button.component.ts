@@ -1,5 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  HostBinding,
+  Input,
+  Output,
+} from '@angular/core';
 import { DefaultImageDirective } from '../directives';
 import { Option } from '../utils';
 
@@ -38,6 +44,7 @@ import { Option } from '../utils';
   imports: [CommonModule, DefaultImageDirective],
 })
 export class SquareButtonComponent {
+  @HostBinding('class') class = 'inline-block';
   @Input() pgButtonId: Option<string> = null;
   @Input() pgThumbnailUrl: Option<string> = null;
   @Input() pgDefaultImageUrl: Option<string> = null;

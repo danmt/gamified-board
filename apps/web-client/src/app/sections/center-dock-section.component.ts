@@ -14,6 +14,7 @@ import {
 } from '../modals';
 import { SlotHotkeyPipe } from '../pipes';
 import { BoardStore } from '../stores';
+import { SlotTooltipDirective } from '../tooltips';
 import { Entity, Option } from '../utils';
 
 interface HotKey {
@@ -87,6 +88,8 @@ interface HotKey {
                 [pgThumbnailUrl]="slot.thumbnailUrl"
                 [pgDefaultImageUrl]="'assets/generic/' + slot?.kind + '.png'"
                 (pgActivated)="onActivate(slot.id, slot.kind)"
+                pgSlotTooltip
+                [pgSlot]="slot"
               ></pg-square-button>
 
               <div *cdkDragPreview class="bg-gray-500 p-1 rounded-md">
@@ -116,6 +119,7 @@ interface HotKey {
     KeyboardListenerDirective,
     EditCollectionModalDirective,
     EditInstructionModalDirective,
+    SlotTooltipDirective,
   ],
   styles: [
     `

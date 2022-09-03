@@ -84,7 +84,8 @@ import { Option } from '../utils';
           <div
             *ngFor="let sysvar of sysvars; trackBy: trackBy"
             class="relative"
-            [pgSysvarTooltip]="sysvar"
+            pgSysvarTooltip
+            [pgSysvar]="sysvar"
           >
             <ng-container *ngIf="(isDragging$ | ngrxPush) === sysvar.id">
               <div

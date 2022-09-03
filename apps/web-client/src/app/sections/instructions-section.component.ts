@@ -96,7 +96,8 @@ import { Option } from '../utils';
           <div
             *ngFor="let instruction of instructions; trackBy: trackBy"
             class="relative"
-            [pgInstructionTooltip]="instruction"
+            pgInstructionTooltip
+            [pgInstruction]="instruction"
           >
             <ng-container *ngIf="(isDragging$ | ngrxPush) === instruction.id">
               <div

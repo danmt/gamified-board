@@ -96,7 +96,8 @@ import { Option } from '../utils';
         >
           <div
             *ngFor="let collection of collections; trackBy: trackBy"
-            [pgCollectionTooltip]="collection"
+            pgCollectionTooltip
+            [pgCollection]="collection"
             class="relative"
           >
             <ng-container *ngIf="(isDragging$ | ngrxPush) === collection.id">

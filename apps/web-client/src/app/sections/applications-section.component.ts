@@ -73,7 +73,8 @@ import { Option } from '../utils';
         >
           <div
             *ngFor="let application of applications; trackBy: trackBy"
-            [pgApplicationTooltip]="application"
+            pgApplicationTooltip
+            [pgApplication]="application"
             class="relative"
           >
             <ng-container *ngIf="(isDragging$ | ngrxPush) === application.id">
