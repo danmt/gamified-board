@@ -5,10 +5,10 @@ import { Component, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { LetModule, PushModule } from '@ngrx/component';
 import { BehaviorSubject } from 'rxjs';
-import { ApplicationTooltipDirective } from '../components';
 import { DefaultImageDirective } from '../directives';
 import { EditApplicationModalDirective } from '../modals';
 import { BoardStore } from '../stores';
+import { ApplicationTooltipDirective } from '../tooltips';
 import { Option } from '../utils';
 
 @Component({
