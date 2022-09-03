@@ -5,11 +5,11 @@ import { Component, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { LetModule, PushModule } from '@ngrx/component';
 import { BehaviorSubject } from 'rxjs';
-import { SysvarTooltipDirective } from '../components';
 import { DefaultImageDirective } from '../directives';
 import { EditSysvarModalDirective } from '../modals';
 import { SysvarApiService } from '../services';
 import { BoardStore } from '../stores';
+import { SysvarTooltipDirective } from '../tooltips';
 import { Option } from '../utils';
 
 @Component({
