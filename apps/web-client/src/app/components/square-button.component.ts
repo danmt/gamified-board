@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { DefaultImageDirective } from '../directives';
 import { Option } from '../utils';
 
 @Component({
@@ -21,7 +22,11 @@ import { Option } from '../utils';
       style="border-width: 0.2rem; margin: 0.12rem"
     >
       <figure>
-        <img [src]="pgThumbnailUrl" class="w-9 h-9 object-cover" />
+        <img
+          [src]="pgThumbnailUrl"
+          [pgDefaultImage]="pgDefaultImageUrl"
+          class="w-9 h-9 object-cover"
+        />
       </figure>
     </button>
 
@@ -30,11 +35,12 @@ import { Option } from '../utils';
     </ng-template>
   `,
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, DefaultImageDirective],
 })
 export class SquareButtonComponent {
   @Input() pgButtonId: Option<string> = null;
   @Input() pgThumbnailUrl: Option<string> = null;
+  @Input() pgDefaultImageUrl: Option<string> = null;
   @Input() pgIsActive = false;
   @Output() pgActivated = new EventEmitter();
   @Output() pgDeactivated = new EventEmitter();

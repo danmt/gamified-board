@@ -1,9 +1,11 @@
 import { CdkDragStart, DragDropModule } from '@angular/cdk/drag-drop';
+import { OverlayModule } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { LetModule, PushModule } from '@ngrx/component';
 import { BehaviorSubject } from 'rxjs';
+import { InstructionTooltipDirective } from '../components';
 import { DefaultImageDirective } from '../directives';
 import { EditInstructionModalDirective } from '../modals';
 import { InstructionApiService } from '../services';
@@ -21,7 +23,7 @@ import { Option } from '../utils';
         class="bp-skin-metal-corner-right-top absolute -top-2.5 -right-2.5 z-20"
       ></div>
       <div
-        class="bp-skin-metal-border-top absolute -top-2.5 w-5/6 right-16 right-0 mx-auto my-0 z-10"
+        class="bp-skin-metal-border-top absolute -top-2.5 w-5/6 right-16 left-0 mx-auto my-0 z-10"
       ></div>
       <div class="bp-skin-detail-1  absolute -top-3 z-20 left-0"></div>
 
@@ -35,19 +37,19 @@ import { Option } from '../utils';
         class="bp-skin-metal-corner-right-bottom absolute -bottom-2.5 -right-2.5 z-20"
       ></div>
       <div
-        class="bp-skin-metal-border-bottom absolute -bottom-2.5 w-5/6 right-16 right-0 mx-auto my-0 z-10"
+        class="bp-skin-metal-border-bottom absolute -bottom-2.5 w-5/6 right-16 left-0 mx-auto my-0 z-10"
       ></div>
       <div class="bp-skin-detail-1  absolute -bottom-4 z-20 left-0"></div>
 
       <!-- section content -->
       <header class="relative h-[80px]">
         <div
-          class="flex relative w-full bp-skin-title-box flex items-center justify-between pl-6 pr-8 mr-1.5"
+          class="relative w-full bp-skin-title-box flex items-center justify-between pl-6 pr-8 mr-1.5"
         >
           <h1 class="bp-font-game text-3xl">Instructions</h1>
           <ng-container *ngIf="workspaceId$ | ngrxPush as workspaceId">
             <ng-container
-              *ngIf="currentApplicationId$ | ngrxPush as applicationId"
+              *ngIf="currentApplicationId$ | ngrxPush as instructionId"
             >
               <button
                 class="bp-button-add-futuristic z-20"
@@ -55,7 +57,7 @@ import { Option } from '../utils';
                 (pgCreateInstruction)="
                   onCreateInstruction(
                     workspaceId,
-                    applicationId,
+                    instructionId,
                     $event.id,
                     $event.name,
                     $event.thumbnailUrl,
@@ -94,6 +96,7 @@ import { Option } from '../utils';
           <div
             *ngFor="let instruction of instructions; trackBy: trackBy"
             class="relative"
+            [pgInstructionTooltip]="instruction"
           >
             <ng-container *ngIf="(isDragging$ | ngrxPush) === instruction.id">
               <div
@@ -143,11 +146,13 @@ import { Option } from '../utils';
   imports: [
     DragDropModule,
     CommonModule,
+    OverlayModule,
     PushModule,
     LetModule,
     RouterModule,
     EditInstructionModalDirective,
     DefaultImageDirective,
+    InstructionTooltipDirective,
   ],
 })
 export class InstructionsSectionComponent {
@@ -155,6 +160,7 @@ export class InstructionsSectionComponent {
   private readonly _instructionApiService = inject(InstructionApiService);
 
   private readonly _isDragging = new BehaviorSubject<Option<string>>(null);
+
   readonly isDragging$ = this._isDragging.asObservable();
   readonly workspaceId$ = this._boardStore.workspaceId$;
   readonly currentApplicationId$ = this._boardStore.currentApplicationId$;
@@ -170,7 +176,7 @@ export class InstructionsSectionComponent {
 
   onCreateInstruction(
     workspaceId: string,
-    applicationId: string,
+    instructionId: string,
     id: string,
     name: string,
     thumbnailUrl: string,
@@ -179,23 +185,12 @@ export class InstructionsSectionComponent {
     this._instructionApiService
       .createInstruction(
         workspaceId,
-        applicationId,
+        instructionId,
         id,
         name,
         thumbnailUrl,
         args
       )
-      .subscribe();
-  }
-
-  onUpdateInstruction(
-    instructionId: string,
-    instructionName: string,
-    thumbnailUrl: string,
-    args: { id: string; name: string; type: string; isOption: boolean }[]
-  ) {
-    this._instructionApiService
-      .updateInstruction(instructionId, instructionName, thumbnailUrl, args)
       .subscribe();
   }
 

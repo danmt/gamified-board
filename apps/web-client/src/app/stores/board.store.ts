@@ -74,7 +74,7 @@ export type ApplicationView = Entity<{
 export type CollectionView = Entity<{
   name: string;
   thumbnailUrl: string;
-  applicationId: string;
+  application: ApplicationDto;
   workspaceId: string;
   attributes: CollectionAttributeDto[];
   kind: 'collection';
@@ -107,8 +107,8 @@ export type InstructionApplicationView = Entity<{
 export type InstructionView = Entity<{
   name: string;
   thumbnailUrl: string;
-  applicationId: string;
   workspaceId: string;
+  application: ApplicationDto;
   arguments: InstructionArgumentDto[];
   documents: InstructionDocumentView[];
   tasks: InstructionTaskView[];
@@ -163,14 +163,28 @@ const populateInstructionApplication = (
   };
 };
 
-const populateCollection = (collection: CollectionDto): CollectionView => {
+const populateCollection = (
+  collection: CollectionDto,
+  applications: ApplicationDto[]
+): CollectionView => {
+  const application =
+    applications.find(
+      (application) => application.id === collection.applicationId
+    ) ?? null;
+
+  if (application === null) {
+    throw new Error(
+      `Collection ${collection.id} has an reference to an unknown application.`
+    );
+  }
+
   return {
     id: collection.id,
     name: collection.name,
     thumbnailUrl: collection.thumbnailUrl,
-    applicationId: collection.applicationId,
     attributes: collection.attributes,
     workspaceId: collection.workspaceId,
+    application,
     kind: 'collection',
   };
 };
@@ -250,7 +264,8 @@ const populateInstructionDocument = (
   document: InstructionDocumentDto,
   documents: InstructionDocumentDto[],
   args: InstructionArgumentDto[],
-  collections: CollectionDto[]
+  collections: CollectionDto[],
+  applications: ApplicationDto[]
 ): InstructionDocumentView => {
   const collection =
     collections.find((collection) => collection.id === document.collectionId) ??
@@ -315,7 +330,7 @@ const populateInstructionDocument = (
         })
         .filter(isNotNull) ?? [],
     bump: populateBump(document, documents, args, collections),
-    collection: populateCollection(collection),
+    collection: populateCollection(collection, applications),
     kind: 'instructionDocument',
   };
 };
@@ -407,11 +422,22 @@ const populateInstruction = (
     ignoreTasks: boolean;
   }
 ): InstructionView => {
+  const application =
+    applications.find(
+      (application) => application.id === instruction.applicationId
+    ) ?? null;
+
+  if (application === null) {
+    throw new Error(
+      `Instruction ${instruction.id} has an reference to an unknown application.`
+    );
+  }
+
   return {
     id: instruction.id,
     name: instruction.name,
     thumbnailUrl: instruction.thumbnailUrl,
-    applicationId: instruction.applicationId,
+    application,
     workspaceId: instruction.workspaceId,
     arguments: instruction.arguments,
     kind: 'instruction',
@@ -429,7 +455,8 @@ const populateInstruction = (
         document,
         instruction.documents,
         instruction.arguments,
-        collections
+        collections,
+        applications
       )
     ),
     tasks: options?.ignoreTasks
@@ -532,8 +559,17 @@ export class BoardStore
     ({ isSysvarsSectionOpen }) => isSysvarsSectionOpen
   );
   readonly collections$: Observable<Option<CollectionView[]>> = this.select(
-    ({ collections }) =>
-      collections?.map((collection) => populateCollection(collection)) ?? null
+    this.select(({ applications }) => applications),
+    this.select(({ collections }) => collections),
+    (applications, collections) => {
+      if (collections === null || applications === null) {
+        return null;
+      }
+
+      return collections.map((collection) =>
+        populateCollection(collection, applications)
+      );
+    }
   );
   readonly sysvars$: Observable<Option<SysvarView[]>> = this.select(
     ({ sysvars }) => sysvars?.map((sysvar) => populateSysvar(sysvar)) ?? null
@@ -541,7 +577,7 @@ export class BoardStore
   readonly instructions$: Observable<Option<InstructionView[]>> = this.select(
     this.select(({ applications }) => applications),
     this.select(({ instructions }) => instructions),
-    this.collections$,
+    this.select(({ collections }) => collections),
     this.sysvars$,
     (applications, instructions, collections, sysvars) => {
       if (
@@ -580,10 +616,10 @@ export class BoardStore
       return applications.map((application) => ({
         ...application,
         instructions: instructions.filter(
-          (instruction) => instruction.applicationId === application.id
+          (instruction) => instruction.application.id === application.id
         ),
         collections: collections.filter(
-          (collection) => collection.applicationId === application.id
+          (collection) => collection.application.id === application.id
         ),
         kind: 'application',
       }));

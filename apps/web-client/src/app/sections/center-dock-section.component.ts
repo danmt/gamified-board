@@ -4,7 +4,10 @@ import { Component, inject } from '@angular/core';
 import { LetModule, PushModule } from '@ngrx/component';
 import { of } from 'rxjs';
 import { SquareButtonComponent } from '../components';
-import { KeyboardListenerDirective } from '../directives';
+import {
+  DefaultImageDirective,
+  KeyboardListenerDirective,
+} from '../directives';
 import {
   EditCollectionModalDirective,
   EditInstructionModalDirective,
@@ -82,11 +85,16 @@ interface HotKey {
                 *ngIf="slot !== null"
                 [pgIsActive]="active?.id === slot.id"
                 [pgThumbnailUrl]="slot.thumbnailUrl"
+                [pgDefaultImageUrl]="'assets/generic/' + slot?.kind + '.png'"
                 (pgActivated)="onActivate(slot.id, slot.kind)"
               ></pg-square-button>
 
               <div *cdkDragPreview class="bg-gray-500 p-1 rounded-md">
-                <img class="w-full h-full" [src]="slot?.thumbnailUrl" />
+                <img
+                  class="w-full h-full"
+                  [src]="slot?.thumbnailUrl"
+                  [pgDefaultImage]="'assets/generic/' + slot?.kind + '.png'"
+                />
               </div>
 
               <div *cdkDragPlaceholder></div>
@@ -100,13 +108,14 @@ interface HotKey {
   imports: [
     CommonModule,
     DragDropModule,
+    PushModule,
+    LetModule,
     SquareButtonComponent,
     SlotHotkeyPipe,
+    DefaultImageDirective,
     KeyboardListenerDirective,
     EditCollectionModalDirective,
     EditInstructionModalDirective,
-    PushModule,
-    LetModule,
   ],
   styles: [
     `

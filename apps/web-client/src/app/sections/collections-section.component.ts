@@ -1,9 +1,11 @@
 import { CdkDragStart, DragDropModule } from '@angular/cdk/drag-drop';
+import { OverlayModule } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { LetModule, PushModule } from '@ngrx/component';
 import { BehaviorSubject } from 'rxjs';
+import { CollectionTooltipDirective } from '../components';
 import { DefaultImageDirective } from '../directives';
 import { EditCollectionModalDirective } from '../modals';
 import { CollectionApiService } from '../services';
@@ -42,7 +44,7 @@ import { Option } from '../utils';
       <!-- section content -->
       <header class="relative h-[80px]">
         <div
-          class="flex absolute w-full bp-skin-title-box flex items-center justify-between pl-6 pr-8 ml-1.5"
+          class="absolute w-full bp-skin-title-box flex items-center justify-between pl-6 pr-8 ml-1.5"
         >
           <h1 class="bp-font-game text-3xl">Collections</h1>
 
@@ -94,7 +96,7 @@ import { Option } from '../utils';
         >
           <div
             *ngFor="let collection of collections; trackBy: trackBy"
-            class="relative"
+            [pgCollectionTooltip]="collection"
           >
             <ng-container *ngIf="(isDragging$ | ngrxPush) === collection.id">
               <div
@@ -147,8 +149,10 @@ import { Option } from '../utils';
     PushModule,
     LetModule,
     RouterModule,
+    OverlayModule,
     EditCollectionModalDirective,
     DefaultImageDirective,
+    CollectionTooltipDirective,
   ],
 })
 export class CollectionsSectionComponent {
@@ -156,6 +160,7 @@ export class CollectionsSectionComponent {
   private readonly _collectionApiService = inject(CollectionApiService);
 
   private readonly _isDragging = new BehaviorSubject<Option<string>>(null);
+
   readonly isDragging$ = this._isDragging.asObservable();
   readonly workspaceId$ = this._boardStore.workspaceId$;
   readonly currentApplicationId$ = this._boardStore.currentApplicationId$;

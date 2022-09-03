@@ -1,9 +1,11 @@
 import { CdkDragStart, DragDropModule } from '@angular/cdk/drag-drop';
+import { OverlayModule } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { LetModule, PushModule } from '@ngrx/component';
 import { BehaviorSubject } from 'rxjs';
+import { SysvarTooltipDirective } from '../components';
 import { DefaultImageDirective } from '../directives';
 import { EditSysvarModalDirective } from '../modals';
 import { SysvarApiService } from '../services';
@@ -42,7 +44,7 @@ import { Option } from '../utils';
       <!-- section content -->
       <header class="relative h-[80px]">
         <div
-          class="flex absolute w-full bp-skin-title-box flex items-center justify-between pl-6 pr-8 ml-1.5"
+          class="absolute w-full bp-skin-title-box flex items-center justify-between pl-6 pr-8 ml-1.5"
         >
           <h1 class="bp-font-game text-3xl">Sysvars</h1>
 
@@ -82,6 +84,7 @@ import { Option } from '../utils';
           <div
             *ngFor="let sysvar of sysvars; trackBy: trackBy"
             class="relative"
+            [pgSysvarTooltip]="sysvar"
           >
             <ng-container *ngIf="(isDragging$ | ngrxPush) === sysvar.id">
               <div
@@ -91,6 +94,7 @@ import { Option } from '../utils';
                 <img
                   class="w-full h-full object-cover"
                   [src]="sysvar.thumbnailUrl"
+                  pgDefaultImage="assets/generic/sysvar.png"
                 />
               </div>
             </ng-container>
@@ -130,11 +134,13 @@ import { Option } from '../utils';
   imports: [
     DragDropModule,
     CommonModule,
+    OverlayModule,
     PushModule,
     LetModule,
     RouterModule,
     EditSysvarModalDirective,
     DefaultImageDirective,
+    SysvarTooltipDirective,
   ],
 })
 export class SysvarsSectionComponent {
@@ -142,6 +148,7 @@ export class SysvarsSectionComponent {
   private readonly _sysvarApiService = inject(SysvarApiService);
 
   private readonly _isDragging = new BehaviorSubject<Option<string>>(null);
+
   readonly isDragging$ = this._isDragging.asObservable();
   readonly sysvars$ = this._boardStore.sysvars$;
 

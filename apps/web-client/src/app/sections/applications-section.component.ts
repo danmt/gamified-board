@@ -1,9 +1,11 @@
 import { CdkDragStart, DragDropModule } from '@angular/cdk/drag-drop';
+import { OverlayModule } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { LetModule, PushModule } from '@ngrx/component';
 import { BehaviorSubject } from 'rxjs';
+import { ApplicationTooltipDirective } from '../components';
 import { DefaultImageDirective } from '../directives';
 import { EditApplicationModalDirective } from '../modals';
 import { BoardStore } from '../stores';
@@ -41,7 +43,7 @@ import { Option } from '../utils';
       <!-- section content -->
       <header class="relative h-[80px]">
         <div
-          class="flex relative w-full bp-skin-title-box flex items-center justify-between pl-6 pr-8 mr-1.5"
+          class="relative w-full bp-skin-title-box flex items-center justify-between pl-6 pr-8 mr-1.5"
         >
           <h1 class="bp-font-game text-3xl">Applications</h1>
         </div>
@@ -71,13 +73,13 @@ import { Option } from '../utils';
         >
           <div
             *ngFor="let application of applications; trackBy: trackBy"
-            class="relative"
+            [pgApplicationTooltip]="application"
           >
             <ng-container *ngIf="(isDragging$ | ngrxPush) === application.id">
               <div
                 class="w-full h-full absolute z-20 bg-black bg-opacity-50"
               ></div>
-              <div class="bg-yellow-500 p-0.5 w-11 h-11">
+              <div class="bg-green-800 p-0.5 w-11 h-11">
                 <img
                   class="w-full h-full object-cover"
                   [src]="application.thumbnailUrl"
@@ -94,7 +96,7 @@ import { Option } from '../utils';
               (cdkDragStarted)="onDragStart($event)"
               (cdkDragEnded)="onDragEnd()"
             >
-              <div class="bg-yellow-500 p-0.5 w-11 h-11">
+              <div class="bg-green-800 p-0.5 w-11 h-11">
                 <img
                   class="w-full h-full object-cover"
                   [src]="application.thumbnailUrl"
@@ -121,17 +123,20 @@ import { Option } from '../utils';
   imports: [
     DragDropModule,
     CommonModule,
+    OverlayModule,
     PushModule,
     LetModule,
     RouterModule,
     EditApplicationModalDirective,
     DefaultImageDirective,
+    ApplicationTooltipDirective,
   ],
 })
 export class ApplicationsSectionComponent {
   private readonly _boardStore = inject(BoardStore);
 
   private readonly _isDragging = new BehaviorSubject<Option<string>>(null);
+
   readonly isDragging$ = this._isDragging.asObservable();
   readonly workspaceId$ = this._boardStore.workspaceId$;
   readonly currentApplicationId$ = this._boardStore.currentApplicationId$;
