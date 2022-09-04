@@ -39,6 +39,7 @@ export const openInstructionTooltip = (
       .flexibleConnectedTo(elementRef)
       .withPositions([getPosition(position)])
       .withLockedPosition(true),
+    scrollStrategy: overlay.scrollStrategies.close(),
   });
   const portal = new ComponentPortal(InstructionTooltipComponent);
   const componentRef = overlayRef.attach(portal);

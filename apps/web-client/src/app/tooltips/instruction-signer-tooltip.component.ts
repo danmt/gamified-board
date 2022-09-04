@@ -14,22 +14,15 @@ import { DefaultImageDirective } from '../directives';
 import { Option } from '../utils';
 import { getPosition, Position } from './utils';
 
-export interface ApplicationTooltip {
-  kind: 'application';
+export interface InstructionSignerTooltip {
+  kind: 'instructionSigner';
   name: string;
-  thumbnailUrl: string;
-  collections: {
-    name: string;
-  }[];
-  instructions: {
-    name: string;
-  }[];
 }
 
-export const openApplicationTooltip = (
+export const openInstructionSignerTooltip = (
   overlay: Overlay,
   elementRef: ElementRef<unknown>,
-  application: ApplicationTooltip,
+  instructionSigner: InstructionSignerTooltip,
   position: Position = 'right'
 ) => {
   const overlayRef = overlay.create({
@@ -40,21 +33,21 @@ export const openApplicationTooltip = (
       .withLockedPosition(true),
     scrollStrategy: overlay.scrollStrategies.close(),
   });
-  const portal = new ComponentPortal(ApplicationTooltipComponent);
+  const portal = new ComponentPortal(InstructionSignerTooltipComponent);
   const componentRef = overlayRef.attach(portal);
-  componentRef.instance.pgApplication = application;
+  componentRef.instance.pgInstructionSigner = instructionSigner;
   componentRef.instance.pgPosition = position;
 
   return overlayRef;
 };
 
-@Directive({ selector: '[pgApplicationTooltip]', standalone: true })
-export class ApplicationTooltipDirective implements OnDestroy {
+@Directive({ selector: '[pgInstructionSignerTooltip]', standalone: true })
+export class InstructionSignerTooltipDirective implements OnDestroy {
   private readonly _overlay = inject(Overlay);
   private readonly _elementRef = inject(ElementRef<unknown>);
   private _overlayRef: Option<OverlayRef> = null;
 
-  @Input() pgApplication: Option<ApplicationTooltip> = null;
+  @Input() pgInstructionSigner: Option<InstructionSignerTooltip> = null;
   @Input() pgPosition: Position = 'right';
 
   @HostListener('mouseenter') onMouseEnter() {
@@ -70,11 +63,11 @@ export class ApplicationTooltipDirective implements OnDestroy {
   }
 
   private _open() {
-    if (this.pgApplication && this._overlayRef === null) {
-      this._overlayRef = openApplicationTooltip(
+    if (this.pgInstructionSigner && this._overlayRef === null) {
+      this._overlayRef = openInstructionSignerTooltip(
         this._overlay,
         this._elementRef,
-        this.pgApplication,
+        this.pgInstructionSigner,
         this.pgPosition
       );
     }
@@ -89,50 +82,24 @@ export class ApplicationTooltipDirective implements OnDestroy {
 }
 
 @Component({
-  selector: 'pg-application-tooltip',
+  selector: 'pg-instruction-signer-tooltip',
   template: `
     <div
       class="relative"
       style="min-width: 250px; max-width: 350px"
-      *ngIf="pgApplication !== null"
+      *ngIf="pgInstructionSigner !== null"
     >
       <header class="p-2 flex gap-2 items-start bg-slate-600">
         <img
-          [src]="pgApplication.thumbnailUrl"
-          pgDefaultImage="assets/generic/application.png"
+          src="assets/generic/signer.png"
+          pgDefaultImage="assets/generic/signer.png"
           class="w-12 h-10 object-cover"
         />
 
         <div>
-          <h3 class="uppercase text-xl">{{ pgApplication.name }}</h3>
+          <h3 class="uppercase text-xl">{{ pgInstructionSigner.name }}</h3>
         </div>
       </header>
-
-      <div class="p-2 bg-slate-700">
-        <p class="uppercase">Collections</p>
-
-        <section class="flex gap-2 flex-wrap">
-          <article
-            *ngFor="let collection of pgApplication.collections"
-            class="border border-slate-900 p-1"
-          >
-            <p class="text-xs">{{ collection.name }}</p>
-          </article>
-        </section>
-      </div>
-
-      <div class="p-2 bg-slate-700">
-        <p class="uppercase">Instructions</p>
-
-        <section class="flex gap-2 flex-wrap">
-          <article
-            *ngFor="let instruction of pgApplication.instructions"
-            class="border border-slate-900 p-1"
-          >
-            <p class="text-xs">{{ instruction.name }}</p>
-          </article>
-        </section>
-      </div>
 
       <div
         *ngIf="pgPosition === 'right'"
@@ -174,7 +141,7 @@ export class ApplicationTooltipDirective implements OnDestroy {
   standalone: true,
   imports: [CommonModule, DefaultImageDirective],
 })
-export class ApplicationTooltipComponent {
-  @Input() pgApplication: Option<ApplicationTooltip> = null;
-  @Input() pgPosition: Position = 'right';
+export class InstructionSignerTooltipComponent {
+  @Input() pgInstructionSigner: Option<InstructionSignerTooltip> = null;
+  @Input() pgPosition: Position = 'left';
 }

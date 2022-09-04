@@ -39,6 +39,7 @@ export const openCollectionTooltip = (
       .flexibleConnectedTo(elementRef)
       .withPositions([getPosition(position)])
       .withLockedPosition(true),
+    scrollStrategy: overlay.scrollStrategies.close(),
   });
   const portal = new ComponentPortal(CollectionTooltipComponent);
   const componentRef = overlayRef.attach(portal);

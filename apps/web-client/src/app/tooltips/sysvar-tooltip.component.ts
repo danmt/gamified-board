@@ -32,6 +32,7 @@ export const openSysvarTooltip = (
       .flexibleConnectedTo(elementRef)
       .withPositions([getPosition(position)])
       .withLockedPosition(true),
+    scrollStrategy: overlay.scrollStrategies.close(),
   });
   const portal = new ComponentPortal(SysvarTooltipComponent);
   const componentRef = overlayRef.attach(portal);

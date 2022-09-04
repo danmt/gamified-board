@@ -10,31 +10,53 @@ import {
 } from '@angular/core';
 import { DefaultImageDirective } from '../directives';
 import { BoardItemDropListsPipe } from '../pipes';
+import {
+  InstructionApplicationTooltipDirective,
+  InstructionDocumentTooltipDirective,
+  InstructionSignerTooltipDirective,
+  InstructionSysvarTooltipDirective,
+  InstructionTaskTooltipDirective,
+} from '../tooltips';
 import { Entity, Option } from '../utils';
 
 interface Instruction {
   id: string;
   documents: Entity<{
+    kind: 'instructionDocument';
+    name: string;
     collection: {
+      name: string;
       thumbnailUrl: string;
     };
   }>[];
   tasks: Entity<{
+    kind: 'instructionTask';
+    name: string;
     instruction: {
+      name: string;
       thumbnailUrl: string;
     };
   }>[];
   applications: Entity<{
+    kind: 'instructionApplication';
+    name: string;
     application: {
+      name: string;
       thumbnailUrl: string;
     };
   }>[];
   sysvars: Entity<{
+    kind: 'instructionSysvar';
+    name: string;
     sysvar: {
+      name: string;
       thumbnailUrl: string;
     };
   }>[];
-  signers: Entity<unknown>[];
+  signers: Entity<{
+    kind: 'instructionSigner';
+    name: string;
+  }>[];
 }
 
 @Component({
@@ -62,16 +84,24 @@ interface Instruction {
           class="flex gap-2 flex-1"
         >
           <div
-            *ngFor="let document of pgInstruction.documents; trackBy: trackBy"
+            *ngFor="
+              let instructionDocument of pgInstruction.documents;
+              trackBy: trackBy
+            "
             cdkDrag
-            [cdkDragData]="document.id"
+            [cdkDragData]="instructionDocument.id"
             class="bg-gray-800 relative w-11 h-11"
             style="padding: 0.12rem"
+            pgInstructionDocumentTooltip
+            [pgInstructionDocument]="instructionDocument"
           >
-            <button class="w-full h-full" (click)="onSelect(document.id)">
+            <button
+              class="w-full h-full"
+              (click)="onSelect(instructionDocument.id)"
+            >
               <img
                 class="w-full h-full"
-                [src]="document.collection.thumbnailUrl"
+                [src]="instructionDocument.collection.thumbnailUrl"
                 pgDefaultImage="assets/generic/instruction-document.png"
               />
             </button>
@@ -79,7 +109,7 @@ interface Instruction {
             <div *cdkDragPreview class="bg-gray-500 p-1 w-12 h-12 rounded-md">
               <img
                 class="w-full h-full"
-                [src]="document.collection.thumbnailUrl"
+                [src]="instructionDocument.collection.thumbnailUrl"
                 pgDefaultImage="assets/generic/instruction-document.png"
               />
             </div>
@@ -90,7 +120,7 @@ interface Instruction {
             >
               <img
                 class="w-full h-full"
-                [src]="document.collection.thumbnailUrl"
+                [src]="instructionDocument.collection.thumbnailUrl"
                 pgDefaultImage="assets/generic/instruction-document.png"
               />
             </div>
@@ -112,16 +142,24 @@ interface Instruction {
           class="flex gap-2 flex-1"
         >
           <div
-            *ngFor="let task of pgInstruction.tasks; trackBy: trackBy"
+            *ngFor="
+              let instructionTask of pgInstruction.tasks;
+              trackBy: trackBy
+            "
             cdkDrag
-            [cdkDragData]="task.id"
+            [cdkDragData]="instructionTask.id"
             class="bg-gray-800 relative w-11 h-11"
             style="padding: 0.12rem"
+            pgInstructionTaskTooltip
+            [pgInstructionTask]="instructionTask"
           >
-            <button class="w-full h-full" (click)="onSelect(task.id)">
+            <button
+              class="w-full h-full"
+              (click)="onSelect(instructionTask.id)"
+            >
               <img
                 class="w-full h-full"
-                [src]="task.instruction.thumbnailUrl"
+                [src]="instructionTask.instruction.thumbnailUrl"
                 pgDefaultImage="assets/generic/instruction-task.png"
               />
             </button>
@@ -129,7 +167,7 @@ interface Instruction {
             <div *cdkDragPreview class="bg-gray-500 p-1 w-12 h-12 rounded-md">
               <img
                 class="w-full h-full"
-                [src]="task.instruction.thumbnailUrl"
+                [src]="instructionTask.instruction.thumbnailUrl"
                 pgDefaultImage="assets/generic/instruction-task.png"
               />
             </div>
@@ -140,7 +178,7 @@ interface Instruction {
             >
               <img
                 class="w-full h-full"
-                [src]="task.instruction.thumbnailUrl"
+                [src]="instructionTask.instruction.thumbnailUrl"
                 pgDefaultImage="assets/generic/instruction-task.png"
               />
             </div>
@@ -170,6 +208,8 @@ interface Instruction {
             [cdkDragData]="instructionApplication.id"
             class="bg-gray-800 relative w-11 h-11"
             style="padding: 0.12rem"
+            pgInstructionApplicationTooltip
+            [pgInstructionApplication]="instructionApplication"
           >
             <button
               class="w-full h-full"
@@ -226,6 +266,8 @@ interface Instruction {
             [cdkDragData]="instructionSysvar.id"
             class="bg-gray-800 relative w-11 h-11"
             style="padding: 0.12rem"
+            pgInstructionSysvarTooltip
+            [pgInstructionSysvar]="instructionSysvar"
           >
             <button
               class="w-full h-full"
@@ -282,6 +324,8 @@ interface Instruction {
             [cdkDragData]="instructionSigner.id"
             class="bg-gray-800 relative w-11 h-11"
             style="padding: 0.12rem"
+            pgInstructionSignerTooltip
+            [pgInstructionSigner]="instructionSigner"
           >
             <button
               class="w-full h-full"
@@ -311,6 +355,11 @@ interface Instruction {
     DragDropModule,
     BoardItemDropListsPipe,
     DefaultImageDirective,
+    InstructionDocumentTooltipDirective,
+    InstructionTaskTooltipDirective,
+    InstructionApplicationTooltipDirective,
+    InstructionSysvarTooltipDirective,
+    InstructionSignerTooltipDirective,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
