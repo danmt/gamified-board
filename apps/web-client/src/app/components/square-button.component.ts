@@ -10,16 +10,9 @@ import { Option } from '../utils';
       (click)="activate()"
       (mouseover)="onMouseOver()"
       (mouseout)="onMouseOut()"
-      [ngClass]="{
-        'opacity-80 border-l-gray-500 border-t-gray-400 border-r-gray-600 border-b-gray-700':
-          !pgIsActive && !isHovered,
-        'opacity-90 border-l-gray-400 border-t-gray-300 border-r-gray-500 border-b-gray-600':
-          !pgIsActive && isHovered,
-        'opacity-100 border-l-gray-300 border-t-gray-200 border-r-gray-400 border-b-gray-500':
-          pgIsActive
-      }"
       style="border-width: 0.2rem; margin: 0.12rem"
     >
+      <div class="bp-skin-dock-icon-border absolute -top-0.5 -left-0.5"></div>
       <figure>
         <img [src]="pgThumbnailUrl" class="w-9 h-9 object-cover" />
       </figure>

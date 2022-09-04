@@ -63,6 +63,7 @@ interface HotKey {
             class="relative"
             style="width: 2.89rem; height: 2.89rem"
           >
+            <!-- Make this a new component -->
             <ng-container *ngrxLet="hotkeys$; let hotkeys">
               <span
                 *ngIf="i | pgSlotHotkey: hotkeys as hotkey"
@@ -74,7 +75,7 @@ interface HotKey {
             </ng-container>
 
             <div
-              class="bp-skin-dock-icon-border absolute -top-0.5 -left-0.5"
+              class="bp-skin-dock-icon-border absolute -top-0.5 -left-0.5 opacity-75"
             ></div>
 
             <div cdkDrag [cdkDragData]="slot?.id">
@@ -91,6 +92,7 @@ interface HotKey {
 
               <div *cdkDragPlaceholder></div>
             </div>
+            <!-- end component -->
           </div>
         </div>
       </ng-container>

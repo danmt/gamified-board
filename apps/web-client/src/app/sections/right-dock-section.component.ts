@@ -33,6 +33,8 @@ import { BoardStore } from '../stores';
           ,
         </span>
 
+        <div class="bp-skin-dock-icon-border absolute -top-0.5 -left-0.5"></div>
+
         <pg-square-button
           *ngrxLet="active$; let active"
           [pgIsActive]="active?.kind === 'signer'"
@@ -51,6 +53,8 @@ import { BoardStore } from '../stores';
         >
           .
         </span>
+
+        <div class="bp-skin-dock-icon-border absolute -top-0.5 -left-0.5"></div>
 
         <pg-square-button
           [pgIsActive]="(isCollectionsSectionOpen$ | ngrxPush) ?? false"

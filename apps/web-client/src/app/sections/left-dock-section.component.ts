@@ -51,6 +51,8 @@ import { BoardStore } from '../stores';
           m
         </span>
 
+        <div class="bp-skin-dock-icon-border absolute -top-0.5 -left-0.5"></div>
+
         <pg-square-button
           [pgIsActive]="(isInstructionsSectionOpen$ | ngrxPush) ?? false"
           pgThumbnailUrl="assets/generic/instruction.png"
