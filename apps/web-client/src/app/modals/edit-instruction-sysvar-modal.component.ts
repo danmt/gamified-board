@@ -16,6 +16,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { v4 as uuid } from 'uuid';
+import { ModalComponent } from '../components/modal.component';
 import {
   KeyboardListenerDirective,
   StopKeydownPropagationDirective,
@@ -79,14 +80,14 @@ export class EditInstructionSysvarModalDirective {
 @Component({
   selector: 'pg-edit-instruction-sysvar-modal',
   template: `
-    <div
+    <pg-modal
       class="px-4 pt-8 pb-4 bg-white shadow-xl relative"
       pgStopKeydownPropagation
       pgKeyboardListener
       (keydown)="onKeyDown($event)"
     >
       <button
-        class="absolute top-2 right-2 rounded-full border border-black leading-none w-6 h-6"
+        class="absolute top-4 right-4 z-20 rounded-full border border-black leading-none w-6 h-6"
         (click)="onClose()"
       >
         x
@@ -134,7 +135,7 @@ export class EditInstructionSysvarModalDirective {
           </button>
         </div>
       </form>
-    </div>
+    </pg-modal>
   `,
   standalone: true,
   imports: [
@@ -142,6 +143,7 @@ export class EditInstructionSysvarModalDirective {
     ReactiveFormsModule,
     StopKeydownPropagationDirective,
     KeyboardListenerDirective,
+    ModalComponent,
   ],
 })
 export class EditInstructionSysvarModalComponent {
