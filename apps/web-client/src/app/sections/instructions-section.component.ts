@@ -14,7 +14,10 @@ import { Option } from '../utils';
 @Component({
   selector: 'pg-instructions-section',
   template: `
-    <pg-inventory [direction]="direction">
+    <pg-inventory
+      [direction]="direction"
+      class="mt-10 min-w-[300px] min-h-[500px] max-h-[500px]"
+    >
       <header class="relative h-[80px]">
         <div
           class="flex relative w-full bp-skin-title-box items-center justify-between pl-6 pr-8 mr-1.5"

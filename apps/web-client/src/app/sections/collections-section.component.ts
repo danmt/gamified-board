@@ -14,7 +14,10 @@ import { Option } from '../utils';
 @Component({
   selector: 'pg-collections-section',
   template: `
-    <pg-inventory [direction]="direction">
+    <pg-inventory
+      class="mt-10 min-w-[300px] min-h-[500px] max-h-[500px]"
+      [direction]="direction"
+    >
       <header class="relative h-[80px]">
         <div
           class="flex absolute w-full bp-skin-title-box items-center justify-between pl-6 pr-8 ml-1.5"

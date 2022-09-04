@@ -57,8 +57,7 @@ export enum InvetoryDirection {
   imports: [CommonModule],
 })
 export class InventoryComponent implements AfterViewInit {
-  @HostBinding('class') class =
-    'flex flex-col relative mt-10 z-40 bp-bg-futuristic min-w-[300px] min-h-[500px] max-h-[500px]';
+  @HostBinding('class') class = 'flex flex-col relative z-40 bp-bg-futuristic';
 
   @Input() direction: InvetoryDirection = InvetoryDirection.right;
   oppositeDirection: InvetoryDirection = InvetoryDirection.left;
