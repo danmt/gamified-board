@@ -11,13 +11,12 @@ import { RouterModule } from '@angular/router';
 import { LetModule, PushModule } from '@ngrx/component';
 import { provideComponentStore } from '@ngrx/component-store';
 import { startWith } from 'rxjs';
-import {
-  EditApplicationModalDirective,
-  EditWorkspaceModalDirective,
-} from '../modals';
-import { ApplicationApiService, WorkspaceApiService } from '../services';
-import { LobbyStore } from '../stores';
-import { Option } from '../utils';
+import { EditApplicationModalDirective } from '../application/components';
+import { ApplicationApiService } from '../application/services';
+import { LobbyStore } from '../core/stores';
+import { Option } from '../shared/utils';
+import { EditWorkspaceModalDirective } from '../workspace/components';
+import { WorkspaceApiService } from '../workspace/services';
 
 @Component({
   selector: 'pg-lobby-page',

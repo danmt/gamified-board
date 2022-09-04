@@ -1,6 +1,6 @@
 import { AnchorProvider, Spl } from '@heavy-duty/anchor';
 import { PublicKey, TransactionInstruction } from '@solana/web3.js';
-import { toInstructionArguments } from '../../../utils';
+import { isNull, toInstructionArguments } from '../../../shared/utils';
 import { IdlInstruction, PluginInterface } from '../../types';
 
 export class TokenPlugin implements PluginInterface {
@@ -27,7 +27,7 @@ export class TokenPlugin implements PluginInterface {
   ): TransactionInstruction | null {
     const instruction = this.getInstruction(instructionName);
 
-    if (instruction === null) {
+    if (isNull(instruction)) {
       return null;
     }
 

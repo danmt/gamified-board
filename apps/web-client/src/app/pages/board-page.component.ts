@@ -11,26 +11,35 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
 import { PushModule } from '@ngrx/component';
 import { provideComponentStore } from '@ngrx/component-store';
 import { map } from 'rxjs';
+import { ApplicationDockComponent } from '../application/sections';
+import { ApplicationsInventoryComponent } from '../application/sections/applications-inventory.component';
+import { ApplicationsStore } from '../application/stores';
 import {
-  ApplicationSectionComponent,
-  ApplicationsSectionComponent,
+  CollectionDockComponent,
+  CollectionsInventoryComponent,
+} from '../collection/sections';
+import { CollectionsStore } from '../collection/stores/collections.store';
+import {
   BoardSectionComponent,
   CenterDockSectionComponent,
-  CollectionSectionComponent,
-  CollectionsSectionComponent,
-  InstructionDocumentSectionComponent,
-  InstructionSectionComponent,
-  InstructionSignerSectionComponent,
-  InstructionsSectionComponent,
-  InstructionSysvarSectionComponent,
-  InstructionTaskSectionComponent,
   LeftDockSectionComponent,
   RightDockSectionComponent,
-  SysvarSectionComponent,
-  SysvarsSectionComponent,
-} from '../sections';
-import { InstructionApplicationSectionComponent } from '../sections/instruction-application-section.component';
-import { BoardStore } from '../stores';
+} from '../core/sections';
+import { BoardStore } from '../core/stores';
+import { InstructionApplicationDockComponent } from '../instruction-application/sections/instruction-application-dock.component';
+import { InstructionDocumentDockComponent } from '../instruction-document/sections';
+import { InstructionSignerDockComponent } from '../instruction-signer/sections';
+import { InstructionSysvarDockComponent } from '../instruction-sysvar/sections';
+import { InstructionTaskDockComponent } from '../instruction-task/sections';
+import {
+  InstructionDockComponent,
+  InstructionsInventoryComponent,
+} from '../instruction/sections';
+import { InstructionsStore } from '../instruction/stores';
+import { SysvarDockComponent } from '../sysvar/sections/sysvar-dock.component';
+import { SysvarsInventoryComponent } from '../sysvar/sections/sysvars-section.component';
+import { SysvarsStore } from '../sysvar/stores';
+import { WorkspaceStore } from '../workspace/stores';
 
 @Component({
   selector: 'pg-board-page',
@@ -48,61 +57,61 @@ import { BoardStore } from '../stores';
       class="fixed bottom-0 -translate-x-1/2 left-1/2"
     ></pg-center-dock-section>
 
-    <pg-instruction-document-section
+    <pg-instruction-document-dock
       class="fixed bottom-0 -translate-x-1/2 left-1/2"
-    ></pg-instruction-document-section>
+    ></pg-instruction-document-dock>
 
-    <pg-instruction-task-section
+    <pg-instruction-task-dock
       class="fixed bottom-0 -translate-x-1/2 left-1/2"
-    ></pg-instruction-task-section>
+    ></pg-instruction-task-dock>
 
-    <pg-instruction-application-section
+    <pg-instruction-application-dock
       class="fixed bottom-0 -translate-x-1/2 left-1/2"
-    ></pg-instruction-application-section>
+    ></pg-instruction-application-dock>
 
-    <pg-instruction-sysvar-section
+    <pg-instruction-sysvar-dock
       class="fixed bottom-0 -translate-x-1/2 left-1/2"
-    ></pg-instruction-sysvar-section>
+    ></pg-instruction-sysvar-dock>
 
-    <pg-instruction-signer-section
+    <pg-instruction-signer-dock
       class="fixed bottom-0 -translate-x-1/2 left-1/2"
-    ></pg-instruction-signer-section>
+    ></pg-instruction-signer-dock>
 
-    <pg-collection-section
+    <pg-collection-dock
       class="fixed bottom-0 -translate-x-1/2 left-1/2"
-    ></pg-collection-section>
+    ></pg-collection-dock>
 
-    <pg-instruction-section
+    <pg-instruction-dock
       class="fixed bottom-0 -translate-x-1/2 left-1/2"
-    ></pg-instruction-section>
+    ></pg-instruction-dock>
 
-    <pg-application-section
+    <pg-application-dock
       class="fixed bottom-0 -translate-x-1/2 left-1/2"
-    ></pg-application-section>
+    ></pg-application-dock>
 
-    <pg-sysvar-section
+    <pg-sysvar-dock
       class="fixed bottom-0 -translate-x-1/2 left-1/2"
-    ></pg-sysvar-section>
+    ></pg-sysvar-dock>
 
-    <pg-collections-section
+    <pg-collections-inventory
       *ngIf="isCollectionsSectionOpen$ | ngrxPush"
       class="fixed right-0 top-24"
-    ></pg-collections-section>
+    ></pg-collections-inventory>
 
-    <pg-sysvars-section
+    <pg-sysvars-inventory
       *ngIf="isSysvarsSectionOpen$ | ngrxPush"
       class="fixed right-0 top-24"
-    ></pg-sysvars-section>
+    ></pg-sysvars-inventory>
 
-    <pg-instructions-section
+    <pg-instructions-inventory
       *ngIf="isInstructionsSectionOpen$ | ngrxPush"
       class="fixed left-0 top-24"
-    ></pg-instructions-section>
+    ></pg-instructions-inventory>
 
-    <pg-applications-section
+    <pg-applications-inventory
       *ngIf="isApplicationsSectionOpen$ | ngrxPush"
       class="fixed left-0 top-24"
-    ></pg-applications-section>
+    ></pg-applications-inventory>
   `,
   standalone: true,
   imports: [
@@ -114,22 +123,29 @@ import { BoardStore } from '../stores';
     CenterDockSectionComponent,
     LeftDockSectionComponent,
     RightDockSectionComponent,
-    CollectionsSectionComponent,
-    InstructionsSectionComponent,
-    ApplicationsSectionComponent,
-    ApplicationSectionComponent,
-    InstructionDocumentSectionComponent,
-    InstructionTaskSectionComponent,
-    InstructionApplicationSectionComponent,
-    InstructionSysvarSectionComponent,
-    InstructionSignerSectionComponent,
-    CollectionSectionComponent,
-    InstructionSectionComponent,
-    SysvarsSectionComponent,
-    SysvarSectionComponent,
+    CollectionsInventoryComponent,
+    CollectionDockComponent,
+    InstructionsInventoryComponent,
+    InstructionDockComponent,
+    ApplicationsInventoryComponent,
+    ApplicationDockComponent,
+    InstructionDocumentDockComponent,
+    InstructionTaskDockComponent,
+    InstructionApplicationDockComponent,
+    InstructionSysvarDockComponent,
+    InstructionSignerDockComponent,
+    SysvarsInventoryComponent,
+    SysvarDockComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  providers: [provideComponentStore(BoardStore)],
+  providers: [
+    provideComponentStore(BoardStore),
+    provideComponentStore(WorkspaceStore),
+    provideComponentStore(ApplicationsStore),
+    provideComponentStore(CollectionsStore),
+    provideComponentStore(InstructionsStore),
+    provideComponentStore(SysvarsStore),
+  ],
 })
 export class BoardPageComponent implements OnInit {
   private readonly _activatedRoute = inject(ActivatedRoute);
