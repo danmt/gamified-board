@@ -61,10 +61,7 @@ export class InventoryComponent implements AfterViewInit {
     'flex flex-col relative mt-10 z-40 bp-bg-futuristic min-w-[300px] min-h-[500px] max-h-[500px]';
 
   @Input() direction: InvetoryDirection = InvetoryDirection.right;
-  oppositeDirection: InvetoryDirection =
-    this.direction === InvetoryDirection.left
-      ? InvetoryDirection.right
-      : InvetoryDirection.left;
+  oppositeDirection: InvetoryDirection = InvetoryDirection.left;
 
   ngAfterViewInit(): void {
     this.oppositeDirection =
