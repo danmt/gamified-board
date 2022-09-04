@@ -39,6 +39,5 @@ import { Component, HostBinding } from '@angular/core';
   imports: [CommonModule],
 })
 export class ModalComponent {
-  @HostBinding('class') class =
-    'px-6 pt-8 pb-4 block bp-bg-futuristic shadow-xl text-white relative';
+  @HostBinding('class') class = 'block bp-bg-futuristic shadow-xl relative';
 }

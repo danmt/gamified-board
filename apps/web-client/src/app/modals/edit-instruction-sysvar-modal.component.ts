@@ -81,7 +81,7 @@ export class EditInstructionSysvarModalDirective {
   selector: 'pg-edit-instruction-sysvar-modal',
   template: `
     <pg-modal
-      class="px-4 pt-8 pb-4 bg-white shadow-xl relative"
+      class="px-6 pt-8 pb-4 text-white shadow-xl relative"
       pgStopKeydownPropagation
       pgKeyboardListener
       (keydown)="onKeyDown($event)"

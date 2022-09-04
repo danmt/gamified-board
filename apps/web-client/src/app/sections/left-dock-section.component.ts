@@ -2,25 +2,22 @@ import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { PushModule } from '@ngrx/component';
 import { SquareButtonComponent } from '../components';
+import {
+  CornerDockComponent,
+  DockDirection,
+} from '../components/corner-dock.component';
 import { KeyboardListenerDirective } from '../directives';
 import { BoardStore } from '../stores';
 
 @Component({
   selector: 'pg-left-dock-section',
   template: `
-    <div
-      class="pt-4 pb-2 pl-6 pr-12 bp-bg-futuristic flex gap-4 justify-center items-start relative text-white bp-font-game"
+    <pg-corner-dock
+      class="pt-4 pb-2 pl-6 pr-12  flex gap-4 justify-center items-start text-white bp-font-game"
       pgKeyboardListener
       (pgKeyDown)="onKeyDown($event)"
+      [direction]="direction"
     >
-      <!-- top border design -->
-      <div
-        class="bp-skin-metal-corner-right-top absolute -top-2.5 -right-2.5 z-20"
-      ></div>
-      <div
-        class="bp-skin-metal-border-top absolute -top-2.5 w-5/6 right-16 left-0 mx-auto my-0 z-10"
-      ></div>
-
       <!-- section content -->
       <div
         class="bg-gray-800 relative z-30"
@@ -59,7 +56,7 @@ import { BoardStore } from '../stores';
           (click)="onToggleInstructionsSection()"
         ></pg-square-button>
       </div>
-    </div>
+    </pg-corner-dock>
   `,
   standalone: true,
   imports: [
@@ -67,6 +64,7 @@ import { BoardStore } from '../stores';
     PushModule,
     KeyboardListenerDirective,
     SquareButtonComponent,
+    CornerDockComponent,
   ],
   styles: [
     `
@@ -78,6 +76,7 @@ import { BoardStore } from '../stores';
 })
 export class LeftDockSectionComponent {
   private readonly _boardStore = inject(BoardStore);
+  readonly direction = DockDirection.left;
 
   readonly isApplicationsSectionOpen$ =
     this._boardStore.isApplicationsSectionOpen$;

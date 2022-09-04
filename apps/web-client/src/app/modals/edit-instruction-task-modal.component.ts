@@ -81,7 +81,7 @@ export class EditInstructionTaskModalDirective {
   selector: 'pg-edit-instruction-task-modal',
   template: `
     <pg-modal
-      class="min-w-[400px] min-h-[300px]"
+      class="px-6 pt-8 pb-4 text-white min-w-[400px] min-h-[300px]"
       pgStopKeydownPropagation
       pgKeyboardListener
       (keydown)="onKeyDown($event)"
