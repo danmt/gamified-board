@@ -435,8 +435,6 @@ export class EditCollectionModalComponent {
         }
       );
 
-      console.log(attributes);
-
       this._dialogRef.close({
         id,
         name,
