@@ -26,7 +26,7 @@ import {
   RightDockSectionComponent,
 } from '../core/sections';
 import { BoardStore } from '../core/stores';
-import { InstructionApplicationDockComponent } from '../instruction-application/sections/instruction-application-dock.component';
+import { InstructionApplicationDockComponent } from '../instruction-application/sections';
 import { InstructionDocumentDockComponent } from '../instruction-document/sections';
 import { InstructionSignerDockComponent } from '../instruction-signer/sections';
 import { InstructionSysvarDockComponent } from '../instruction-sysvar/sections';
@@ -36,8 +36,10 @@ import {
   InstructionsInventoryComponent,
 } from '../instruction/sections';
 import { InstructionsStore } from '../instruction/stores';
-import { SysvarDockComponent } from '../sysvar/sections/sysvar-dock.component';
-import { SysvarsInventoryComponent } from '../sysvar/sections/sysvars-section.component';
+import {
+  SysvarDockComponent,
+  SysvarsInventoryComponent,
+} from '../sysvar/sections';
 import { SysvarsStore } from '../sysvar/stores';
 import { WorkspaceStore } from '../workspace/stores';
 

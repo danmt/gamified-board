@@ -83,7 +83,7 @@ export class InstructionDocumentApiService {
             documents: [
               ...newInstructionInstructionDocuments.slice(0, newIndex),
               document,
-              ...newInstructionInstructionDocuments.slice(newIndex + 1),
+              ...newInstructionInstructionDocuments.slice(newIndex),
             ],
           });
 

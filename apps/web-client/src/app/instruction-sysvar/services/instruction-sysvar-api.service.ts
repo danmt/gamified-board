@@ -61,7 +61,7 @@ export class InstructionSysvarApiService {
             sysvars: [
               ...newInstructionSysvars.slice(0, newIndex),
               sysvar,
-              ...newInstructionSysvars.slice(newIndex + 1),
+              ...newInstructionSysvars.slice(newIndex),
             ],
           });
 

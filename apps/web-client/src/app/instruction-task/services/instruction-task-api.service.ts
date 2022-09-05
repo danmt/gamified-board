@@ -60,7 +60,7 @@ export class InstructionTaskApiService {
             tasks: [
               ...newInstructionTasks.slice(0, newIndex),
               task,
-              ...newInstructionTasks.slice(newIndex + 1),
+              ...newInstructionTasks.slice(newIndex),
             ],
           });
 

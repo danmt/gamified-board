@@ -8,7 +8,7 @@ import {
   CollectionAttributeDto,
   CollectionDto,
 } from '../../collection/services';
-import { CollectionsStore } from '../../collection/stores/collections.store';
+import { CollectionsStore } from '../../collection/stores';
 import { openEditInstructionApplicationModal } from '../../instruction-application/components';
 import {
   InstructionApplicationApiService,
@@ -1149,9 +1149,5 @@ export class BoardStore
     this._applicationsStore.setWorkspaceId(this.workspaceId$);
     this._collectionsStore.setWorkspaceId(this.workspaceId$);
     this._instructionsStore.setWorkspaceId(this.workspaceId$);
-  }
-
-  private _handleError(error: unknown) {
-    console.log(error);
   }
 }

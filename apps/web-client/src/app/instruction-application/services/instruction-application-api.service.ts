@@ -62,7 +62,7 @@ export class InstructionApplicationApiService {
             applications: [
               ...newInstructionApplications.slice(0, newIndex),
               application,
-              ...newInstructionApplications.slice(newIndex + 1),
+              ...newInstructionApplications.slice(newIndex),
             ],
           });
 
