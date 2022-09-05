@@ -13,6 +13,7 @@ import {
   KeyboardListenerDirective,
   StopKeydownPropagationDirective,
 } from '../directives';
+import { ModalComponent } from './modal.component';
 
 export interface ConfirmData {
   message: string;
@@ -65,35 +66,43 @@ export class ConfirmModalDirective {
 @Component({
   selector: 'pg-confirm-modal',
   template: `
-    <div
-      class="px-4 pt-10 pb-4 bg-white shadow-xl relative"
+    <pg-modal
+      class="px-6 pt-10 pb-4 text-white"
       pgStopKeydownPropagation
       pgKeyboardListener
       (keydown)="onKeyDown($event)"
     >
       <button
-        class="absolute top-2 right-2 rounded-full border border-black leading-none w-6 h-6"
+        class="bp-button-close-futuristic z-20 outline-0 absolute right-10 top-5"
         (click)="onClose()"
-      >
-        x
-      </button>
+      ></button>
 
-      <h1 class="mb-8">
+      <h1 class="mt-10 mb-10 bp-font-game text-3xl">
         {{ message }}
       </h1>
 
       <div class="flex justify-center gap-2">
-        <button class="border-2 border-blue-300 p-2" (click)="onConfirm()">
+        <button
+          class="bp-button-futuristic text-black bp-font-game uppercase"
+          (click)="onConfirm()"
+        >
           Confirm
         </button>
-        <button class="border-2 border-red-300 p-2" (click)="onCancel()">
+        <button
+          class="bp-button-error-futuristic text-black bp-font-game uppercase"
+          (click)="onCancel()"
+        >
           Cancel
         </button>
       </div>
-    </div>
+    </pg-modal>
   `,
   standalone: true,
-  imports: [StopKeydownPropagationDirective, KeyboardListenerDirective],
+  imports: [
+    StopKeydownPropagationDirective,
+    KeyboardListenerDirective,
+    ModalComponent,
+  ],
 })
 export class ConfirmModalComponent {
   private readonly _dialogRef =

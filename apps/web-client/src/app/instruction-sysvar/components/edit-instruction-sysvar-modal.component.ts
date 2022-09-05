@@ -81,27 +81,28 @@ export class EditInstructionSysvarModalDirective {
   selector: 'pg-edit-instruction-sysvar-modal',
   template: `
     <pg-modal
-      class="px-6 pt-8 pb-4 text-white shadow-xl relative"
+      class="px-6 pt-8 pb-4 text-white min-w-[400px] min-h-[300px]"
       pgStopKeydownPropagation
       pgKeyboardListener
       (keydown)="onKeyDown($event)"
     >
-      <button
-        class="absolute top-4 right-4 z-20 rounded-full border border-black leading-none w-6 h-6"
-        (click)="onClose()"
-      >
-        x
-      </button>
-
-      <h1 class="text-center text-xl mb-4">
-        {{ sysvar === null ? 'Create' : 'Update' }} sysvar
-      </h1>
+      <div class="flex justify-between w-full">
+        <h1 class="text-center text-3xl mb-4 bp-font-game uppercase">
+          {{ sysvar === null ? 'Create' : 'Update' }} sysvar
+        </h1>
+        <button
+          class="bp-button-close-futuristic z-20 outline-0"
+          (click)="onClose()"
+        ></button>
+      </div>
 
       <form [formGroup]="form" (ngSubmit)="onSubmit()">
-        <div>
-          <label class="block" for="sysvar-id-input">Sysvar ID</label>
+        <div class="mb-4">
+          <label class="block bp-font-game text-xl" for="sysvar-id-input"
+            >Sysvar ID</label
+          >
           <input
-            class="block border-b-2 border-black"
+            class="bp-input-futuristic p-4 outline-0"
             id="sysvar-id-input"
             type="text"
             formControlName="id"
@@ -114,23 +115,29 @@ export class EditInstructionSysvarModalDirective {
             *ngIf="sysvar === null"
             type="button"
             (click)="idControl.setValue(onGenerateId())"
+            class="bp-button-futuristic text-black bp-font-game uppercase"
           >
             Generate
           </button>
         </div>
 
-        <div>
-          <label class="block" for="sysvar-name-input"> Sysvar name </label>
+        <div class="mb-4">
+          <label class="block bp-font-game text-xl" for="sysvar-name-input">
+            Sysvar name
+          </label>
           <input
-            class="block border-b-2 border-black"
+            class="bp-input-futuristic p-4 outline-0"
             id="sysvar-name-input"
             type="text"
             formControlName="name"
           />
         </div>
 
-        <div class="flex justify-center items-center mt-4">
-          <button type="submit" class="px-4 py-2 border-blue-500 border">
+        <div class="flex justify-center items-center mt-10">
+          <button
+            type="submit"
+            class="bp-button-futuristic text-black bp-font-game uppercase"
+          >
             {{ sysvar === null ? 'Send' : 'Save' }}
           </button>
         </div>
