@@ -145,6 +145,11 @@ export class InstructionTaskDockComponent {
     instructionTaskId: string,
     instructionTaskData: EditInstructionTaskSubmit
   ) {
+    console.log({
+      instructionId,
+      instructionTaskId,
+      instructionTaskData,
+    });
     this._instructionTaskApiService
       .updateInstructionTask(
         instructionId,

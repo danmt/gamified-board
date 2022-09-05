@@ -7,11 +7,12 @@ import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  EventEmitter,
   HostBinding,
   inject,
   Input,
+  Output,
 } from '@angular/core';
-import { BoardStore } from '../../core/stores';
 import { DefaultImageDirective } from '../../shared/directives';
 import { Entity, Option } from '../../shared/utils';
 import { InstructionSysvarTooltipDirective } from '../components';
@@ -88,7 +89,6 @@ type InstructionSysvar = Entity<{
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InstructionSysvarsListComponent {
-  private readonly _boardStore = inject(BoardStore);
   private readonly _instructionSysvarApiService = inject(
     InstructionSysvarApiService
   );
@@ -97,9 +97,10 @@ export class InstructionSysvarsListComponent {
   @Input() pgInstructionId: Option<string> = null;
   @Input() pgDropLists: string[] = [];
   @Input() pgInstructionSysvars: InstructionSysvar[] = [];
+  @Output() pgSelect = new EventEmitter<string>();
 
   onSelect(selectId: string) {
-    this._boardStore.setSelectedId(selectId);
+    this.pgSelect.emit(selectId);
   }
 
   trackBy(index: number): number {

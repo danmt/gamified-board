@@ -1,17 +1,11 @@
 import { CommonModule } from '@angular/common';
-import {
-  ChangeDetectionStrategy,
-  Component,
-  HostBinding,
-  Input,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostBinding } from '@angular/core';
 
 @Component({
   selector: 'pg-row',
   template: `
     <div
-      class="text-2xl text-white uppercase relative h-full flex gap-4 border-2"
-      [ngClass]="{ 'border-blue-500': pgIsHovered }"
+      class="text-2xl text-white uppercase relative h-full flex gap-4 border-2 hover:border-blue-500"
     >
       <ng-content></ng-content>
     </div>
@@ -21,8 +15,6 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RowComponent {
-  @Input() pgIsHovered = false;
-
   @HostBinding('class') class = 'block h-64 bg-bp-bricks';
 
   trackBy(index: number): number {

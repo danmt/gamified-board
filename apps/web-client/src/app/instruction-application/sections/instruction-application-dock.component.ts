@@ -164,6 +164,7 @@ export class InstructionApplicationDockComponent {
     instructionId: string,
     instructionApplicationId: string
   ) {
+    console.log(instructionId, instructionApplicationId);
     this._instructionApplicationApiService
       .deleteInstructionApplication(instructionId, instructionApplicationId)
       .subscribe(() => this._boardStore.setSelectedId(null));
@@ -212,6 +213,8 @@ export class InstructionApplicationDockComponent {
           })
             .closed.pipe(
               concatMap((confirmData) => {
+                console.log(confirmData);
+
                 this.isDeleting = false;
 
                 if (confirmData === undefined || !confirmData) {

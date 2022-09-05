@@ -6,7 +6,6 @@ import { InstructionDocumentsListComponent } from '../../instruction-document/se
 import { InstructionSignersListComponent } from '../../instruction-signer/sections';
 import { InstructionSysvarsListComponent } from '../../instruction-sysvar/sections';
 import { InstructionTasksListComponent } from '../../instruction-task/sections';
-import { ActiveComponent } from '../../shared/components';
 import {
   CursorScrollDirective,
   FollowCursorDirective,
@@ -27,11 +26,8 @@ import { BoardStore } from '../stores';
       (pgKeyDown)="onKeyDown($event)"
     >
       <pg-row
+        [id]="instruction.id"
         *ngFor="let instruction of instructions; trackBy: trackBy"
-        [pgIsHovered]="(hoveredId$ | ngrxPush) === instruction.id"
-        (click)="onUseActive(instruction.id)"
-        (mouseenter)="onMouseEnterRow(instruction.id)"
-        (mouseleave)="onMouseLeaveRow()"
       >
         <p>Instruction: {{ instruction.name }}</p>
 
@@ -39,39 +35,37 @@ import { BoardStore } from '../stores';
           [pgInstructionId]="instruction.id"
           [pgDropLists]="instructions | pgBoardItemDropLists: 'application'"
           [pgInstructionApplications]="instruction.applications"
+          (pgSelect)="onSelect($event)"
         ></pg-instruction-applications-list>
 
         <pg-instruction-documents-list
           [pgInstructionId]="instruction.id"
           [pgDropLists]="instructions | pgBoardItemDropLists: 'document'"
           [pgInstructionDocuments]="instruction.documents"
+          (pgSelect)="onSelect($event)"
         ></pg-instruction-documents-list>
 
         <pg-instruction-tasks-list
           [pgInstructionId]="instruction.id"
           [pgDropLists]="instructions | pgBoardItemDropLists: 'task'"
           [pgInstructionTasks]="instruction.tasks"
+          (pgSelect)="onSelect($event)"
         ></pg-instruction-tasks-list>
 
         <pg-instruction-sysvars-list
           [pgInstructionId]="instruction.id"
           [pgDropLists]="instructions | pgBoardItemDropLists: 'sysvar'"
           [pgInstructionSysvars]="instruction.sysvars"
+          (pgSelect)="onSelect($event)"
         ></pg-instruction-sysvars-list>
 
         <pg-instruction-signers-list
           [pgInstructionId]="instruction.id"
           [pgDropLists]="instructions | pgBoardItemDropLists: 'signer'"
           [pgInstructionSigners]="instruction.signers"
+          (pgSelect)="onSelect($event)"
         ></pg-instruction-signers-list>
       </pg-row>
-    </div>
-
-    <div class="fixed z-10 pointer-events-none" pgFollowCursor>
-      <pg-active
-        [pgActive]="(active$ | ngrxPush) ?? null"
-        [pgCanAdd]="(hoveredId$ | ngrxPush) !== null"
-      ></pg-active>
     </div>
   `,
   standalone: true,
@@ -83,7 +77,6 @@ import { BoardStore } from '../stores';
     CursorScrollDirective,
     BoardItemDropListsPipe,
     RowComponent,
-    ActiveComponent,
     InstructionApplicationsListComponent,
     InstructionDocumentsListComponent,
     InstructionTasksListComponent,
@@ -95,18 +88,12 @@ export class BoardSectionComponent {
   private readonly _boardStore = inject(BoardStore);
 
   readonly instructions$ = this._boardStore.currentApplicationInstructions$;
-  readonly active$ = this._boardStore.active$;
   readonly selected$ = this._boardStore.selected$;
-  readonly hoveredId$ = this._boardStore.hoveredId$;
 
   @HostBinding('class') class = 'block relative min-h-screen min-w-screen';
 
   onSelect(selectId: Option<string>) {
     this._boardStore.setSelectedId(selectId);
-  }
-
-  onUseActive(instructionId: string) {
-    this._boardStore.useActive(instructionId);
   }
 
   onKeyDown(event: KeyboardEvent) {
@@ -121,13 +108,5 @@ export class BoardSectionComponent {
 
   trackBy(_: number, item: Entity<unknown>): string {
     return item.id;
-  }
-
-  onMouseEnterRow(hoveredId: string) {
-    this._boardStore.setHoveredId(hoveredId);
-  }
-
-  onMouseLeaveRow() {
-    this._boardStore.setHoveredId(null);
   }
 }

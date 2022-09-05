@@ -7,11 +7,12 @@ import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  EventEmitter,
   HostBinding,
   inject,
   Input,
+  Output,
 } from '@angular/core';
-import { BoardStore } from '../../core/stores';
 import { Entity, Option } from '../../shared/utils';
 import { InstructionSignerTooltipDirective } from '../components';
 import { InstructionSignerApiService } from '../services';
@@ -66,7 +67,6 @@ type InstructionSigner = Entity<{
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InstructionSignersListComponent {
-  private readonly _boardStore = inject(BoardStore);
   private readonly _instructionSignerApiService = inject(
     InstructionSignerApiService
   );
@@ -75,9 +75,10 @@ export class InstructionSignersListComponent {
   @Input() pgInstructionId: Option<string> = null;
   @Input() pgDropLists: string[] = [];
   @Input() pgInstructionSigners: InstructionSigner[] = [];
+  @Output() pgSelect = new EventEmitter<string>();
 
   onSelect(selectId: string) {
-    this._boardStore.setSelectedId(selectId);
+    this.pgSelect.emit(selectId);
   }
 
   trackBy(index: number): number {

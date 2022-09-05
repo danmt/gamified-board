@@ -24,7 +24,6 @@ export type Value = {
 export type InstructionDocumentDto = Entity<{
   name: string;
   method: string;
-  ownerId: string;
   collectionId: string;
   seeds: (Reference | Value)[];
   bump: Option<Reference>;
@@ -197,7 +196,6 @@ export class InstructionDocumentApiService {
                 id: newInstructionDocumentId,
                 name,
                 method,
-                ownerId,
                 collectionId,
                 seeds,
                 bump,

@@ -7,11 +7,12 @@ import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  EventEmitter,
   HostBinding,
   inject,
   Input,
+  Output,
 } from '@angular/core';
-import { BoardStore } from '../../core/stores';
 import { DefaultImageDirective } from '../../shared/directives';
 import { Entity, Option } from '../../shared/utils';
 import { InstructionDocumentTooltipDirective } from '../components';
@@ -94,7 +95,6 @@ type InstructionDocument = Entity<{
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InstructionDocumentsListComponent {
-  private readonly _boardStore = inject(BoardStore);
   private readonly _instructionDocumentApiService = inject(
     InstructionDocumentApiService
   );
@@ -103,9 +103,10 @@ export class InstructionDocumentsListComponent {
   @Input() pgInstructionId: Option<string> = null;
   @Input() pgDropLists: string[] = [];
   @Input() pgInstructionDocuments: InstructionDocument[] = [];
+  @Output() pgSelect = new EventEmitter<string>();
 
   onSelect(selectId: string) {
-    this._boardStore.setSelectedId(selectId);
+    this.pgSelect.emit(selectId);
   }
 
   trackBy(index: number): number {

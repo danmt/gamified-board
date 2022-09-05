@@ -1,7 +1,5 @@
-import { Dialog } from '@angular/cdk/dialog';
 import { inject, Injectable } from '@angular/core';
 import { ComponentStore, OnStoreInit } from '@ngrx/component-store';
-import { concatMap, EMPTY, of, switchMap, withLatestFrom } from 'rxjs';
 import { ApplicationDto } from '../../application/services';
 import { ApplicationsStore } from '../../application/stores';
 import {
@@ -9,31 +7,11 @@ import {
   CollectionDto,
 } from '../../collection/services';
 import { CollectionsStore } from '../../collection/stores';
-import { openEditInstructionApplicationModal } from '../../instruction-application/components';
-import {
-  InstructionApplicationApiService,
-  InstructionApplicationDto,
-} from '../../instruction-application/services';
-import { openEditInstructionDocumentModal } from '../../instruction-document/components';
-import {
-  InstructionDocumentApiService,
-  InstructionDocumentDto,
-} from '../../instruction-document/services';
-import { openEditInstructionSignerModal } from '../../instruction-signer/components';
-import {
-  InstructionSignerApiService,
-  InstructionSignerDto,
-} from '../../instruction-signer/services';
-import { openEditInstructionSysvarModal } from '../../instruction-sysvar/components';
-import {
-  InstructionSysvarApiService,
-  InstructionSysvarDto,
-} from '../../instruction-sysvar/services';
-import { openEditInstructionTaskModal } from '../../instruction-task/components';
-import {
-  InstructionTaskApiService,
-  InstructionTaskDto,
-} from '../../instruction-task/services';
+import { InstructionApplicationDto } from '../../instruction-application/services';
+import { InstructionDocumentDto } from '../../instruction-document/services';
+import { InstructionSignerDto } from '../../instruction-signer/services';
+import { InstructionSysvarDto } from '../../instruction-sysvar/services';
+import { InstructionTaskDto } from '../../instruction-task/services';
 import {
   InstructionArgumentDto,
   InstructionDto,
@@ -140,6 +118,7 @@ export type InstructionSignerView = Entity<{
 }>;
 
 const populateInstructionApplication = (
+  owner: InstructionDto,
   instructionApplication: InstructionApplicationDto,
   applications: ApplicationDto[]
 ): InstructionApplicationView => {
@@ -157,7 +136,7 @@ const populateInstructionApplication = (
   return {
     id: instructionApplication.id,
     name: instructionApplication.name,
-    ownerId: instructionApplication.ownerId,
+    ownerId: owner.id,
     application,
     kind: 'instructionApplication',
   };
@@ -261,6 +240,7 @@ const populatePayer = (
 };
 
 const populateInstructionDocument = (
+  owner: InstructionDto,
   document: InstructionDocumentDto,
   documents: InstructionDocumentDto[],
   args: InstructionArgumentDto[],
@@ -281,7 +261,7 @@ const populateInstructionDocument = (
     id: document.id,
     name: document.name,
     method: document.method,
-    ownerId: document.ownerId,
+    ownerId: owner.id,
     payer: populatePayer(document, documents, collections),
     seeds:
       document.seeds
@@ -345,6 +325,7 @@ const populateSysvar = (sysvar: SysvarDto): SysvarView => {
 };
 
 const populateInstructionTask = (
+  owner: InstructionDto,
   task: InstructionTaskDto,
   instructions: InstructionDto[],
   applications: ApplicationDto[],
@@ -363,7 +344,7 @@ const populateInstructionTask = (
   return {
     id: task.id,
     name: task.name,
-    ownerId: task.ownerId,
+    ownerId: owner.id,
     instruction: populateInstruction(
       instruction,
       applications,
@@ -379,6 +360,7 @@ const populateInstructionTask = (
 };
 
 const populateInstructionSysvar = (
+  owner: InstructionDto,
   instructionSysvar: InstructionSysvarDto,
   sysvars: SysvarDto[]
 ): InstructionSysvarView => {
@@ -394,19 +376,20 @@ const populateInstructionSysvar = (
   return {
     id: instructionSysvar.id,
     name: instructionSysvar.name,
-    ownerId: instructionSysvar.ownerId,
+    ownerId: owner.id,
     sysvar: populateSysvar(sysvar),
     kind: 'instructionSysvar',
   };
 };
 
 const populateInstructionSigner = (
+  owner: InstructionDto,
   instructionSigner: InstructionSignerDto
 ): InstructionSignerView => {
   return {
     id: instructionSigner.id,
     name: instructionSigner.name,
-    ownerId: instructionSigner.ownerId,
+    ownerId: owner.id,
     saveChanges: instructionSigner.saveChanges,
     kind: 'instructionSigner',
   };
@@ -442,16 +425,21 @@ const populateInstruction = (
     arguments: instruction.arguments,
     kind: 'instruction',
     signers: instruction.signers.map((signer) =>
-      populateInstructionSigner(signer)
+      populateInstructionSigner(instruction, signer)
     ),
     applications: instruction.applications.map((instructionApplication) =>
-      populateInstructionApplication(instructionApplication, applications)
+      populateInstructionApplication(
+        instruction,
+        instructionApplication,
+        applications
+      )
     ),
     sysvars: instruction.sysvars.map((instructionSysvar) =>
-      populateInstructionSysvar(instructionSysvar, sysvars)
+      populateInstructionSysvar(instruction, instructionSysvar, sysvars)
     ),
     documents: instruction.documents.map((document) =>
       populateInstructionDocument(
+        instruction,
         document,
         instruction.documents,
         instruction.arguments,
@@ -463,6 +451,7 @@ const populateInstruction = (
       ? []
       : instruction.tasks.map((instructionTask) =>
           populateInstructionTask(
+            instruction,
             instructionTask,
             instructions,
             applications,
@@ -515,7 +504,6 @@ interface ViewModel {
     kind: 'collection' | 'instruction' | 'application' | 'sysvar' | 'signer';
   }>;
   selectedId: Option<string>;
-  hoveredId: Option<string>;
   slots: Option<{
     id: string;
     kind: 'collection' | 'instruction' | 'application' | 'sysvar';
@@ -531,7 +519,6 @@ const initialState: ViewModel = {
   isSysvarsSectionOpen: false,
   active: null,
   selectedId: null,
-  hoveredId: null,
   slots: [null, null, null, null, null, null, null, null, null, null],
 };
 
@@ -540,22 +527,6 @@ export class BoardStore
   extends ComponentStore<ViewModel>
   implements OnStoreInit
 {
-  private readonly _dialog = inject(Dialog);
-  private readonly _instructionTaskApiService = inject(
-    InstructionTaskApiService
-  );
-  private readonly _instructionDocumentApiService = inject(
-    InstructionDocumentApiService
-  );
-  private readonly _instructionApplicationApiService = inject(
-    InstructionApplicationApiService
-  );
-  private readonly _instructionSysvarApiService = inject(
-    InstructionSysvarApiService
-  );
-  private readonly _instructionSignerApiService = inject(
-    InstructionSignerApiService
-  );
   private readonly _workspaceStore = inject(WorkspaceStore);
   private readonly _applicationsStore = inject(ApplicationsStore);
   private readonly _collectionsStore = inject(CollectionsStore);
@@ -563,7 +534,7 @@ export class BoardStore
   private readonly _sysvarsStore = inject(SysvarsStore);
 
   readonly workspaceId$ = this.select(({ workspaceId }) => workspaceId);
-  readonly hoveredId$ = this.select(({ hoveredId }) => hoveredId);
+  readonly active$ = this.select(({ active }) => active);
   readonly currentApplicationId$ = this.select(
     ({ currentApplicationId }) => currentApplicationId
   );
@@ -726,50 +697,6 @@ export class BoardStore
       });
     }
   );
-  readonly active$ = this.select(
-    this.applications$,
-    this.instructions$,
-    this.collections$,
-    this.sysvars$,
-    this.select(({ active }) => active),
-    (applications, instructions, collections, sysvars, active) => {
-      if (
-        isNull(applications) ||
-        isNull(instructions) ||
-        isNull(collections) ||
-        isNull(sysvars) ||
-        isNull(active)
-      ) {
-        return null;
-      }
-
-      switch (active.kind) {
-        case 'application':
-          return (
-            applications.find((application) => application.id === active.id) ??
-            null
-          );
-        case 'collection':
-          return (
-            collections.find((collection) => collection.id === active.id) ??
-            null
-          );
-        case 'instruction':
-          return (
-            instructions.find((instruction) => instruction.id === active.id) ??
-            null
-          );
-        case 'sysvar':
-          return sysvars.find((sysvar) => sysvar.id === active.id) ?? null;
-        case 'signer':
-          return {
-            id: 'signer',
-            kind: 'signer' as const,
-            thumbnailUrl: 'assets/generic/signer.png',
-          };
-      }
-    }
-  );
   readonly selected$ = this.select(
     this.applications$,
     this.instructions$,
@@ -886,11 +813,6 @@ export class BoardStore
     })
   );
 
-  readonly setHoveredId = this.updater<Option<string>>((state, hoveredId) => ({
-    ...state,
-    hoveredId,
-  }));
-
   readonly toggleIsCollectionsSectionOpen = this.updater<void>((state) => ({
     ...state,
     isCollectionsSectionOpen: !state.isCollectionsSectionOpen,
@@ -943,202 +865,6 @@ export class BoardStore
       return state;
     }
   });
-
-  readonly useActive = this.effect<string>(
-    switchMap((instructionId) => {
-      return of(instructionId).pipe(
-        withLatestFrom(this.active$),
-        concatMap(([instructionId, active]) => {
-          if (isNull(active)) {
-            return EMPTY;
-          }
-
-          this.patchState({
-            active: null,
-          });
-
-          if (active.kind === 'application') {
-            // application
-            return openEditInstructionApplicationModal(this._dialog, {
-              instructionApplication: null,
-            }).closed.pipe(
-              concatMap((instructionApplicationData) => {
-                if (instructionApplicationData === undefined) {
-                  return EMPTY;
-                }
-
-                return this._instructionApplicationApiService.createInstructionApplication(
-                  instructionId,
-                  instructionApplicationData.id,
-                  instructionApplicationData.name,
-                  active.id
-                );
-              })
-            );
-          } else if (active.kind === 'instruction') {
-            // instruction
-            return openEditInstructionTaskModal(this._dialog, {
-              instructionTask: null,
-            }).closed.pipe(
-              concatMap((taskData) => {
-                if (taskData === undefined) {
-                  return EMPTY;
-                }
-
-                return this._instructionTaskApiService.createInstructionTask(
-                  instructionId,
-                  taskData.id,
-                  taskData.name,
-                  active.id
-                );
-              })
-            );
-          } else if (active.kind === 'collection') {
-            // collection
-            const argumentReferences$ = this.select(
-              this.currentApplicationInstructions$,
-              (instructions) => {
-                const instruction =
-                  instructions?.find(({ id }) => id === instructionId) ?? null;
-
-                if (isNull(instruction)) {
-                  return [];
-                }
-
-                return instruction.arguments.map((argument) => ({
-                  kind: 'argument' as const,
-                  argument: {
-                    id: argument.id,
-                    name: argument.name,
-                    type: argument.type,
-                  },
-                }));
-              }
-            );
-
-            const attributeReferences$ = this.select(
-              this.currentApplicationInstructions$,
-              (instructions) => {
-                const instruction =
-                  instructions?.find(({ id }) => id === instructionId) ?? null;
-
-                if (isNull(instruction)) {
-                  return [];
-                }
-
-                return instruction.documents.reduce<
-                  {
-                    kind: 'document';
-                    attribute: {
-                      id: string;
-                      name: string;
-                      type: string;
-                    };
-                    document: {
-                      id: string;
-                      name: string;
-                    };
-                  }[]
-                >(
-                  (attributes, document) =>
-                    attributes.concat(
-                      document.collection.attributes.map((attribute) => ({
-                        kind: 'document' as const,
-                        attribute: {
-                          id: attribute.id,
-                          name: attribute.name,
-                          type: attribute.type,
-                        },
-                        document: {
-                          id: document.id,
-                          name: document.name,
-                        },
-                      }))
-                    ),
-                  []
-                );
-              }
-            );
-
-            const bumpReferences$ = this.select(
-              argumentReferences$,
-              attributeReferences$,
-              (argumentReferences, attributeReferences) => [
-                ...(argumentReferences?.filter(
-                  (argumentReference) =>
-                    argumentReference.argument.type === 'u8'
-                ) ?? []),
-                ...(attributeReferences?.filter(
-                  (attributeReference) =>
-                    attributeReference.attribute.type === 'u8'
-                ) ?? []),
-              ]
-            );
-
-            return openEditInstructionDocumentModal(this._dialog, {
-              instructionDocument: null,
-              argumentReferences$,
-              attributeReferences$,
-              bumpReferences$,
-            }).closed.pipe(
-              concatMap((documentData) => {
-                if (documentData === undefined) {
-                  return EMPTY;
-                }
-
-                return this._instructionDocumentApiService.createInstructionDocument(
-                  instructionId,
-                  documentData.id,
-                  documentData.name,
-                  documentData.method,
-                  active.id,
-                  documentData.seeds,
-                  documentData.bump,
-                  documentData.payer
-                );
-              })
-            );
-          } else if (active.kind === 'sysvar') {
-            // sysvar
-            return openEditInstructionSysvarModal(this._dialog, {
-              instructionSysvar: null,
-            }).closed.pipe(
-              concatMap((documentData) => {
-                if (documentData === undefined) {
-                  return EMPTY;
-                }
-
-                return this._instructionSysvarApiService.createInstructionSysvar(
-                  instructionId,
-                  documentData.id,
-                  documentData.name,
-                  active.id
-                );
-              })
-            );
-          } else {
-            // signer
-            return openEditInstructionSignerModal(this._dialog, {
-              instructionSigner: null,
-            }).closed.pipe(
-              concatMap((signerData) => {
-                if (signerData === undefined) {
-                  return EMPTY;
-                }
-
-                return this._instructionSignerApiService.createInstructionSigner(
-                  instructionId,
-                  signerData.id,
-                  signerData.name,
-                  signerData.saveChanges
-                );
-              })
-            );
-          }
-        })
-      );
-    })
-  );
 
   constructor() {
     super(initialState);

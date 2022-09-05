@@ -4,7 +4,7 @@ import {
   OnStoreInit,
   tapResponse,
 } from '@ngrx/component-store';
-import { EMPTY, switchMap } from 'rxjs';
+import { EMPTY, switchMap, tap } from 'rxjs';
 import { IdlStructField, PluginsService } from '../../plugins';
 import { isNull, Option } from '../../shared/utils';
 import { WorkspaceApiService } from '../../workspace/services';
@@ -47,6 +47,7 @@ export class CollectionsStore
       return this._workspaceApiService
         .getWorkspaceCollections(workspaceId)
         .pipe(
+          tap((a) => console.log(a)),
           tapResponse(
             (collections) =>
               this.patchState({

@@ -7,11 +7,12 @@ import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  EventEmitter,
   HostBinding,
   inject,
   Input,
+  Output,
 } from '@angular/core';
-import { BoardStore } from '../../core/stores';
 import { DefaultImageDirective } from '../../shared/directives';
 import { Entity, Option } from '../../shared/utils';
 import { InstructionApplicationTooltipDirective } from '../components';
@@ -94,7 +95,6 @@ type InstructionApplication = Entity<{
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InstructionApplicationsListComponent {
-  private readonly _boardStore = inject(BoardStore);
   private readonly _instructionApplicationApiService = inject(
     InstructionApplicationApiService
   );
@@ -103,6 +103,11 @@ export class InstructionApplicationsListComponent {
   @Input() pgInstructionId: Option<string> = null;
   @Input() pgDropLists: string[] = [];
   @Input() pgInstructionApplications: InstructionApplication[] = [];
+  @Output() pgSelect = new EventEmitter<string>();
+
+  onSelect(selectId: string) {
+    this.pgSelect.emit(selectId);
+  }
 
   trackBy(index: number): number {
     return index;
@@ -130,10 +135,6 @@ export class InstructionApplicationsListComponent {
         event.currentIndex
       );
     }
-  }
-
-  onSelect(selectId: string) {
-    this._boardStore.setSelectedId(selectId);
   }
 
   private _moveApplication(

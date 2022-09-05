@@ -65,7 +65,7 @@ interface HotKey {
             [pgInstruction]="selected"
             (pgOpenModal)="isEditing = true"
             (pgCloseModal)="isEditing = false"
-            (pgUpdateInstruction)="onUpdateInstruction(selected.id, selected)"
+            (pgUpdateInstruction)="onUpdateInstruction(selected.id, $event)"
           ></pg-square-button>
         </div>
 

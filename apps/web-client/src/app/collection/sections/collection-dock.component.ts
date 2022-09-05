@@ -65,7 +65,7 @@ interface HotKey {
             [pgCollection]="selected"
             (pgOpenModal)="isEditing = true"
             (pgCloseModal)="isEditing = false"
-            (pgUpdateCollection)="onUpdateCollection(selected.id, selected)"
+            (pgUpdateCollection)="onUpdateCollection(selected.id, $event)"
           ></pg-square-button>
         </div>
 

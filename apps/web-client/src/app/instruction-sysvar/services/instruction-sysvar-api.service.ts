@@ -5,7 +5,6 @@ import { Entity, isNull } from '../../shared/utils';
 
 export type InstructionSysvarDto = Entity<{
   name: string;
-  ownerId: string;
   sysvarId: string;
 }>;
 
@@ -163,7 +162,6 @@ export class InstructionSysvarApiService {
               {
                 id: newInstructionSysvarId,
                 name,
-                ownerId,
                 sysvarId,
               },
             ],
