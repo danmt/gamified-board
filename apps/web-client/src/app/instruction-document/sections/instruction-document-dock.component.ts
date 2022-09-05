@@ -120,13 +120,28 @@ export class InstructionDocumentDockComponent {
     InstructionDocumentApiService
   );
 
-  readonly selected$ = this._boardStore.selected$.pipe(
-    map((selected) => {
-      if (isNull(selected) || selected.kind !== 'instructionDocument') {
+  readonly selected$ = combineLatest([
+    this._boardStore.instructions$,
+    this._boardStore.selected$,
+  ]).pipe(
+    map(([instructions, selected]) => {
+      if (
+        isNull(instructions) ||
+        isNull(selected) ||
+        selected.kind !== 'instructionDocument'
+      ) {
         return null;
       }
 
-      return selected;
+      return (
+        instructions
+          .reduce<InstructionDocumentView[]>(
+            (instructionDocuments, instruction) =>
+              instructionDocuments.concat(instruction.documents),
+            []
+          )
+          .find(({ id }) => id === selected.id) ?? null
+      );
     })
   );
   readonly argumentReferences$ = combineLatest([
@@ -244,7 +259,7 @@ export class InstructionDocumentDockComponent {
   onDeleteInstructionDocument(instructionId: string, documentId: string) {
     this._instructionDocumentApiService
       .deleteInstructionDocument(instructionId, documentId)
-      .subscribe(() => this._boardStore.setSelectedId(null));
+      .subscribe(() => this._boardStore.setSelected(null));
   }
 
   onKeyDown(
@@ -308,7 +323,7 @@ export class InstructionDocumentDockComponent {
                     instructionDocument.ownerId,
                     instructionDocument.id
                   )
-                  .pipe(tap(() => this._boardStore.setSelectedId(null)));
+                  .pipe(tap(() => this._boardStore.setSelected(null)));
               })
             )
             .subscribe();

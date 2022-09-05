@@ -103,10 +103,13 @@ export class InstructionDocumentsListComponent {
   @Input() pgInstructionId: Option<string> = null;
   @Input() pgDropLists: string[] = [];
   @Input() pgInstructionDocuments: InstructionDocument[] = [];
-  @Output() pgSelect = new EventEmitter<string>();
+  @Output() pgSelect = new EventEmitter<{
+    id: string;
+    kind: 'instructionDocument';
+  }>();
 
   onSelect(selectId: string) {
-    this.pgSelect.emit(selectId);
+    this.pgSelect.emit({ id: selectId, kind: 'instructionDocument' });
   }
 
   trackBy(index: number): number {

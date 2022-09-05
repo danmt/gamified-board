@@ -2,7 +2,7 @@ import { Dialog } from '@angular/cdk/dialog';
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { LetModule, PushModule } from '@ngrx/component';
-import { concatMap, EMPTY, map, of, tap } from 'rxjs';
+import { combineLatest, concatMap, EMPTY, map, of, tap } from 'rxjs';
 import { BoardStore, InstructionView } from '../../core/stores';
 import {
   ConfirmModalDirective,
@@ -115,13 +115,20 @@ export class InstructionDockComponent {
   private readonly _instructionApiService = inject(InstructionApiService);
 
   readonly currentApplicationId$ = this._boardStore.currentApplicationId$;
-  readonly selected$ = this._boardStore.selected$.pipe(
-    map((selected) => {
-      if (isNull(selected) || selected.kind !== 'instruction') {
+  readonly selected$ = combineLatest([
+    this._boardStore.instructions$,
+    this._boardStore.selected$,
+  ]).pipe(
+    map(([instructions, selected]) => {
+      if (
+        isNull(instructions) ||
+        isNull(selected) ||
+        selected.kind !== 'instruction'
+      ) {
         return null;
       }
 
-      return selected;
+      return instructions.find(({ id }) => id === selected.id) ?? null;
     })
   );
   readonly hotkeys$ = of([
@@ -157,7 +164,7 @@ export class InstructionDockComponent {
   onDeleteInstruction(instructionId: string) {
     this._instructionApiService
       .deleteInstruction(instructionId)
-      .subscribe(() => this._boardStore.setSelectedId(null));
+      .subscribe(() => this._boardStore.setSelected(null));
   }
 
   onKeyDown(
@@ -210,7 +217,7 @@ export class InstructionDockComponent {
 
                 return this._instructionApiService
                   .deleteInstruction(instruction.id)
-                  .pipe(tap(() => this._boardStore.setSelectedId(null)));
+                  .pipe(tap(() => this._boardStore.setSelected(null)));
               })
             )
             .subscribe();

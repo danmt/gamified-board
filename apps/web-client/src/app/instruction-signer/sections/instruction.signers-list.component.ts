@@ -75,10 +75,13 @@ export class InstructionSignersListComponent {
   @Input() pgInstructionId: Option<string> = null;
   @Input() pgDropLists: string[] = [];
   @Input() pgInstructionSigners: InstructionSigner[] = [];
-  @Output() pgSelect = new EventEmitter<string>();
+  @Output() pgSelect = new EventEmitter<{
+    id: string;
+    kind: 'instructionSigner';
+  }>();
 
   onSelect(selectId: string) {
-    this.pgSelect.emit(selectId);
+    this.pgSelect.emit({ id: selectId, kind: 'instructionSigner' });
   }
 
   trackBy(index: number): number {

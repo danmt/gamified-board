@@ -2,7 +2,7 @@ import { Dialog } from '@angular/cdk/dialog';
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { LetModule, PushModule } from '@ngrx/component';
-import { concatMap, EMPTY, map, of, tap } from 'rxjs';
+import { combineLatest, concatMap, EMPTY, map, of, tap } from 'rxjs';
 import { BoardStore, InstructionSysvarView } from '../../core/stores';
 import {
   ConfirmModalDirective,
@@ -117,13 +117,28 @@ export class InstructionSysvarDockComponent {
     InstructionSysvarApiService
   );
 
-  readonly selected$ = this._boardStore.selected$.pipe(
-    map((selected) => {
-      if (isNull(selected) || selected.kind !== 'instructionSysvar') {
+  readonly selected$ = combineLatest([
+    this._boardStore.instructions$,
+    this._boardStore.selected$,
+  ]).pipe(
+    map(([instructions, selected]) => {
+      if (
+        isNull(instructions) ||
+        isNull(selected) ||
+        selected.kind !== 'instructionSysvar'
+      ) {
         return null;
       }
 
-      return selected;
+      return (
+        instructions
+          .reduce<InstructionSysvarView[]>(
+            (instructionSysvars, instruction) =>
+              instructionSysvars.concat(instruction.sysvars),
+            []
+          )
+          .find(({ id }) => id === selected.id) ?? null
+      );
     })
   );
   readonly hotkeys$ = of([
@@ -162,7 +177,7 @@ export class InstructionSysvarDockComponent {
   ) {
     this._instructionSysvarApiService
       .deleteInstructionSysvar(instructionId, instructionSysvarId)
-      .subscribe(() => this._boardStore.setSelectedId(null));
+      .subscribe(() => this._boardStore.setSelected(null));
   }
 
   onKeyDown(
@@ -219,7 +234,7 @@ export class InstructionSysvarDockComponent {
                     instructionSysvar.ownerId,
                     instructionSysvar.id
                   )
-                  .pipe(tap(() => this._boardStore.setSelectedId(null)));
+                  .pipe(tap(() => this._boardStore.setSelected(null)));
               })
             )
             .subscribe();

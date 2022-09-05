@@ -2,7 +2,7 @@ import { Dialog } from '@angular/cdk/dialog';
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { LetModule, PushModule } from '@ngrx/component';
-import { concatMap, EMPTY, map, of, tap } from 'rxjs';
+import { combineLatest, concatMap, EMPTY, map, of, tap } from 'rxjs';
 import { BoardStore, SysvarView } from '../../core/stores';
 import {
   ConfirmModalDirective,
@@ -113,13 +113,16 @@ export class SysvarDockComponent {
   private readonly _sysvarApiService = inject(SysvarApiService);
 
   readonly currentApplicationId$ = this._boardStore.currentApplicationId$;
-  readonly selected$ = this._boardStore.selected$.pipe(
-    map((selected) => {
-      if (isNull(selected) || selected.kind !== 'sysvar') {
+  readonly selected$ = combineLatest([
+    this._boardStore.sysvars$,
+    this._boardStore.selected$,
+  ]).pipe(
+    map(([sysvars, selected]) => {
+      if (isNull(sysvars) || isNull(selected) || selected.kind !== 'sysvar') {
         return null;
       }
 
-      return selected;
+      return sysvars.find(({ id }) => id === selected.id) ?? null;
     })
   );
   readonly hotkeys$ = of([
@@ -147,7 +150,7 @@ export class SysvarDockComponent {
   onDeleteSysvar(sysvarId: string) {
     this._sysvarApiService
       .deleteSysvar(sysvarId)
-      .subscribe(() => this._boardStore.setSelectedId(null));
+      .subscribe(() => this._boardStore.setSelected(null));
   }
 
   onKeyDown(hotkeys: HotKey[], sysvar: SysvarView, event: KeyboardEvent) {
@@ -195,7 +198,7 @@ export class SysvarDockComponent {
 
                 return this._sysvarApiService
                   .deleteSysvar(sysvar.id)
-                  .pipe(tap(() => this._boardStore.setSelectedId(null)));
+                  .pipe(tap(() => this._boardStore.setSelected(null)));
               })
             )
             .subscribe();

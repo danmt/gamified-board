@@ -88,12 +88,26 @@ export class BoardSectionComponent {
   private readonly _boardStore = inject(BoardStore);
 
   readonly instructions$ = this._boardStore.currentApplicationInstructions$;
-  readonly selected$ = this._boardStore.selected$;
 
   @HostBinding('class') class = 'block relative min-h-screen min-w-screen';
 
-  onSelect(selectId: Option<string>) {
-    this._boardStore.setSelectedId(selectId);
+  onSelect(
+    selected: Option<{
+      id: string;
+      kind:
+        | 'collection'
+        | 'instruction'
+        | 'application'
+        | 'sysvar'
+        | 'signer'
+        | 'instructionDocument'
+        | 'instructionTask'
+        | 'instructionSigner'
+        | 'instructionSysvar'
+        | 'instructionApplication';
+    }>
+  ) {
+    this._boardStore.setSelected(selected);
   }
 
   onKeyDown(event: KeyboardEvent) {

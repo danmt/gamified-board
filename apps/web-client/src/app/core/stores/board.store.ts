@@ -503,7 +503,20 @@ interface ViewModel {
     id: string;
     kind: 'collection' | 'instruction' | 'application' | 'sysvar' | 'signer';
   }>;
-  selectedId: Option<string>;
+  selected: Option<{
+    id: string;
+    kind:
+      | 'collection'
+      | 'instruction'
+      | 'application'
+      | 'sysvar'
+      | 'signer'
+      | 'instructionDocument'
+      | 'instructionTask'
+      | 'instructionSigner'
+      | 'instructionSysvar'
+      | 'instructionApplication';
+  }>;
   slots: Option<{
     id: string;
     kind: 'collection' | 'instruction' | 'application' | 'sysvar';
@@ -518,7 +531,7 @@ const initialState: ViewModel = {
   isApplicationsSectionOpen: false,
   isSysvarsSectionOpen: false,
   active: null,
-  selectedId: null,
+  selected: null,
   slots: [null, null, null, null, null, null, null, null, null, null],
 };
 
@@ -534,10 +547,11 @@ export class BoardStore
   private readonly _sysvarsStore = inject(SysvarsStore);
 
   readonly workspaceId$ = this.select(({ workspaceId }) => workspaceId);
-  readonly active$ = this.select(({ active }) => active);
   readonly currentApplicationId$ = this.select(
     ({ currentApplicationId }) => currentApplicationId
   );
+  readonly active$ = this.select(({ active }) => active);
+  readonly selected$ = this.select(({ selected }) => selected);
   readonly isCollectionsSectionOpen$ = this.select(
     ({ isCollectionsSectionOpen }) => isCollectionsSectionOpen
   );
@@ -697,62 +711,6 @@ export class BoardStore
       });
     }
   );
-  readonly selected$ = this.select(
-    this.applications$,
-    this.instructions$,
-    this.collections$,
-    this.sysvars$,
-    this.select(({ selectedId }) => selectedId),
-    (applications, instructions, collections, sysvars, selectedId) => {
-      if (
-        isNull(applications) ||
-        isNull(instructions) ||
-        isNull(collections) ||
-        isNull(sysvars) ||
-        isNull(selectedId)
-      ) {
-        return null;
-      }
-
-      return (
-        applications.find((application) => application.id === selectedId) ??
-        instructions.find((instruction) => instruction.id === selectedId) ??
-        collections.find((collection) => collection.id === selectedId) ??
-        sysvars.find((sysvar) => sysvar.id === selectedId) ??
-        instructions
-          .reduce<InstructionDocumentView[]>(
-            (all, instruction) => all.concat(instruction.documents),
-            []
-          )
-          .find((document) => document.id === selectedId) ??
-        instructions
-          .reduce<InstructionTaskView[]>(
-            (all, instruction) => all.concat(instruction.tasks),
-            []
-          )
-          .find((task) => task.id === selectedId) ??
-        instructions
-          .reduce<InstructionApplicationView[]>(
-            (all, instruction) => all.concat(instruction.applications),
-            []
-          )
-          .find((application) => application.id === selectedId) ??
-        instructions
-          .reduce<InstructionSysvarView[]>(
-            (all, instruction) => all.concat(instruction.sysvars),
-            []
-          )
-          .find((sysvar) => sysvar.id === selectedId) ??
-        instructions
-          .reduce<InstructionSignerView[]>(
-            (all, instruction) => all.concat(instruction.signers),
-            []
-          )
-          .find((signer) => signer.id === selectedId) ??
-        null
-      );
-    }
-  );
 
   readonly setWorkspaceId = this.updater<Option<string>>(
     (state, workspaceId) => ({
@@ -806,12 +764,25 @@ export class BoardStore
     active,
   }));
 
-  readonly setSelectedId = this.updater<Option<string>>(
-    (state, selectedId) => ({
-      ...state,
-      selectedId,
-    })
-  );
+  readonly setSelected = this.updater<
+    Option<{
+      id: string;
+      kind:
+        | 'collection'
+        | 'instruction'
+        | 'application'
+        | 'sysvar'
+        | 'signer'
+        | 'instructionDocument'
+        | 'instructionTask'
+        | 'instructionSigner'
+        | 'instructionSysvar'
+        | 'instructionApplication';
+    }>
+  >((state, selected) => ({
+    ...state,
+    selected,
+  }));
 
   readonly toggleIsCollectionsSectionOpen = this.updater<void>((state) => ({
     ...state,
@@ -856,10 +827,10 @@ export class BoardStore
         ...state,
         active: null,
       };
-    } else if (isNotNull(state.selectedId)) {
+    } else if (isNotNull(state.selected)) {
       return {
         ...state,
-        selectedId: null,
+        selected: null,
       };
     } else {
       return state;

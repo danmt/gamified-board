@@ -160,7 +160,7 @@ export class SysvarsInventoryComponent {
   }
 
   onSelectSysvar(sysvarId: string) {
-    this._boardStore.setSelectedId(sysvarId);
+    this._boardStore.setSelected({ id: sysvarId, kind: 'signer' });
   }
 
   onCreateSysvar(id: string, name: string, thumbnailUrl: string) {

@@ -2,7 +2,7 @@ import { Dialog } from '@angular/cdk/dialog';
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { LetModule, PushModule } from '@ngrx/component';
-import { concatMap, EMPTY, map, of, tap } from 'rxjs';
+import { combineLatest, concatMap, EMPTY, map, of, tap } from 'rxjs';
 import { ApplicationView, BoardStore } from '../../core/stores';
 import {
   ConfirmModalDirective,
@@ -117,13 +117,20 @@ export class ApplicationDockComponent {
   private readonly _applicationApiService = inject(ApplicationApiService);
 
   readonly currentApplicationId$ = this._boardStore.currentApplicationId$;
-  readonly selected$ = this._boardStore.selected$.pipe(
-    map((selected) => {
-      if (isNull(selected) || selected.kind !== 'application') {
+  readonly selected$ = combineLatest([
+    this._boardStore.applications$,
+    this._boardStore.selected$,
+  ]).pipe(
+    map(([applications, selected]) => {
+      if (
+        isNull(applications) ||
+        isNull(selected) ||
+        selected.kind !== 'application'
+      ) {
         return null;
       }
 
-      return selected;
+      return applications.find(({ id }) => id === selected.id) ?? null;
     })
   );
   readonly hotkeys$ = of([
@@ -158,7 +165,7 @@ export class ApplicationDockComponent {
   onDeleteApplication(applicationId: string) {
     this._applicationApiService
       .deleteApplication(applicationId)
-      .subscribe(() => this._boardStore.setSelectedId(null));
+      .subscribe(() => this._boardStore.setSelected(null));
   }
 
   onKeyDown(
@@ -210,7 +217,7 @@ export class ApplicationDockComponent {
 
                 return this._applicationApiService
                   .deleteApplication(application.id)
-                  .pipe(tap(() => this._boardStore.setSelectedId(null)));
+                  .pipe(tap(() => this._boardStore.setSelected(null)));
               })
             )
             .subscribe();
