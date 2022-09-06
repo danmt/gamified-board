@@ -81,15 +81,15 @@ body,
   height: 80px;
 }
 
-.bp-skin-detail-1 {
-  background-image: url('./assets/skins/futuristic/metal-details-1.png');
+.bp-skin-detail-left {
+  background-image: url('./assets/skins/futuristic/metal-details-left.png');
   background-repeat: no-repeat;
   width: 30px;
   height: 41px;
 }
 
-.bp-skin-detail-2 {
-  background-image: url('./assets/skins/futuristic/metal-details-2.png');
+.bp-skin-detail-right {
+  background-image: url('./assets/skins/futuristic/metal-details-right.png');
   background-repeat: no-repeat;
   width: 30px;
   height: 41px;
@@ -181,6 +181,23 @@ body,
 
 .bp-button-futuristic:active {
   background-image: url('./assets/skins/futuristic/button-active.png');
+}
+
+.bp-button-error-futuristic {
+  background-color: transparent;
+  background-image: url('./assets/skins/futuristic/button-error-normal.png');
+  background-repeat: no-repeat;
+  width: 229px;
+  height: 69px;
+  font-size: 24px;
+}
+
+.bp-button-error-futuristic:hover {
+  background-image: url('./assets/skins/futuristic/button-error-hover.png');
+}
+
+.bp-button-error-futuristic:active {
+  background-image: url('./assets/skins/futuristic/button-error-active.png');
 }
 
 .bp-button-close-futuristic {

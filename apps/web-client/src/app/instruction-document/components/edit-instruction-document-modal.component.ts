@@ -24,6 +24,7 @@ import {
 } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { v4 as uuid } from 'uuid';
+import { ModalComponent } from '../../shared/components';
 import {
   KeyboardListenerDirective,
   StopKeydownPropagationDirective,
@@ -158,61 +159,67 @@ export class EditInstructionDocumentModalDirective {
 @Component({
   selector: 'pg-edit-instruction-document-modal',
   template: `
-    <div
-      class="px-4 pt-8 pb-4 bg-white shadow-xl relative"
+    <pg-modal
+      class="px-6 pt-8 pb-4 text-white min-w-[400px] min-h-[400px]"
       pgStopKeydownPropagation
       pgKeyboardListener
       (keydown)="onKeyDown($event)"
     >
-      <button
-        class="absolute top-2 right-2 rounded-full border border-black leading-none w-6 h-6"
-        (click)="onClose()"
-      >
-        x
-      </button>
-
-      <h1 class="text-center text-xl mb-4">
-        {{ instructionDocument === null ? 'Create' : 'Update' }} document
-      </h1>
+      <div class="flex justify-between w-full">
+        <h1 class="text-center text-3xl mb-4 bp-font-game uppercase">
+          {{ instructionDocument === null ? 'Create' : 'Update' }} document
+        </h1>
+        <button
+          class="bp-button-close-futuristic z-20 outline-0"
+          (click)="onClose()"
+        ></button>
+      </div>
 
       <form
         [formGroup]="form"
         (ngSubmit)="onSubmit()"
         class="max-h-96 overflow-y-auto"
       >
-        <div>
-          <label class="block" for="document-id-input">Document ID</label>
-          <input
-            class="block border-b-2 border-black"
-            id="document-id-input"
-            type="text"
-            formControlName="id"
-            [readonly]="instructionDocument !== null"
-          />
-          <p *ngIf="instructionDocument === null">
+        <div class="mb-4">
+          <label class="block bp-font-game text-xl" for="document-id-input"
+            >Document ID</label
+          >
+          <div class="flex items-center justify-between w-full">
+            <input
+              class="bp-input-futuristic p-4 outline-0"
+              id="document-id-input"
+              type="text"
+              formControlName="id"
+              [readonly]="instructionDocument !== null"
+            />
+
+            <button
+              *ngIf="instructionDocument === null"
+              type="button"
+              (click)="idControl.setValue(onGenerateId())"
+            >
+              Generate
+            </button>
+          </div>
+          <p class="bp-font-game text-sm" *ngIf="instructionDocument === null">
             Hint: The ID cannot be changed afterwards.
           </p>
-          <button
-            *ngIf="instructionDocument === null"
-            type="button"
-            (click)="idControl.setValue(onGenerateId())"
-          >
-            Generate
-          </button>
         </div>
 
-        <div>
-          <label class="block" for="document-name-input"> Document name </label>
+        <div class="mb-4">
+          <label class="block bp-font-game text-xl" for="document-name-input">
+            Document name
+          </label>
           <input
-            class="block border-b-2 border-black"
+            class="bp-input-futuristic p-4 outline-0"
             id="document-name-input"
             type="text"
             formControlName="name"
           />
         </div>
 
-        <fieldset>
-          <legend>Select a method:</legend>
+        <fieldset class="mb-4 bp-font-game">
+          <legend class="block text-xl">Select a method:</legend>
 
           <div>
             <input
@@ -220,8 +227,9 @@ export class EditInstructionDocumentModalDirective {
               id="document-method-read"
               value="read"
               formControlName="method"
+              class="mr-2"
             />
-            <label for="document-method-read">Read</label>
+            <label for="document-method-read" class="text-lg">Read</label>
           </div>
 
           <div>
@@ -230,8 +238,9 @@ export class EditInstructionDocumentModalDirective {
               id="document-method-create"
               value="create"
               formControlName="method"
+              class="mr-2"
             />
-            <label for="document-method-create">Create</label>
+            <label for="document-method-create" class="text-lg">Create</label>
           </div>
 
           <div>
@@ -240,8 +249,9 @@ export class EditInstructionDocumentModalDirective {
               id="document-method-update"
               value="update"
               formControlName="method"
+              class="mr-2"
             />
-            <label for="document-method-update">Update</label>
+            <label for="document-method-update" class="text-lg">Update</label>
           </div>
 
           <div>
@@ -250,8 +260,9 @@ export class EditInstructionDocumentModalDirective {
               id="document-method-delete"
               value="delete"
               formControlName="method"
+              class="mr-2"
             />
-            <label for="document-method-delete">Delete</label>
+            <label for="document-method-delete" class="text-lg">Delete</label>
           </div>
         </fieldset>
 
@@ -453,13 +464,16 @@ export class EditInstructionDocumentModalDirective {
           </select>
         </div>
 
-        <div class="flex justify-center items-center mt-4">
-          <button type="submit" class="px-4 py-2 border-blue-500 border">
+        <div class="flex justify-center items-center mt-10">
+          <button
+            type="submit"
+            class="bp-button-futuristic text-black bp-font-game uppercase"
+          >
             {{ instructionDocument === null ? 'Send' : 'Save' }}
           </button>
         </div>
       </form>
-    </div>
+    </pg-modal>
   `,
   standalone: true,
   imports: [
@@ -468,6 +482,7 @@ export class EditInstructionDocumentModalDirective {
     DragDropModule,
     StopKeydownPropagationDirective,
     KeyboardListenerDirective,
+    ModalComponent,
   ],
 })
 export class EditInstructionDocumentModalComponent {

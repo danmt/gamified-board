@@ -16,6 +16,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { v4 as uuid } from 'uuid';
+import { ModalComponent } from '../../shared/components';
 import {
   KeyboardListenerDirective,
   StopKeydownPropagationDirective,
@@ -79,99 +80,68 @@ export class EditInstructionTaskModalDirective {
 @Component({
   selector: 'pg-edit-instruction-task-modal',
   template: `
-    <div
-      class="px-6 pt-8 pb-4 bp-bg-futuristic shadow-xl relative text-white min-w-[400px] min-h-[300px]"
+    <pg-modal
+      class="px-6 pt-8 pb-4 text-white min-w-[400px] min-h-[300px]"
       pgStopKeydownPropagation
       pgKeyboardListener
       (keydown)="onKeyDown($event)"
     >
-      <!-- corners-->
-      <div
-        class="bp-skin-metal-corner-left-top absolute -left-4 -top-4 z-20"
-      ></div>
-      <div
-        class="bp-skin-metal-corner-right-top absolute -right-4 -top-4 z-20"
-      ></div>
-      <div
-        class="bp-skin-metal-corner-left-bottom absolute -left-4 -bottom-4 z-20"
-      ></div>
-      <div
-        class="bp-skin-metal-corner-right-bottom absolute -right-4 -bottom-4 z-20"
-      ></div>
+      <div class="flex justify-between w-full">
+        <h1 class="text-center text-3xl mb-4 bp-font-game uppercase">
+          {{ instructionTask === null ? 'Create' : 'Update' }} task
+        </h1>
+        <button
+          class="bp-button-close-futuristic z-20 outline-0"
+          (click)="onClose()"
+        ></button>
+      </div>
 
-      <!-- borders -->
-      <div
-        class="bp-skin-metal-border-right absolute -right-4 h-5/6 top-0 bottom-0 my-auto mx-0 z-10"
-      ></div>
-      <div
-        class="bp-skin-metal-border-left absolute -left-4 h-5/6 top-0 bottom-0 my-auto mx-0 z-10"
-      ></div>
-      <div
-        class="bp-skin-metal-border-bottom absolute -bottom-4 w-5/6 left-0 right-0 mx-auto my-0 z-10"
-      ></div>
-      <div
-        class="bp-skin-metal-border-top absolute -top-4 w-5/6 left-0 right-0 mx-auto my-0 z-10"
-      ></div>
-
-      <!-- modal content -->
-      <div>
-        <div class="flex justify-between w-full">
-          <h1 class="text-center text-3xl mb-4 bp-font-game">
-            {{ instructionTask === null ? 'CREATE' : 'UPDATE' }} TASK
-          </h1>
-          <button
-            class="bp-button-close-futuristic z-20 outline-0"
-            (click)="onClose()"
-          ></button>
-        </div>
-
-        <form [formGroup]="form" (ngSubmit)="onSubmit()">
-          <div class="mb-4">
-            <label class="block bp-font-game text-xl" for="task-id-input"
-              >Task ID</label
-            >
-            <div class="flex items-center justify-between w-full">
-              <input
-                class="bp-input-futuristic p-4 outline-0"
-                id="task-id-input"
-                type="text"
-                formControlName="id"
-                [readonly]="instructionTask !== null"
-              />
-              <button
-                *ngIf="instructionTask === null"
-                class="bp-button-generate-futuristic"
-                (click)="idControl.setValue(onGenerateId())"
-              ></button>
-            </div>
-            <p *ngIf="instructionTask === null">
-              Hint: The ID cannot be changed afterwards.
-            </p>
-          </div>
-
-          <div class="mb-4">
-            <label class="block bp-font-game text-xl" for="task-name-input">
-              Task name
-            </label>
+      <form [formGroup]="form" (ngSubmit)="onSubmit()">
+        <div class="mb-4">
+          <label class="block bp-font-game text-xl" for="task-id-input"
+            >Task ID</label
+          >
+          <div class="flex items-center justify-between w-full">
             <input
               class="bp-input-futuristic p-4 outline-0"
-              id="task-name-input"
+              id="task-id-input"
               type="text"
-              formControlName="name"
+              formControlName="id"
+              [readonly]="instructionTask !== null"
             />
-          </div>
-
-          <div class="flex justify-center items-center mt-10">
             <button
-              type="submit"
-              class="bp-button-futuristic text-black bp-font-game"
-            >
-              {{ instructionTask === null ? 'SEND' : 'SAVE' }}
-            </button>
+              *ngIf="instructionTask === null"
+              class="bp-button-generate-futuristic"
+              (click)="idControl.setValue(onGenerateId())"
+            ></button>
           </div>
-        </form>
-      </div>
-    </div>
+          <p class="bp-font-game text-sm" *ngIf="instructionTask === null">
+            Hint: The ID cannot be changed afterwards.
+          </p>
+        </div>
+
+        <div class="mb-4">
+          <label class="block bp-font-game text-xl" for="task-name-input">
+            Task name
+          </label>
+          <input
+            class="bp-input-futuristic p-4 outline-0"
+            id="task-name-input"
+            type="text"
+            formControlName="name"
+          />
+        </div>
+
+        <div class="flex justify-center items-center mt-10">
+          <button
+            type="submit"
+            class="bp-button-futuristic text-black bp-font-game uppercase"
+          >
+            {{ instructionTask === null ? 'Send' : 'Save' }}
+          </button>
+        </div>
+      </form>
+    </pg-modal>
   `,
   standalone: true,
   imports: [
@@ -179,6 +149,7 @@ export class EditInstructionTaskModalDirective {
     ReactiveFormsModule,
     StopKeydownPropagationDirective,
     KeyboardListenerDirective,
+    ModalComponent,
   ],
 })
 export class EditInstructionTaskModalComponent {
