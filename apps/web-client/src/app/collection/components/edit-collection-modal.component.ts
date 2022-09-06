@@ -170,9 +170,7 @@ export class UpdateCollectionModalDirective {
               class="bp-button-generate-futuristic"
               type="button"
               (click)="idControl.setValue(onGenerateId())"
-            >
-              Generate
-            </button>
+            ></button>
           </div>
           <p class="bp-font-game text-sm" *ngIf="collection === null">
             Hint: The ID cannot be changed afterwards.
