@@ -3,7 +3,7 @@ import { Component, inject } from '@angular/core';
 import { LetModule, PushModule } from '@ngrx/component';
 import { DockDirection, SquareButtonComponent } from '../../shared/components';
 import { KeyboardListenerDirective } from '../../shared/directives';
-import { RightDockComponent } from '../components/right-dock.component copy';
+import { RightDockComponent } from '../components/right-dock.component';
 import { BoardStore } from '../stores';
 
 @Component({
