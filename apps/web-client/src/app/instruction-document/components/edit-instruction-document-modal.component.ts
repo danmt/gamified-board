@@ -173,7 +173,11 @@ export class UpdateInstructionDocumentModalDirective {
         ></button>
       </div>
 
-      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="overflow-y-auto">
+      <form
+        [formGroup]="form"
+        (ngSubmit)="onSubmit()"
+        class="overflow-y-auto max-h-[550px]"
+      >
         <div class="mb-4">
           <label class="block bp-font-game text-xl" for="document-id-input"
             >Document ID</label
@@ -189,11 +193,10 @@ export class UpdateInstructionDocumentModalDirective {
 
             <button
               *ngIf="instructionDocument === null"
+              class="bp-button-generate-futuristic"
               type="button"
               (click)="idControl.setValue(onGenerateId())"
-            >
-              Generate
-            </button>
+            ></button>
           </div>
           <p class="bp-font-game text-sm" *ngIf="instructionDocument === null">
             Hint: The ID cannot be changed afterwards.
