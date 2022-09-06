@@ -15,7 +15,7 @@ import { BoardStore } from '../stores';
       class="pt-4 pb-2 pl-6 pr-12  flex gap-4 justify-center items-start text-white bp-font-game"
       pgKeyboardListener
       (pgKeyDown)="onKeyDown($event)"
-      [direction]="'left'"
+      pgDirection="left"
     >
       <!-- section content -->
       <div

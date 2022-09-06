@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, HostBinding, Input } from '@angular/core';
+import { Component, HostBinding, Input } from '@angular/core';
+import { isNotNull, Option } from '../utils';
 
 export type DockDirection = 'right' | 'left';
 
@@ -24,13 +25,20 @@ export type DockDirection = 'right' | 'left';
   standalone: true,
   imports: [CommonModule],
 })
-export class CornerDockComponent implements AfterViewInit {
+export class CornerDockComponent {
   @HostBinding('class') class = 'block bp-bg-futuristic relative';
 
-  @Input() direction: DockDirection = 'right';
+  direction: DockDirection = 'right';
   oppositeDirection: DockDirection = 'left';
 
-  ngAfterViewInit(): void {
-    this.oppositeDirection = this.direction === 'left' ? 'right' : 'left';
+  @Input() set pgDirection(value: Option<DockDirection>) {
+    if (isNotNull(value)) {
+      this._setDirection(value);
+    }
+  }
+
+  private _setDirection(direction: DockDirection) {
+    this.direction = direction;
+    this.oppositeDirection = direction === 'left' ? 'right' : 'left';
   }
 }

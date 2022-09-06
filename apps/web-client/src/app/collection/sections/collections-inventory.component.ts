@@ -20,7 +20,7 @@ import { CollectionApiService } from '../services';
   template: `
     <pg-inventory
       class="mt-10 min-w-[300px] min-h-[500px] max-h-[500px]"
-      direction="right"
+      pgDirection="right"
     >
       <header class="relative h-[80px]">
         <div

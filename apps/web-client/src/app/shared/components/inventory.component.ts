@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, HostBinding, Input } from '@angular/core';
+import { Component, HostBinding, Input } from '@angular/core';
+import { isNotNull, Option } from '../utils';
 
 export type InventoryDirection = 'left' | 'right';
 
@@ -53,13 +54,20 @@ export type InventoryDirection = 'left' | 'right';
   standalone: true,
   imports: [CommonModule],
 })
-export class InventoryComponent implements AfterViewInit {
+export class InventoryComponent {
   @HostBinding('class') class = 'flex flex-col relative z-40 bp-bg-futuristic';
 
-  @Input() direction: InventoryDirection = 'right';
+  direction: InventoryDirection = 'right';
   oppositeDirection: InventoryDirection = 'left';
 
-  ngAfterViewInit(): void {
-    this.oppositeDirection = this.direction === 'left' ? 'right' : 'left';
+  @Input() set pgDirection(value: Option<InventoryDirection>) {
+    if (isNotNull(value)) {
+      this._setDirection(value);
+    }
+  }
+
+  private _setDirection(direction: InventoryDirection) {
+    this.direction = direction;
+    this.oppositeDirection = direction === 'left' ? 'right' : 'left';
   }
 }

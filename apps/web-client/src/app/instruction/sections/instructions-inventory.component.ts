@@ -4,11 +4,11 @@ import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { LetModule, PushModule } from '@ngrx/component';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, combineLatest, map } from 'rxjs';
 import { BoardStore } from '../../core/stores';
 import { InventoryComponent } from '../../shared/components';
 import { DefaultImageDirective } from '../../shared/directives';
-import { Option } from '../../shared/utils';
+import { isNull, Option } from '../../shared/utils';
 import {
   EditInstructionModalDirective,
   InstructionTooltipDirective,
@@ -19,7 +19,7 @@ import { InstructionApiService } from '../services';
   selector: 'pg-instructions-inventory',
   template: `
     <pg-inventory
-      direction="left"
+      pgDirection="left"
       class="mt-10 min-w-[300px] min-h-[500px] max-h-[500px]"
     >
       <header class="relative h-[80px]">
@@ -119,6 +119,19 @@ import { InstructionApiService } from '../services';
               <div *cdkDragPlaceholder></div>
             </div>
           </div>
+
+          <div *ngrxLet="page$; let page">
+            <button (click)="onPreviousPage()" [disabled]="page === 1">
+              previous
+            </button>
+            <button
+              *ngrxLet="total$; let total"
+              (click)="onNextPage()"
+              [disabled]="pageSize * page >= total"
+            >
+              next
+            </button>
+          </div>
         </div>
       </section>
     </pg-inventory>
@@ -142,11 +155,39 @@ export class InstructionsInventoryComponent {
   private readonly _instructionApiService = inject(InstructionApiService);
 
   private readonly _isDragging = new BehaviorSubject<Option<string>>(null);
+  private readonly _page = new BehaviorSubject(1);
 
   readonly isDragging$ = this._isDragging.asObservable();
   readonly workspaceId$ = this._boardStore.workspaceId$;
   readonly currentApplicationId$ = this._boardStore.currentApplicationId$;
-  readonly instructions$ = this._boardStore.instructions$;
+  readonly total$ = this._boardStore.instructions$.pipe(
+    map((instructions) => instructions?.length ?? 0)
+  );
+  readonly pageSize = 24;
+  readonly page$ = this._page.asObservable();
+  readonly instructions$ = combineLatest([
+    this._boardStore.instructions$,
+    this.page$,
+  ]).pipe(
+    map(([instructions, page]) => {
+      if (isNull(instructions)) {
+        return null;
+      }
+
+      return instructions.slice(
+        page === 1 ? 0 : (page - 1) * this.pageSize,
+        page * this.pageSize
+      );
+    })
+  );
+
+  onNextPage() {
+    this._page.next(this._page.getValue() + 1);
+  }
+
+  onPreviousPage() {
+    this._page.next(this._page.getValue() - 1);
+  }
 
   onActivateInstruction(instructionId: string) {
     this._boardStore.setActive({ id: instructionId, kind: 'instruction' });
