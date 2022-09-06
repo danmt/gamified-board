@@ -45,20 +45,22 @@ export const openEditInstructionSysvarModal = (
     data,
   });
 
-@Directive({ selector: '[pgEditInstructionSysvarModal]', standalone: true })
-export class EditInstructionSysvarModalDirective {
+@Directive({ selector: '[pgUpdateInstructionSysvarModal]', standalone: true })
+export class UpdateInstructionSysvarModalDirective {
   private readonly _dialog = inject(Dialog);
 
   @Input() pgInstructionSysvar: Option<InstructionSysvar> = null;
 
-  @Output() pgCreateInstructionSysvar =
-    new EventEmitter<EditInstructionSysvarSubmit>();
   @Output() pgUpdateInstructionSysvar =
     new EventEmitter<EditInstructionSysvarSubmit>();
   @Output() pgOpenModal = new EventEmitter();
   @Output() pgCloseModal = new EventEmitter();
 
   @HostListener('click', []) onClick() {
+    if (isNull(this.pgInstructionSysvar)) {
+      throw new Error('pgInstructionSysvar is missing.');
+    }
+
     this.pgOpenModal.emit();
 
     openEditInstructionSysvarModal(this._dialog, {
@@ -67,11 +69,7 @@ export class EditInstructionSysvarModalDirective {
       this.pgCloseModal.emit();
 
       if (instructionSysvarData !== undefined) {
-        if (isNull(this.pgInstructionSysvar)) {
-          this.pgCreateInstructionSysvar.emit(instructionSysvarData);
-        } else {
-          this.pgUpdateInstructionSysvar.emit(instructionSysvarData);
-        }
+        this.pgUpdateInstructionSysvar.emit(instructionSysvarData);
       }
     });
   }

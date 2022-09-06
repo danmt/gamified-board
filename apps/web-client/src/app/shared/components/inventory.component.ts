@@ -1,5 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { Component, HostBinding, Input } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  HostBinding,
+  Input,
+  Output,
+} from '@angular/core';
 import { isNotNull, Option } from '../utils';
 
 export type InventoryDirection = 'left' | 'right';
@@ -49,13 +55,44 @@ export type InventoryDirection = 'left' | 'right';
     ></div>
 
     <!-- section content -->
-    <ng-content></ng-content>
+
+    <header class="relative h-[80px]">
+      <div
+        class="flex relative w-full bp-skin-title-box items-center justify-between pl-6 pr-8 mr-1.5"
+      >
+        <ng-content select="[pgInventoryTitle]"></ng-content>
+        <ng-content select="[pgInventoryCreateButton]"></ng-content>
+      </div>
+    </header>
+
+    <section class="max-w-[280px] p-4 flex flex-col gap-2 flex-1">
+      <div class="flex-1">
+        <ng-content select="[pgInventoryBody]"></ng-content>
+      </div>
+
+      <div class="flex justify-center gap-2">
+        <button (click)="onPreviousPage()" [disabled]="pgPage === 1">
+          previous
+        </button>
+        <button
+          (click)="onNextPage()"
+          [disabled]="pgPageSize * pgPage >= pgTotal"
+        >
+          next
+        </button>
+      </div>
+    </section>
   `,
   standalone: true,
   imports: [CommonModule],
 })
 export class InventoryComponent {
   @HostBinding('class') class = 'flex flex-col relative z-40 bp-bg-futuristic';
+
+  @Input() pgPageSize = 24;
+  @Input() pgPage = 1;
+  @Input() pgTotal = 0;
+  @Output() pgSetPage = new EventEmitter<number>();
 
   direction: InventoryDirection = 'right';
   oppositeDirection: InventoryDirection = 'left';
@@ -69,5 +106,13 @@ export class InventoryComponent {
   private _setDirection(direction: InventoryDirection) {
     this.direction = direction;
     this.oppositeDirection = direction === 'left' ? 'right' : 'left';
+  }
+
+  onPreviousPage() {
+    this.pgSetPage.emit(this.pgPage - 1);
+  }
+
+  onNextPage() {
+    this.pgSetPage.emit(this.pgPage + 1);
   }
 }

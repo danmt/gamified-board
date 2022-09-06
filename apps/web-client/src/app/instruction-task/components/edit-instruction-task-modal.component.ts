@@ -45,20 +45,22 @@ export const openEditInstructionTaskModal = (
     data,
   });
 
-@Directive({ selector: '[pgEditInstructionTaskModal]', standalone: true })
-export class EditInstructionTaskModalDirective {
+@Directive({ selector: '[pgUpdateInstructionTaskModal]', standalone: true })
+export class UpdateInstructionTaskModalDirective {
   private readonly _dialog = inject(Dialog);
 
   @Input() pgInstructionTask: Option<InstructionTask> = null;
 
-  @Output() pgCreateInstructionTask =
-    new EventEmitter<EditInstructionTaskSubmit>();
   @Output() pgUpdateInstructionTask =
     new EventEmitter<EditInstructionTaskSubmit>();
   @Output() pgOpenModal = new EventEmitter();
   @Output() pgCloseModal = new EventEmitter();
 
   @HostListener('click', []) onClick() {
+    if (isNull(this.pgInstructionTask)) {
+      throw new Error('pgInstructionTask is missing.');
+    }
+
     this.pgOpenModal.emit();
 
     openEditInstructionTaskModal(this._dialog, {
@@ -67,11 +69,7 @@ export class EditInstructionTaskModalDirective {
       this.pgCloseModal.emit();
 
       if (instructionTaskData !== undefined) {
-        if (isNull(this.pgInstructionTask)) {
-          this.pgCreateInstructionTask.emit(instructionTaskData);
-        } else {
-          this.pgUpdateInstructionTask.emit(instructionTaskData);
-        }
+        this.pgUpdateInstructionTask.emit(instructionTaskData);
       }
     });
   }

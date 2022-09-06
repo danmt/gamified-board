@@ -11,7 +11,10 @@ import { RouterModule } from '@angular/router';
 import { LetModule, PushModule } from '@ngrx/component';
 import { provideComponentStore } from '@ngrx/component-store';
 import { startWith } from 'rxjs';
-import { EditApplicationModalDirective } from '../application/components';
+import {
+  CreateApplicationModalDirective,
+  UpdateApplicationModalDirective,
+} from '../application/components';
 import { ApplicationApiService } from '../application/services';
 import { LobbyStore } from '../core/stores';
 import { Option } from '../shared/utils';
@@ -80,10 +83,11 @@ import { WorkspaceApiService } from '../workspace/services';
           <button
             *ngIf="selectedWorkspace$ | ngrxPush as selectedWorkspace"
             class="border border-blue-500"
-            pgEditApplicationModal
+            pgCreateApplicationModal
+            [pgWorkspaceId]="selectedWorkspace?.id ?? null"
             (pgCreateApplication)="
               onCreateApplication(
-                selectedWorkspace.id,
+                $event.workspaceId,
                 $event.id,
                 $event.name,
                 $event.thumbnailUrl
@@ -95,7 +99,7 @@ import { WorkspaceApiService } from '../workspace/services';
           <button
             *ngIf="selectedApplication$ | ngrxPush as selectedApplication"
             class="border border-blue-500"
-            pgEditApplicationModal
+            pgUpdateApplicationModal
             (pgUpdateApplication)="
               onUpdateApplication(
                 selectedApplication.id,
@@ -155,7 +159,8 @@ import { WorkspaceApiService } from '../workspace/services';
     LetModule,
     PushModule,
     EditWorkspaceModalDirective,
-    EditApplicationModalDirective,
+    CreateApplicationModalDirective,
+    UpdateApplicationModalDirective,
   ],
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,

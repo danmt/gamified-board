@@ -41,6 +41,11 @@ export interface EditCollectionData {
 
 export type EditCollectionSubmit = Collection;
 
+export type CreateCollectionSubmit = Collection & {
+  workspaceId: string;
+  applicationId: string;
+};
+
 export const openEditCollectionModal = (
   dialog: Dialog,
   data: EditCollectionData
@@ -53,18 +58,61 @@ export const openEditCollectionModal = (
     data,
   });
 
-@Directive({ selector: '[pgEditCollectionModal]', standalone: true })
-export class EditCollectionModalDirective {
+@Directive({ selector: '[pgCreateCollectionModal]', standalone: true })
+export class CreateCollectionModalDirective {
+  private readonly _dialog = inject(Dialog);
+
+  @Input() pgWorkspaceId: Option<string> = null;
+  @Input() pgApplicationId: Option<string> = null;
+  @Output() pgCreateCollection = new EventEmitter<CreateCollectionSubmit>();
+  @Output() pgOpenModal = new EventEmitter();
+  @Output() pgCloseModal = new EventEmitter();
+
+  @HostListener('click', []) onClick() {
+    if (isNull(this.pgWorkspaceId)) {
+      throw new Error('pgWorkspaceId is missing');
+    }
+
+    if (isNull(this.pgApplicationId)) {
+      throw new Error('pgApplicationId is missing');
+    }
+
+    const workspaceId = this.pgWorkspaceId;
+    const applicationId = this.pgApplicationId;
+
+    this.pgOpenModal.emit();
+
+    openEditCollectionModal(this._dialog, {
+      collection: null,
+    }).closed.subscribe((collectionData) => {
+      this.pgCloseModal.emit();
+
+      if (collectionData !== undefined) {
+        this.pgCreateCollection.emit({
+          ...collectionData,
+          workspaceId,
+          applicationId,
+        });
+      }
+    });
+  }
+}
+
+@Directive({ selector: '[pgUpdateCollectionModal]', standalone: true })
+export class UpdateCollectionModalDirective {
   private readonly _dialog = inject(Dialog);
 
   @Input() pgCollection: Option<Collection> = null;
 
-  @Output() pgCreateCollection = new EventEmitter<EditCollectionSubmit>();
   @Output() pgUpdateCollection = new EventEmitter<EditCollectionSubmit>();
   @Output() pgOpenModal = new EventEmitter();
   @Output() pgCloseModal = new EventEmitter();
 
   @HostListener('click', []) onClick() {
+    if (isNull(this.pgCollection)) {
+      throw new Error('pgCollection is missing');
+    }
+
     this.pgOpenModal.emit();
 
     openEditCollectionModal(this._dialog, {
@@ -73,11 +121,7 @@ export class EditCollectionModalDirective {
       this.pgCloseModal.emit();
 
       if (collectionData !== undefined) {
-        if (isNull(this.pgCollection)) {
-          this.pgCreateCollection.emit(collectionData);
-        } else {
-          this.pgUpdateCollection.emit(collectionData);
-        }
+        this.pgUpdateCollection.emit(collectionData);
       }
     });
   }

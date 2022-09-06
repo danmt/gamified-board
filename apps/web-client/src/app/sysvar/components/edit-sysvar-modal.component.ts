@@ -20,7 +20,7 @@ import {
   KeyboardListenerDirective,
   StopKeydownPropagationDirective,
 } from '../../shared/directives';
-import { Entity, isNull, Option } from '../../shared/utils';
+import { Entity, Option } from '../../shared/utils';
 
 export type Sysvar = Entity<{
   name: string;
@@ -41,18 +41,44 @@ export const openEditSysvarModal = (dialog: Dialog, data: EditSysvarData) =>
     }
   );
 
-@Directive({ selector: '[pgEditSysvarModal]', standalone: true })
-export class EditSysvarModalDirective {
+@Directive({ selector: '[pgCreateSysvarModal]', standalone: true })
+export class CreateSysvarModalDirective {
+  private readonly _dialog = inject(Dialog);
+
+  @Output() pgCreateSysvar = new EventEmitter<EditSysvarSubmit>();
+  @Output() pgOpenModal = new EventEmitter();
+  @Output() pgCloseModal = new EventEmitter();
+
+  @HostListener('click', []) onClick() {
+    this.pgOpenModal.emit();
+
+    openEditSysvarModal(this._dialog, {
+      sysvar: null,
+    }).closed.subscribe((sysvarData) => {
+      this.pgCloseModal.emit();
+
+      if (sysvarData !== undefined) {
+        this.pgCreateSysvar.emit(sysvarData);
+      }
+    });
+  }
+}
+
+@Directive({ selector: '[pgUpdateSysvarModal]', standalone: true })
+export class UpdateSysvarModalDirective {
   private readonly _dialog = inject(Dialog);
 
   @Input() pgSysvar: Option<Sysvar> = null;
 
-  @Output() pgCreateSysvar = new EventEmitter<EditSysvarSubmit>();
   @Output() pgUpdateSysvar = new EventEmitter<EditSysvarSubmit>();
   @Output() pgOpenModal = new EventEmitter();
   @Output() pgCloseModal = new EventEmitter();
 
   @HostListener('click', []) onClick() {
+    if (this.pgSysvar === null) {
+      throw new Error('pgSysvar is missing.');
+    }
+
     this.pgOpenModal.emit();
 
     openEditSysvarModal(this._dialog, {
@@ -61,11 +87,7 @@ export class EditSysvarModalDirective {
       this.pgCloseModal.emit();
 
       if (sysvarData !== undefined) {
-        if (isNull(this.pgSysvar)) {
-          this.pgCreateSysvar.emit(sysvarData);
-        } else {
-          this.pgUpdateSysvar.emit(sysvarData);
-        }
+        this.pgUpdateSysvar.emit(sysvarData);
       }
     });
   }

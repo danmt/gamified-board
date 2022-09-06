@@ -4,13 +4,13 @@ import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { LetModule, PushModule } from '@ngrx/component';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, combineLatest, map } from 'rxjs';
 import { BoardStore } from '../../core/stores';
 import { InventoryComponent } from '../../shared/components';
 import { DefaultImageDirective } from '../../shared/directives';
-import { Option } from '../../shared/utils';
+import { isNull, Option } from '../../shared/utils';
 import {
-  EditSysvarModalDirective,
+  CreateSysvarModalDirective,
   SysvarTooltipDirective,
 } from '../components';
 import { SysvarApiService } from '../services';
@@ -21,94 +21,90 @@ import { SysvarApiService } from '../services';
     <pg-inventory
       class="mt-10 min-w-[300px] min-h-[500px] max-h-[500px]"
       pgDirection="right"
+      [pgTotal]="(total$ | ngrxPush) ?? 0"
+      [pgPage]="(page$ | ngrxPush) ?? 1"
+      [pgPageSize]="pageSize"
+      (pgSetPage)="onSetPage($event)"
     >
-      <header class="relative h-[80px]">
-        <div
-          class="flex absolute w-full bp-skin-title-box items-center justify-between pl-6 pr-8 ml-1.5"
-        >
-          <h1 class="bp-font-game text-3xl">Sysvars</h1>
+      <h2 class="bp-font-game text-3xl" pgInventoryTitle>Sysvars</h2>
 
-          <button
-            class="bp-button-add-futuristic z-20"
-            pgEditSysvarModal
-            (pgCreateSysvar)="
-              onCreateSysvar($event.id, $event.name, $event.thumbnailUrl)
-            "
-          ></button>
-        </div>
-      </header>
+      <button
+        class="bp-button-add-futuristic z-20"
+        pgCreateSysvarModal
+        (pgCreateSysvar)="
+          onCreateSysvar($event.id, $event.name, $event.thumbnailUrl)
+        "
+        pgInventoryCreateButton
+      ></button>
 
-      <section
-        class="flex-1 pl-6 pr-4 pt-4 pb-10 overflow-auto max-w-[280px] ml-2"
+      <div
+        pgInventoryBody
+        *ngrxLet="sysvars$; let sysvars"
+        id="sysvars-section"
+        cdkDropList
+        [cdkDropListConnectedTo]="[
+          'slot-0',
+          'slot-1',
+          'slot-2',
+          'slot-3',
+          'slot-4',
+          'slot-5',
+          'slot-6',
+          'slot-7',
+          'slot-8',
+          'slot-9'
+        ]"
+        [cdkDropListData]="sysvars"
+        cdkDropListSortingDisabled
+        class="flex flex-wrap gap-4 justify-center"
       >
         <div
-          *ngrxLet="sysvars$; let sysvars"
-          id="sysvars-section"
-          cdkDropList
-          [cdkDropListConnectedTo]="[
-            'slot-0',
-            'slot-1',
-            'slot-2',
-            'slot-3',
-            'slot-4',
-            'slot-5',
-            'slot-6',
-            'slot-7',
-            'slot-8',
-            'slot-9'
-          ]"
-          [cdkDropListData]="sysvars"
-          cdkDropListSortingDisabled
-          class="flex flex-wrap gap-4"
+          *ngFor="let sysvar of sysvars; trackBy: trackBy"
+          class="relative"
+          pgSysvarTooltip
+          [pgSysvar]="sysvar"
         >
-          <div
-            *ngFor="let sysvar of sysvars; trackBy: trackBy"
-            class="relative"
-            pgSysvarTooltip
-            [pgSysvar]="sysvar"
-          >
-            <ng-container *ngIf="(isDragging$ | ngrxPush) === sysvar.id">
-              <div
-                class="w-full h-full absolute z-20 bg-black bg-opacity-50"
-              ></div>
-              <div class="bg-green-800 p-0.5 w-11 h-11">
-                <img
-                  class="w-full h-full object-cover"
-                  [src]="sysvar.thumbnailUrl"
-                  pgDefaultImage="assets/generic/sysvar.png"
-                />
-              </div>
-            </ng-container>
-
+          <ng-container *ngIf="(isDragging$ | ngrxPush) === sysvar.id">
             <div
-              cdkDrag
-              [cdkDragData]="{ id: sysvar.id, kind: 'sysvar' }"
-              (click)="onSelectSysvar(sysvar.id)"
-              (dblclick)="onActivateSysvar(sysvar.id)"
-              (cdkDragStarted)="onDragStart($event)"
-              (cdkDragEnded)="onDragEnd()"
-            >
-              <div class="bg-green-800 p-0.5 w-11 h-11">
-                <img
-                  class="w-full h-full object-cover"
-                  [src]="sysvar.thumbnailUrl"
-                  pgDefaultImage="assets/generic/sysvar.png"
-                />
-              </div>
-
-              <div *cdkDragPreview class="bg-gray-500 p-1 w-12 h-12 rounded-md">
-                <img
-                  class="w-full h-full object-cover"
-                  [src]="sysvar.thumbnailUrl"
-                  pgDefaultImage="assets/generic/sysvar.png"
-                />
-              </div>
-
-              <div *cdkDragPlaceholder></div>
+              class="w-full h-full absolute z-20 bg-black bg-opacity-50"
+            ></div>
+            <div class="bg-green-800 p-0.5 w-11 h-11">
+              <img
+                class="w-full h-full object-cover"
+                [src]="sysvar.thumbnailUrl"
+                pgDefaultImage="assets/generic/sysvar.png"
+              />
             </div>
+          </ng-container>
+
+          <div
+            cdkDrag
+            [cdkDragData]="{ id: sysvar.id, kind: 'sysvar' }"
+            (click)="onSelectSysvar(sysvar.id)"
+            (dblclick)="onActivateSysvar(sysvar.id)"
+            (cdkDragStarted)="onDragStart($event)"
+            (cdkDragEnded)="onDragEnd()"
+          >
+            <div class="bg-green-800 p-0.5 w-11 h-11">
+              <img
+                class="w-full h-full object-cover"
+                [src]="sysvar.thumbnailUrl"
+                pgDefaultImage="assets/generic/sysvar.png"
+              />
+            </div>
+
+            <div *cdkDragPreview class="bg-gray-500 p-1 w-12 h-12 rounded-md">
+              <img
+                class="w-full h-full object-cover"
+                [src]="sysvar.thumbnailUrl"
+                pgDefaultImage="assets/generic/sysvar.png"
+              />
+            </div>
+
+            <div *cdkDragPlaceholder></div>
           </div>
         </div>
-      </section>
+      </div>
     </pg-inventory>
   `,
   standalone: true,
@@ -119,7 +115,7 @@ import { SysvarApiService } from '../services';
     PushModule,
     LetModule,
     RouterModule,
-    EditSysvarModalDirective,
+    CreateSysvarModalDirective,
     DefaultImageDirective,
     SysvarTooltipDirective,
     InventoryComponent,
@@ -130,9 +126,33 @@ export class SysvarsInventoryComponent {
   private readonly _sysvarApiService = inject(SysvarApiService);
 
   private readonly _isDragging = new BehaviorSubject<Option<string>>(null);
+  private readonly _page = new BehaviorSubject<number>(1);
 
   readonly isDragging$ = this._isDragging.asObservable();
-  readonly sysvars$ = this._boardStore.sysvars$;
+  readonly total$ = this._boardStore.sysvars$.pipe(
+    map((sysvars) => sysvars?.length ?? 0)
+  );
+  readonly pageSize = 24;
+  readonly page$ = this._page.asObservable();
+  readonly sysvars$ = combineLatest([
+    this._boardStore.sysvars$,
+    this.page$,
+  ]).pipe(
+    map(([sysvars, page]) => {
+      if (isNull(sysvars)) {
+        return null;
+      }
+
+      return sysvars.slice(
+        page === 1 ? 0 : (page - 1) * this.pageSize,
+        page * this.pageSize
+      );
+    })
+  );
+
+  onSetPage(page: number) {
+    this._page.next(page);
+  }
 
   onActivateSysvar(sysvarId: string) {
     this._boardStore.setActive({ id: sysvarId, kind: 'sysvar' });
