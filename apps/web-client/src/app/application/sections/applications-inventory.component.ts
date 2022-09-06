@@ -131,7 +131,7 @@ export class ApplicationsInventoryComponent {
   }
 
   onSelectApplication(applicationId: string) {
-    this._boardStore.setSelectedId(applicationId);
+    this._boardStore.setSelected({ id: applicationId, kind: 'application' });
   }
 
   onDragStart(event: CdkDragStart) {

@@ -155,7 +155,7 @@ export class CollectionsInventoryComponent {
   }
 
   onSelectCollection(collectionId: string) {
-    this._boardStore.setSelectedId(collectionId);
+    this._boardStore.setSelected({ id: collectionId, kind: 'collection' });
   }
 
   onCreateCollection(

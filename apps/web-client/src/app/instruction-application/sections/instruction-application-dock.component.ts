@@ -2,7 +2,7 @@ import { Dialog } from '@angular/cdk/dialog';
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { LetModule, PushModule } from '@ngrx/component';
-import { concatMap, EMPTY, map, of, tap } from 'rxjs';
+import { combineLatest, concatMap, EMPTY, map, of, tap } from 'rxjs';
 import { BoardStore, InstructionApplicationView } from '../../core/stores';
 import {
   ConfirmModalDirective,
@@ -121,13 +121,28 @@ export class InstructionApplicationDockComponent {
     InstructionApplicationApiService
   );
 
-  readonly selected$ = this._boardStore.selected$.pipe(
-    map((selected) => {
-      if (isNull(selected) || selected.kind !== 'instructionApplication') {
+  readonly selected$ = combineLatest([
+    this._boardStore.instructions$,
+    this._boardStore.selected$,
+  ]).pipe(
+    map(([instructions, selected]) => {
+      if (
+        isNull(instructions) ||
+        isNull(selected) ||
+        selected.kind !== 'instructionApplication'
+      ) {
         return null;
       }
 
-      return selected;
+      return (
+        instructions
+          .reduce<InstructionApplicationView[]>(
+            (instructionApplications, instruction) =>
+              instructionApplications.concat(instruction.applications),
+            []
+          )
+          .find(({ id }) => id === selected.id) ?? null
+      );
     })
   );
   readonly hotkeys$ = of([
@@ -166,7 +181,7 @@ export class InstructionApplicationDockComponent {
   ) {
     this._instructionApplicationApiService
       .deleteInstructionApplication(instructionId, instructionApplicationId)
-      .subscribe(() => this._boardStore.setSelectedId(null));
+      .subscribe(() => this._boardStore.setSelected(null));
   }
 
   onKeyDown(
@@ -223,7 +238,7 @@ export class InstructionApplicationDockComponent {
                     instructionApplication.ownerId,
                     instructionApplication.id
                   )
-                  .pipe(tap(() => this._boardStore.setSelectedId(null)));
+                  .pipe(tap(() => this._boardStore.setSelected(null)));
               })
             )
             .subscribe();

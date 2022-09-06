@@ -97,10 +97,13 @@ export class InstructionSysvarsListComponent {
   @Input() pgInstructionId: Option<string> = null;
   @Input() pgDropLists: string[] = [];
   @Input() pgInstructionSysvars: InstructionSysvar[] = [];
-  @Output() pgSelect = new EventEmitter<string>();
+  @Output() pgSelect = new EventEmitter<{
+    id: string;
+    kind: 'instructionSysvar';
+  }>();
 
   onSelect(selectId: string) {
-    this.pgSelect.emit(selectId);
+    this.pgSelect.emit({ id: selectId, kind: 'instructionSysvar' });
   }
 
   trackBy(index: number): number {

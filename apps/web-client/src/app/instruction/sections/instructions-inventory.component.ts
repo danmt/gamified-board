@@ -154,7 +154,7 @@ export class InstructionsInventoryComponent {
   }
 
   onSelectInstruction(instructionId: string) {
-    this._boardStore.setSelectedId(instructionId);
+    this._boardStore.setSelected({ id: instructionId, kind: 'instruction' });
   }
 
   onCreateInstruction(

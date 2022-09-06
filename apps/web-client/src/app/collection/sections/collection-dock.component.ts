@@ -2,7 +2,7 @@ import { Dialog } from '@angular/cdk/dialog';
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { LetModule, PushModule } from '@ngrx/component';
-import { concatMap, EMPTY, map, of, tap } from 'rxjs';
+import { combineLatest, concatMap, EMPTY, map, of, tap } from 'rxjs';
 import { BoardStore, CollectionView } from '../../core/stores';
 import {
   ConfirmModalDirective,
@@ -115,13 +115,20 @@ export class CollectionDockComponent {
   private readonly _collectionApiService = inject(CollectionApiService);
 
   readonly currentApplicationId$ = this._boardStore.currentApplicationId$;
-  readonly selected$ = this._boardStore.selected$.pipe(
-    map((selected) => {
-      if (isNull(selected) || selected.kind !== 'collection') {
+  readonly selected$ = combineLatest([
+    this._boardStore.collections$,
+    this._boardStore.selected$,
+  ]).pipe(
+    map(([collections, selected]) => {
+      if (
+        isNull(collections) ||
+        isNull(selected) ||
+        selected.kind !== 'collection'
+      ) {
         return null;
       }
 
-      return selected;
+      return collections.find(({ id }) => id === selected.id) ?? null;
     })
   );
   readonly hotkeys$ = of([
@@ -157,7 +164,7 @@ export class CollectionDockComponent {
   onDeleteCollection(collectionId: string) {
     this._collectionApiService
       .deleteCollection(collectionId)
-      .subscribe(() => this._boardStore.setSelectedId(null));
+      .subscribe(() => this._boardStore.setSelected(null));
   }
 
   onKeyDown(
@@ -210,7 +217,7 @@ export class CollectionDockComponent {
 
                 return this._collectionApiService
                   .deleteCollection(collection.id)
-                  .pipe(tap(() => this._boardStore.setSelectedId(null)));
+                  .pipe(tap(() => this._boardStore.setSelected(null)));
               })
             )
             .subscribe();

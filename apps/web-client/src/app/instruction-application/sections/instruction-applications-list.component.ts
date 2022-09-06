@@ -103,10 +103,13 @@ export class InstructionApplicationsListComponent {
   @Input() pgInstructionId: Option<string> = null;
   @Input() pgDropLists: string[] = [];
   @Input() pgInstructionApplications: InstructionApplication[] = [];
-  @Output() pgSelect = new EventEmitter<string>();
+  @Output() pgSelect = new EventEmitter<{
+    id: string;
+    kind: 'instructionApplication';
+  }>();
 
   onSelect(selectId: string) {
-    this.pgSelect.emit(selectId);
+    this.pgSelect.emit({ id: selectId, kind: 'instructionApplication' });
   }
 
   trackBy(index: number): number {
