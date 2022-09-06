@@ -10,7 +10,7 @@ import { InventoryComponent } from '../../shared/components';
 import { DefaultImageDirective } from '../../shared/directives';
 import { isNull, Option } from '../../shared/utils';
 import {
-  EditInstructionModalDirective,
+  CreateInstructionModalDirective,
   InstructionTooltipDirective,
 } from '../components';
 import { InstructionApiService } from '../services';
@@ -21,119 +21,99 @@ import { InstructionApiService } from '../services';
     <pg-inventory
       pgDirection="left"
       class="mt-10 min-w-[300px] min-h-[500px] max-h-[500px]"
+      [pgTotal]="(total$ | ngrxPush) ?? 0"
+      [pgPage]="(page$ | ngrxPush) ?? 1"
+      [pgPageSize]="pageSize"
+      (pgSetPage)="onSetPage($event)"
     >
-      <header class="relative h-[80px]">
-        <div
-          class="flex relative w-full bp-skin-title-box items-center justify-between pl-6 pr-8 mr-1.5"
-        >
-          <h1 class="bp-font-game text-3xl">Instructions</h1>
-          <ng-container *ngIf="workspaceId$ | ngrxPush as workspaceId">
-            <ng-container
-              *ngIf="currentApplicationId$ | ngrxPush as instructionId"
-            >
-              <button
-                class="bp-button-add-futuristic z-20"
-                pgEditInstructionModal
-                (pgCreateInstruction)="
-                  onCreateInstruction(
-                    workspaceId,
-                    instructionId,
-                    $event.id,
-                    $event.name,
-                    $event.thumbnailUrl,
-                    $event.arguments
-                  )
-                "
-              ></button>
-            </ng-container>
-          </ng-container>
-        </div>
-      </header>
+      <h2 pgInventoryTitle class="bp-font-game text-3xl">Instructions</h2>
 
-      <section
-        class="flex-1 pl-6 pr-4 pt-4 pb-10 overflow-auto max-w-[280px] mr-4"
+      <button
+        class="bp-button-add-futuristic z-20"
+        pgInventoryCreateButton
+        pgCreateInstructionModal
+        [pgWorkspaceId]="(workspaceId$ | ngrxPush) ?? null"
+        [pgApplicationId]="(currentApplicationId$ | ngrxPush) ?? null"
+        (pgCreateInstruction)="
+          onCreateInstruction(
+            $event.workspaceId,
+            $event.applicationId,
+            $event.id,
+            $event.name,
+            $event.thumbnailUrl,
+            $event.arguments
+          )
+        "
+      ></button>
+
+      <div
+        pgInventoryBody
+        *ngrxLet="instructions$; let instructions"
+        id="instructions-section"
+        cdkDropList
+        [cdkDropListConnectedTo]="[
+          'slot-0',
+          'slot-1',
+          'slot-2',
+          'slot-3',
+          'slot-4',
+          'slot-5',
+          'slot-6',
+          'slot-7',
+          'slot-8',
+          'slot-9'
+        ]"
+        [cdkDropListData]="instructions"
+        cdkDropListSortingDisabled
+        class="flex flex-wrap gap-4 justify-center"
       >
         <div
-          *ngrxLet="instructions$; let instructions"
-          id="instructions-section"
-          cdkDropList
-          [cdkDropListConnectedTo]="[
-            'slot-0',
-            'slot-1',
-            'slot-2',
-            'slot-3',
-            'slot-4',
-            'slot-5',
-            'slot-6',
-            'slot-7',
-            'slot-8',
-            'slot-9'
-          ]"
-          [cdkDropListData]="instructions"
-          cdkDropListSortingDisabled
-          class="flex flex-wrap gap-4"
+          *ngFor="let instruction of instructions; trackBy: trackBy"
+          class="relative"
+          pgInstructionTooltip
+          [pgInstruction]="instruction"
         >
-          <div
-            *ngFor="let instruction of instructions; trackBy: trackBy"
-            class="relative"
-            pgInstructionTooltip
-            [pgInstruction]="instruction"
-          >
-            <ng-container *ngIf="(isDragging$ | ngrxPush) === instruction.id">
-              <div
-                class="w-full h-full absolute z-20 bg-black bg-opacity-50"
-              ></div>
-              <div class="bg-green-800 p-0.5 w-11 h-11">
-                <img
-                  class="w-full h-full object-cover"
-                  [src]="instruction.thumbnailUrl"
-                  pgDefaultImage="assets/generic/instruction.png"
-                />
-              </div>
-            </ng-container>
-
+          <ng-container *ngIf="(isDragging$ | ngrxPush) === instruction.id">
             <div
-              cdkDrag
-              [cdkDragData]="{ id: instruction.id, kind: 'instruction' }"
-              (click)="onSelectInstruction(instruction.id)"
-              (dblclick)="onActivateInstruction(instruction.id)"
-              (cdkDragStarted)="onDragStart($event)"
-              (cdkDragEnded)="onDragEnd()"
-            >
-              <div class="bg-green-800 p-0.5 w-11 h-11">
-                <img
-                  class="w-full h-full object-cover"
-                  [src]="instruction.thumbnailUrl"
-                  pgDefaultImage="assets/generic/instruction.png"
-                />
-              </div>
-
-              <div *cdkDragPreview class="bg-gray-500 p-1 w-12 h-12 rounded-md">
-                <img
-                  class="w-full h-full object-cover"
-                  [src]="instruction.thumbnailUrl"
-                  pgDefaultImage="assets/generic/instruction.png"
-                />
-              </div>
-
-              <div *cdkDragPlaceholder></div>
+              class="w-full h-full absolute z-20 bg-black bg-opacity-50"
+            ></div>
+            <div class="bg-green-800 p-0.5 w-11 h-11">
+              <img
+                class="w-full h-full object-cover"
+                [src]="instruction.thumbnailUrl"
+                pgDefaultImage="assets/generic/instruction.png"
+              />
             </div>
-          </div>
+          </ng-container>
 
-          <div *ngrxLet="page$; let page">
-            <button (click)="onPreviousPage()" [disabled]="page === 1">
-              previous
-            </button>
-            <button
-              *ngrxLet="total$; let total"
-              (click)="onNextPage()"
-              [disabled]="pageSize * page >= total"
-            >
-              next
-            </button>
+          <div
+            cdkDrag
+            [cdkDragData]="{ id: instruction.id, kind: 'instruction' }"
+            (click)="onSelectInstruction(instruction.id)"
+            (dblclick)="onActivateInstruction(instruction.id)"
+            (cdkDragStarted)="onDragStart($event)"
+            (cdkDragEnded)="onDragEnd()"
+          >
+            <div class="bg-green-800 p-0.5 w-11 h-11">
+              <img
+                class="w-full h-full object-cover"
+                [src]="instruction.thumbnailUrl"
+                pgDefaultImage="assets/generic/instruction.png"
+              />
+            </div>
+
+            <div *cdkDragPreview class="bg-gray-500 p-1 w-12 h-12 rounded-md">
+              <img
+                class="w-full h-full object-cover"
+                [src]="instruction.thumbnailUrl"
+                pgDefaultImage="assets/generic/instruction.png"
+              />
+            </div>
+
+            <div *cdkDragPlaceholder></div>
           </div>
         </div>
-      </section>
+      </div>
     </pg-inventory>
   `,
   standalone: true,
@@ -144,7 +124,7 @@ import { InstructionApiService } from '../services';
     PushModule,
     LetModule,
     RouterModule,
-    EditInstructionModalDirective,
+    CreateInstructionModalDirective,
     DefaultImageDirective,
     InstructionTooltipDirective,
     InventoryComponent,
@@ -181,12 +161,8 @@ export class InstructionsInventoryComponent {
     })
   );
 
-  onNextPage() {
-    this._page.next(this._page.getValue() + 1);
-  }
-
-  onPreviousPage() {
-    this._page.next(this._page.getValue() - 1);
+  onSetPage(page: number) {
+    this._page.next(page);
   }
 
   onActivateInstruction(instructionId: string) {

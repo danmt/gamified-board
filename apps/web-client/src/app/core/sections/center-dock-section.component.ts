@@ -3,8 +3,6 @@ import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { LetModule, PushModule } from '@ngrx/component';
 import { of } from 'rxjs';
-import { EditCollectionModalDirective } from '../../collection/components';
-import { EditInstructionModalDirective } from '../../instruction/components';
 import { SquareButtonComponent } from '../../shared/components';
 import {
   DefaultImageDirective,
@@ -115,8 +113,6 @@ interface HotKey {
     SlotHotkeyPipe,
     DefaultImageDirective,
     KeyboardListenerDirective,
-    EditCollectionModalDirective,
-    EditInstructionModalDirective,
     SlotTooltipDirective,
   ],
   styles: [

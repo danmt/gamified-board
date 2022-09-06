@@ -13,9 +13,9 @@ import { KeyboardListenerDirective } from '../../shared/directives';
 import { SlotHotkeyPipe } from '../../shared/pipes';
 import { isNotNull, isNull } from '../../shared/utils';
 import {
-  EditInstructionSignerModalDirective,
   EditInstructionSignerSubmit,
   openEditInstructionSignerModal,
+  UpdateInstructionSignerModalDirective,
 } from '../components';
 import { InstructionSignerApiService } from '../services';
 
@@ -54,7 +54,7 @@ interface HotKey {
           <pg-square-button
             [pgIsActive]="isEditing"
             pgThumbnailUrl="assets/generic/signer.png"
-            pgEditInstructionSignerModal
+            pgUpdateInstructionSignerModal
             [pgInstructionSigner]="selected"
             (pgOpenModal)="isEditing = true"
             (pgCloseModal)="isEditing = false"
@@ -98,7 +98,7 @@ interface HotKey {
     LetModule,
     SquareButtonComponent,
     SlotHotkeyPipe,
-    EditInstructionSignerModalDirective,
+    UpdateInstructionSignerModalDirective,
     KeyboardListenerDirective,
     ConfirmModalDirective,
   ],

@@ -34,6 +34,10 @@ export interface EditApplicationData {
 
 export type EditApplicationSubmit = Application;
 
+export type CreateApplicationSubmit = Application & {
+  workspaceId: string;
+};
+
 export const openEditApplicationModal = (
   dialog: Dialog,
   data: EditApplicationData
@@ -47,15 +51,48 @@ export const openEditApplicationModal = (
   });
 
 @Directive({
-  selector: '[pgEditApplicationModal]',
+  selector: '[pgCreateApplicationModal]',
   standalone: true,
 })
-export class EditApplicationModalDirective {
+export class CreateApplicationModalDirective {
+  private readonly _dialog = inject(Dialog);
+
+  @Input() pgWorkspaceId: Option<string> = null;
+
+  @Output() pgCreateApplication = new EventEmitter<CreateApplicationSubmit>();
+  @Output() pgOpenModal = new EventEmitter();
+  @Output() pgCloseModal = new EventEmitter();
+
+  @HostListener('click', []) onClick() {
+    if (isNull(this.pgWorkspaceId)) {
+      throw new Error('pgWorkspaceId is missing');
+    }
+
+    const workspaceId = this.pgWorkspaceId;
+
+    this.pgOpenModal.emit();
+
+    openEditApplicationModal(this._dialog, {
+      application: null,
+    }).closed.subscribe((applicationData) => {
+      this.pgCloseModal.emit();
+
+      if (applicationData !== undefined) {
+        this.pgCreateApplication.emit({ ...applicationData, workspaceId });
+      }
+    });
+  }
+}
+
+@Directive({
+  selector: '[pgUpdateApplicationModal]',
+  standalone: true,
+})
+export class UpdateApplicationModalDirective {
   private readonly _dialog = inject(Dialog);
 
   @Input() pgApplication: Option<Application> = null;
 
-  @Output() pgCreateApplication = new EventEmitter<EditApplicationSubmit>();
   @Output() pgUpdateApplication = new EventEmitter<EditApplicationSubmit>();
   @Output() pgOpenModal = new EventEmitter();
   @Output() pgCloseModal = new EventEmitter();
@@ -66,14 +103,14 @@ export class EditApplicationModalDirective {
     openEditApplicationModal(this._dialog, {
       application: this.pgApplication,
     }).closed.subscribe((applicationData) => {
+      if (isNull(this.pgApplication)) {
+        throw new Error('pgApplication is missing');
+      }
+
       this.pgCloseModal.emit();
 
       if (applicationData !== undefined) {
-        if (isNull(this.pgApplication)) {
-          this.pgCreateApplication.emit(applicationData);
-        } else {
-          this.pgUpdateApplication.emit(applicationData);
-        }
+        this.pgUpdateApplication.emit(applicationData);
       }
     });
   }

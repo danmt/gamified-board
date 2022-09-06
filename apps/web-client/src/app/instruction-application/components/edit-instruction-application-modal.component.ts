@@ -46,22 +46,24 @@ export const openEditInstructionApplicationModal = (
   });
 
 @Directive({
-  selector: '[pgEditInstructionApplicationModal]',
+  selector: '[pgUpdateInstructionApplicationModal]',
   standalone: true,
 })
-export class EditInstructionApplicationModalDirective {
+export class UpdateInstructionApplicationModalDirective {
   private readonly _dialog = inject(Dialog);
 
   @Input() pgInstructionApplication: Option<InstructionApplication> = null;
 
-  @Output() pgCreateInstructionApplication =
-    new EventEmitter<EditInstructionApplicationSubmit>();
   @Output() pgUpdateInstructionApplication =
     new EventEmitter<EditInstructionApplicationSubmit>();
   @Output() pgOpenModal = new EventEmitter();
   @Output() pgCloseModal = new EventEmitter();
 
   @HostListener('click', []) onClick() {
+    if (isNull(this.pgInstructionApplication)) {
+      throw new Error('pgInstructionApplication is missing.');
+    }
+
     this.pgOpenModal.emit();
 
     openEditInstructionApplicationModal(this._dialog, {
@@ -70,11 +72,7 @@ export class EditInstructionApplicationModalDirective {
       this.pgCloseModal.emit();
 
       if (instructionApplicationData !== undefined) {
-        if (isNull(this.pgInstructionApplication)) {
-          this.pgCreateInstructionApplication.emit(instructionApplicationData);
-        } else {
-          this.pgUpdateInstructionApplication.emit(instructionApplicationData);
-        }
+        this.pgUpdateInstructionApplication.emit(instructionApplicationData);
       }
     });
   }

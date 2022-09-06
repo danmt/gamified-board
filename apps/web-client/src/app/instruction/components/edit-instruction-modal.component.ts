@@ -42,6 +42,11 @@ export interface EditInstructionData {
 
 export type EditInstructionSubmit = Instruction;
 
+export type CreateInstructionSubmit = Instruction & {
+  workspaceId: string;
+  applicationId: string;
+};
+
 export const openEditInstructionModal = (
   dialog: Dialog,
   data: EditInstructionData
@@ -54,18 +59,62 @@ export const openEditInstructionModal = (
     data,
   });
 
-@Directive({ selector: '[pgEditInstructionModal]', standalone: true })
-export class EditInstructionModalDirective {
+@Directive({ selector: '[pgCreateInstructionModal]', standalone: true })
+export class CreateInstructionModalDirective {
+  private readonly _dialog = inject(Dialog);
+
+  @Input() pgWorkspaceId: Option<string> = null;
+  @Input() pgApplicationId: Option<string> = null;
+
+  @Output() pgCreateInstruction = new EventEmitter<CreateInstructionSubmit>();
+  @Output() pgOpenModal = new EventEmitter();
+  @Output() pgCloseModal = new EventEmitter();
+
+  @HostListener('click', []) onClick() {
+    if (isNull(this.pgWorkspaceId)) {
+      throw new Error('pgWorkspaceId is missing');
+    }
+
+    if (isNull(this.pgApplicationId)) {
+      throw new Error('pgApplicationId is missing');
+    }
+
+    const workspaceId = this.pgWorkspaceId;
+    const applicationId = this.pgApplicationId;
+
+    this.pgOpenModal.emit();
+
+    openEditInstructionModal(this._dialog, {
+      instruction: null,
+    }).closed.subscribe((instructionData) => {
+      this.pgCloseModal.emit();
+
+      if (instructionData !== undefined) {
+        this.pgCreateInstruction.emit({
+          ...instructionData,
+          workspaceId,
+          applicationId,
+        });
+      }
+    });
+  }
+}
+
+@Directive({ selector: '[pgUpdateInstructionModal]', standalone: true })
+export class UpdateInstructionModalDirective {
   private readonly _dialog = inject(Dialog);
 
   @Input() pgInstruction: Option<Instruction> = null;
 
-  @Output() pgCreateInstruction = new EventEmitter<EditInstructionSubmit>();
   @Output() pgUpdateInstruction = new EventEmitter<EditInstructionSubmit>();
   @Output() pgOpenModal = new EventEmitter();
   @Output() pgCloseModal = new EventEmitter();
 
   @HostListener('click', []) onClick() {
+    if (isNull(this.pgInstruction)) {
+      throw new Error('pgInstruction is missing');
+    }
+
     this.pgOpenModal.emit();
 
     openEditInstructionModal(this._dialog, {
@@ -74,11 +123,7 @@ export class EditInstructionModalDirective {
       this.pgCloseModal.emit();
 
       if (instructionData !== undefined) {
-        if (isNull(this.pgInstruction)) {
-          this.pgCreateInstruction.emit(instructionData);
-        } else {
-          this.pgUpdateInstruction.emit(instructionData);
-        }
+        this.pgUpdateInstruction.emit(instructionData);
       }
     });
   }

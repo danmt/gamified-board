@@ -16,9 +16,9 @@ import {
 import { SlotHotkeyPipe } from '../../shared/pipes';
 import { isNotNull, isNull } from '../../shared/utils';
 import {
-  EditSysvarModalDirective,
   EditSysvarSubmit,
   openEditSysvarModal,
+  UpdateSysvarModalDirective,
 } from '../components';
 import { SysvarApiService } from '../services';
 
@@ -60,7 +60,7 @@ interface HotKey {
           <pg-square-button
             [pgIsActive]="isEditing"
             pgThumbnailUrl="assets/generic/sysvar.png"
-            pgEditSysvarModal
+            pgUpdateSysvarModal
             [pgSysvar]="selected"
             (pgOpenModal)="isEditing = true"
             (pgCloseModal)="isEditing = false"
@@ -99,10 +99,9 @@ interface HotKey {
     PushModule,
     LetModule,
     SquareButtonComponent,
-    EditSysvarModalDirective,
+    UpdateSysvarModalDirective,
     SlotHotkeyPipe,
     KeyboardListenerDirective,
-    EditSysvarModalDirective,
     ConfirmModalDirective,
     DefaultImageDirective,
   ],

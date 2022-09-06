@@ -16,9 +16,9 @@ import {
 import { SlotHotkeyPipe } from '../../shared/pipes';
 import { isNotNull, isNull } from '../../shared/utils';
 import {
-  EditInstructionModalDirective,
   EditInstructionSubmit,
   openEditInstructionModal,
+  UpdateInstructionModalDirective,
 } from '../components';
 import { InstructionApiService } from '../services';
 
@@ -61,7 +61,7 @@ interface HotKey {
           <pg-square-button
             [pgIsActive]="isEditing"
             pgThumbnailUrl="assets/generic/instruction.png"
-            pgEditInstructionModal
+            pgUpdateInstructionModal
             [pgInstruction]="selected"
             (pgOpenModal)="isEditing = true"
             (pgCloseModal)="isEditing = false"
@@ -101,10 +101,9 @@ interface HotKey {
     PushModule,
     LetModule,
     SquareButtonComponent,
-    EditInstructionModalDirective,
+    UpdateInstructionModalDirective,
     SlotHotkeyPipe,
     KeyboardListenerDirective,
-    EditInstructionModalDirective,
     ConfirmModalDirective,
     DefaultImageDirective,
   ],

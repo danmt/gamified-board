@@ -104,8 +104,8 @@ export const openEditInstructionDocumentModal = (
     data,
   });
 
-@Directive({ selector: '[pgEditInstructionDocumentModal]', standalone: true })
-export class EditInstructionDocumentModalDirective {
+@Directive({ selector: '[pgUpdateInstructionDocumentModal]', standalone: true })
+export class UpdateInstructionDocumentModalDirective {
   private readonly _dialog = inject(Dialog);
 
   @Input() pgInstructionDocument: Option<InstructionDocument> = null;
@@ -115,14 +115,16 @@ export class EditInstructionDocumentModalDirective {
     null;
   @Input() pgBumpReferences$: Option<Observable<Reference[]>> = null;
 
-  @Output() pgCreateInstructionDocument =
-    new EventEmitter<EditInstructionDocumentSubmit>();
   @Output() pgUpdateInstructionDocument =
     new EventEmitter<EditInstructionDocumentSubmit>();
   @Output() pgOpenModal = new EventEmitter();
   @Output() pgCloseModal = new EventEmitter();
 
   @HostListener('click', []) onClick() {
+    if (isNull(this.pgInstructionDocument)) {
+      throw new Error('pgInstructionDocument is missing.');
+    }
+
     if (isNull(this.pgArgumentReferences$)) {
       throw new Error('pgArgumentReferences$ is missing.');
     }
@@ -146,11 +148,7 @@ export class EditInstructionDocumentModalDirective {
       this.pgCloseModal.emit();
 
       if (instructionDocumentData !== undefined) {
-        if (isNull(this.pgInstructionDocument)) {
-          this.pgCreateInstructionDocument.emit(instructionDocumentData);
-        } else {
-          this.pgUpdateInstructionDocument.emit(instructionDocumentData);
-        }
+        this.pgUpdateInstructionDocument.emit(instructionDocumentData);
       }
     });
   }

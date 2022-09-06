@@ -46,20 +46,22 @@ export const openEditInstructionSignerModal = (
     data,
   });
 
-@Directive({ selector: '[pgEditInstructionSignerModal]', standalone: true })
-export class EditInstructionSignerModalDirective {
+@Directive({ selector: '[pgUpdateInstructionSignerModal]', standalone: true })
+export class UpdateInstructionSignerModalDirective {
   private readonly _dialog = inject(Dialog);
 
   @Input() pgInstructionSigner: Option<InstructionSigner> = null;
 
-  @Output() pgCreateInstructionSigner =
-    new EventEmitter<EditInstructionSignerSubmit>();
   @Output() pgUpdateInstructionSigner =
     new EventEmitter<EditInstructionSignerSubmit>();
   @Output() pgOpenModal = new EventEmitter();
   @Output() pgCloseModal = new EventEmitter();
 
   @HostListener('click', []) onClick() {
+    if (isNull(this.pgInstructionSigner)) {
+      throw new Error('pgInstructionSigner is missing.');
+    }
+
     this.pgOpenModal.emit();
 
     openEditInstructionSignerModal(this._dialog, {
@@ -68,11 +70,7 @@ export class EditInstructionSignerModalDirective {
       this.pgCloseModal.emit();
 
       if (instructionSignerData !== undefined) {
-        if (isNull(this.pgInstructionSigner)) {
-          this.pgCreateInstructionSigner.emit(instructionSignerData);
-        } else {
-          this.pgUpdateInstructionSigner.emit(instructionSignerData);
-        }
+        this.pgUpdateInstructionSigner.emit(instructionSignerData);
       }
     });
   }
