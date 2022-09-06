@@ -1,5 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { ComponentStore, OnStoreInit } from '@ngrx/component-store';
+import { concatMap, of, tap, withLatestFrom } from 'rxjs';
 import { ApplicationDto } from '../../application/services';
 import { ApplicationsStore } from '../../application/stores';
 import {
@@ -517,10 +518,12 @@ interface ViewModel {
       | 'instructionSysvar'
       | 'instructionApplication';
   }>;
-  slots: Option<{
-    id: string;
-    kind: 'collection' | 'instruction' | 'application' | 'sysvar';
-  }>[];
+  slots: Option<
+    Option<{
+      id: string;
+      kind: 'collection' | 'instruction' | 'application' | 'sysvar';
+    }>[]
+  >;
 }
 
 const initialState: ViewModel = {
@@ -532,7 +535,7 @@ const initialState: ViewModel = {
   isSysvarsSectionOpen: false,
   active: null,
   selected: null,
-  slots: [null, null, null, null, null, null, null, null, null, null],
+  slots: null,
 };
 
 @Injectable()
@@ -726,34 +729,6 @@ export class BoardStore
     })
   );
 
-  readonly setSlot = this.updater<{
-    index: number;
-    data: Option<{
-      id: string;
-      kind: 'instruction' | 'collection' | 'application' | 'sysvar';
-    }>;
-  }>((state, { index, data }) => {
-    return {
-      ...state,
-      slots: state.slots.map((slot, i) => (i === index ? data : slot)),
-    };
-  });
-
-  readonly swapSlots = this.updater<{
-    previousIndex: number;
-    newIndex: number;
-  }>((state, { previousIndex, newIndex }) => {
-    const slots = [...state.slots];
-    const temp = slots[newIndex];
-    slots[newIndex] = slots[previousIndex];
-    slots[previousIndex] = temp;
-
-    return {
-      ...state,
-      slots,
-    };
-  });
-
   readonly setActive = this.updater<
     Option<{
       id: string;
@@ -837,6 +812,129 @@ export class BoardStore
     }
   });
 
+  loadSlots = this.effect<{
+    workspaceId: Option<string>;
+    applicationId: Option<string>;
+  }>(
+    tap(({ workspaceId, applicationId }) => {
+      const slotsMap = localStorage.getItem('slotsMap');
+
+      if (isNull(slotsMap) || isNull(workspaceId) || isNull(applicationId)) {
+        this.patchState({
+          slots: [null, null, null, null, null, null, null, null, null, null],
+        });
+      } else {
+        const slots = JSON.parse(slotsMap)[`${workspaceId}/${applicationId}`];
+
+        this.patchState({
+          slots,
+        });
+      }
+    })
+  );
+
+  setSlot = this.effect<{
+    index: number;
+    data: Option<{
+      id: string;
+      kind: 'instruction' | 'collection' | 'application' | 'sysvar';
+    }>;
+  }>(
+    concatMap(({ index, data }) =>
+      of(null).pipe(
+        withLatestFrom(
+          this.select(({ slots }) => slots),
+          this.select(({ workspaceId }) => workspaceId),
+          this.select(({ currentApplicationId }) => currentApplicationId)
+        ),
+        tap(([, slots, workspaceId, applicationId]) => {
+          if (
+            isNotNull(slots) &&
+            isNotNull(workspaceId) &&
+            isNotNull(applicationId)
+          ) {
+            const updatedSlots = slots.map((slot, i) =>
+              i === index ? data : slot
+            );
+
+            this.patchState({
+              slots: updatedSlots,
+            });
+
+            const slotsMap = localStorage.getItem('slotsMap');
+
+            if (isNull(slotsMap)) {
+              localStorage.setItem(
+                'slotsMap',
+                JSON.stringify({
+                  [`${workspaceId}/${applicationId}`]: updatedSlots,
+                })
+              );
+            } else {
+              localStorage.setItem(
+                'slotsMap',
+                JSON.stringify({
+                  ...JSON.parse(slotsMap),
+                  [`${workspaceId}/${applicationId}`]: updatedSlots,
+                })
+              );
+            }
+          }
+        })
+      )
+    )
+  );
+
+  swapSlots = this.effect<{
+    previousIndex: number;
+    newIndex: number;
+  }>(
+    concatMap(({ previousIndex, newIndex }) =>
+      of(null).pipe(
+        withLatestFrom(
+          this.select(({ slots }) => slots),
+          this.select(({ workspaceId }) => workspaceId),
+          this.select(({ currentApplicationId }) => currentApplicationId)
+        ),
+        tap(([, slots, workspaceId, applicationId]) => {
+          if (
+            isNotNull(slots) &&
+            isNotNull(workspaceId) &&
+            isNotNull(applicationId)
+          ) {
+            const updatedSlots = [...slots];
+            const temp = slots[newIndex];
+            updatedSlots[newIndex] = updatedSlots[previousIndex];
+            updatedSlots[previousIndex] = temp;
+
+            this.patchState({
+              slots: updatedSlots,
+            });
+
+            const slotsMap = localStorage.getItem('slotsMap');
+
+            if (isNull(slotsMap)) {
+              localStorage.setItem(
+                'slotsMap',
+                JSON.stringify({
+                  [`${workspaceId}/${applicationId}`]: updatedSlots,
+                })
+              );
+            } else {
+              localStorage.setItem(
+                'slotsMap',
+                JSON.stringify({
+                  ...JSON.parse(slotsMap),
+                  [`${workspaceId}/${applicationId}`]: updatedSlots,
+                })
+              );
+            }
+          }
+        })
+      )
+    )
+  );
+
   constructor() {
     super(initialState);
   }
@@ -846,5 +944,12 @@ export class BoardStore
     this._applicationsStore.setWorkspaceId(this.workspaceId$);
     this._collectionsStore.setWorkspaceId(this.workspaceId$);
     this._instructionsStore.setWorkspaceId(this.workspaceId$);
+    this.loadSlots(
+      this.select(
+        this.workspaceId$,
+        this.currentApplicationId$,
+        (workspaceId, applicationId) => ({ workspaceId, applicationId })
+      )
+    );
   }
 }
