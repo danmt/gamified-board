@@ -1,10 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { AfterViewInit, Component, HostBinding, Input } from '@angular/core';
 
-export enum InventoryDirection {
-  left = 'left',
-  right = 'right',
-}
+export type InventoryDirection = 'left' | 'right';
 
 @Component({
   selector: 'pg-inventory',
@@ -59,13 +56,10 @@ export enum InventoryDirection {
 export class InventoryComponent implements AfterViewInit {
   @HostBinding('class') class = 'flex flex-col relative z-40 bp-bg-futuristic';
 
-  @Input() direction: InventoryDirection = InventoryDirection.right;
-  oppositeDirection: InventoryDirection = InventoryDirection.left;
+  @Input() direction: InventoryDirection = 'right';
+  oppositeDirection: InventoryDirection = 'left';
 
   ngAfterViewInit(): void {
-    this.oppositeDirection =
-      this.direction === InventoryDirection.left
-        ? InventoryDirection.right
-        : InventoryDirection.left;
+    this.oppositeDirection = this.direction === 'left' ? 'right' : 'left';
   }
 }

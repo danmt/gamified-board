@@ -6,10 +6,7 @@ import { RouterModule } from '@angular/router';
 import { LetModule, PushModule } from '@ngrx/component';
 import { BehaviorSubject } from 'rxjs';
 import { BoardStore } from '../../core/stores';
-import {
-  InventoryComponent,
-  InventoryDirection,
-} from '../../shared/components';
+import { InventoryComponent } from '../../shared/components';
 import { DefaultImageDirective } from '../../shared/directives';
 import { Option } from '../../shared/utils';
 import {
@@ -22,7 +19,7 @@ import {
   template: `
     <pg-inventory
       class="mt-10 min-w-[300px] min-h-[500px] max-h-[500px]"
-      [direction]="direction"
+      [direction]="'left'"
     >
       <header class="relative h-[80px]">
         <div
@@ -127,7 +124,6 @@ export class ApplicationsInventoryComponent {
   readonly workspaceId$ = this._boardStore.workspaceId$;
   readonly currentApplicationId$ = this._boardStore.currentApplicationId$;
   readonly applications$ = this._boardStore.applications$;
-  readonly direction = InventoryDirection.left;
 
   onActivateApplication(applicationId: string) {
     this._boardStore.setActive({ id: applicationId, kind: 'application' });

@@ -1,10 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { AfterViewInit, Component, HostBinding, Input } from '@angular/core';
 
-export enum DockDirection {
-  left = 'left',
-  right = 'right',
-}
+export type DockDirection = 'right' | 'left';
 
 @Component({
   selector: 'pg-corner-dock',
@@ -30,13 +27,10 @@ export enum DockDirection {
 export class CornerDockComponent implements AfterViewInit {
   @HostBinding('class') class = 'block bp-bg-futuristic relative';
 
-  @Input() direction: DockDirection = DockDirection.right;
-  oppositeDirection: DockDirection = DockDirection.left;
+  @Input() direction: DockDirection = 'right';
+  oppositeDirection: DockDirection = 'left';
 
   ngAfterViewInit(): void {
-    this.oppositeDirection =
-      this.direction === DockDirection.left
-        ? DockDirection.right
-        : DockDirection.left;
+    this.oppositeDirection = this.direction === 'left' ? 'right' : 'left';
   }
 }

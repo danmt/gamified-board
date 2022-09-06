@@ -6,10 +6,7 @@ import { RouterModule } from '@angular/router';
 import { LetModule, PushModule } from '@ngrx/component';
 import { BehaviorSubject } from 'rxjs';
 import { BoardStore } from '../../core/stores';
-import {
-  InventoryComponent,
-  InventoryDirection,
-} from '../../shared/components';
+import { InventoryComponent } from '../../shared/components';
 import { DefaultImageDirective } from '../../shared/directives';
 import { Option } from '../../shared/utils';
 import {
@@ -23,7 +20,7 @@ import { SysvarApiService } from '../services';
   template: `
     <pg-inventory
       class="mt-10 min-w-[300px] min-h-[500px] max-h-[500px]"
-      [direction]="direction"
+      [direction]="'right'"
     >
       <header class="relative h-[80px]">
         <div
@@ -136,7 +133,6 @@ export class SysvarsInventoryComponent {
 
   readonly isDragging$ = this._isDragging.asObservable();
   readonly sysvars$ = this._boardStore.sysvars$;
-  readonly direction = InventoryDirection.right;
 
   onActivateSysvar(sysvarId: string) {
     this._boardStore.setActive({ id: sysvarId, kind: 'sysvar' });

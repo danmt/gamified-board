@@ -6,10 +6,7 @@ import { RouterModule } from '@angular/router';
 import { LetModule, PushModule } from '@ngrx/component';
 import { BehaviorSubject } from 'rxjs';
 import { BoardStore } from '../../core/stores';
-import {
-  InventoryComponent,
-  InventoryDirection,
-} from '../../shared/components';
+import { InventoryComponent } from '../../shared/components';
 import { DefaultImageDirective } from '../../shared/directives';
 import { Option } from '../../shared/utils';
 import {
@@ -22,7 +19,7 @@ import { InstructionApiService } from '../services';
   selector: 'pg-instructions-inventory',
   template: `
     <pg-inventory
-      [direction]="direction"
+      [direction]="'left'"
       class="mt-10 min-w-[300px] min-h-[500px] max-h-[500px]"
     >
       <header class="relative h-[80px]">
@@ -150,7 +147,6 @@ export class InstructionsInventoryComponent {
   readonly workspaceId$ = this._boardStore.workspaceId$;
   readonly currentApplicationId$ = this._boardStore.currentApplicationId$;
   readonly instructions$ = this._boardStore.instructions$;
-  readonly direction = InventoryDirection.left;
 
   onActivateInstruction(instructionId: string) {
     this._boardStore.setActive({ id: instructionId, kind: 'instruction' });

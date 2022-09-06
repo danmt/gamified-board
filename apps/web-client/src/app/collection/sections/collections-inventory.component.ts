@@ -6,10 +6,7 @@ import { RouterModule } from '@angular/router';
 import { LetModule, PushModule } from '@ngrx/component';
 import { BehaviorSubject } from 'rxjs';
 import { BoardStore } from '../../core/stores';
-import {
-  InventoryComponent,
-  InventoryDirection,
-} from '../../shared/components';
+import { InventoryComponent } from '../../shared/components';
 import { DefaultImageDirective } from '../../shared/directives';
 import { Option } from '../../shared/utils';
 import {
@@ -23,7 +20,7 @@ import { CollectionApiService } from '../services';
   template: `
     <pg-inventory
       class="mt-10 min-w-[300px] min-h-[500px] max-h-[500px]"
-      [direction]="direction"
+      [direction]="'right'"
     >
       <header class="relative h-[80px]">
         <div
@@ -151,7 +148,6 @@ export class CollectionsInventoryComponent {
   readonly workspaceId$ = this._boardStore.workspaceId$;
   readonly currentApplicationId$ = this._boardStore.currentApplicationId$;
   readonly collections$ = this._boardStore.collections$;
-  readonly direction = InventoryDirection.right;
 
   onActivateCollection(collectionId: string) {
     this._boardStore.setActive({ id: collectionId, kind: 'collection' });
