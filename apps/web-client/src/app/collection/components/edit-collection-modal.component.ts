@@ -103,11 +103,7 @@ export class EditCollectionModalDirective {
         {{ collection === null ? 'Create' : 'Update' }} collection
       </h1>
 
-      <form
-        [formGroup]="form"
-        (ngSubmit)="onSubmit()"
-        class="max-h-96 overflow-y-auto"
-      >
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="overflow-y-auto">
         <div>
           <label class="block" for="collection-id-input">Collection ID</label>
           <input

@@ -91,11 +91,7 @@ export class EditSysvarModalDirective {
         {{ sysvar === null ? 'Create' : 'Update' }} sysvar
       </h1>
 
-      <form
-        [formGroup]="form"
-        (ngSubmit)="onSubmit()"
-        class="max-h-96 overflow-y-auto"
-      >
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="overflow-y-auto">
         <div>
           <label class="block" for="sysvar-id-input">Sysvar ID</label>
           <input

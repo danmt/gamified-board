@@ -106,7 +106,7 @@ export class EditInstructionModalDirective {
       <form
         [formGroup]="form"
         (ngSubmit)="onSubmit()"
-        class="max-h-96 overflow-y-auto"
+        class="overflow-y-auto max-h-[500px]"
       >
         <div class="mb-4">
           <label class="block bp-font-game text-xl" for="instruction-id-input"
@@ -162,11 +162,17 @@ export class EditInstructionModalDirective {
           />
         </div>
 
-        <div class="mb-4" formArrayName="arguments">
-          <p>
-            <span>Instruction arguments</span>
-            <button (click)="onAddArgument()" type="button">+</button>
-          </p>
+        <div class="mb-4 text-black" formArrayName="arguments">
+          <div class="flex items-center justify-between">
+            <p class="block bp-font-game text-2xl text-white">
+              Instruction arguments
+            </p>
+            <button
+              class="bp-button-add-futuristic"
+              (click)="onAddArgument()"
+              type="button"
+            ></button>
+          </div>
 
           <div
             class="flex flex-col gap-2"
@@ -273,8 +279,11 @@ export class EditInstructionModalDirective {
           </div>
         </div>
 
-        <div class="flex justify-center items-center mt-4">
-          <button type="submit" class="px-4 py-2 border-blue-500 border">
+        <div class="flex justify-center items-center mt-10">
+          <button
+            type="submit"
+            class="bp-button-futuristic text-black bp-font-game uppercase"
+          >
             {{ instruction === null ? 'Send' : 'Save' }}
           </button>
         </div>

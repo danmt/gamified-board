@@ -175,11 +175,7 @@ export class EditInstructionDocumentModalDirective {
         ></button>
       </div>
 
-      <form
-        [formGroup]="form"
-        (ngSubmit)="onSubmit()"
-        class="max-h-96 overflow-y-auto"
-      >
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="overflow-y-auto">
         <div class="mb-4">
           <label class="block bp-font-game text-xl" for="document-id-input"
             >Document ID</label
