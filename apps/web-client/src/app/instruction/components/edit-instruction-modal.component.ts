@@ -23,6 +23,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { v4 as uuid } from 'uuid';
+import { ModalComponent } from '../../shared/components';
 import {
   KeyboardListenerDirective,
   StopKeydownPropagationDirective,
@@ -86,74 +87,82 @@ export class EditInstructionModalDirective {
 @Component({
   selector: 'pg-edit-instruction-modal',
   template: `
-    <div
-      class="px-4 pt-8 pb-4 bg-white shadow-xl relative"
+    <pg-modal
+      class="px-6 pt-8 pb-4 text-white min-w-[400px] min-h-[300px]"
       pgStopKeydownPropagation
       pgKeyboardListener
       (keydown)="onKeyDown($event)"
     >
-      <button
-        class="absolute top-2 right-2 rounded-full border border-black leading-none w-6 h-6"
-        (click)="onClose()"
-      >
-        x
-      </button>
-
-      <h1 class="text-center text-xl mb-4">
-        {{ instruction === null ? 'Create' : 'Update' }} instruction
-      </h1>
+      <div class="flex justify-between w-full">
+        <h1 class="text-center text-3xl mb-4 bp-font-game uppercase">
+          {{ instruction === null ? 'Create' : 'Update' }} instruction
+        </h1>
+        <button
+          class="bp-button-close-futuristic z-20 outline-0"
+          (click)="onClose()"
+        ></button>
+      </div>
 
       <form
         [formGroup]="form"
         (ngSubmit)="onSubmit()"
         class="max-h-96 overflow-y-auto"
       >
-        <div>
-          <label class="block" for="instruction-id-input">Instruction ID</label>
-          <input
-            class="block border-b-2 border-black"
-            id="instruction-id-input"
-            type="text"
-            formControlName="id"
-            [readonly]="instruction !== null"
-          />
-          <p *ngIf="instruction === null">
+        <div class="mb-4">
+          <label class="block bp-font-game text-xl" for="instruction-id-input"
+            >Instruction ID</label
+          >
+          <div class="flex items-center justify-between w-full">
+            <input
+              class="bp-input-futuristic p-4 outline-0"
+              id="instruction-id-input"
+              type="text"
+              formControlName="id"
+              [readonly]="instruction !== null"
+            />
+            <button
+              *ngIf="instruction === null"
+              class="bp-button-generate-futuristic"
+              type="button"
+              (click)="idControl.setValue(onGenerateId())"
+            ></button>
+          </div>
+          <p class="bp-font-game text-sm" *ngIf="instruction === null">
             Hint: The ID cannot be changed afterwards.
           </p>
-          <button
-            *ngIf="instruction === null"
-            type="button"
-            (click)="idControl.setValue(onGenerateId())"
-          >
-            Generate
-          </button>
         </div>
 
-        <div>
-          <label class="block" for="instruction-name-input">
+        <div class="mb-4">
+          <label
+            class="block bp-font-game text-xl"
+            for="instruction-name-input"
+          >
             Instruction name
           </label>
           <input
-            class="block border-b-2 border-black"
+            class="bp-input-futuristic p-4 outline-0"
             id="instruction-name-input"
             type="text"
             formControlName="name"
           />
         </div>
 
-        <div>
-          <label class="block" for="instruction-thumbnail-url-input">
+        <div class="mb-4">
+          <label
+            class="block bp-font-game text-xl"
+            for="instruction-thumbnail-url-input"
+          >
             Instruction thumbnail
           </label>
           <input
-            class="block border-b-2 border-black"
+            class="bp-input-futuristic p-4 outline-0"
             id="instruction-thumbnail-url-input"
             type="text"
             formControlName="thumbnailUrl"
           />
         </div>
 
-        <div formArrayName="arguments">
+        <div class="mb-4" formArrayName="arguments">
           <p>
             <span>Instruction arguments</span>
             <button (click)="onAddArgument()" type="button">+</button>
@@ -270,7 +279,7 @@ export class EditInstructionModalDirective {
           </button>
         </div>
       </form>
-    </div>
+    </pg-modal>
   `,
   standalone: true,
   imports: [
@@ -279,6 +288,7 @@ export class EditInstructionModalDirective {
     DragDropModule,
     StopKeydownPropagationDirective,
     KeyboardListenerDirective,
+    ModalComponent,
   ],
 })
 export class EditInstructionModalComponent {

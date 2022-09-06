@@ -101,24 +101,24 @@ export class EditInstructionSysvarModalDirective {
           <label class="block bp-font-game text-xl" for="sysvar-id-input"
             >Sysvar ID</label
           >
-          <input
-            class="bp-input-futuristic p-4 outline-0"
-            id="sysvar-id-input"
-            type="text"
-            formControlName="id"
-            [readonly]="sysvar !== null"
-          />
+          <div class="flex items-center justify-between w-full">
+            <input
+              class="bp-input-futuristic p-4 outline-0"
+              id="sysvar-id-input"
+              type="text"
+              formControlName="id"
+              [readonly]="sysvar !== null"
+            />
+            <button
+              *ngIf="sysvar === null"
+              type="button"
+              (click)="idControl.setValue(onGenerateId())"
+              class="bp-button-generate-futuristic"
+            ></button>
+          </div>
           <p *ngIf="sysvar === null">
             Hint: The ID cannot be changed afterwards.
           </p>
-          <button
-            *ngIf="sysvar === null"
-            type="button"
-            (click)="idControl.setValue(onGenerateId())"
-            class="bp-button-futuristic text-black bp-font-game uppercase"
-          >
-            Generate
-          </button>
         </div>
 
         <div class="mb-4">
