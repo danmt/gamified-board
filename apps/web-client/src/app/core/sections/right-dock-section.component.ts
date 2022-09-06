@@ -1,22 +1,18 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { LetModule, PushModule } from '@ngrx/component';
-import {
-  CornerDockComponent,
-  DockDirection,
-  SquareButtonComponent,
-} from '../../shared/components';
+import { DockDirection, SquareButtonComponent } from '../../shared/components';
 import { KeyboardListenerDirective } from '../../shared/directives';
+import { RightDockComponent } from '../components/right-dock.component copy';
 import { BoardStore } from '../stores';
 
 @Component({
   selector: 'pg-right-dock-section',
   template: `
-    <pg-corner-dock
+    <pg-right-corner-dock
       class="pt-4 pb-2 pr-6 pl-12 flex gap-4 justify-center items-start text-white bp-font-game"
       pgKeyboardListener
       (pgKeyDown)="onKeyDown($event)"
-      [direction]="direction"
     >
       <!-- section content -->
       <div
@@ -77,7 +73,7 @@ import { BoardStore } from '../stores';
           (pgActivated)="onToggleSysvarsSection()"
         ></pg-square-button>
       </div>
-    </pg-corner-dock>
+    </pg-right-corner-dock>
   `,
   standalone: true,
   imports: [
@@ -86,7 +82,7 @@ import { BoardStore } from '../stores';
     PushModule,
     KeyboardListenerDirective,
     SquareButtonComponent,
-    CornerDockComponent,
+    RightDockComponent,
   ],
   styles: [
     `
