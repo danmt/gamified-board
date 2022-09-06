@@ -809,7 +809,17 @@ export class BoardStore
   }));
 
   readonly closeActiveOrSelected = this.updater<void>((state) => {
-    if (
+    if (isNotNull(state.active)) {
+      return {
+        ...state,
+        active: null,
+      };
+    } else if (isNotNull(state.selected)) {
+      return {
+        ...state,
+        selected: null,
+      };
+    } else if (
       state.isCollectionsSectionOpen ||
       state.isInstructionsSectionOpen ||
       state.isApplicationsSectionOpen ||
@@ -821,16 +831,6 @@ export class BoardStore
         isInstructionsSectionOpen: false,
         isApplicationsSectionOpen: false,
         isSysvarsSectionOpen: false,
-      };
-    } else if (isNotNull(state.active)) {
-      return {
-        ...state,
-        active: null,
-      };
-    } else if (isNotNull(state.selected)) {
-      return {
-        ...state,
-        selected: null,
       };
     } else {
       return state;
