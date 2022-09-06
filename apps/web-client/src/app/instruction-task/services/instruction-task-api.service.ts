@@ -5,7 +5,6 @@ import { Entity, isNull } from '../../shared/utils';
 
 export type InstructionTaskDto = Entity<{
   name: string;
-  ownerId: string;
   instructionId: string;
 }>;
 
@@ -60,7 +59,7 @@ export class InstructionTaskApiService {
             tasks: [
               ...newInstructionTasks.slice(0, newIndex),
               task,
-              ...newInstructionTasks.slice(newIndex + 1),
+              ...newInstructionTasks.slice(newIndex),
             ],
           });
 
@@ -111,6 +110,7 @@ export class InstructionTaskApiService {
           const instruction = await transaction.get(instructionRef);
           const instructionTasks = (instruction.data()?.['tasks'] ??
             []) as InstructionTaskDto[];
+
           const index = instructionTasks.findIndex(
             (instructionTask) => instructionTask.id === instructionTaskId
           );
@@ -161,7 +161,6 @@ export class InstructionTaskApiService {
               {
                 id: newInstructionTaskId,
                 name,
-                ownerId,
                 instructionId,
               },
             ],

@@ -5,7 +5,6 @@ import { Entity, isNull } from '../../shared/utils';
 
 export type InstructionSignerDto = Entity<{
   name: string;
-  ownerId: string;
   saveChanges: boolean;
 }>;
 
@@ -163,7 +162,6 @@ export class InstructionSignerApiService {
               {
                 id: newInstructionSignerId,
                 name,
-                ownerId,
                 saveChanges,
               },
             ],

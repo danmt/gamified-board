@@ -5,7 +5,6 @@ import { Entity, isNull } from '../../shared/utils';
 
 export type InstructionApplicationDto = Entity<{
   name: string;
-  ownerId: string;
   applicationId: string;
 }>;
 
@@ -62,7 +61,7 @@ export class InstructionApplicationApiService {
             applications: [
               ...newInstructionApplications.slice(0, newIndex),
               application,
-              ...newInstructionApplications.slice(newIndex + 1),
+              ...newInstructionApplications.slice(newIndex),
             ],
           });
 
@@ -169,7 +168,6 @@ export class InstructionApplicationApiService {
               {
                 id: newInstructionApplicationId,
                 name,
-                ownerId,
                 applicationId,
               },
             ],

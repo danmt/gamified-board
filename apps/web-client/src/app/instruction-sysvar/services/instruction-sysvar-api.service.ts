@@ -5,7 +5,6 @@ import { Entity, isNull } from '../../shared/utils';
 
 export type InstructionSysvarDto = Entity<{
   name: string;
-  ownerId: string;
   sysvarId: string;
 }>;
 
@@ -61,7 +60,7 @@ export class InstructionSysvarApiService {
             sysvars: [
               ...newInstructionSysvars.slice(0, newIndex),
               sysvar,
-              ...newInstructionSysvars.slice(newIndex + 1),
+              ...newInstructionSysvars.slice(newIndex),
             ],
           });
 
@@ -163,7 +162,6 @@ export class InstructionSysvarApiService {
               {
                 id: newInstructionSysvarId,
                 name,
-                ownerId,
                 sysvarId,
               },
             ],

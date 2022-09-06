@@ -11,10 +11,14 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
 import { PushModule } from '@ngrx/component';
 import { provideComponentStore } from '@ngrx/component-store';
 import { map } from 'rxjs';
-import { ApplicationDockComponent } from '../application/sections';
+import {
+  ActiveApplicationComponent,
+  ApplicationDockComponent,
+} from '../application/sections';
 import { ApplicationsInventoryComponent } from '../application/sections/applications-inventory.component';
 import { ApplicationsStore } from '../application/stores';
 import {
+  ActiveCollectionComponent,
   CollectionDockComponent,
   CollectionsInventoryComponent,
 } from '../collection/sections';
@@ -26,18 +30,23 @@ import {
   RightDockSectionComponent,
 } from '../core/sections';
 import { BoardStore } from '../core/stores';
-import { InstructionApplicationDockComponent } from '../instruction-application/sections/instruction-application-dock.component';
+import { InstructionApplicationDockComponent } from '../instruction-application/sections';
 import { InstructionDocumentDockComponent } from '../instruction-document/sections';
 import { InstructionSignerDockComponent } from '../instruction-signer/sections';
 import { InstructionSysvarDockComponent } from '../instruction-sysvar/sections';
 import { InstructionTaskDockComponent } from '../instruction-task/sections';
 import {
+  ActiveInstructionComponent,
   InstructionDockComponent,
   InstructionsInventoryComponent,
 } from '../instruction/sections';
 import { InstructionsStore } from '../instruction/stores';
-import { SysvarDockComponent } from '../sysvar/sections/sysvar-dock.component';
-import { SysvarsInventoryComponent } from '../sysvar/sections/sysvars-section.component';
+import { ActiveSignerComponent } from '../signer/sections';
+import {
+  ActiveSysvarComponent,
+  SysvarDockComponent,
+  SysvarsInventoryComponent,
+} from '../sysvar/sections';
 import { SysvarsStore } from '../sysvar/stores';
 import { WorkspaceStore } from '../workspace/stores';
 
@@ -112,6 +121,12 @@ import { WorkspaceStore } from '../workspace/stores';
       *ngIf="isApplicationsSectionOpen$ | ngrxPush"
       class="fixed left-0 top-24"
     ></pg-applications-inventory>
+
+    <pg-active-application></pg-active-application>
+    <pg-active-collection></pg-active-collection>
+    <pg-active-instruction></pg-active-instruction>
+    <pg-active-sysvar></pg-active-sysvar>
+    <pg-active-signer></pg-active-signer>
   `,
   standalone: true,
   imports: [
@@ -136,6 +151,11 @@ import { WorkspaceStore } from '../workspace/stores';
     InstructionSignerDockComponent,
     SysvarsInventoryComponent,
     SysvarDockComponent,
+    ActiveApplicationComponent,
+    ActiveCollectionComponent,
+    ActiveInstructionComponent,
+    ActiveSysvarComponent,
+    ActiveSignerComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [

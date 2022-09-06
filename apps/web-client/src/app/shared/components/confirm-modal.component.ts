@@ -49,11 +49,11 @@ export class ConfirmModalDirective {
 
     openConfirmModal(this._dialog, {
       message: this.pgMessage,
-    }).closed.subscribe((messageData) => {
+    }).closed.subscribe((confirm) => {
       this.pgCloseModal.emit();
 
-      if (messageData !== undefined) {
-        if (isNull(messageData)) {
+      if (confirm !== undefined) {
+        if (confirm) {
           this.pgConfirm.emit();
         } else {
           this.pgCancel.emit();

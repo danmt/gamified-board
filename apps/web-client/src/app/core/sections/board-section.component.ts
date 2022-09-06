@@ -1,21 +1,20 @@
-import { moveItemInArray } from '@angular/cdk/drag-drop';
 import { CommonModule } from '@angular/common';
 import { Component, HostBinding, inject } from '@angular/core';
 import { PushModule } from '@ngrx/component';
-import { InstructionApplicationApiService } from '../../instruction-application/services';
-import { InstructionDocumentApiService } from '../../instruction-document/services';
-import { InstructionSignerApiService } from '../../instruction-signer/services';
-import { InstructionSysvarApiService } from '../../instruction-sysvar/services';
-import { InstructionTaskApiService } from '../../instruction-task/services';
-import { ActiveComponent } from '../../shared/components';
+import { InstructionApplicationsListComponent } from '../../instruction-application/sections';
+import { InstructionDocumentsListComponent } from '../../instruction-document/sections';
+import { InstructionSignersListComponent } from '../../instruction-signer/sections';
+import { InstructionSysvarsListComponent } from '../../instruction-sysvar/sections';
+import { InstructionTasksListComponent } from '../../instruction-task/sections';
 import {
   CursorScrollDirective,
   FollowCursorDirective,
   KeyboardListenerDirective,
 } from '../../shared/directives';
+import { BoardItemDropListsPipe } from '../../shared/pipes';
 import { Entity, Option } from '../../shared/utils';
 import { RowComponent } from '../components';
-import { BoardStore, InstructionView } from '../stores';
+import { BoardStore } from '../stores';
 
 @Component({
   selector: 'pg-board-section',
@@ -27,105 +26,46 @@ import { BoardStore, InstructionView } from '../stores';
       (pgKeyDown)="onKeyDown($event)"
     >
       <pg-row
+        [id]="instruction.id"
         *ngFor="let instruction of instructions; trackBy: trackBy"
-        style="width: 8000px"
-        [pgInstruction]="instruction"
-        [pgInstructions]="instructions"
-        [pgIsHovered]="(hoveredId$ | ngrxPush) === instruction.id"
-        (pgUseActive)="onUseActive(instruction.id)"
-        (pgSelect)="onSelect($event)"
-        (pgMoveDocument)="
-          onMoveDocument(
-            instructions,
-            instruction.id,
-            $event.previousIndex,
-            $event.newIndex
-          )
-        "
-        (pgTransferDocument)="
-          onTransferDocument(
-            $event.previousInstructionId,
-            $event.newInstructionId,
-            $event.documentId,
-            $event.newIndex
-          )
-        "
-        (pgMoveTask)="
-          onMoveTask(
-            instructions,
-            instruction.id,
-            $event.previousIndex,
-            $event.newIndex
-          )
-        "
-        (pgTransferTask)="
-          onTransferTask(
-            $event.previousInstructionId,
-            $event.newInstructionId,
-            $event.instructionTaskId,
-            $event.newIndex
-          )
-        "
-        (pgMoveApplication)="
-          onMoveApplication(
-            instructions,
-            instruction.id,
-            $event.previousIndex,
-            $event.newIndex
-          )
-        "
-        (pgTransferApplication)="
-          onTransferApplication(
-            $event.previousInstructionId,
-            $event.newInstructionId,
-            $event.instructionApplicationId,
-            $event.newIndex
-          )
-        "
-        (pgMoveSysvar)="
-          onMoveSysvar(
-            instructions,
-            instruction.id,
-            $event.previousIndex,
-            $event.newIndex
-          )
-        "
-        (pgTransferSysvar)="
-          onTransferSysvar(
-            $event.previousInstructionId,
-            $event.newInstructionId,
-            $event.instructionSysvarId,
-            $event.newIndex
-          )
-        "
-        (pgMoveSigner)="
-          onMoveSigner(
-            instructions,
-            instruction.id,
-            $event.previousIndex,
-            $event.newIndex
-          )
-        "
-        (pgTransferSigner)="
-          onTransferSigner(
-            $event.previousInstructionId,
-            $event.newInstructionId,
-            $event.instructionSignerId,
-            $event.newIndex
-          )
-        "
-        (mouseenter)="onMouseEnterRow(instruction.id)"
-        (mouseleave)="onMouseLeaveRow()"
       >
         <p>Instruction: {{ instruction.name }}</p>
-      </pg-row>
-    </div>
 
-    <div class="fixed z-10 pointer-events-none" pgFollowCursor>
-      <pg-active
-        [pgActive]="(active$ | ngrxPush) ?? null"
-        [pgCanAdd]="(hoveredId$ | ngrxPush) !== null"
-      ></pg-active>
+        <pg-instruction-applications-list
+          [pgInstructionId]="instruction.id"
+          [pgDropLists]="instructions | pgBoardItemDropLists: 'application'"
+          [pgInstructionApplications]="instruction.applications"
+          (pgSelect)="onSelect($event)"
+        ></pg-instruction-applications-list>
+
+        <pg-instruction-documents-list
+          [pgInstructionId]="instruction.id"
+          [pgDropLists]="instructions | pgBoardItemDropLists: 'document'"
+          [pgInstructionDocuments]="instruction.documents"
+          (pgSelect)="onSelect($event)"
+        ></pg-instruction-documents-list>
+
+        <pg-instruction-tasks-list
+          [pgInstructionId]="instruction.id"
+          [pgDropLists]="instructions | pgBoardItemDropLists: 'task'"
+          [pgInstructionTasks]="instruction.tasks"
+          (pgSelect)="onSelect($event)"
+        ></pg-instruction-tasks-list>
+
+        <pg-instruction-sysvars-list
+          [pgInstructionId]="instruction.id"
+          [pgDropLists]="instructions | pgBoardItemDropLists: 'sysvar'"
+          [pgInstructionSysvars]="instruction.sysvars"
+          (pgSelect)="onSelect($event)"
+        ></pg-instruction-sysvars-list>
+
+        <pg-instruction-signers-list
+          [pgInstructionId]="instruction.id"
+          [pgDropLists]="instructions | pgBoardItemDropLists: 'signer'"
+          [pgInstructionSigners]="instruction.signers"
+          (pgSelect)="onSelect($event)"
+        ></pg-instruction-signers-list>
+      </pg-row>
     </div>
   `,
   standalone: true,
@@ -135,246 +75,25 @@ import { BoardStore, InstructionView } from '../stores';
     KeyboardListenerDirective,
     FollowCursorDirective,
     CursorScrollDirective,
+    BoardItemDropListsPipe,
     RowComponent,
-    ActiveComponent,
+    InstructionApplicationsListComponent,
+    InstructionDocumentsListComponent,
+    InstructionTasksListComponent,
+    InstructionSysvarsListComponent,
+    InstructionSignersListComponent,
   ],
 })
 export class BoardSectionComponent {
-  private readonly _instructionTaskApiService = inject(
-    InstructionTaskApiService
-  );
-  private readonly _instructionDocumentApiService = inject(
-    InstructionDocumentApiService
-  );
-  private readonly _instructionApplicationApiService = inject(
-    InstructionApplicationApiService
-  );
-  private readonly _instructionSysvarApiService = inject(
-    InstructionSysvarApiService
-  );
-  private readonly _instructionSignerApiService = inject(
-    InstructionSignerApiService
-  );
   private readonly _boardStore = inject(BoardStore);
 
   readonly instructions$ = this._boardStore.currentApplicationInstructions$;
-  readonly active$ = this._boardStore.active$;
   readonly selected$ = this._boardStore.selected$;
-  readonly hoveredId$ = this._boardStore.hoveredId$;
-  readonly isCollectionsSectionOpen$ =
-    this._boardStore.isCollectionsSectionOpen$;
-  readonly isInstructionsSectionOpen$ =
-    this._boardStore.isInstructionsSectionOpen$;
-  readonly isApplicationsSectionOpen$ =
-    this._boardStore.isApplicationsSectionOpen$;
 
   @HostBinding('class') class = 'block relative min-h-screen min-w-screen';
 
-  onMoveDocument(
-    entries: InstructionView[],
-    instructionId: string,
-    previousIndex: number,
-    newIndex: number
-  ) {
-    const instructionIndex = entries.findIndex(
-      ({ id }) => id === instructionId
-    );
-
-    if (instructionIndex === -1) {
-      throw new Error('Invalid instruction.');
-    }
-
-    const documentsOrder = entries[instructionIndex].documents.map(
-      ({ id }) => id
-    );
-
-    moveItemInArray(documentsOrder, previousIndex, newIndex);
-
-    this._instructionDocumentApiService
-      .updateInstructionDocumentsOrder(instructionId, documentsOrder)
-      .subscribe();
-  }
-
-  onTransferDocument(
-    previousInstructionId: string,
-    newInstructionId: string,
-    instructionDocumentId: string,
-    newIndex: number
-  ) {
-    this._instructionDocumentApiService
-      .transferInstructionDocument(
-        previousInstructionId,
-        newInstructionId,
-        instructionDocumentId,
-        newIndex
-      )
-      .subscribe();
-  }
-
-  onMoveTask(
-    entries: InstructionView[],
-    instructionId: string,
-    previousIndex: number,
-    newIndex: number
-  ) {
-    const instructionIndex = entries.findIndex(
-      ({ id }) => id === instructionId
-    );
-
-    if (instructionIndex === -1) {
-      throw new Error('Invalid instruction.');
-    }
-
-    const tasksOrder = entries[instructionIndex].tasks.map(({ id }) => id);
-
-    moveItemInArray(tasksOrder, previousIndex, newIndex);
-
-    this._instructionTaskApiService
-      .updateInstructionTasksOrder(instructionId, tasksOrder)
-      .subscribe();
-  }
-
-  onTransferTask(
-    previousInstructionId: string,
-    newInstructionId: string,
-    instructionTaskId: string,
-    newIndex: number
-  ) {
-    this._instructionTaskApiService
-      .transferInstructionTask(
-        previousInstructionId,
-        newInstructionId,
-        instructionTaskId,
-        newIndex
-      )
-      .subscribe();
-  }
-
-  onMoveApplication(
-    entries: InstructionView[],
-    instructionId: string,
-    previousIndex: number,
-    newIndex: number
-  ) {
-    const instructionIndex = entries.findIndex(
-      ({ id }) => id === instructionId
-    );
-
-    if (instructionIndex === -1) {
-      throw new Error('Invalid instruction.');
-    }
-
-    const applicationsOrder = entries[instructionIndex].applications.map(
-      ({ id }) => id
-    );
-
-    moveItemInArray(applicationsOrder, previousIndex, newIndex);
-
-    this._instructionApplicationApiService
-      .updateInstructionApplicationsOrder(instructionId, applicationsOrder)
-      .subscribe();
-  }
-
-  onTransferApplication(
-    previousInstructionId: string,
-    newInstructionId: string,
-    instructionApplicationId: string,
-    newIndex: number
-  ) {
-    this._instructionApplicationApiService
-      .transferInstructionApplication(
-        previousInstructionId,
-        newInstructionId,
-        instructionApplicationId,
-        newIndex
-      )
-      .subscribe();
-  }
-
-  onMoveSysvar(
-    entries: InstructionView[],
-    instructionId: string,
-    previousIndex: number,
-    newIndex: number
-  ) {
-    const instructionIndex = entries.findIndex(
-      ({ id }) => id === instructionId
-    );
-
-    if (instructionIndex === -1) {
-      throw new Error('Invalid instruction.');
-    }
-
-    const sysvarsOrder = entries[instructionIndex].sysvars.map(({ id }) => id);
-
-    moveItemInArray(sysvarsOrder, previousIndex, newIndex);
-
-    this._instructionSysvarApiService
-      .updateInstructionSysvarsOrder(instructionId, sysvarsOrder)
-      .subscribe();
-  }
-
-  onTransferSysvar(
-    previousInstructionId: string,
-    newInstructionId: string,
-    instructionSysvarId: string,
-    newIndex: number
-  ) {
-    this._instructionSysvarApiService
-      .transferInstructionSysvar(
-        previousInstructionId,
-        newInstructionId,
-        instructionSysvarId,
-        newIndex
-      )
-      .subscribe();
-  }
-
-  onMoveSigner(
-    entries: InstructionView[],
-    instructionId: string,
-    previousIndex: number,
-    newIndex: number
-  ) {
-    const instructionIndex = entries.findIndex(
-      ({ id }) => id === instructionId
-    );
-
-    if (instructionIndex === -1) {
-      throw new Error('Invalid instruction.');
-    }
-
-    const signersOrder = entries[instructionIndex].signers.map(({ id }) => id);
-
-    moveItemInArray(signersOrder, previousIndex, newIndex);
-
-    this._instructionSignerApiService
-      .updateInstructionSignersOrder(instructionId, signersOrder)
-      .subscribe();
-  }
-
-  onTransferSigner(
-    previousInstructionId: string,
-    newInstructionId: string,
-    instructionSignerId: string,
-    newIndex: number
-  ) {
-    this._instructionSignerApiService
-      .transferInstructionSigner(
-        previousInstructionId,
-        newInstructionId,
-        instructionSignerId,
-        newIndex
-      )
-      .subscribe();
-  }
-
   onSelect(selectId: Option<string>) {
     this._boardStore.setSelectedId(selectId);
-  }
-
-  onUseActive(instructionId: string) {
-    this._boardStore.useActive(instructionId);
   }
 
   onKeyDown(event: KeyboardEvent) {
@@ -389,13 +108,5 @@ export class BoardSectionComponent {
 
   trackBy(_: number, item: Entity<unknown>): string {
     return item.id;
-  }
-
-  onMouseEnterRow(hoveredId: string) {
-    this._boardStore.setHoveredId(hoveredId);
-  }
-
-  onMouseLeaveRow() {
-    this._boardStore.setHoveredId(null);
   }
 }
