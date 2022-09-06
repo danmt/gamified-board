@@ -6,7 +6,10 @@ import { RouterModule } from '@angular/router';
 import { LetModule, PushModule } from '@ngrx/component';
 import { BehaviorSubject } from 'rxjs';
 import { BoardStore } from '../../core/stores';
-import { InventoryComponent, InvetoryDirection } from '../../shared/components';
+import {
+  InventoryComponent,
+  InventoryDirection,
+} from '../../shared/components';
 import { DefaultImageDirective } from '../../shared/directives';
 import { Option } from '../../shared/utils';
 import {
@@ -148,7 +151,7 @@ export class CollectionsInventoryComponent {
   readonly workspaceId$ = this._boardStore.workspaceId$;
   readonly currentApplicationId$ = this._boardStore.currentApplicationId$;
   readonly collections$ = this._boardStore.collections$;
-  readonly direction = InvetoryDirection.right;
+  readonly direction = InventoryDirection.right;
 
   onActivateCollection(collectionId: string) {
     this._boardStore.setActive({ id: collectionId, kind: 'collection' });

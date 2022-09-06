@@ -6,7 +6,10 @@ import { RouterModule } from '@angular/router';
 import { LetModule, PushModule } from '@ngrx/component';
 import { BehaviorSubject } from 'rxjs';
 import { BoardStore } from '../../core/stores';
-import { InventoryComponent, InvetoryDirection } from '../../shared/components';
+import {
+  InventoryComponent,
+  InventoryDirection,
+} from '../../shared/components';
 import { DefaultImageDirective } from '../../shared/directives';
 import { Option } from '../../shared/utils';
 import {
@@ -147,7 +150,7 @@ export class InstructionsInventoryComponent {
   readonly workspaceId$ = this._boardStore.workspaceId$;
   readonly currentApplicationId$ = this._boardStore.currentApplicationId$;
   readonly instructions$ = this._boardStore.instructions$;
-  readonly direction = InvetoryDirection.left;
+  readonly direction = InventoryDirection.left;
 
   onActivateInstruction(instructionId: string) {
     this._boardStore.setActive({ id: instructionId, kind: 'instruction' });

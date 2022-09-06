@@ -6,7 +6,10 @@ import { RouterModule } from '@angular/router';
 import { LetModule, PushModule } from '@ngrx/component';
 import { BehaviorSubject } from 'rxjs';
 import { BoardStore } from '../../core/stores';
-import { InventoryComponent, InvetoryDirection } from '../../shared/components';
+import {
+  InventoryComponent,
+  InventoryDirection,
+} from '../../shared/components';
 import { DefaultImageDirective } from '../../shared/directives';
 import { Option } from '../../shared/utils';
 import {
@@ -133,7 +136,7 @@ export class SysvarsInventoryComponent {
 
   readonly isDragging$ = this._isDragging.asObservable();
   readonly sysvars$ = this._boardStore.sysvars$;
-  readonly direction = InvetoryDirection.right;
+  readonly direction = InventoryDirection.right;
 
   onActivateSysvar(sysvarId: string) {
     this._boardStore.setActive({ id: sysvarId, kind: 'sysvar' });
