@@ -19,7 +19,7 @@ import {
   template: `
     <pg-inventory
       class="mt-10 min-w-[300px] min-h-[500px] max-h-[500px]"
-      [direction]="'left'"
+      direction="left"
     >
       <header class="relative h-[80px]">
         <div

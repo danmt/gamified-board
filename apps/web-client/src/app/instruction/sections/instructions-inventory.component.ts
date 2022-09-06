@@ -19,7 +19,7 @@ import { InstructionApiService } from '../services';
   selector: 'pg-instructions-inventory',
   template: `
     <pg-inventory
-      [direction]="'left'"
+      direction="left"
       class="mt-10 min-w-[300px] min-h-[500px] max-h-[500px]"
     >
       <header class="relative h-[80px]">
