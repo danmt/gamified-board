@@ -98,19 +98,16 @@ export class UpdateSysvarModalDirective {
   selector: 'pg-edit-sysvar-modal',
   template: `
     <pg-modal
-      class="px-6 pt-8 pb-4 text-white min-w-[400px] min-h-[300px]"
+      class="text-white min-w-[400px] min-h-[300px]"
       pgStopKeydownPropagation
       pgKeyboardListener
       (keydown)="onKeyDown($event)"
+      (pgCloseModal)="onClose()"
     >
       <div class="flex justify-between w-full">
         <h1 class="text-center text-3xl mb-4 bp-font-game uppercase">
           {{ sysvar === null ? 'Create' : 'Update' }} sysvar
         </h1>
-        <button
-          class="bp-button-close-futuristic z-20 outline-0"
-          (click)="onClose()"
-        ></button>
       </div>
 
       <form
@@ -170,7 +167,7 @@ export class UpdateSysvarModalDirective {
           />
         </div>
 
-        <div class="flex justify-center items-center mt-10">
+        <div class="flex justify-center items-center mt-10 mb-14">
           <button
             type="submit"
             class="bp-button-futuristic text-black bp-font-game uppercase"

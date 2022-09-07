@@ -124,15 +124,12 @@ export class UpdateApplicationModalDirective {
       pgStopKeydownPropagation
       pgKeyboardListener
       (keydown)="onKeyDown($event)"
+      (pgCloseModal)="onClose()"
     >
       <div class="flex justify-between w-full">
         <h1 class="text-center text-3xl mb-4 bp-font-game uppercase">
           {{ application === null ? 'Create' : 'Update' }} application
         </h1>
-        <button
-          class="bp-button-close-futuristic z-20 outline-0"
-          (click)="onClose()"
-        ></button>
       </div>
 
       <form [formGroup]="form" (ngSubmit)="onSubmit()">
@@ -184,7 +181,7 @@ export class UpdateApplicationModalDirective {
           />
         </div>
 
-        <div class="flex justify-center items-center mt-10">
+        <div class="flex justify-center items-center mt-10 mb-14">
           <button
             type="submit"
             class="bp-button-futuristic text-black bp-font-game uppercase"

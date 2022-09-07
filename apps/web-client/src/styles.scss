@@ -256,3 +256,141 @@ body,
 ::-webkit-scrollbar-thumb:hover {
   background: #275045;
 }
+
+/// TEMPORAL
+.bp-skin-outer-metal-corner-right-top {
+  background-image: url('./assets/skins/futuristic/yellow/outer-corner-top-right.png');
+  background-repeat: no-repeat;
+  height: 122px;
+  width: 121px;
+}
+
+.bp-skin-outer-metal-corner-left-top {
+  background-image: url('./assets/skins/futuristic/yellow/outer-corner-top-left.png');
+  background-repeat: no-repeat;
+  height: 121px;
+  width: 122px;
+}
+
+.bp-skin-outer-metal-corner-right-bottom {
+  background-image: url('./assets/skins/futuristic/yellow/outer-corner-bottom-right.png');
+  background-repeat: no-repeat;
+  height: 121px;
+  width: 122px;
+}
+
+.bp-skin-outer-metal-corner-left-bottom {
+  background-image: url('./assets/skins/futuristic/yellow/outer-corner-bottom-left.png');
+  background-repeat: no-repeat;
+  height: 122px;
+  width: 121px;
+}
+
+.bp-skin-outer-metal-border-right {
+  background-image: url('./assets/skins/futuristic/yellow/outer-metal-vertical.png');
+  background-repeat: repeat;
+  width: 23px;
+}
+
+.bp-skin-outer-metal-border-left {
+  background-image: url('./assets/skins/futuristic/yellow/outer-metal-vertical.png');
+  background-repeat: repeat;
+  width: 23px;
+  transform: scale(-1);
+}
+
+.bp-skin-outer-metal-border-top {
+  background-image: url('./assets/skins/futuristic/yellow/outer-metal-horizontal.png');
+  background-repeat: repeat;
+  height: 23px;
+  transform: scale(-1);
+}
+
+.bp-skin-outer-metal-border-bottom {
+  background-image: url('./assets/skins/futuristic/yellow/outer-metal-horizontal.png');
+  background-repeat: repeat;
+  height: 23px;
+}
+
+.bp-skin-inner-metal-corner-right-top {
+  background-image: url('./assets/skins/futuristic/yellow/inner-corner-top-right.png');
+  background-repeat: no-repeat;
+  height: 178px;
+  width: 213px;
+}
+
+.bp-skin-inner-metal-corner-left-top {
+  background-image: url('./assets/skins/futuristic/yellow/inner-corner-top-left.png');
+  background-repeat: no-repeat;
+  height: 178px;
+  width: 213px;
+}
+
+.bp-skin-inner-metal-corner-right-bottom {
+  background-image: url('./assets/skins/futuristic/yellow/inner-corner-bottom-right.png');
+  background-repeat: no-repeat;
+  height: 178px;
+  width: 213px;
+}
+
+.bp-skin-inner-metal-corner-left-bottom {
+  background-image: url('./assets/skins/futuristic/yellow/inner-corner-bottom-left.png');
+  background-repeat: no-repeat;
+  height: 178px;
+  width: 213px;
+}
+
+.bp-skin-inner-metal-border-right {
+  background-image: url('./assets/skins/futuristic/yellow/inner-metal-vertical.png');
+  background-repeat: repeat;
+  width: 23px;
+}
+
+.bp-skin-inner-metal-border-left {
+  background-image: url('./assets/skins/futuristic/yellow/inner-metal-vertical.png');
+  background-repeat: repeat;
+  width: 23px;
+  transform: scale(-1);
+}
+
+.bp-skin-inner-metal-border-top {
+  background-image: url('./assets/skins/futuristic/yellow/inner-metal-horizontal.png');
+  background-repeat: repeat;
+  height: 23px;
+  transform: scale(-1);
+}
+
+.bp-skin-inner-metal-border-bottom {
+  background-image: url('./assets/skins/futuristic/yellow/inner-metal-horizontal.png');
+  background-repeat: repeat;
+  height: 23px;
+}
+
+.bp-skin-metal-top-detail {
+  background-image: url('./assets/skins/futuristic/yellow/top_detail.png');
+  background-repeat: repeat;
+  width: 341px;
+  height: 50px;
+}
+
+.bp-skin-metal-bottom-detail {
+  background-image: url('./assets/skins/futuristic/yellow/bottom_detail.png');
+  background-repeat: repeat;
+  width: 286px;
+  height: 43px;
+}
+
+.bp-skin-metal-right-detail {
+  background-image: url('./assets/skins/futuristic/yellow/side_detail.png');
+  background-repeat: repeat;
+  width: 43px;
+  height: 286px;
+}
+
+.bp-skin-metal-left-detail {
+  background-image: url('./assets/skins/futuristic/yellow/side_detail.png');
+  background-repeat: repeat;
+  width: 43px;
+  height: 286px;
+  transform: scale(-1);
+}

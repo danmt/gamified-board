@@ -162,21 +162,18 @@ export class UpdateInstructionDocumentModalDirective {
       pgStopKeydownPropagation
       pgKeyboardListener
       (keydown)="onKeyDown($event)"
+      (pgCloseModal)="onClose()"
     >
       <div class="flex justify-between w-full">
         <h1 class="text-center text-3xl mb-4 bp-font-game uppercase">
           {{ instructionDocument === null ? 'Create' : 'Update' }} document
         </h1>
-        <button
-          class="bp-button-close-futuristic z-20 outline-0"
-          (click)="onClose()"
-        ></button>
       </div>
 
       <form
         [formGroup]="form"
         (ngSubmit)="onSubmit()"
-        class="overflow-y-auto max-h-[550px]"
+        class="overflow-y-auto max-h-[565px]"
       >
         <div class="mb-4">
           <label class="block bp-font-game text-xl" for="document-id-input"
@@ -461,7 +458,7 @@ export class UpdateInstructionDocumentModalDirective {
           </select>
         </div>
 
-        <div class="flex justify-center items-center mt-10">
+        <div class="flex justify-center items-center mt-10 mb-9">
           <button
             type="submit"
             class="bp-button-futuristic text-black bp-font-game uppercase"
