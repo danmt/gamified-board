@@ -4,6 +4,7 @@ import {
   doc,
   docData,
   Firestore,
+  runTransaction,
   setDoc,
   updateDoc,
 } from '@angular/fire/firestore';
@@ -33,6 +34,23 @@ export type InstructionDto = Entity<{
   sysvars: InstructionSysvarDto[];
   signers: InstructionSignerDto[];
 }>;
+
+export type CreateInstructionDto = Entity<{
+  name: string;
+  applicationId: string;
+  workspaceId: string;
+  arguments: InstructionArgumentDto[];
+}>;
+
+export type UpdateInstructionDto = Partial<{
+  name: string;
+  arguments: InstructionArgumentDto[];
+}>;
+
+export interface UpdateInstructionThumbnailDto {
+  fileId: string;
+  fileUrl: string;
+}
 
 @Injectable({ providedIn: 'root' })
 export class InstructionApiService {
@@ -75,23 +93,19 @@ export class InstructionApiService {
     return defer(() => from(deleteDoc(instructionRef)));
   }
 
-  createInstruction(
-    workspaceId: string,
-    applicationId: string,
-    newInstructionId: string,
-    name: string,
-    thumbnailUrl: string,
-    args: InstructionArgumentDto[]
-  ) {
+  createInstruction({
+    id,
+    applicationId,
+    arguments: args,
+    name,
+    workspaceId,
+  }: CreateInstructionDto) {
     const workspaceRef = doc(this._firestore, `workspaces/${workspaceId}`);
     const applicationRef = doc(
       this._firestore,
       `applications/${applicationId}`
     );
-    const newInstructionRef = doc(
-      this._firestore,
-      `instructions/${newInstructionId}`
-    );
+    const newInstructionRef = doc(this._firestore, `instructions/${id}`);
 
     return defer(() =>
       from(
@@ -99,7 +113,7 @@ export class InstructionApiService {
           name,
           applicationRef,
           workspaceRef,
-          thumbnailUrl,
+          thumbnailUrl: null,
           tasks: [],
           sysvars: [],
           applications: [],
@@ -110,23 +124,35 @@ export class InstructionApiService {
     );
   }
 
-  updateInstruction(
-    instructionId: string,
-    name: string,
-    thumbnailUrl: string,
-    args: InstructionArgumentDto[]
-  ) {
+  updateInstruction(instructionId: string, changes: UpdateInstructionDto) {
     const instructionRef = doc(
       this._firestore,
       `instructions/${instructionId}`
     );
 
+    return defer(() => from(updateDoc(instructionRef, changes)));
+  }
+
+  updateInstructionThumbnail(
+    instructionId: string,
+    { fileId, fileUrl }: UpdateInstructionThumbnailDto
+  ) {
+    const instructionRef = doc(
+      this._firestore,
+      `instructions/${instructionId}`
+    );
+    const uploadRef = doc(this._firestore, `uploads/${fileId}`);
+
     return defer(() =>
       from(
-        updateDoc(instructionRef, {
-          name,
-          thumbnailUrl,
-          arguments: args,
+        runTransaction(this._firestore, async (transaction) => {
+          transaction.set(uploadRef, {
+            kind: 'instruction',
+            ref: instructionId,
+          });
+          transaction.update(instructionRef, { thumbnailUrl: fileUrl });
+
+          return true;
         })
       )
     );

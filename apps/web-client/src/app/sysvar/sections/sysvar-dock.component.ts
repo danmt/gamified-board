@@ -1,20 +1,24 @@
 import { Dialog } from '@angular/cdk/dialog';
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
+import { Storage } from '@angular/fire/storage';
 import { LetModule, PushModule } from '@ngrx/component';
 import { combineLatest, concatMap, EMPTY, map, of, tap } from 'rxjs';
 import { BoardStore, SysvarView } from '../../core/stores';
 import {
   ConfirmModalDirective,
   openConfirmModal,
+  openUploadFileModal,
+  openUploadFileProgressModal,
   SquareButtonComponent,
+  UploadFileModalDirective,
 } from '../../shared/components';
 import {
   DefaultImageDirective,
   KeyboardListenerDirective,
 } from '../../shared/directives';
 import { SlotHotkeyPipe } from '../../shared/pipes';
-import { isNotNull, isNull } from '../../shared/utils';
+import { generateId, isNotNull, isNull } from '../../shared/utils';
 import {
   EditSysvarSubmit,
   openEditSysvarModal,
@@ -90,6 +94,30 @@ interface HotKey {
             (pgCloseModal)="isDeleting = false"
           ></pg-square-button>
         </div>
+
+        <div
+          class="bg-gray-800 relative"
+          style="width: 2.89rem; height: 2.89rem"
+        >
+          <ng-container *ngrxLet="hotkeys$; let hotkeys">
+            <span
+              *ngIf="2 | pgSlotHotkey: hotkeys as hotkey"
+              class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
+              style="font-size: 0.5rem; line-height: 0.5rem"
+            >
+              {{ hotkey }}
+            </span>
+          </ng-container>
+
+          <pg-square-button
+            [pgIsActive]="isUpdatingThumbnail"
+            pgThumbnailUrl="assets/generic/sysvar.png"
+            pgUploadFileModal
+            (pgSubmit)="
+              onUploadThumbnail(selected.id, $event.fileId, $event.fileUrl)
+            "
+          ></pg-square-button>
+        </div>
       </div>
     </ng-container>
   `,
@@ -100,6 +128,7 @@ interface HotKey {
     LetModule,
     SquareButtonComponent,
     UpdateSysvarModalDirective,
+    UploadFileModalDirective,
     SlotHotkeyPipe,
     KeyboardListenerDirective,
     ConfirmModalDirective,
@@ -108,6 +137,7 @@ interface HotKey {
 })
 export class SysvarDockComponent {
   private readonly _dialog = inject(Dialog);
+  private readonly _storage = inject(Storage);
   private readonly _boardStore = inject(BoardStore);
   private readonly _sysvarApiService = inject(SysvarApiService);
 
@@ -135,14 +165,29 @@ export class SysvarDockComponent {
       code: 'KeyW',
       key: 'w',
     },
+    {
+      slot: 2,
+      code: 'KeyE',
+      key: 'e',
+    },
   ]);
 
   isEditing = false;
   isDeleting = false;
+  isUpdatingThumbnail = false;
 
   onUpdateSysvar(sysvarId: string, sysvarData: EditSysvarSubmit) {
     this._sysvarApiService
-      .updateSysvar(sysvarId, sysvarData.name, sysvarData.thumbnailUrl)
+      .updateSysvar(sysvarId, { name: sysvarData.name })
+      .subscribe();
+  }
+
+  onUploadThumbnail(sysvarId: string, fileId: string, fileUrl: string) {
+    this._sysvarApiService
+      .updateSysvarThumbnail(sysvarId, {
+        fileId,
+        fileUrl,
+      })
       .subscribe();
   }
 
@@ -169,11 +214,9 @@ export class SysvarDockComponent {
                   return EMPTY;
                 }
 
-                return this._sysvarApiService.updateSysvar(
-                  sysvar.id,
-                  sysvarData.name,
-                  sysvarData.thumbnailUrl
-                );
+                return this._sysvarApiService.updateSysvar(sysvar.id, {
+                  name: sysvarData.name,
+                });
               })
             )
             .subscribe();
@@ -198,6 +241,44 @@ export class SysvarDockComponent {
                 return this._sysvarApiService
                   .deleteSysvar(sysvar.id)
                   .pipe(tap(() => this._boardStore.setSelected(null)));
+              })
+            )
+            .subscribe();
+
+          break;
+        }
+
+        case 2: {
+          this.isUpdatingThumbnail = true;
+
+          const fileId = generateId();
+          const fileName = `${fileId}.png`;
+
+          openUploadFileModal(this._dialog)
+            .closed.pipe(
+              concatMap((uploadFileData) => {
+                this.isUpdatingThumbnail = false;
+
+                if (uploadFileData === undefined) {
+                  return EMPTY;
+                }
+
+                return openUploadFileProgressModal(
+                  this._dialog,
+                  this._storage,
+                  fileName,
+                  uploadFileData.fileSource
+                ).closed;
+              }),
+              concatMap((payload) => {
+                if (payload === undefined) {
+                  return EMPTY;
+                }
+
+                return this._sysvarApiService.updateSysvarThumbnail(sysvar.id, {
+                  fileId,
+                  fileUrl: payload.fileUrl,
+                });
               })
             )
             .subscribe();

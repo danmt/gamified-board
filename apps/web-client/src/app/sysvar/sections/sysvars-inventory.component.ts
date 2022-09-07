@@ -31,9 +31,7 @@ import { SysvarApiService } from '../services';
       <button
         class="bp-button-add-futuristic z-20"
         pgCreateSysvarModal
-        (pgCreateSysvar)="
-          onCreateSysvar($event.id, $event.name, $event.thumbnailUrl)
-        "
+        (pgCreateSysvar)="onCreateSysvar($event.id, $event.name)"
         pgInventoryCreateButton
       ></button>
 
@@ -159,11 +157,11 @@ export class SysvarsInventoryComponent {
   }
 
   onSelectSysvar(sysvarId: string) {
-    this._boardStore.setSelected({ id: sysvarId, kind: 'signer' });
+    this._boardStore.setSelected({ id: sysvarId, kind: 'sysvar' });
   }
 
-  onCreateSysvar(id: string, name: string, thumbnailUrl: string) {
-    this._sysvarApiService.createSysvar(id, name, thumbnailUrl).subscribe();
+  onCreateSysvar(id: string, name: string) {
+    this._sysvarApiService.createSysvar({ id, name }).subscribe();
   }
 
   onDragStart(event: CdkDragStart) {

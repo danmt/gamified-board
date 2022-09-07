@@ -1,3 +1,4 @@
+import { v4 as uuid } from 'uuid';
 import { Option } from './types';
 
 export function isNull<T>(x: Option<T>): x is null {
@@ -9,7 +10,7 @@ export function isNotNull<T>(x: Option<T>): x is T {
 }
 
 export function isChildOf(
-  element: HTMLElement | null,
+  element: Option<HTMLElement>,
   matchFn: (element: HTMLElement) => boolean
 ): boolean {
   if (element === null) {
@@ -24,9 +25,9 @@ export function isChildOf(
 }
 
 export function getFirstParentId(
-  element: HTMLElement | null,
+  element: Option<HTMLElement>,
   matchFn: (element: HTMLElement) => boolean
-): string | null {
+): Option<string> {
   if (element === null) {
     return null;
   }
@@ -36,4 +37,8 @@ export function getFirstParentId(
   }
 
   return getFirstParentId(element.parentElement, matchFn);
+}
+
+export function generateId() {
+  return uuid();
 }

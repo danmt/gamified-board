@@ -23,13 +23,18 @@ import {
   Validators,
 } from '@angular/forms';
 import { Observable } from 'rxjs';
-import { v4 as uuid } from 'uuid';
 import { ModalComponent } from '../../shared/components';
 import {
   KeyboardListenerDirective,
   StopKeydownPropagationDirective,
 } from '../../shared/directives';
-import { Entity, isNotNull, isNull, Option } from '../../shared/utils';
+import {
+  Entity,
+  generateId,
+  isNotNull,
+  isNull,
+  Option,
+} from '../../shared/utils';
 
 interface ArgumentReference {
   kind: 'argument';
@@ -949,6 +954,6 @@ export class EditInstructionDocumentModalComponent {
   }
 
   onGenerateId() {
-    return uuid();
+    return generateId();
   }
 }

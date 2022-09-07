@@ -12,6 +12,7 @@ import {
   Firestore,
   orderBy,
   query,
+  runTransaction,
   setDoc,
   startAt,
   updateDoc,
@@ -24,6 +25,20 @@ export type ApplicationDto = Entity<{
   workspaceId: string;
   thumbnailUrl: string;
 }>;
+
+export type CreateApplicationDto = Entity<{
+  name: string;
+  workspaceId: string;
+}>;
+
+export type UpdateApplicationDto = Partial<{
+  name: string;
+}>;
+
+export interface UpdateApplicationThumbnailDto {
+  fileId: string;
+  fileUrl: string;
+}
 
 @Injectable({ providedIn: 'root' })
 export class ApplicationApiService {
@@ -95,40 +110,50 @@ export class ApplicationApiService {
     );
   }
 
-  createApplication(
-    workspaceId: string,
-    newApplicationId: string,
-    name: string,
-    thumbnailUrl: string
-  ) {
+  createApplication({ id, workspaceId, name }: CreateApplicationDto) {
     const workspaceRef = doc(this._firestore, `workspaces/${workspaceId}`);
-    const newApplicationRef = doc(
-      this._firestore,
-      `applications/${newApplicationId}`
-    );
+    const newApplicationRef = doc(this._firestore, `applications/${id}`);
 
     return defer(() =>
       from(
         setDoc(newApplicationRef, {
           name,
-          thumbnailUrl,
+          thumbnailUrl: null,
           workspaceRef,
         })
       )
     );
   }
 
-  updateApplication(applicationId: string, name: string, thumbnailUrl: string) {
+  updateApplication(applicationId: string, changes: UpdateApplicationDto) {
     const applicationRef = doc(
       this._firestore,
       `applications/${applicationId}`
     );
 
+    return defer(() => from(updateDoc(applicationRef, changes)));
+  }
+
+  updateApplicationThumbnail(
+    applicationId: string,
+    { fileId, fileUrl }: UpdateApplicationThumbnailDto
+  ) {
+    const applicationRef = doc(
+      this._firestore,
+      `applications/${applicationId}`
+    );
+    const uploadRef = doc(this._firestore, `uploads/${fileId}`);
+
     return defer(() =>
       from(
-        updateDoc(applicationRef, {
-          name,
-          thumbnailUrl,
+        runTransaction(this._firestore, async (transaction) => {
+          transaction.set(uploadRef, {
+            kind: 'application',
+            ref: applicationId,
+          });
+          transaction.update(applicationRef, { thumbnailUrl: fileUrl });
+
+          return true;
         })
       )
     );

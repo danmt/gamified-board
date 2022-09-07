@@ -1,6 +1,7 @@
 import { enableProdMode, importProvidersFrom } from '@angular/core';
 import { initializeApp, provideFirebaseApp } from '@angular/fire/app';
 import { getFirestore, provideFirestore } from '@angular/fire/firestore';
+import { getStorage, provideStorage } from '@angular/fire/storage';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterModule } from '@angular/router';
@@ -53,7 +54,8 @@ bootstrapApplication(AppComponent, {
         },
       ]),
       provideFirebaseApp(() => initializeApp(environment.firebaseConfig)),
-      provideFirestore(() => getFirestore())
+      provideFirestore(() => getFirestore()),
+      provideStorage(() => getStorage())
     ),
   ],
 }).catch((err) => console.error(err));

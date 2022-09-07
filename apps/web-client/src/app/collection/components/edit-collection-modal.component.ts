@@ -22,17 +22,15 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { v4 as uuid } from 'uuid';
 import { ModalComponent } from '../../shared/components';
 import {
   KeyboardListenerDirective,
   StopKeydownPropagationDirective,
 } from '../../shared/directives';
-import { Entity, isNull, Option } from '../../shared/utils';
+import { Entity, generateId, isNull, Option } from '../../shared/utils';
 
 export type Collection = Entity<{
   name: string;
-  thumbnailUrl: string;
   attributes: Entity<{ name: string; type: string; isOption: boolean }>[];
 }>;
 
@@ -186,32 +184,11 @@ export class UpdateCollectionModalDirective {
           />
         </div>
 
-        <div class="mb-4">
-          <label
-            class="block bp-font-game text-xl"
-            for="collection-thumbnail-url-input"
-          >
-            Collection thumbnail
-          </label>
-          <input
-            class="bp-input-futuristic p-4 outline-0"
-            id="collection-thumbnail-url-input"
-            type="text"
-            formControlName="thumbnailUrl"
-          />
-        </div>
-
-        <div class="mb-4 text-black" formArrayName="attributes">
-          <div class="flex items-center justify-between">
-            <p class="block bp-font-game text-2xl text-white">
-              Collection attributes
-            </p>
-            <button
-              class="bp-button-add-futuristic"
-              (click)="onAddAttribute()"
-              type="button"
-            ></button>
-          </div>
+        <div formArrayName="attributes">
+          <p>
+            <span>Collection attributes</span>
+            <button (click)="onAddAttribute()" type="button">+</button>
+          </p>
 
           <div
             class="flex flex-col gap-2"
@@ -356,13 +333,6 @@ export class EditCollectionModalComponent {
       validators: [Validators.required],
       nonNullable: true,
     }),
-    thumbnailUrl: this._formBuilder.control<string>(
-      this.collection?.thumbnailUrl ?? '',
-      {
-        validators: [Validators.required],
-        nonNullable: true,
-      }
-    ),
     attributes: this.collection?.attributes
       ? this._formBuilder.array(
           this.collection.attributes.map((attribute) =>
@@ -394,10 +364,6 @@ export class EditCollectionModalComponent {
 
   get nameControl() {
     return this.form.get('name') as FormControl<string>;
-  }
-
-  get thumbnailUrlControl() {
-    return this.form.get('thumbnailUrl') as FormControl<string>;
   }
 
   get attributesControl() {
@@ -474,7 +440,6 @@ export class EditCollectionModalComponent {
     if (this.form.valid) {
       const id = this.idControl.value;
       const name = this.nameControl.value;
-      const thumbnailUrl = this.thumbnailUrlControl.value;
       const attributes = this.attributesControl.controls.map(
         (attributeForm) => {
           const idControl = attributeForm.get('id') as FormControl<string>;
@@ -496,7 +461,6 @@ export class EditCollectionModalComponent {
       this._dialogRef.close({
         id,
         name,
-        thumbnailUrl,
         attributes,
       });
     }
@@ -513,6 +477,6 @@ export class EditCollectionModalComponent {
   }
 
   onGenerateId() {
-    return uuid();
+    return generateId();
   }
 }

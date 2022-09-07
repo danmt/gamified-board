@@ -1,20 +1,24 @@
 import { Dialog } from '@angular/cdk/dialog';
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
+import { Storage } from '@angular/fire/storage';
 import { LetModule, PushModule } from '@ngrx/component';
 import { combineLatest, concatMap, EMPTY, map, of, tap } from 'rxjs';
 import { BoardStore, CollectionView } from '../../core/stores';
 import {
   ConfirmModalDirective,
   openConfirmModal,
+  openUploadFileModal,
+  openUploadFileProgressModal,
   SquareButtonComponent,
+  UploadFileModalDirective,
 } from '../../shared/components';
 import {
   DefaultImageDirective,
   KeyboardListenerDirective,
 } from '../../shared/directives';
 import { SlotHotkeyPipe } from '../../shared/pipes';
-import { isNotNull, isNull } from '../../shared/utils';
+import { generateId, isNotNull, isNull } from '../../shared/utils';
 import {
   EditCollectionSubmit,
   openEditCollectionModal,
@@ -59,12 +63,12 @@ interface HotKey {
           </span>
 
           <pg-square-button
-            [pgIsActive]="isEditing"
+            [pgIsActive]="isUpdating"
             pgThumbnailUrl="assets/generic/collection.png"
             pgUpdateCollectionModal
             [pgCollection]="selected"
-            (pgOpenModal)="isEditing = true"
-            (pgCloseModal)="isEditing = false"
+            (pgOpenModal)="isUpdating = true"
+            (pgCloseModal)="isUpdating = false"
             (pgUpdateCollection)="onUpdateCollection(selected.id, $event)"
           ></pg-square-button>
         </div>
@@ -92,6 +96,31 @@ interface HotKey {
             (pgCloseModal)="isDeleting = false"
           ></pg-square-button>
         </div>
+
+        <div
+          class="bg-gray-800 relative"
+          style="width: 2.89rem; height: 2.89rem"
+          *ngIf="(currentApplicationId$ | ngrxPush) === selected.application.id"
+        >
+          <ng-container *ngrxLet="hotkeys$; let hotkeys">
+            <span
+              *ngIf="2 | pgSlotHotkey: hotkeys as hotkey"
+              class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
+              style="font-size: 0.5rem; line-height: 0.5rem"
+            >
+              {{ hotkey }}
+            </span>
+          </ng-container>
+
+          <pg-square-button
+            [pgIsActive]="isUpdatingThumbnail"
+            pgThumbnailUrl="assets/generic/collection.png"
+            pgUploadFileModal
+            (pgSubmit)="
+              onUploadThumbnail(selected.id, $event.fileId, $event.fileUrl)
+            "
+          ></pg-square-button>
+        </div>
       </div>
     </ng-container>
   `,
@@ -102,6 +131,7 @@ interface HotKey {
     LetModule,
     SquareButtonComponent,
     UpdateCollectionModalDirective,
+    UploadFileModalDirective,
     SlotHotkeyPipe,
     KeyboardListenerDirective,
     ConfirmModalDirective,
@@ -110,6 +140,7 @@ interface HotKey {
 })
 export class CollectionDockComponent {
   private readonly _dialog = inject(Dialog);
+  private readonly _storage = inject(Storage);
   private readonly _boardStore = inject(BoardStore);
   private readonly _collectionApiService = inject(CollectionApiService);
 
@@ -141,22 +172,26 @@ export class CollectionDockComponent {
       code: 'KeyW',
       key: 'w',
     },
+    {
+      slot: 2,
+      code: 'KeyE',
+      key: 'e',
+    },
   ]);
 
-  isEditing = false;
+  isUpdating = false;
   isDeleting = false;
+  isUpdatingThumbnail = false;
 
   onUpdateCollection(
     collectionId: string,
     collectionData: EditCollectionSubmit
   ) {
     this._collectionApiService
-      .updateCollection(
-        collectionId,
-        collectionData.name,
-        collectionData.thumbnailUrl,
-        collectionData.attributes
-      )
+      .updateCollection(collectionId, {
+        name: collectionData.name,
+        attributes: collectionData.attributes,
+      })
       .subscribe();
   }
 
@@ -164,6 +199,15 @@ export class CollectionDockComponent {
     this._collectionApiService
       .deleteCollection(collectionId)
       .subscribe(() => this._boardStore.setSelected(null));
+  }
+
+  onUploadThumbnail(collectionId: string, fileId: string, fileUrl: string) {
+    this._collectionApiService
+      .updateCollectionThumbnail(collectionId, {
+        fileId,
+        fileUrl,
+      })
+      .subscribe();
   }
 
   onKeyDown(
@@ -176,12 +220,12 @@ export class CollectionDockComponent {
     if (isNotNull(hotkey)) {
       switch (hotkey.slot) {
         case 0: {
-          this.isEditing = true;
+          this.isUpdating = true;
 
           openEditCollectionModal(this._dialog, { collection })
             .closed.pipe(
               concatMap((collectionData) => {
-                this.isEditing = false;
+                this.isUpdating = false;
 
                 if (collectionData === undefined) {
                   return EMPTY;
@@ -189,9 +233,10 @@ export class CollectionDockComponent {
 
                 return this._collectionApiService.updateCollection(
                   collection.id,
-                  collectionData.name,
-                  collectionData.thumbnailUrl,
-                  collectionData.attributes
+                  {
+                    name: collectionData.name,
+                    attributes: collectionData.attributes,
+                  }
                 );
               })
             )
@@ -217,6 +262,44 @@ export class CollectionDockComponent {
                 return this._collectionApiService
                   .deleteCollection(collection.id)
                   .pipe(tap(() => this._boardStore.setSelected(null)));
+              })
+            )
+            .subscribe();
+
+          break;
+        }
+
+        case 2: {
+          this.isUpdatingThumbnail = true;
+
+          const fileId = generateId();
+          const fileName = `${fileId}.png`;
+
+          openUploadFileModal(this._dialog)
+            .closed.pipe(
+              concatMap((uploadFileData) => {
+                this.isUpdatingThumbnail = false;
+
+                if (uploadFileData === undefined) {
+                  return EMPTY;
+                }
+
+                return openUploadFileProgressModal(
+                  this._dialog,
+                  this._storage,
+                  fileName,
+                  uploadFileData.fileSource
+                ).closed;
+              }),
+              concatMap((payload) => {
+                if (payload === undefined) {
+                  return EMPTY;
+                }
+
+                return this._collectionApiService.updateCollectionThumbnail(
+                  collection.id,
+                  { fileId, fileUrl: payload.fileUrl }
+                );
               })
             )
             .subscribe();
