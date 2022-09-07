@@ -86,12 +86,7 @@ import { WorkspaceApiService } from '../workspace/services';
             pgCreateApplicationModal
             [pgWorkspaceId]="selectedWorkspace?.id ?? null"
             (pgCreateApplication)="
-              onCreateApplication(
-                $event.workspaceId,
-                $event.id,
-                $event.name,
-                $event.thumbnailUrl
-              )
+              onCreateApplication($event.workspaceId, $event.id, $event.name)
             "
           >
             New application
@@ -101,11 +96,7 @@ import { WorkspaceApiService } from '../workspace/services';
             class="border border-blue-500"
             pgUpdateApplicationModal
             (pgUpdateApplication)="
-              onUpdateApplication(
-                selectedApplication.id,
-                $event.name,
-                $event.thumbnailUrl
-              )
+              onUpdateApplication(selectedApplication.id, $event.name)
             "
             [pgApplication]="selectedApplication"
           >
@@ -227,26 +218,20 @@ export class LobbyPageComponent implements OnInit {
   onCreateApplication(
     workspaceId: string,
     applicationId: string,
-    applicationName: string,
-    thumbnailUrl: string
+    applicationName: string
   ) {
     this._applicationApiService
-      .createApplication(
+      .createApplication({
+        id: applicationId,
         workspaceId,
-        applicationId,
-        applicationName,
-        thumbnailUrl
-      )
+        name: applicationName,
+      })
       .subscribe();
   }
 
-  onUpdateApplication(
-    applicationId: string,
-    applicationName: string,
-    thumbnailUrl: string
-  ) {
+  onUpdateApplication(applicationId: string, applicationName: string) {
     this._applicationApiService
-      .updateApplication(applicationId, applicationName, thumbnailUrl)
+      .updateApplication(applicationId, { name: applicationName })
       .subscribe();
   }
 

@@ -144,6 +144,6 @@ export class CollectionsStore
   }
 
   private _handleError(error: unknown) {
-    console.log(error);
+    console.error(error);
   }
 }

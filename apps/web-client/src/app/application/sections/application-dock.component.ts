@@ -1,20 +1,24 @@
 import { Dialog } from '@angular/cdk/dialog';
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { Storage } from '@angular/fire/storage';
 import { LetModule, PushModule } from '@ngrx/component';
 import { combineLatest, concatMap, EMPTY, map, of, tap } from 'rxjs';
 import { ApplicationView, BoardStore } from '../../core/stores';
 import {
   ConfirmModalDirective,
   openConfirmModal,
+  openUploadFileModal,
+  openUploadFileProgressModal,
   SquareButtonComponent,
+  UploadFileModalDirective,
 } from '../../shared/components';
 import {
   DefaultImageDirective,
   KeyboardListenerDirective,
 } from '../../shared/directives';
 import { SlotHotkeyPipe } from '../../shared/pipes';
-import { isNotNull, isNull } from '../../shared/utils';
+import { generateId, isNotNull, isNull } from '../../shared/utils';
 import {
   EditApplicationSubmit,
   openEditApplicationModal,
@@ -39,6 +43,7 @@ interface HotKey {
         (pgKeyDown)="onKeyDown(hotkeys, selected, $event)"
       >
         <img
+          class="w-24 h-20 object-cover"
           [src]="selected?.thumbnailUrl"
           pgDefaultImage="assets/generic/application.png"
         />
@@ -61,12 +66,12 @@ interface HotKey {
           </ng-container>
 
           <pg-square-button
-            [pgIsActive]="isEditing"
+            [pgIsActive]="isUpdating"
             pgThumbnailUrl="assets/generic/application.png"
             pgUpdateApplicationModal
             [pgApplication]="selected"
-            (pgOpenModal)="isEditing = true"
-            (pgCloseModal)="isEditing = false"
+            (pgOpenModal)="isUpdating = true"
+            (pgCloseModal)="isUpdating = false"
             (pgUpdateApplication)="onUpdateApplication(selected.id, $event)"
           ></pg-square-button>
         </div>
@@ -94,6 +99,31 @@ interface HotKey {
             pgMessage="Are you sure? This action cannot be reverted."
           ></pg-square-button>
         </div>
+
+        <div
+          class="bg-gray-800 relative"
+          style="width: 2.89rem; height: 2.89rem"
+          *ngIf="(currentApplicationId$ | ngrxPush) === selected.id"
+        >
+          <ng-container *ngrxLet="hotkeys$; let hotkeys">
+            <span
+              *ngIf="2 | pgSlotHotkey: hotkeys as hotkey"
+              class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
+              style="font-size: 0.5rem; line-height: 0.5rem"
+            >
+              {{ hotkey }}
+            </span>
+          </ng-container>
+
+          <pg-square-button
+            [pgIsActive]="isUpdatingThumbnail"
+            pgThumbnailUrl="assets/generic/application.png"
+            pgUploadFileModal
+            (pgSubmit)="
+              onUploadThumbnail(selected.id, $event.fileId, $event.fileUrl)
+            "
+          ></pg-square-button>
+        </div>
       </div>
     </ng-container>
   `,
@@ -108,11 +138,13 @@ interface HotKey {
     UpdateApplicationModalDirective,
     ConfirmModalDirective,
     DefaultImageDirective,
+    UploadFileModalDirective,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ApplicationDockComponent {
   private readonly _dialog = inject(Dialog);
+  private readonly _storage = inject(Storage);
   private readonly _boardStore = inject(BoardStore);
   private readonly _applicationApiService = inject(ApplicationApiService);
 
@@ -144,21 +176,25 @@ export class ApplicationDockComponent {
       code: 'KeyW',
       key: 'w',
     },
+    {
+      slot: 2,
+      code: 'KeyE',
+      key: 'e',
+    },
   ]);
 
-  isEditing = false;
+  isUpdating = false;
   isDeleting = false;
+  isUpdatingThumbnail = false;
 
   onUpdateApplication(
     applicationId: string,
     applicationData: EditApplicationSubmit
   ) {
     this._applicationApiService
-      .updateApplication(
-        applicationId,
-        applicationData.name,
-        applicationData.thumbnailUrl
-      )
+      .updateApplication(applicationId, {
+        name: applicationData.name,
+      })
       .subscribe();
   }
 
@@ -166,6 +202,15 @@ export class ApplicationDockComponent {
     this._applicationApiService
       .deleteApplication(applicationId)
       .subscribe(() => this._boardStore.setSelected(null));
+  }
+
+  onUploadThumbnail(applicationId: string, fileId: string, fileUrl: string) {
+    this._applicationApiService
+      .updateApplicationThumbnail(applicationId, {
+        fileId,
+        fileUrl,
+      })
+      .subscribe();
   }
 
   onKeyDown(
@@ -178,12 +223,12 @@ export class ApplicationDockComponent {
     if (isNotNull(hotkey)) {
       switch (hotkey.slot) {
         case 0: {
-          this.isEditing = true;
+          this.isUpdating = true;
 
           openEditApplicationModal(this._dialog, { application })
             .closed.pipe(
               concatMap((applicationData) => {
-                this.isEditing = false;
+                this.isUpdating = false;
 
                 if (applicationData === undefined) {
                   return EMPTY;
@@ -191,8 +236,9 @@ export class ApplicationDockComponent {
 
                 return this._applicationApiService.updateApplication(
                   application.id,
-                  applicationData.name,
-                  applicationData.thumbnailUrl
+                  {
+                    name: applicationData.name,
+                  }
                 );
               })
             )
@@ -218,6 +264,44 @@ export class ApplicationDockComponent {
                 return this._applicationApiService
                   .deleteApplication(application.id)
                   .pipe(tap(() => this._boardStore.setSelected(null)));
+              })
+            )
+            .subscribe();
+
+          break;
+        }
+
+        case 2: {
+          this.isUpdatingThumbnail = true;
+
+          const fileId = generateId();
+          const fileName = `${fileId}.png`;
+
+          openUploadFileModal(this._dialog)
+            .closed.pipe(
+              concatMap((uploadFileData) => {
+                this.isUpdatingThumbnail = false;
+
+                if (uploadFileData === undefined) {
+                  return EMPTY;
+                }
+
+                return openUploadFileProgressModal(
+                  this._dialog,
+                  this._storage,
+                  fileName,
+                  uploadFileData.fileSource
+                ).closed;
+              }),
+              concatMap((payload) => {
+                if (payload === undefined) {
+                  return EMPTY;
+                }
+
+                return this._applicationApiService.updateApplicationThumbnail(
+                  application.id,
+                  { fileId, fileUrl: payload.fileUrl }
+                );
               })
             )
             .subscribe();

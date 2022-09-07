@@ -6,6 +6,7 @@ import {
   doc,
   docData,
   Firestore,
+  runTransaction,
   setDoc,
   updateDoc,
 } from '@angular/fire/firestore';
@@ -16,6 +17,19 @@ export type SysvarDto = Entity<{
   name: string;
   thumbnailUrl: string;
 }>;
+
+export type CreateSysvarDto = Entity<{
+  name: string;
+}>;
+
+export type UpdateSysvarDto = Partial<{
+  name: string;
+}>;
+
+export interface UpdateSysvarThumbnailDto {
+  fileId: string;
+  fileUrl: string;
+}
 
 @Injectable({ providedIn: 'root' })
 export class SysvarApiService {
@@ -62,27 +76,42 @@ export class SysvarApiService {
     return defer(() => from(deleteDoc(sysvarRef)));
   }
 
-  createSysvar(newSysvarId: string, name: string, thumbnailUrl: string) {
-    const newSysvarRef = doc(this._firestore, `sysvars/${newSysvarId}`);
+  createSysvar({ id, name }: CreateSysvarDto) {
+    const newSysvarRef = doc(this._firestore, `sysvars/${id}`);
 
     return defer(() =>
       from(
         setDoc(newSysvarRef, {
           name,
-          thumbnailUrl,
+          thumbnailUrl: null,
         })
       )
     );
   }
 
-  updateSysvar(sysvarId: string, name: string, thumbnailUrl: string) {
+  updateSysvar(sysvarId: string, changes: UpdateSysvarDto) {
     const sysvarRef = doc(this._firestore, `sysvars/${sysvarId}`);
+
+    return defer(() => from(updateDoc(sysvarRef, changes)));
+  }
+
+  updateSysvarThumbnail(
+    sysvarId: string,
+    { fileId, fileUrl }: UpdateSysvarThumbnailDto
+  ) {
+    const sysvarRef = doc(this._firestore, `sysvars/${sysvarId}`);
+    const uploadRef = doc(this._firestore, `uploads/${fileId}`);
 
     return defer(() =>
       from(
-        updateDoc(sysvarRef, {
-          name,
-          thumbnailUrl,
+        runTransaction(this._firestore, async (transaction) => {
+          transaction.set(uploadRef, {
+            kind: 'sysvar',
+            ref: sysvarId,
+          });
+          transaction.update(sysvarRef, { thumbnailUrl: fileUrl });
+
+          return true;
         })
       )
     );

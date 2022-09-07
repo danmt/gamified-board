@@ -4,6 +4,7 @@ import {
   doc,
   docData,
   Firestore,
+  runTransaction,
   setDoc,
   updateDoc,
 } from '@angular/fire/firestore';
@@ -23,6 +24,23 @@ export type CollectionDto = Entity<{
   workspaceId: string;
   attributes: CollectionAttributeDto[];
 }>;
+
+export type CreateCollectionDto = Entity<{
+  name: string;
+  applicationId: string;
+  workspaceId: string;
+  attributes: CollectionAttributeDto[];
+}>;
+
+export type UpdateCollectionDto = Partial<{
+  name: string;
+  attributes: CollectionAttributeDto[];
+}>;
+
+export interface UpdateCollectionThumbnailDto {
+  fileId: string;
+  fileUrl: string;
+}
 
 @Injectable({ providedIn: 'root' })
 export class CollectionApiService {
@@ -57,23 +75,19 @@ export class CollectionApiService {
     return defer(() => from(deleteDoc(collectionRef)));
   }
 
-  createCollection(
-    workspaceId: string,
-    applicationId: string,
-    newCollectionId: string,
-    name: string,
-    thumbnailUrl: string,
-    attributes: CollectionAttributeDto[]
-  ) {
+  createCollection({
+    id,
+    workspaceId,
+    applicationId,
+    name,
+    attributes,
+  }: CreateCollectionDto) {
     const workspaceRef = doc(this._firestore, `workspaces/${workspaceId}`);
     const applicationRef = doc(
       this._firestore,
       `applications/${applicationId}`
     );
-    const newCollectionRef = doc(
-      this._firestore,
-      `collections/${newCollectionId}`
-    );
+    const newCollectionRef = doc(this._firestore, `collections/${id}`);
 
     return defer(() =>
       from(
@@ -81,27 +95,36 @@ export class CollectionApiService {
           name,
           applicationRef,
           workspaceRef,
-          thumbnailUrl,
+          thumbnailUrl: null,
           attributes,
         })
       )
     );
   }
 
-  updateCollection(
+  updateCollection(collectionId: string, changes: UpdateCollectionDto) {
+    const collectionRef = doc(this._firestore, `collections/${collectionId}`);
+
+    return defer(() => from(updateDoc(collectionRef, changes)));
+  }
+
+  updateCollectionThumbnail(
     collectionId: string,
-    name: string,
-    thumbnailUrl: string,
-    attributes: CollectionAttributeDto[]
+    { fileId, fileUrl }: UpdateCollectionThumbnailDto
   ) {
     const collectionRef = doc(this._firestore, `collections/${collectionId}`);
+    const uploadRef = doc(this._firestore, `uploads/${fileId}`);
 
     return defer(() =>
       from(
-        updateDoc(collectionRef, {
-          name,
-          thumbnailUrl,
-          attributes,
+        runTransaction(this._firestore, async (transaction) => {
+          transaction.set(uploadRef, {
+            kind: 'collection',
+            ref: collectionId,
+          });
+          transaction.update(collectionRef, { thumbnailUrl: fileUrl });
+
+          return true;
         })
       )
     );

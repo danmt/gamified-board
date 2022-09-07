@@ -40,7 +40,6 @@ import { CollectionApiService } from '../services';
             $event.applicationId,
             $event.id,
             $event.name,
-            $event.thumbnailUrl,
             $event.attributes
           )
         "
@@ -178,18 +177,16 @@ export class CollectionsInventoryComponent {
     applicationId: string,
     id: string,
     name: string,
-    thumbnailUrl: string,
     attributes: { id: string; name: string; type: string; isOption: boolean }[]
   ) {
     this._collectionApiService
-      .createCollection(
+      .createCollection({
         workspaceId,
         applicationId,
         id,
         name,
-        thumbnailUrl,
-        attributes
-      )
+        attributes,
+      })
       .subscribe();
   }
 

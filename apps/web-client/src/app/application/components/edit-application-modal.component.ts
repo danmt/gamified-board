@@ -15,17 +15,15 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { v4 as uuid } from 'uuid';
 import { ModalComponent } from '../../shared/components';
 import {
   KeyboardListenerDirective,
   StopKeydownPropagationDirective,
 } from '../../shared/directives';
-import { Entity, isNull, Option } from '../../shared/utils';
+import { Entity, generateId, isNull, Option } from '../../shared/utils';
 
 export type Application = Entity<{
   name: string;
-  thumbnailUrl: string;
 }>;
 
 export interface EditApplicationData {
@@ -172,18 +170,6 @@ export class UpdateApplicationModalDirective {
           />
         </div>
 
-        <div class="mb-4">
-          <label class="block" for="application-thumbnail-url-input">
-            Application thumbnail
-          </label>
-          <input
-            class="bp-input-futuristic p-4 outline-0"
-            id="application-thumbnail-url-input"
-            type="text"
-            formControlName="thumbnailUrl"
-          />
-        </div>
-
         <div class="flex justify-center items-center mt-10">
           <button
             type="submit"
@@ -222,13 +208,6 @@ export class EditApplicationModalComponent {
       validators: [Validators.required],
       nonNullable: true,
     }),
-    thumbnailUrl: this._formBuilder.control<string>(
-      this.application?.thumbnailUrl ?? '',
-      {
-        validators: [Validators.required],
-        nonNullable: true,
-      }
-    ),
   });
 
   get idControl() {
@@ -239,20 +218,14 @@ export class EditApplicationModalComponent {
     return this.form.get('name') as FormControl<string>;
   }
 
-  get thumbnailUrlControl() {
-    return this.form.get('thumbnailUrl') as FormControl<string>;
-  }
-
   onSubmit() {
     if (this.form.valid) {
       const id = this.idControl.value;
       const name = this.nameControl.value;
-      const thumbnailUrl = this.thumbnailUrlControl.value;
 
       this._dialogRef.close({
         id,
         name,
-        thumbnailUrl,
       });
     }
   }
@@ -268,6 +241,6 @@ export class EditApplicationModalComponent {
   }
 
   onGenerateId() {
-    return uuid();
+    return generateId();
   }
 }

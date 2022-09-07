@@ -15,16 +15,14 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { v4 as uuid } from 'uuid';
 import {
   KeyboardListenerDirective,
   StopKeydownPropagationDirective,
 } from '../../shared/directives';
-import { Entity, Option } from '../../shared/utils';
+import { Entity, generateId, Option } from '../../shared/utils';
 
 export type Sysvar = Entity<{
   name: string;
-  thumbnailUrl: string;
 }>;
 
 export interface EditSysvarData {
@@ -149,18 +147,6 @@ export class UpdateSysvarModalDirective {
           />
         </div>
 
-        <div>
-          <label class="block" for="sysvar-thumbnail-url-input">
-            Sysvar thumbnail
-          </label>
-          <input
-            class="block border-b-2 border-black"
-            id="sysvar-thumbnail-url-input"
-            type="text"
-            formControlName="thumbnailUrl"
-          />
-        </div>
-
         <div class="flex justify-center items-center mt-4">
           <button type="submit" class="px-4 py-2 border-blue-500 border">
             {{ sysvar === null ? 'Send' : 'Save' }}
@@ -193,13 +179,6 @@ export class EditSysvarModalComponent {
       validators: [Validators.required],
       nonNullable: true,
     }),
-    thumbnailUrl: this._formBuilder.control<string>(
-      this.sysvar?.thumbnailUrl ?? '',
-      {
-        validators: [Validators.required],
-        nonNullable: true,
-      }
-    ),
   });
 
   get idControl() {
@@ -210,20 +189,14 @@ export class EditSysvarModalComponent {
     return this.form.get('name') as FormControl<string>;
   }
 
-  get thumbnailUrlControl() {
-    return this.form.get('thumbnailUrl') as FormControl<string>;
-  }
-
   onSubmit() {
     if (this.form.valid) {
       const id = this.idControl.value;
       const name = this.nameControl.value;
-      const thumbnailUrl = this.thumbnailUrlControl.value;
 
       this._dialogRef.close({
         id,
         name,
-        thumbnailUrl,
       });
     }
   }
@@ -239,6 +212,6 @@ export class EditSysvarModalComponent {
   }
 
   onGenerateId() {
-    return uuid();
+    return generateId();
   }
 }

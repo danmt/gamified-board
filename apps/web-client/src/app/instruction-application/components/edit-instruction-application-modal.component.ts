@@ -15,13 +15,12 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { v4 as uuid } from 'uuid';
 import { ModalComponent } from '../../shared/components';
 import {
   KeyboardListenerDirective,
   StopKeydownPropagationDirective,
 } from '../../shared/directives';
-import { Entity, isNull, Option } from '../../shared/utils';
+import { Entity, generateId, isNull, Option } from '../../shared/utils';
 
 export type InstructionApplication = Entity<{
   name: string;
@@ -227,6 +226,6 @@ export class EditInstructionApplicationModalComponent {
   }
 
   onGenerateId() {
-    return uuid();
+    return generateId();
   }
 }

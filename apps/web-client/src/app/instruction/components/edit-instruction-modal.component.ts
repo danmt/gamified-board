@@ -22,17 +22,15 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { v4 as uuid } from 'uuid';
 import { ModalComponent } from '../../shared/components';
 import {
   KeyboardListenerDirective,
   StopKeydownPropagationDirective,
 } from '../../shared/directives';
-import { Entity, isNull, Option } from '../../shared/utils';
+import { Entity, generateId, isNull, Option } from '../../shared/utils';
 
 export type Instruction = Entity<{
   name: string;
-  thumbnailUrl: string;
   arguments: Entity<{ name: string; type: string; isOption: boolean }>[];
 }>;
 
@@ -192,21 +190,6 @@ export class UpdateInstructionModalDirective {
           />
         </div>
 
-        <div class="mb-4">
-          <label
-            class="block bp-font-game text-xl"
-            for="instruction-thumbnail-url-input"
-          >
-            Instruction thumbnail
-          </label>
-          <input
-            class="bp-input-futuristic p-4 outline-0"
-            id="instruction-thumbnail-url-input"
-            type="text"
-            formControlName="thumbnailUrl"
-          />
-        </div>
-
         <div class="mb-4" formArrayName="arguments">
           <p>
             <span>Instruction arguments</span>
@@ -354,13 +337,6 @@ export class EditInstructionModalComponent {
       validators: [Validators.required],
       nonNullable: true,
     }),
-    thumbnailUrl: this._formBuilder.control<string>(
-      this.instruction?.thumbnailUrl ?? '',
-      {
-        validators: [Validators.required],
-        nonNullable: true,
-      }
-    ),
     arguments: this.instruction?.arguments
       ? this._formBuilder.array(
           this.instruction.arguments.map((argument) =>
@@ -392,10 +368,6 @@ export class EditInstructionModalComponent {
 
   get nameControl() {
     return this.form.get('name') as FormControl<string>;
-  }
-
-  get thumbnailUrlControl() {
-    return this.form.get('thumbnailUrl') as FormControl<string>;
   }
 
   get argumentsControl() {
@@ -472,7 +444,6 @@ export class EditInstructionModalComponent {
     if (this.form.valid) {
       const id = this.idControl.value;
       const name = this.nameControl.value;
-      const thumbnailUrl = this.thumbnailUrlControl.value;
       const args = this.argumentsControl.controls.map((argumentForm) => {
         const idControl = argumentForm.get('id') as FormControl<string>;
         const nameControl = argumentForm.get('name') as FormControl<string>;
@@ -492,7 +463,6 @@ export class EditInstructionModalComponent {
       this._dialogRef.close({
         id,
         name,
-        thumbnailUrl,
         arguments: args,
       });
     }
@@ -509,6 +479,6 @@ export class EditInstructionModalComponent {
   }
 
   onGenerateId() {
-    return uuid();
+    return generateId();
   }
 }
