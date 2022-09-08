@@ -24,6 +24,11 @@ import {
   openEditCollectionModal,
   UpdateCollectionModalDirective,
 } from '../components';
+import {
+  EditCollectionAttributesSubmit,
+  openEditCollectionAttributesModal,
+  UpdateCollectionAttributesModalDirective,
+} from '../components/edit-collection-attributes-modal.component';
 import { CollectionApiService } from '../services';
 
 interface HotKey {
@@ -121,6 +126,32 @@ interface HotKey {
             "
           ></pg-square-button>
         </div>
+
+        <div
+          class="bg-gray-800 relative"
+          style="width: 2.89rem; height: 2.89rem"
+          *ngIf="(currentApplicationId$ | ngrxPush) === selected.application.id"
+        >
+          <span
+            *ngIf="3 | pgSlotHotkey: hotkeys as hotkey"
+            class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
+            style="font-size: 0.5rem; line-height: 0.5rem"
+          >
+            {{ hotkey }}
+          </span>
+
+          <pg-square-button
+            [pgIsActive]="isUpdatingAttributes"
+            pgThumbnailUrl="assets/generic/collection.png"
+            pgUpdateCollectionAttributesModal
+            [pgCollectionAttributes]="selected.attributes"
+            (pgOpenModal)="isUpdatingAttributes = true"
+            (pgCloseModal)="isUpdatingAttributes = false"
+            (pgUpdateCollectionAttributes)="
+              onUpdateCollectionAttributes(selected.id, $event)
+            "
+          ></pg-square-button>
+        </div>
       </div>
     </ng-container>
   `,
@@ -131,6 +162,7 @@ interface HotKey {
     LetModule,
     SquareButtonComponent,
     UpdateCollectionModalDirective,
+    UpdateCollectionAttributesModalDirective,
     UploadFileModalDirective,
     SlotHotkeyPipe,
     KeyboardListenerDirective,
@@ -177,11 +209,17 @@ export class CollectionDockComponent {
       code: 'KeyE',
       key: 'e',
     },
+    {
+      slot: 3,
+      code: 'KeyR',
+      key: 'r',
+    },
   ]);
 
   isUpdating = false;
   isDeleting = false;
   isUpdatingThumbnail = false;
+  isUpdatingAttributes = false;
 
   onUpdateCollection(
     collectionId: string,
@@ -190,7 +228,17 @@ export class CollectionDockComponent {
     this._collectionApiService
       .updateCollection(collectionId, {
         name: collectionData.name,
-        attributes: collectionData.attributes,
+      })
+      .subscribe();
+  }
+
+  onUpdateCollectionAttributes(
+    collectionId: string,
+    collectionAttributesData: EditCollectionAttributesSubmit
+  ) {
+    this._collectionApiService
+      .updateCollection(collectionId, {
+        attributes: collectionAttributesData,
       })
       .subscribe();
   }
@@ -235,7 +283,6 @@ export class CollectionDockComponent {
                   collection.id,
                   {
                     name: collectionData.name,
-                    attributes: collectionData.attributes,
                   }
                 );
               })
@@ -299,6 +346,33 @@ export class CollectionDockComponent {
                 return this._collectionApiService.updateCollectionThumbnail(
                   collection.id,
                   { fileId, fileUrl: payload.fileUrl }
+                );
+              })
+            )
+            .subscribe();
+
+          break;
+        }
+
+        case 3: {
+          this.isUpdatingAttributes = true;
+
+          openEditCollectionAttributesModal(this._dialog, {
+            collectionAttributes: collection.attributes,
+          })
+            .closed.pipe(
+              concatMap((collectionAttributesData) => {
+                this.isUpdatingAttributes = false;
+
+                if (collectionAttributesData === undefined) {
+                  return EMPTY;
+                }
+
+                return this._collectionApiService.updateCollection(
+                  collection.id,
+                  {
+                    attributes: collectionAttributesData,
+                  }
                 );
               })
             )

@@ -39,8 +39,7 @@ import { CollectionApiService } from '../services';
             $event.workspaceId,
             $event.applicationId,
             $event.id,
-            $event.name,
-            $event.attributes
+            $event.name
           )
         "
       ></button>
@@ -176,8 +175,7 @@ export class CollectionsInventoryComponent {
     workspaceId: string,
     applicationId: string,
     id: string,
-    name: string,
-    attributes: { id: string; name: string; type: string; isOption: boolean }[]
+    name: string
   ) {
     this._collectionApiService
       .createCollection({
@@ -185,7 +183,6 @@ export class CollectionsInventoryComponent {
         applicationId,
         id,
         name,
-        attributes,
       })
       .subscribe();
   }

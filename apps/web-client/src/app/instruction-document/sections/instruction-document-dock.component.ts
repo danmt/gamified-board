@@ -16,9 +16,12 @@ import {
 import { SlotHotkeyPipe } from '../../shared/pipes';
 import { isNotNull, isNull } from '../../shared/utils';
 import {
+  EditInstructionDocumentSeedsSubmit,
   EditInstructionDocumentSubmit,
   openEditInstructionDocumentModal,
+  openEditInstructionDocumentSeedsModal,
   UpdateInstructionDocumentModalDirective,
+  UpdateInstructionDocumentSeedsModalDirective,
 } from '../components';
 import { InstructionDocumentApiService } from '../services';
 
@@ -58,15 +61,13 @@ interface HotKey {
           </span>
 
           <pg-square-button
-            [pgIsActive]="isEditing"
+            [pgIsActive]="isUpdating"
             pgThumbnailUrl="assets/generic/instruction-document.png"
             pgUpdateInstructionDocumentModal
             [pgInstructionDocument]="selected"
-            [pgArgumentReferences$]="argumentReferences$"
-            [pgAttributeReferences$]="attributeReferences$"
-            [pgBumpReferences$]="bumpReferences$"
-            (pgOpenModal)="isEditing = true"
-            (pgCloseModal)="isEditing = false"
+            [pgDocumentReferences$]="documentReferences$"
+            (pgOpenModal)="isUpdating = true"
+            (pgCloseModal)="isUpdating = false"
             (pgUpdateInstructionDocument)="
               onUpdateInstructionDocument(selected.ownerId, selected.id, $event)
             "
@@ -97,6 +98,38 @@ interface HotKey {
             (pgCloseModal)="isDeleting = false"
           ></pg-square-button>
         </div>
+
+        <div
+          class="bg-gray-800 relative"
+          style="width: 2.89rem; height: 2.89rem"
+        >
+          <span
+            *ngIf="2 | pgSlotHotkey: hotkeys as hotkey"
+            class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
+            style="font-size: 0.5rem; line-height: 0.5rem"
+          >
+            {{ hotkey }}
+          </span>
+
+          <pg-square-button
+            [pgIsActive]="isUpdatingSeeds"
+            pgThumbnailUrl="assets/generic/instruction-document.png"
+            pgUpdateInstructionDocumentSeedsModal
+            [pgInstructionDocumentSeeds]="selected"
+            [pgArgumentReferences$]="argumentReferences$"
+            [pgAttributeReferences$]="attributeReferences$"
+            [pgBumpReferences$]="bumpReferences$"
+            (pgOpenModal)="isUpdatingSeeds = true"
+            (pgCloseModal)="isUpdatingSeeds = false"
+            (pgUpdateInstructionDocumentSeeds)="
+              onUpdateInstructionDocumentSeeds(
+                selected.ownerId,
+                selected.id,
+                $event
+              )
+            "
+          ></pg-square-button>
+        </div>
       </div>
     </ng-container>
   `,
@@ -108,6 +141,7 @@ interface HotKey {
     SquareButtonComponent,
     SlotHotkeyPipe,
     UpdateInstructionDocumentModalDirective,
+    UpdateInstructionDocumentSeedsModalDirective,
     KeyboardListenerDirective,
     ConfirmModalDirective,
     DefaultImageDirective,
@@ -163,6 +197,28 @@ export class InstructionDocumentDockComponent {
       }));
     })
   );
+  readonly documentReferences$ = combineLatest([
+    this._boardStore.currentApplicationInstructions$,
+    this.selected$,
+  ]).pipe(
+    map(([instructions, instructionDocument]) => {
+      const instruction =
+        instructions?.find(({ id }) => id === instructionDocument?.ownerId) ??
+        null;
+
+      if (isNull(instruction)) {
+        return [];
+      }
+
+      return instruction.documents.map((document) => ({
+        kind: 'document' as const,
+        document: {
+          id: document.id,
+          name: document.name,
+        },
+      }));
+    })
+  );
   readonly attributeReferences$ = combineLatest([
     this._boardStore.currentApplicationInstructions$,
     this.selected$,
@@ -178,7 +234,7 @@ export class InstructionDocumentDockComponent {
 
       return instruction.documents.reduce<
         {
-          kind: 'document';
+          kind: 'attribute';
           attribute: {
             id: string;
             name: string;
@@ -193,7 +249,7 @@ export class InstructionDocumentDockComponent {
         (attributes, document) =>
           attributes.concat(
             document.collection.attributes.map((attribute) => ({
-              kind: 'document' as const,
+              kind: 'attribute' as const,
               attribute: {
                 id: attribute.id,
                 name: attribute.name,
@@ -233,10 +289,16 @@ export class InstructionDocumentDockComponent {
       code: 'KeyW',
       key: 'w',
     },
+    {
+      slot: 2,
+      code: 'KeyE',
+      key: 'e',
+    },
   ]);
 
-  isEditing = false;
+  isUpdating = false;
   isDeleting = false;
+  isUpdatingSeeds = false;
 
   onUpdateInstructionDocument(
     instructionId: string,
@@ -244,15 +306,24 @@ export class InstructionDocumentDockComponent {
     instructionDocumentData: EditInstructionDocumentSubmit
   ) {
     this._instructionDocumentApiService
-      .updateInstructionDocument(
-        instructionId,
-        instructionDocumentId,
-        instructionDocumentData.name,
-        instructionDocumentData.method,
-        instructionDocumentData.seeds,
-        instructionDocumentData.bump,
-        instructionDocumentData.payer
-      )
+      .updateInstructionDocument(instructionId, instructionDocumentId, {
+        name: instructionDocumentData.name,
+        method: instructionDocumentData.method,
+        payer: instructionDocumentData.payer,
+      })
+      .subscribe();
+  }
+
+  onUpdateInstructionDocumentSeeds(
+    instructionId: string,
+    instructionDocumentId: string,
+    instructionDocumentSeedsData: EditInstructionDocumentSeedsSubmit
+  ) {
+    this._instructionDocumentApiService
+      .updateInstructionDocument(instructionId, instructionDocumentId, {
+        seeds: instructionDocumentSeedsData.seeds,
+        bump: instructionDocumentSeedsData.bump,
+      })
       .subscribe();
   }
 
@@ -272,17 +343,15 @@ export class InstructionDocumentDockComponent {
     if (isNotNull(hotkey)) {
       switch (hotkey.slot) {
         case 0: {
-          this.isEditing = true;
+          this.isUpdating = true;
 
           openEditInstructionDocumentModal(this._dialog, {
             instructionDocument,
-            argumentReferences$: this.argumentReferences$,
-            attributeReferences$: this.attributeReferences$,
-            bumpReferences$: this.bumpReferences$,
+            documentReferences$: this.documentReferences$,
           })
             .closed.pipe(
               concatMap((instructionDocumentData) => {
-                this.isEditing = false;
+                this.isUpdating = false;
 
                 if (instructionDocumentData === undefined) {
                   return EMPTY;
@@ -291,11 +360,11 @@ export class InstructionDocumentDockComponent {
                 return this._instructionDocumentApiService.updateInstructionDocument(
                   instructionDocument.ownerId,
                   instructionDocument.id,
-                  instructionDocumentData.name,
-                  instructionDocumentData.method,
-                  instructionDocumentData.seeds,
-                  instructionDocumentData.bump,
-                  instructionDocumentData.payer
+                  {
+                    name: instructionDocumentData.name,
+                    method: instructionDocumentData.method,
+                    payer: instructionDocumentData.payer,
+                  }
                 );
               })
             )
@@ -324,6 +393,38 @@ export class InstructionDocumentDockComponent {
                     instructionDocument.id
                   )
                   .pipe(tap(() => this._boardStore.setSelected(null)));
+              })
+            )
+            .subscribe();
+
+          break;
+        }
+
+        case 2: {
+          this.isUpdatingSeeds = true;
+
+          openEditInstructionDocumentSeedsModal(this._dialog, {
+            instructionDocumentSeeds: instructionDocument,
+            argumentReferences$: this.argumentReferences$,
+            attributeReferences$: this.attributeReferences$,
+            bumpReferences$: this.bumpReferences$,
+          })
+            .closed.pipe(
+              concatMap((instructionDocumentSeedsData) => {
+                this.isUpdatingSeeds = false;
+
+                if (instructionDocumentSeedsData === undefined) {
+                  return EMPTY;
+                }
+
+                return this._instructionDocumentApiService.updateInstructionDocument(
+                  instructionDocument.ownerId,
+                  instructionDocument.id,
+                  {
+                    seeds: instructionDocumentSeedsData.seeds,
+                    bump: instructionDocumentSeedsData.bump,
+                  }
+                );
               })
             )
             .subscribe();

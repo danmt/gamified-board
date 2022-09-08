@@ -39,8 +39,7 @@ import { InstructionApiService } from '../services';
             $event.workspaceId,
             $event.applicationId,
             $event.id,
-            $event.name,
-            $event.arguments
+            $event.name
           )
         "
       ></button>
@@ -176,8 +175,7 @@ export class InstructionsInventoryComponent {
     workspaceId: string,
     applicationId: string,
     id: string,
-    name: string,
-    args: { id: string; name: string; type: string; isOption: boolean }[]
+    name: string
   ) {
     this._instructionApiService
       .createInstruction({
@@ -185,7 +183,6 @@ export class InstructionsInventoryComponent {
         applicationId,
         id,
         name,
-        arguments: args,
       })
       .subscribe();
   }

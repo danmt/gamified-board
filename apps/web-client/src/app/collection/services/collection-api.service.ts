@@ -29,7 +29,6 @@ export type CreateCollectionDto = Entity<{
   name: string;
   applicationId: string;
   workspaceId: string;
-  attributes: CollectionAttributeDto[];
 }>;
 
 export type UpdateCollectionDto = Partial<{
@@ -80,7 +79,6 @@ export class CollectionApiService {
     workspaceId,
     applicationId,
     name,
-    attributes,
   }: CreateCollectionDto) {
     const workspaceRef = doc(this._firestore, `workspaces/${workspaceId}`);
     const applicationRef = doc(
@@ -96,7 +94,7 @@ export class CollectionApiService {
           applicationRef,
           workspaceRef,
           thumbnailUrl: null,
-          attributes,
+          attributes: [],
         })
       )
     );

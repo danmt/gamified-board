@@ -81,7 +81,7 @@ export class ActiveCollectionComponent {
   }
 
   private _useCollection(instructionId: string) {
-    const argumentReferences$ =
+    const documentReferences$ =
       this._boardStore.currentApplicationInstructions$.pipe(
         map((instructions) => {
           const instruction =
@@ -91,68 +91,15 @@ export class ActiveCollectionComponent {
             return [];
           }
 
-          return instruction.arguments.map((argument) => ({
-            kind: 'argument' as const,
-            argument,
+          return instruction.documents.map((document) => ({
+            kind: 'document' as const,
+            document: {
+              id: document.id,
+              name: document.name,
+            },
           }));
         })
       );
-    const attributeReferences$ =
-      this._boardStore.currentApplicationInstructions$.pipe(
-        map((instructions) => {
-          const instruction =
-            instructions?.find(({ id }) => id === instructionId) ?? null;
-
-          if (isNull(instruction)) {
-            return [];
-          }
-
-          return instruction.documents.reduce<
-            {
-              kind: 'document';
-              attribute: {
-                id: string;
-                name: string;
-                type: string;
-              };
-              document: {
-                id: string;
-                name: string;
-              };
-            }[]
-          >(
-            (attributes, document) =>
-              attributes.concat(
-                document.collection.attributes.map((attribute) => ({
-                  kind: 'document' as const,
-                  attribute: {
-                    id: attribute.id,
-                    name: attribute.name,
-                    type: attribute.type,
-                  },
-                  document: {
-                    id: document.id,
-                    name: document.name,
-                  },
-                }))
-              ),
-            []
-          );
-        })
-      );
-    const bumpReferences$ = combineLatest([
-      argumentReferences$,
-      attributeReferences$,
-    ]).pipe(
-      map(([argumentReferences, attributeReferences]) => [
-        ...(argumentReferences?.filter(
-          (argumentReference) => argumentReference.argument.type === 'u8'
-        ) ?? []),
-        ...(attributeReferences?.filter(
-          (attributeReference) => attributeReference.attribute.type === 'u8'
-        ) ?? []),
-      ])
-    );
 
     this.activeCollection$
       .pipe(
@@ -161,9 +108,7 @@ export class ActiveCollectionComponent {
         concatMap((activeCollection) =>
           openEditInstructionDocumentModal(this._dialog, {
             instructionDocument: null,
-            argumentReferences$,
-            attributeReferences$,
-            bumpReferences$,
+            documentReferences$,
           }).closed.pipe(
             concatMap((documentData) => {
               if (documentData === undefined) {
@@ -172,13 +117,13 @@ export class ActiveCollectionComponent {
 
               return this._instructionDocumentApiService.createInstructionDocument(
                 instructionId,
-                documentData.id,
-                documentData.name,
-                documentData.method,
-                activeCollection.id,
-                documentData.seeds,
-                documentData.bump,
-                documentData.payer
+                {
+                  id: documentData.id,
+                  name: documentData.name,
+                  method: documentData.method,
+                  collectionId: activeCollection.id,
+                  payer: documentData.payer,
+                }
               );
             })
           )

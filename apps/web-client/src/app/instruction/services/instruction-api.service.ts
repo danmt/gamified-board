@@ -39,7 +39,6 @@ export type CreateInstructionDto = Entity<{
   name: string;
   applicationId: string;
   workspaceId: string;
-  arguments: InstructionArgumentDto[];
 }>;
 
 export type UpdateInstructionDto = Partial<{
@@ -96,7 +95,6 @@ export class InstructionApiService {
   createInstruction({
     id,
     applicationId,
-    arguments: args,
     name,
     workspaceId,
   }: CreateInstructionDto) {
@@ -118,7 +116,7 @@ export class InstructionApiService {
           sysvars: [],
           applications: [],
           documents: [],
-          arguments: args,
+          arguments: [],
         })
       )
     );
