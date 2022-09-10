@@ -20,7 +20,7 @@ import { InstructionApiService } from '../services';
   template: `
     <pg-inventory
       pgDirection="left"
-      class="mt-10 min-w-[300px] min-h-[500px] max-h-[500px]"
+      class="mt-10 min-w-[300px] min-h-[520px] max-h-[520px]"
       [pgTotal]="(total$ | ngrxPush) ?? 0"
       [pgPage]="(page$ | ngrxPush) ?? 1"
       [pgPageSize]="pageSize"

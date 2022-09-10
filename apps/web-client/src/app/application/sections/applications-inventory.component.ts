@@ -15,7 +15,7 @@ import { ApplicationTooltipDirective } from '../components';
   selector: 'pg-applications-inventory',
   template: `
     <pg-inventory
-      class="mt-10 min-w-[300px] min-h-[500px] max-h-[500px]"
+      class="mt-10 min-w-[300px] min-h-[520px] max-h-[520px]"
       pgDirection="left"
       [pgTotal]="(total$ | ngrxPush) ?? 0"
       [pgPage]="(page$ | ngrxPush) ?? 1"
