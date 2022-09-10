@@ -10,6 +10,7 @@ import {
   Input,
   OnDestroy,
 } from '@angular/core';
+import { TooltipComponent } from '../../shared/components/tooltip.component';
 import { DefaultImageDirective } from '../../shared/directives';
 import {
   getPosition,
@@ -90,20 +91,22 @@ export class SysvarTooltipDirective implements OnDestroy {
 @Component({
   selector: 'pg-sysvar-tooltip',
   template: `
-    <div
+    <pg-tooltip
       class="relative"
       style="min-width: 250px; max-width: 350px"
       *ngIf="pgSysvar !== null"
     >
       <div>
-        <header class="p-2 flex gap-2 items-start bg-slate-600">
+        <header
+          class="bp-bg-futuristic flex gap-2 items-center bp-font-game p-4"
+        >
           <img
             [src]="pgSysvar.thumbnailUrl"
             pgDefaultImage="assets/generic/sysvar.png"
             class="w-12 h-10 object-cover"
           />
 
-          <div>
+          <div class="ml-4">
             <h3 class="uppercase text-xl">{{ pgSysvar.name }}</h3>
           </div>
         </header>
@@ -113,7 +116,7 @@ export class SysvarTooltipDirective implements OnDestroy {
         *ngIf="pgPosition === 'right'"
         class="absolute -left-4 -translate-y-1/2 top-1/2  w-4 h-4 -rotate-90"
       >
-        <svg id="triangle" viewBox="0 0 100 100" fill="#334155">
+        <svg id="triangle" viewBox="0 0 100 100" fill="#414141">
           <polygon points="50 15, 100 100, 0 100" />
         </svg>
       </div>
@@ -122,7 +125,7 @@ export class SysvarTooltipDirective implements OnDestroy {
         *ngIf="pgPosition === 'right'"
         class="absolute -left-4 -translate-y-1/2 top-1/2  w-4 h-4 -rotate-90"
       >
-        <svg id="triangle" viewBox="0 0 100 100" fill="#334155">
+        <svg id="triangle" viewBox="0 0 100 100" fill="#414141">
           <polygon points="50 15, 100 100, 0 100" />
         </svg>
       </div>
@@ -131,7 +134,7 @@ export class SysvarTooltipDirective implements OnDestroy {
         *ngIf="pgPosition === 'left'"
         class="absolute -right-4 -translate-y-1/2 top-1/2  w-4 h-4 rotate-90"
       >
-        <svg id="triangle" viewBox="0 0 100 100" fill="#334155">
+        <svg id="triangle" viewBox="0 0 100 100" fill="#414141">
           <polygon points="50 15, 100 100, 0 100" />
         </svg>
       </div>
@@ -140,7 +143,7 @@ export class SysvarTooltipDirective implements OnDestroy {
         *ngIf="pgPosition === 'top'"
         class="absolute -bottom-4 -translate-x-1/2 left-1/2  w-4 h-4 rotate-180"
       >
-        <svg id="triangle" viewBox="0 0 100 100" fill="#334155">
+        <svg id="triangle" viewBox="0 0 100 100" fill="#414141">
           <polygon points="50 15, 100 100, 0 100" />
         </svg>
       </div>
@@ -149,14 +152,14 @@ export class SysvarTooltipDirective implements OnDestroy {
         *ngIf="pgPosition === 'bottom'"
         class="absolute -top-4 -translate-x-1/2 left-1/2  w-4 h-4 rotate"
       >
-        <svg id="triangle" viewBox="0 0 100 100" fill="#334155">
+        <svg id="triangle" viewBox="0 0 100 100" fill="#414141">
           <polygon points="50 15, 100 100, 0 100" />
         </svg>
       </div>
-    </div>
+    </pg-tooltip>
   `,
   standalone: true,
-  imports: [CommonModule, DefaultImageDirective],
+  imports: [CommonModule, DefaultImageDirective, TooltipComponent],
 })
 export class SysvarTooltipComponent {
   @Input() pgSysvar: Option<SysvarTooltip> = null;

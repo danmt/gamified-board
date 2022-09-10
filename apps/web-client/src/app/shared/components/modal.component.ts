@@ -74,16 +74,16 @@ import { Component, EventEmitter, HostBinding, Output } from '@angular/core';
 
     <!-- inner borders -->
     <div
-      class="bp-skin-inner-metal-border-right absolute -right-6 h-5/6 top-0 bottom-0 my-auto mx-0"
+      class="bp-skin-inner-metal-border-right absolute -right-6 h-3/5 top-0 bottom-0 my-auto mx-0"
     ></div>
     <div
-      class="bp-skin-inner-metal-border-left absolute -left-6 h-5/6 top-0 bottom-0 my-auto mx-0"
+      class="bp-skin-inner-metal-border-left absolute -left-6 h-3/5 top-0 bottom-0 my-auto mx-0"
     ></div>
     <div
-      class="bp-skin-inner-metal-border-bottom absolute -bottom-4 w-5/6 left-0 right-0 mx-auto my-0"
+      class="bp-skin-inner-metal-border-bottom absolute -bottom-4 w-3/5 left-0 right-0 mx-auto my-0"
     ></div>
     <div
-      class="bp-skin-inner-metal-border-top absolute -top-4 w-5/6 left-0 right-0 mx-auto my-0"
+      class="bp-skin-inner-metal-border-top absolute -top-4 w-3/5 left-0 right-0 mx-auto my-0"
     ></div>
 
     <!-- modal content -->

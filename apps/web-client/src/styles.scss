@@ -256,28 +256,6 @@ body,
   background-image: url('./assets/skins/futuristic/generate-button-hover.png');
 }
 
-// SCROLL BAR
-/* width */
-::-webkit-scrollbar {
-  width: 12px;
-}
-
-/* Track */
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-/* Handle */
-::-webkit-scrollbar-thumb {
-  background: #3c7364;
-}
-
-/* Handle on hover */
-::-webkit-scrollbar-thumb:hover {
-  background: #275045;
-}
-
-/// TEMPORAL
 .bp-skin-outer-metal-corner-right-top {
   background-image: url('./assets/skins/futuristic/yellow/outer-corner-top-right.png');
   background-repeat: no-repeat;
@@ -304,6 +282,54 @@ body,
   background-repeat: no-repeat;
   height: 122px;
   width: 121px;
+}
+
+.bp-skin-outer-mini-metal-corner-left-top {
+  background-image: url('./assets/skins/futuristic/yellow/outer-mini-corner-top-left.png');
+  background-repeat: no-repeat;
+  height: 30px;
+  width: 35px;
+}
+
+.bp-skin-outer-mini-metal-corner-right-top {
+  background-image: url('./assets/skins/futuristic/yellow/outer-mini-corner-top-right.png');
+  background-repeat: no-repeat;
+  height: 30px;
+  width: 35px;
+}
+
+.bp-skin-outer-mini-metal-corner-left-bottom {
+  background-image: url('./assets/skins/futuristic/yellow/outer-mini-corner-bottom-left.png');
+  background-repeat: no-repeat;
+  height: 30px;
+  width: 35px;
+}
+
+.bp-skin-outer-mini-metal-corner-right-bottom {
+  background-image: url('./assets/skins/futuristic/yellow/outer-mini-corner-bottom-right.png');
+  background-repeat: no-repeat;
+  height: 30px;
+  width: 35px;
+}
+
+.bp-skin-outer-mini-metal-border-right {
+  background-image: url('./assets/skins/futuristic/yellow/outer-mini-metal-right.png');
+  width: 8px;
+}
+
+.bp-skin-outer-mini-metal-border-left {
+  background-image: url('./assets/skins/futuristic/yellow/outer-mini-metal-left.png');
+  width: 8px;
+}
+
+.bp-skin-outer-mini-metal-border-bottom {
+  background-image: url('./assets/skins/futuristic/yellow/outer-mini-metal-bottom.png');
+  height: 8px;
+}
+
+.bp-skin-outer-mini-metal-border-top {
+  background-image: url('./assets/skins/futuristic/yellow/outer-mini-metal-top.png');
+  height: 8px;
 }
 
 .bp-skin-outer-metal-border-right {
@@ -413,4 +439,25 @@ body,
   width: 43px;
   height: 286px;
   transform: scale(-1);
+}
+
+// SCROLL BAR
+/* width */
+::-webkit-scrollbar {
+  width: 12px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #3c7364;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #275045;
 }
