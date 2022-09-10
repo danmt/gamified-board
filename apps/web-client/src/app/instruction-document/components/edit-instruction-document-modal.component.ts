@@ -124,7 +124,7 @@ export class UpdateInstructionDocumentModalDirective {
       <form
         [formGroup]="form"
         (ngSubmit)="onSubmit()"
-        class="overflow-y-auto max-h-[565px] text-black"
+        class="overflow-y-auto max-h-[565px]"
       >
         <div class="mb-4">
           <label class="block bp-font-game text-xl" for="document-id-input"

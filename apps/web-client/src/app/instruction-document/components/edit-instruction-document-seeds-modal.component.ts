@@ -159,25 +159,22 @@ export class UpdateInstructionDocumentSeedsModalDirective {
   selector: 'pg-edit-instruction-document-seeds-modal',
   template: `
     <pg-modal
-      class="px-6 pt-8 pb-4 text-white min-w-[400px] min-h-[400px]"
+      class="text-white"
       pgStopKeydownPropagation
       pgKeyboardListener
       (keydown)="onKeyDown($event)"
+      (pgCloseModal)="onClose()"
     >
       <div class="flex justify-between w-full">
         <h1 class="text-center text-3xl mb-4 bp-font-game uppercase">
           Document seeds
         </h1>
-        <button
-          class="bp-button-close-futuristic z-20 outline-0"
-          (click)="onClose()"
-        ></button>
       </div>
 
       <form
         [formGroup]="form"
         (ngSubmit)="onSubmit()"
-        class="max-h-96 overflow-y-auto text-black"
+        class="max-h-96 overflow-y-auto"
       >
         <div formArrayName="seeds">
           <p>
@@ -214,7 +211,7 @@ export class UpdateInstructionDocumentSeedsModalDirective {
           >
             <div
               *ngFor="let seedForm of seedsControl.controls; let i = index"
-              class="border-black border-2 p-2 bg-white relative"
+              class="border-black border-2 p-2 bg-white relative text-black"
               cdkDrag
               [cdkDragData]="seedForm.value"
             >
@@ -358,7 +355,7 @@ export class UpdateInstructionDocumentSeedsModalDirective {
           </select>
         </div>
 
-        <div class="flex justify-center items-center mt-10">
+        <div class="flex justify-center items-center mt-10 mb-11">
           <button
             type="submit"
             class="bp-button-futuristic text-black bp-font-game uppercase"
