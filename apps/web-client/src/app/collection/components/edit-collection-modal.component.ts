@@ -130,7 +130,7 @@ export class UpdateCollectionModalDirective {
       (pgCloseModal)="onClose()"
     >
       <div class="flex justify-between w-full">
-        <h1 class="text-center text-3xl mb-4 bp-font-game uppercase">
+        <h1 class="text-3xl mb-4 bp-font-game uppercase">
           {{ collection === null ? 'Create' : 'Update' }} collection
         </h1>
       </div>
@@ -138,7 +138,7 @@ export class UpdateCollectionModalDirective {
       <form
         [formGroup]="form"
         (ngSubmit)="onSubmit()"
-        class="overflow-y-auto max-h-[515px] "
+        class="overflow-y-auto max-h-[515px]"
       >
         <div class="mb-4">
           <label class="block bp-font-game text-xl" for="collection-id-input"

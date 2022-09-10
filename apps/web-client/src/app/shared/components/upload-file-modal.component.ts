@@ -91,17 +91,13 @@ export class UploadFileModalDirective {
   selector: 'pg-upload-file-modal',
   template: `
     <pg-modal
-      class="px-6 pt-10 pb-4 text-white"
+      class="text-white"
       pgStopKeydownPropagation
       pgKeyboardListener
       (keydown)="onKeyDown($event)"
+      (pgCloseModal)="onClose()"
     >
-      <button
-        class="bp-button-close-futuristic z-20 outline-0 absolute right-10 top-5"
-        (click)="onClose()"
-      ></button>
-
-      <h1 class="mt-10 mb-10 bp-font-game text-3xl">Upload Thumbnail</h1>
+      <h1 class="mt-8 mb-6 bp-font-game text-3xl">Upload Thumbnail</h1>
 
       <form [formGroup]="form" (ngSubmit)="onSubmit()">
         <input
@@ -116,7 +112,7 @@ export class UploadFileModalDirective {
           style="height: 300px; width:500px"
         />
 
-        <div class="flex justify-center gap-2">
+        <div class="flex justify-center gap-2 mt-6 mb-12">
           <button
             class="bp-button-futuristic text-black bp-font-game uppercase"
             type="submit"

@@ -22,6 +22,7 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
+import { ModalComponent } from '../../shared/components';
 import {
   KeyboardListenerDirective,
   StopKeydownPropagationDirective,
@@ -88,29 +89,31 @@ export class UpdateCollectionAttributesModalDirective {
 @Component({
   selector: 'pg-edit-collection-attributes-modal',
   template: `
-    <div
-      class="px-4 pt-8 pb-4 bg-white shadow-xl relative"
+    <pg-modal
+      class="text-white min-w-[450px]"
       pgStopKeydownPropagation
       pgKeyboardListener
       (keydown)="onKeyDown($event)"
+      (pgCloseModal)="onClose()"
     >
-      <button
-        class="absolute top-2 right-2 rounded-full border border-black leading-none w-6 h-6"
-        (click)="onClose()"
-      >
-        x
-      </button>
+      <div class="flex items-center w-full mb-4 mt-6">
+        <h1 class="text-3xl bp-font-game uppercase mr-6">
+          Collection attributes
+        </h1>
 
-      <h1 class="text-center text-xl mb-4">Collection attributes</h1>
+        <button
+          class="bp-button-add-futuristic z-40"
+          (click)="onAddAttribute()"
+          type="button"
+        ></button>
+      </div>
 
       <form
         [formGroup]="form"
         (ngSubmit)="onSubmit()"
-        class="max-h-96 overflow-y-auto text-black"
+        class="overflow-y-auto max-h-[515px] text-black"
       >
-        <div formArrayName="attributes">
-          <button (click)="onAddAttribute()" type="button">+</button>
-
+        <div class="mb-4" formArrayName="attributes">
           <div
             class="flex flex-col gap-2"
             cdkDropList
@@ -215,13 +218,16 @@ export class UpdateCollectionAttributesModalDirective {
           </div>
         </div>
 
-        <div class="flex justify-center items-center mt-4">
-          <button type="submit" class="px-4 py-2 border-blue-500 border">
+        <div class="flex justify-center items-center mt-10 mb-10">
+          <button
+            type="submit"
+            class="bp-button-futuristic text-black bp-font-game uppercase"
+          >
             Save
           </button>
         </div>
       </form>
-    </div>
+    </pg-modal>
   `,
   standalone: true,
   imports: [
@@ -230,6 +236,7 @@ export class UpdateCollectionAttributesModalDirective {
     DragDropModule,
     StopKeydownPropagationDirective,
     KeyboardListenerDirective,
+    ModalComponent,
   ],
 })
 export class EditCollectionAttributesModalComponent {

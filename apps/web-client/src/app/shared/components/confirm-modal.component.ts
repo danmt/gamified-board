@@ -67,7 +67,7 @@ export class ConfirmModalDirective {
   selector: 'pg-confirm-modal',
   template: `
     <pg-modal
-      class=" text-white"
+      class="text-white"
       pgStopKeydownPropagation
       pgKeyboardListener
       (keydown)="onKeyDown($event)"
