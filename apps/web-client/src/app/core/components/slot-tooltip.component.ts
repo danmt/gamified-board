@@ -7,20 +7,11 @@ import {
   Input,
   OnDestroy,
 } from '@angular/core';
-import {
-  ApplicationTooltip,
-  openApplicationTooltip,
-} from '../../application/components';
-import {
-  CollectionTooltip,
-  openCollectionTooltip,
-} from '../../collection/components';
-import {
-  InstructionTooltip,
-  openInstructionTooltip,
-} from '../../instruction/components';
-import { isNotNull, isNull, Option } from '../../shared/utils';
-import { openSysvarTooltip, SysvarTooltip } from '../../sysvar/components';
+import { ApplicationTooltip, openApplicationTooltip } from '../../application';
+import { CollectionTooltip, openCollectionTooltip } from '../../collection';
+import { InstructionTooltip, openInstructionTooltip } from '../../instruction';
+import { isNotNull, isNull, Option } from '../../shared';
+import { openSysvarTooltip, SysvarTooltip } from '../../sysvar';
 
 type SlotTooltip =
   | ApplicationTooltip

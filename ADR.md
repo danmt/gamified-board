@@ -95,3 +95,29 @@ To get started, we'll make sure we can show the active item thumbnail next to th
 
 - If the cursor is over a section where the active item can be dropped a plus sign is added and a green shadow.
 - If the cursor is over a section where the active item can't be dropped an x sign is added and a red shadow.
+
+## 5. Task execution flow
+
+An instruction executes arbitrary code, to make it easier for builders we want to make it so they can do design the flow of execution visually in a graph-like interface. While it sounds good on paper, it comes with a set of difficulties, specially for a real-time collaborative experience.
+
+On one hand we have to figure out the logic of the graph-UX, on the other, we have to come up with a good way to make it collaborative.
+
+Problem #1: Graph User-Experience
+
+The execution flow is a directed acyclic graph, it has a root and can have up to N end nodes. Users can drag-n-drop the nodes freely to visually arrange the graph. Users can select a node or an edge and delete it. Users can change the start and/or end of an edge to another node.
+
+A node is represented by a task, an edge is represented by a follows relation. i.e. A -> B, we say that task A is followed by task B.
+
+A task can be:
+
+- Generic code
+- Error
+- Instruction execution
+
+Edges can have a condition, this means that for A -> B where -> has a condition C, we say that B follows A as long as C is true.
+
+Problem #2: Real-time experience
+
+We need a way for the graph to stay in sync across clients. One way would be to track each change and mutate the graph's state in firebase, each client just "watches" the graph document as it updates.
+
+NOTE: Given how complex the real-time experience can get for a graph, it might be better to follow a different UI.

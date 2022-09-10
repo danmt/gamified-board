@@ -4,31 +4,29 @@ import { Component, inject } from '@angular/core';
 import { Storage } from '@angular/fire/storage';
 import { LetModule, PushModule } from '@ngrx/component';
 import { combineLatest, concatMap, EMPTY, map, of, tap } from 'rxjs';
-import { BoardStore, CollectionView } from '../../core/stores';
+import { BoardStore, CollectionView } from '../../core';
 import {
   ConfirmModalDirective,
+  DefaultImageDirective,
+  generateId,
+  isNotNull,
+  isNull,
+  KeyboardListenerDirective,
   openConfirmModal,
   openUploadFileModal,
   openUploadFileProgressModal,
+  SlotHotkeyPipe,
   SquareButtonComponent,
   UploadFileModalDirective,
-} from '../../shared/components';
-import {
-  DefaultImageDirective,
-  KeyboardListenerDirective,
-} from '../../shared/directives';
-import { SlotHotkeyPipe } from '../../shared/pipes';
-import { generateId, isNotNull, isNull } from '../../shared/utils';
-import {
-  EditCollectionSubmit,
-  openEditCollectionModal,
-  UpdateCollectionModalDirective,
-} from '../components';
+} from '../../shared';
 import {
   EditCollectionAttributesSubmit,
+  EditCollectionSubmit,
   openEditCollectionAttributesModal,
+  openEditCollectionModal,
   UpdateCollectionAttributesModalDirective,
-} from '../components/edit-collection-attributes-modal.component';
+  UpdateCollectionModalDirective,
+} from '../components';
 import { CollectionApiService } from '../services';
 
 interface HotKey {

@@ -3,18 +3,17 @@ import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { LetModule, PushModule } from '@ngrx/component';
 import { combineLatest, concatMap, EMPTY, map, of, tap } from 'rxjs';
-import { BoardStore, InstructionDocumentView } from '../../core/stores';
+import { BoardStore, InstructionDocumentView } from '../../core';
 import {
   ConfirmModalDirective,
-  openConfirmModal,
-  SquareButtonComponent,
-} from '../../shared/components';
-import {
   DefaultImageDirective,
+  isNotNull,
+  isNull,
   KeyboardListenerDirective,
-} from '../../shared/directives';
-import { SlotHotkeyPipe } from '../../shared/pipes';
-import { isNotNull, isNull } from '../../shared/utils';
+  openConfirmModal,
+  SlotHotkeyPipe,
+  SquareButtonComponent,
+} from '../../shared';
 import {
   EditInstructionDocumentSeedsSubmit,
   EditInstructionDocumentSubmit,
@@ -65,7 +64,7 @@ interface HotKey {
             pgThumbnailUrl="assets/generic/instruction-document.png"
             pgUpdateInstructionDocumentModal
             [pgInstructionDocument]="selected"
-            [pgDocumentReferences$]="documentReferences$"
+            [pgDocumentReferences$]="references$"
             (pgOpenModal)="isUpdating = true"
             (pgCloseModal)="isUpdating = false"
             (pgUpdateInstructionDocument)="
@@ -193,11 +192,13 @@ export class InstructionDocumentDockComponent {
 
       return instruction.arguments.map((argument) => ({
         kind: 'argument' as const,
-        argument,
+        id: argument.id,
+        name: argument.name,
+        type: argument.type,
       }));
     })
   );
-  readonly documentReferences$ = combineLatest([
+  readonly references$ = combineLatest([
     this._boardStore.currentApplicationInstructions$,
     this.selected$,
   ]).pipe(
@@ -210,13 +211,18 @@ export class InstructionDocumentDockComponent {
         return [];
       }
 
-      return instruction.documents.map((document) => ({
-        kind: 'document' as const,
-        document: {
+      return [
+        ...instruction.documents.map((document) => ({
+          kind: 'document' as const,
           id: document.id,
           name: document.name,
-        },
-      }));
+        })),
+        ...instruction.signers.map((signer) => ({
+          kind: 'signer' as const,
+          id: signer.id,
+          name: signer.name,
+        })),
+      ];
     })
   );
   readonly attributeReferences$ = combineLatest([
@@ -235,11 +241,9 @@ export class InstructionDocumentDockComponent {
       return instruction.documents.reduce<
         {
           kind: 'attribute';
-          attribute: {
-            id: string;
-            name: string;
-            type: string;
-          };
+          id: string;
+          name: string;
+          type: string;
           document: {
             id: string;
             name: string;
@@ -250,11 +254,9 @@ export class InstructionDocumentDockComponent {
           attributes.concat(
             document.collection.attributes.map((attribute) => ({
               kind: 'attribute' as const,
-              attribute: {
-                id: attribute.id,
-                name: attribute.name,
-                type: attribute.type,
-              },
+              id: attribute.id,
+              name: attribute.name,
+              type: attribute.type,
               document: {
                 id: document.id,
                 name: document.name,
@@ -271,10 +273,10 @@ export class InstructionDocumentDockComponent {
   ]).pipe(
     map(([argumentReferences, attributeReferences]) => [
       ...(argumentReferences?.filter(
-        (argumentReference) => argumentReference.argument.type === 'u8'
+        (argumentReference) => argumentReference.type === 'u8'
       ) ?? []),
       ...(attributeReferences?.filter(
-        (attributeReference) => attributeReference.attribute.type === 'u8'
+        (attributeReference) => attributeReference.type === 'u8'
       ) ?? []),
     ])
   );
@@ -347,7 +349,7 @@ export class InstructionDocumentDockComponent {
 
           openEditInstructionDocumentModal(this._dialog, {
             instructionDocument,
-            documentReferences$: this.documentReferences$,
+            references$: this.references$,
           })
             .closed.pipe(
               concatMap((instructionDocumentData) => {

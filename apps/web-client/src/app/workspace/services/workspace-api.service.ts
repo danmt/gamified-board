@@ -18,12 +18,19 @@ import {
   where,
 } from '@angular/fire/firestore';
 import { defer, from, map, Observable } from 'rxjs';
-import { ApplicationDto } from '../../application/services';
-import { CollectionDto } from '../../collection/services';
-import { InstructionDto } from '../../instruction/services';
-import { Entity } from '../../shared/utils';
+import { ApplicationDto } from '../../application';
+import { CollectionDto } from '../../collection';
+import { InstructionDto } from '../../instruction';
+import { Entity } from '../../shared';
+import { WorkspaceDto } from '../utils';
 
-export type WorkspaceDto = Entity<{ name: string }>;
+export type CreateWorkspaceDto = Entity<{
+  name: string;
+}>;
+
+export type UpdateWorkspaceDto = Partial<{
+  name: string;
+}>;
 
 @Injectable({ providedIn: 'root' })
 export class WorkspaceApiService {
@@ -145,17 +152,14 @@ export class WorkspaceApiService {
     );
   }
 
-  createWorkspace(userId: string, newWorkspaceId: string, name: string) {
+  createWorkspace(userId: string, { id, name }: CreateWorkspaceDto) {
     return defer(() =>
       from(
         runTransaction(this._firestore, async (transaction) => {
-          const newWorkspaceRef = doc(
-            this._firestore,
-            `workspaces/${newWorkspaceId}`
-          );
+          const newWorkspaceRef = doc(this._firestore, `workspaces/${id}`);
           const newFavoriteWorkspaceRef = doc(
             this._firestore,
-            `users/${userId}/favorite-workspaces/${newWorkspaceId}`
+            `users/${userId}/favorite-workspaces/${id}`
           );
 
           // create the new workspace
@@ -174,10 +178,10 @@ export class WorkspaceApiService {
     );
   }
 
-  updateWorkspace(workspaceId: string, name: string) {
+  updateWorkspace(workspaceId: string, changes: UpdateWorkspaceDto) {
     return defer(() =>
       from(
-        updateDoc(doc(this._firestore, `workspaces/${workspaceId}`), { name })
+        updateDoc(doc(this._firestore, `workspaces/${workspaceId}`), changes)
       )
     );
   }

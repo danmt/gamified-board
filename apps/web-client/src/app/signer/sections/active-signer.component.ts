@@ -3,17 +3,19 @@ import { CommonModule } from '@angular/common';
 import { Component, HostListener, inject } from '@angular/core';
 import { PushModule } from '@ngrx/component';
 import { concatMap, EMPTY, filter, map, take } from 'rxjs';
-import { BoardStore } from '../../core/stores';
-import { openEditInstructionSignerModal } from '../../instruction-signer/components';
-import { InstructionSignerApiService } from '../../instruction-signer/services';
-import { ActiveComponent } from '../../shared/components';
-import { FollowCursorDirective } from '../../shared/directives';
+import { BoardStore } from '../../core';
 import {
+  InstructionSignerApiService,
+  openEditInstructionSignerModal,
+} from '../../instruction-signer';
+import {
+  ActiveComponent,
+  FollowCursorDirective,
   getFirstParentId,
   isChildOf,
   isNotNull,
   isNull,
-} from '../../shared/utils';
+} from '../../shared';
 
 @Component({
   selector: 'pg-active-signer',
@@ -91,9 +93,11 @@ export class ActiveSignerComponent {
 
               return this._instructionSignerApiService.createInstructionSigner(
                 instructionId,
-                instructionSignerData.id,
-                instructionSignerData.name,
-                instructionSignerData.saveChanges
+                {
+                  id: instructionSignerData.id,
+                  name: instructionSignerData.name,
+                  saveChanges: instructionSignerData.saveChanges,
+                }
               );
             })
           )

@@ -3,17 +3,19 @@ import { CommonModule } from '@angular/common';
 import { Component, HostListener, inject } from '@angular/core';
 import { PushModule } from '@ngrx/component';
 import { combineLatest, concatMap, EMPTY, filter, map, take } from 'rxjs';
-import { BoardStore } from '../../core/stores';
-import { openEditInstructionApplicationModal } from '../../instruction-application/components';
-import { InstructionApplicationApiService } from '../../instruction-application/services';
-import { ActiveComponent } from '../../shared/components';
-import { FollowCursorDirective } from '../../shared/directives';
+import { BoardStore } from '../../core';
 import {
+  InstructionApplicationApiService,
+  openEditInstructionApplicationModal,
+} from '../../instruction-application';
+import {
+  ActiveComponent,
+  FollowCursorDirective,
   getFirstParentId,
   isChildOf,
   isNotNull,
   isNull,
-} from '../../shared/utils';
+} from '../../shared';
 
 @Component({
   selector: 'pg-active-application',
@@ -96,9 +98,11 @@ export class ActiveApplicationComponent {
 
               return this._instructionApplicationApiService.createInstructionApplication(
                 instructionId,
-                instructionApplicationData.id,
-                instructionApplicationData.name,
-                activeApplication.id
+                {
+                  id: instructionApplicationData.id,
+                  name: instructionApplicationData.name,
+                  applicationId: activeApplication.id,
+                }
               );
             })
           )

@@ -12,14 +12,13 @@ import { LetModule, PushModule } from '@ngrx/component';
 import { provideComponentStore } from '@ngrx/component-store';
 import { startWith } from 'rxjs';
 import {
+  ApplicationApiService,
   CreateApplicationModalDirective,
   UpdateApplicationModalDirective,
-} from '../application/components';
-import { ApplicationApiService } from '../application/services';
-import { LobbyStore } from '../core/stores';
-import { Option } from '../shared/utils';
-import { EditWorkspaceModalDirective } from '../workspace/components';
-import { WorkspaceApiService } from '../workspace/services';
+} from '../application';
+import { LobbyStore } from '../core';
+import { Option } from '../shared';
+import { EditWorkspaceModalDirective, WorkspaceApiService } from '../workspace';
 
 @Component({
   selector: 'pg-lobby-page',
@@ -195,13 +194,13 @@ export class LobbyPageComponent implements OnInit {
     workspaceName: string
   ) {
     this._workspaceApiService
-      .createWorkspace(userId, workspaceId, workspaceName)
+      .createWorkspace(userId, { id: workspaceId, name: workspaceName })
       .subscribe();
   }
 
   onUpdateWorkspace(workspaceId: string, workspaceName: string) {
     this._workspaceApiService
-      .updateWorkspace(workspaceId, workspaceName)
+      .updateWorkspace(workspaceId, { name: workspaceName })
       .subscribe();
   }
 

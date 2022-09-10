@@ -9,21 +9,8 @@ import {
   updateDoc,
 } from '@angular/fire/firestore';
 import { combineLatest, defer, from, map, Observable, of } from 'rxjs';
-import { Entity } from '../../shared/utils';
-
-export type CollectionAttributeDto = Entity<{
-  name: string;
-  type: string;
-  isOption: boolean;
-}>;
-
-export type CollectionDto = Entity<{
-  name: string;
-  thumbnailUrl: string;
-  applicationId: string;
-  workspaceId: string;
-  attributes: CollectionAttributeDto[];
-}>;
+import { Entity } from '../../shared';
+import { CollectionAttributeDto, CollectionDto } from '../utils';
 
 export type CreateCollectionDto = Entity<{
   name: string;

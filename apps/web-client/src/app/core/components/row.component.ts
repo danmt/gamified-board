@@ -5,7 +5,7 @@ import { ChangeDetectionStrategy, Component, HostBinding } from '@angular/core';
   selector: 'pg-row',
   template: `
     <div
-      class="text-2xl text-white uppercase relative h-full flex gap-4 border-2 hover:border-blue-500"
+      class="text-2xl text-white uppercase flex gap-4 border-2 hover:border-blue-500"
     >
       <ng-content></ng-content>
     </div>
@@ -15,7 +15,7 @@ import { ChangeDetectionStrategy, Component, HostBinding } from '@angular/core';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RowComponent {
-  @HostBinding('class') class = 'block h-64 bg-bp-bricks';
+  @HostBinding('class') class = 'block bg-bp-bricks';
 
   trackBy(index: number): number {
     return index;

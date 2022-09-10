@@ -5,8 +5,9 @@ import {
   tapResponse,
 } from '@ngrx/component-store';
 import { switchMap } from 'rxjs';
-import { Option } from '../../shared/utils';
-import { SysvarApiService, SysvarDto } from '../services';
+import { Option } from '../../shared';
+import { SysvarApiService } from '../services';
+import { SysvarDto } from '../utils';
 
 interface ViewModel {
   sysvars: Option<SysvarDto[]>;

@@ -17,10 +17,13 @@ import {
   Validators,
 } from '@angular/forms';
 import {
+  Entity,
+  generateId,
+  isNull,
   KeyboardListenerDirective,
+  Option,
   StopKeydownPropagationDirective,
-} from '../../shared/directives';
-import { Entity, generateId, isNull, Option } from '../../shared/utils';
+} from '../../shared';
 
 export type Collection = Entity<{
   name: string;

@@ -18,13 +18,8 @@ import {
   updateDoc,
 } from '@angular/fire/firestore';
 import { defer, from, map, Observable } from 'rxjs';
-import { Entity } from '../../shared/utils';
-
-export type ApplicationDto = Entity<{
-  name: string;
-  workspaceId: string;
-  thumbnailUrl: string;
-}>;
+import { Entity } from '../../shared';
+import { ApplicationDto } from '../utils';
 
 export type CreateApplicationDto = Entity<{
   name: string;

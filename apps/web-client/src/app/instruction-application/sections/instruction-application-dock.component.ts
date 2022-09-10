@@ -3,18 +3,17 @@ import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { LetModule, PushModule } from '@ngrx/component';
 import { combineLatest, concatMap, EMPTY, map, of, tap } from 'rxjs';
-import { BoardStore, InstructionApplicationView } from '../../core/stores';
+import { BoardStore, InstructionApplicationView } from '../../core';
 import {
   ConfirmModalDirective,
-  openConfirmModal,
-  SquareButtonComponent,
-} from '../../shared/components';
-import {
   DefaultImageDirective,
+  isNotNull,
+  isNull,
   KeyboardListenerDirective,
-} from '../../shared/directives';
-import { SlotHotkeyPipe } from '../../shared/pipes';
-import { isNotNull, isNull } from '../../shared/utils';
+  openConfirmModal,
+  SlotHotkeyPipe,
+  SquareButtonComponent,
+} from '../../shared';
 import {
   EditInstructionApplicationSubmit,
   openEditInstructionApplicationModal,
@@ -167,11 +166,9 @@ export class InstructionApplicationDockComponent {
     instructionApplicationData: EditInstructionApplicationSubmit
   ) {
     this._instructionApplicationApiService
-      .updateInstructionApplication(
-        instructionId,
-        instructionApplicationId,
-        instructionApplicationData.name
-      )
+      .updateInstructionApplication(instructionId, instructionApplicationId, {
+        name: instructionApplicationData.name,
+      })
       .subscribe();
   }
 
@@ -210,7 +207,7 @@ export class InstructionApplicationDockComponent {
                 return this._instructionApplicationApiService.updateInstructionApplication(
                   instructionApplication.ownerId,
                   instructionApplication.id,
-                  instructionApplicationData.name
+                  { name: instructionApplicationData.name }
                 );
               })
             )

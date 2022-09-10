@@ -1,93 +1,48 @@
 import { inject, Injectable } from '@angular/core';
 import { doc, Firestore, runTransaction } from '@angular/fire/firestore';
 import { defer, from } from 'rxjs';
-import { Entity, isNull } from '../../shared/utils';
+import { Entity } from '../../shared';
+import { InstructionSignerDto } from '../utils';
 
-export type InstructionSignerDto = Entity<{
+export type CreateInstructionSignerDto = Entity<{
   name: string;
   saveChanges: boolean;
+}>;
+
+export type UpdateInstructionSignerDto = Partial<{
+  name: string;
 }>;
 
 @Injectable({ providedIn: 'root' })
 export class InstructionSignerApiService {
   private readonly _firestore = inject(Firestore);
 
-  transferInstructionSigner(
-    previousInstructionId: string,
-    newInstructionId: string,
-    instructionSignerId: string,
-    newIndex: number
+  createInstructionSigner(
+    ownerId: string,
+    { id, name, saveChanges }: CreateInstructionSignerDto
   ) {
-    const previousInstructionRef = doc(
-      this._firestore,
-      `instructions/${previousInstructionId}`
-    );
-
-    const newInstructionRef = doc(
-      this._firestore,
-      `instructions/${newInstructionId}`
-    );
-
-    return defer(() =>
-      from(
-        runTransaction(this._firestore, async (transaction) => {
-          const previousInstruction = await transaction.get(
-            previousInstructionRef
-          );
-          const newInstruction = await transaction.get(newInstructionRef);
-
-          const previousInstructionSigners = (previousInstruction.data()?.[
-            'signers'
-          ] ?? []) as InstructionSignerDto[];
-          const newInstructionSigners = (newInstruction.data()?.['signers'] ??
-            []) as InstructionSignerDto[];
-          const signer =
-            previousInstructionSigners.find(
-              (signer) => signer.id === instructionSignerId
-            ) ?? null;
-
-          if (isNull(signer)) {
-            throw new Error('Signer not found');
-          }
-
-          transaction.update(previousInstructionRef, {
-            signers: previousInstructionSigners.filter(
-              (signer: InstructionSignerDto) =>
-                signer.id !== instructionSignerId
-            ),
-          });
-          transaction.update(newInstructionRef, {
-            signers: [
-              ...newInstructionSigners.slice(0, newIndex),
-              signer,
-              ...newInstructionSigners.slice(newIndex + 1),
-            ],
-          });
-
-          return {};
-        })
-      )
-    );
-  }
-
-  deleteInstructionSigner(instructionId: string, instructionSignerId: string) {
     return defer(() =>
       from(
         runTransaction(this._firestore, async (transaction) => {
           const instructionRef = doc(
             this._firestore,
-            `instructions/${instructionId}`
+            `instructions/${ownerId}`
           );
-
           const instruction = await transaction.get(instructionRef);
+          const instructionData = instruction.data();
 
+          // push signer to the instruction's signers list
           transaction.update(instructionRef, {
-            signers: instruction
-              .data()
-              ?.['signers'].filter(
-                (signers: InstructionSignerDto) =>
-                  signers.id !== instructionSignerId
-              ),
+            signers: [
+              ...(instructionData && instructionData['signers']
+                ? instructionData['signers']
+                : []),
+              {
+                id,
+                name,
+                saveChanges,
+              },
+            ],
           });
 
           return {};
@@ -99,7 +54,7 @@ export class InstructionSignerApiService {
   updateInstructionSigner(
     instructionId: string,
     instructionSignerId: string,
-    name: string
+    { name }: UpdateInstructionSignerDto
   ) {
     return defer(() =>
       from(
@@ -137,67 +92,24 @@ export class InstructionSignerApiService {
     );
   }
 
-  createInstructionSigner(
-    ownerId: string,
-    newInstructionSignerId: string,
-    name: string,
-    saveChanges: boolean
-  ) {
+  deleteInstructionSigner(instructionId: string, instructionSignerId: string) {
     return defer(() =>
       from(
         runTransaction(this._firestore, async (transaction) => {
           const instructionRef = doc(
             this._firestore,
-            `instructions/${ownerId}`
-          );
-          const instruction = await transaction.get(instructionRef);
-          const instructionData = instruction.data();
-
-          // push signer to the instruction's signers list
-          transaction.update(instructionRef, {
-            signers: [
-              ...(instructionData && instructionData['signers']
-                ? instructionData['signers']
-                : []),
-              {
-                id: newInstructionSignerId,
-                name,
-                saveChanges,
-              },
-            ],
-          });
-
-          return {};
-        })
-      )
-    );
-  }
-
-  updateInstructionSignersOrder(
-    ownerId: string,
-    instructionSignersOrder: string[]
-  ) {
-    return defer(() =>
-      from(
-        runTransaction(this._firestore, async (transaction) => {
-          const instructionRef = doc(
-            this._firestore,
-            `instructions/${ownerId}`
+            `instructions/${instructionId}`
           );
 
           const instruction = await transaction.get(instructionRef);
-          const signers = (instruction.data()?.['signers'] ??
-            []) as InstructionSignerDto[];
 
           transaction.update(instructionRef, {
-            signers: instructionSignersOrder.map((instructionSignerId) => {
-              const instructionSignerIndex = signers.findIndex(
-                (instructionSigner) =>
-                  instructionSigner.id === instructionSignerId
-              );
-
-              return signers[instructionSignerIndex];
-            }),
+            signers: instruction
+              .data()
+              ?.['signers'].filter(
+                (signers: InstructionSignerDto) =>
+                  signers.id !== instructionSignerId
+              ),
           });
 
           return {};

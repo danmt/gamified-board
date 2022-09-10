@@ -5,12 +5,9 @@ import {
   tapResponse,
 } from '@ngrx/component-store';
 import { combineLatest, EMPTY, map, of, switchMap } from 'rxjs';
-import {
-  ApplicationApiService,
-  ApplicationDto,
-} from '../../application/services';
-import { isNull, Option } from '../../shared/utils';
-import { WorkspaceApiService, WorkspaceDto } from '../../workspace/services';
+import { ApplicationApiService, ApplicationDto } from '../../application';
+import { isNull, Option } from '../../shared';
+import { WorkspaceApiService, WorkspaceDto } from '../../workspace';
 
 interface ViewModel {
   userId: Option<string>;

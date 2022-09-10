@@ -1,5 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { Option } from '../../shared/utils';
+import { Option } from '../../shared';
 
 export interface HotKey {
   slot: number;

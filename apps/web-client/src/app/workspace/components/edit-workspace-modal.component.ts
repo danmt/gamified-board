@@ -2,14 +2,13 @@ import { Dialog, DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
 import { CommonModule } from '@angular/common';
 import {
   Component,
+  Directive,
   EventEmitter,
   HostListener,
   inject,
   Input,
   Output,
 } from '@angular/core';
-
-import { Directive } from '@angular/core';
 import {
   FormBuilder,
   FormControl,
@@ -17,10 +16,13 @@ import {
   Validators,
 } from '@angular/forms';
 import {
+  Entity,
+  generateId,
+  isNull,
   KeyboardListenerDirective,
+  Option,
   StopKeydownPropagationDirective,
-} from '../../shared/directives';
-import { Entity, generateId, isNull, Option } from '../../shared/utils';
+} from '../../shared';
 
 export type Workspace = Entity<{
   name: string;

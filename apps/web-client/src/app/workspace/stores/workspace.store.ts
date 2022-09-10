@@ -5,8 +5,9 @@ import {
   tapResponse,
 } from '@ngrx/component-store';
 import { EMPTY, switchMap } from 'rxjs';
-import { isNull, Option } from '../../shared/utils';
-import { WorkspaceApiService, WorkspaceDto } from '../services';
+import { isNull, Option } from '../../shared';
+import { WorkspaceApiService } from '../services';
+import { WorkspaceDto } from '../utils';
 
 interface ViewModel {
   workspaceId: Option<string>;
