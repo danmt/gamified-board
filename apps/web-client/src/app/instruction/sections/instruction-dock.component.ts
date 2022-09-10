@@ -42,133 +42,141 @@ interface HotKey {
     <ng-container *ngrxLet="hotkeys$; let hotkeys">
       <pg-secondary-dock
         *ngIf="selected$ | ngrxPush as selected"
-        class="text-white flex gap-4 justify-center items-start bp-font-game"
+        class="text-white block bp-font-game"
         pgKeyboardListener
         (pgKeyDown)="onKeyDown(hotkeys, selected, $event)"
       >
-        <img
-          [src]="selected?.thumbnailUrl"
-          pgDefaultImage="assets/generic/instruction.png"
-          class="w-[140px]"
-        />
+        <div class="flex gap-4 justify-center items-start">
+          <img
+            [src]="selected?.thumbnailUrl"
+            pgDefaultImage="assets/generic/instruction.png"
+            class="w-[140px]"
+          />
 
-        <div>
-          <h2 class="text-xl">Name</h2>
-          <p class="text-base">{{ selected?.name }}</p>
-          <h2 class="text-xl">Kind</h2>
-          <p class="text-base">{{ selected?.kind }}</p>
-        </div>
+          <div>
+            <h2 class="text-xl">Name</h2>
+            <p class="text-base">{{ selected?.name }}</p>
+            <h2 class="text-xl">Kind</h2>
+            <p class="text-base">{{ selected?.kind }}</p>
+          </div>
 
-        <div>
-          <h2 class="text-xl">Actions</h2>
-          <div class="flex gap-4 justify-center items-start">
-            <div
-              class="bg-gray-800 relative"
-              style="width: 2.89rem; height: 2.89rem"
-              *ngIf="
-                (currentApplicationId$ | ngrxPush) === selected.application.id
-              "
-            >
-              <span
-                *ngIf="0 | pgSlotHotkey: hotkeys as hotkey"
-                class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
-                style="font-size: 0.5rem; line-height: 0.5rem"
+          <div>
+            <h2 class="text-xl">Actions</h2>
+            <div class="flex gap-4 justify-center items-start">
+              <div
+                class="bg-gray-800 relative"
+                style="width: 2.89rem; height: 2.89rem"
+                *ngIf="
+                  (currentApplicationId$ | ngrxPush) === selected.application.id
+                "
               >
-                {{ hotkey }}
-              </span>
-
-              <pg-square-button
-                [pgIsActive]="isUpdating"
-                pgThumbnailUrl="assets/generic/instruction.png"
-                pgUpdateInstructionModal
-                [pgInstruction]="selected"
-                (pgOpenModal)="isUpdating = true"
-                (pgCloseModal)="isUpdating = false"
-                (pgUpdateInstruction)="onUpdateInstruction(selected.id, $event)"
-              ></pg-square-button>
-            </div>
-
-            <div
-              class="bg-gray-800 relative"
-              style="width: 2.89rem; height: 2.89rem"
-              *ngIf="
-                (currentApplicationId$ | ngrxPush) === selected.application.id
-              "
-            >
-              <span
-                *ngIf="1 | pgSlotHotkey: hotkeys as hotkey"
-                class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
-                style="font-size: 0.5rem; line-height: 0.5rem"
-              >
-                {{ hotkey }}
-              </span>
-
-              <pg-square-button
-                [pgIsActive]="isDeleting"
-                pgThumbnailUrl="assets/generic/instruction.png"
-                (pgConfirm)="onDeleteInstruction(selected.id)"
-                pgConfirmModal
-                pgMessage="Are you sure? This action cannot be reverted."
-                (pgOpenModal)="isDeleting = true"
-                (pgCloseModal)="isDeleting = false"
-              ></pg-square-button>
-            </div>
-
-            <div
-              class="bg-gray-800 relative"
-              style="width: 2.89rem; height: 2.89rem"
-              *ngIf="
-                (currentApplicationId$ | ngrxPush) === selected.application.id
-              "
-            >
-              <ng-container *ngrxLet="hotkeys$; let hotkeys">
                 <span
-                  *ngIf="2 | pgSlotHotkey: hotkeys as hotkey"
+                  *ngIf="0 | pgSlotHotkey: hotkeys as hotkey"
                   class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
                   style="font-size: 0.5rem; line-height: 0.5rem"
                 >
                   {{ hotkey }}
                 </span>
-              </ng-container>
 
-              <pg-square-button
-                [pgIsActive]="isUpdatingThumbnail"
-                pgThumbnailUrl="assets/generic/instruction.png"
-                pgUploadFileModal
-                (pgOpenModal)="isUpdatingThumbnail = true"
-                (pgCloseModal)="isUpdatingThumbnail = false"
-                (pgSubmit)="
-                  onUploadThumbnail(selected.id, $event.fileId, $event.fileUrl)
+                <pg-square-button
+                  [pgIsActive]="isUpdating"
+                  pgThumbnailUrl="assets/generic/instruction.png"
+                  pgUpdateInstructionModal
+                  [pgInstruction]="selected"
+                  (pgOpenModal)="isUpdating = true"
+                  (pgCloseModal)="isUpdating = false"
+                  (pgUpdateInstruction)="
+                    onUpdateInstruction(selected.id, $event)
+                  "
+                ></pg-square-button>
+              </div>
+
+              <div
+                class="bg-gray-800 relative"
+                style="width: 2.89rem; height: 2.89rem"
+                *ngIf="
+                  (currentApplicationId$ | ngrxPush) === selected.application.id
                 "
-              ></pg-square-button>
-            </div>
-
-            <div
-              class="bg-gray-800 relative"
-              style="width: 2.89rem; height: 2.89rem"
-              *ngIf="
-                (currentApplicationId$ | ngrxPush) === selected.application.id
-              "
-            >
-              <span
-                *ngIf="3 | pgSlotHotkey: hotkeys as hotkey"
-                class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
-                style="font-size: 0.5rem; line-height: 0.5rem"
               >
-                {{ hotkey }}
-              </span>
+                <span
+                  *ngIf="1 | pgSlotHotkey: hotkeys as hotkey"
+                  class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
+                  style="font-size: 0.5rem; line-height: 0.5rem"
+                >
+                  {{ hotkey }}
+                </span>
 
-              <pg-square-button
-                [pgIsActive]="isUpdatingArguments"
-                pgThumbnailUrl="assets/generic/instruction.png"
-                pgUpdateInstructionArgumentsModal
-                [pgInstructionArguments]="selected.arguments"
-                (pgOpenModal)="isUpdatingArguments = true"
-                (pgCloseModal)="isUpdatingArguments = false"
-                (pgUpdateInstructionArguments)="
-                  onUpdateInstructionArguments(selected.id, $event)
+                <pg-square-button
+                  [pgIsActive]="isDeleting"
+                  pgThumbnailUrl="assets/generic/instruction.png"
+                  (pgConfirm)="onDeleteInstruction(selected.id)"
+                  pgConfirmModal
+                  pgMessage="Are you sure? This action cannot be reverted."
+                  (pgOpenModal)="isDeleting = true"
+                  (pgCloseModal)="isDeleting = false"
+                ></pg-square-button>
+              </div>
+
+              <div
+                class="bg-gray-800 relative"
+                style="width: 2.89rem; height: 2.89rem"
+                *ngIf="
+                  (currentApplicationId$ | ngrxPush) === selected.application.id
                 "
-              ></pg-square-button>
+              >
+                <ng-container *ngrxLet="hotkeys$; let hotkeys">
+                  <span
+                    *ngIf="2 | pgSlotHotkey: hotkeys as hotkey"
+                    class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
+                    style="font-size: 0.5rem; line-height: 0.5rem"
+                  >
+                    {{ hotkey }}
+                  </span>
+                </ng-container>
+
+                <pg-square-button
+                  [pgIsActive]="isUpdatingThumbnail"
+                  pgThumbnailUrl="assets/generic/instruction.png"
+                  pgUploadFileModal
+                  (pgOpenModal)="isUpdatingThumbnail = true"
+                  (pgCloseModal)="isUpdatingThumbnail = false"
+                  (pgSubmit)="
+                    onUploadThumbnail(
+                      selected.id,
+                      $event.fileId,
+                      $event.fileUrl
+                    )
+                  "
+                ></pg-square-button>
+              </div>
+
+              <div
+                class="bg-gray-800 relative"
+                style="width: 2.89rem; height: 2.89rem"
+                *ngIf="
+                  (currentApplicationId$ | ngrxPush) === selected.application.id
+                "
+              >
+                <span
+                  *ngIf="3 | pgSlotHotkey: hotkeys as hotkey"
+                  class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
+                  style="font-size: 0.5rem; line-height: 0.5rem"
+                >
+                  {{ hotkey }}
+                </span>
+
+                <pg-square-button
+                  [pgIsActive]="isUpdatingArguments"
+                  pgThumbnailUrl="assets/generic/instruction.png"
+                  pgUpdateInstructionArgumentsModal
+                  [pgInstructionArguments]="selected.arguments"
+                  (pgOpenModal)="isUpdatingArguments = true"
+                  (pgCloseModal)="isUpdatingArguments = false"
+                  (pgUpdateInstructionArguments)="
+                    onUpdateInstructionArguments(selected.id, $event)
+                  "
+                ></pg-square-button>
+              </div>
             </div>
           </div>
         </div>

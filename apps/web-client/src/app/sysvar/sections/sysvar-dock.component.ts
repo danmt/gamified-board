@@ -39,91 +39,93 @@ interface HotKey {
     <ng-container *ngrxLet="hotkeys$; let hotkeys">
       <pg-secondary-dock
         *ngIf="selected$ | ngrxPush as selected"
-        class="text-white flex gap-4 justify-center items-start bp-font-game"
+        class="text-white block bp-font-game"
         pgKeyboardListener
         (pgKeyDown)="onKeyDown(hotkeys, selected, $event)"
       >
-        <img
-          [src]="selected?.thumbnailUrl"
-          pgDefaultImage="assets/generic/sysvar.png"
-          class="w-[140px]"
-        />
+        <div class="flex gap-4 justify-center items-start">
+          <img
+            [src]="selected?.thumbnailUrl"
+            pgDefaultImage="assets/generic/sysvar.png"
+            class="w-[140px]"
+          />
 
-        <div>
-          <h2 class="text-xl">Name</h2>
-          <p class="text-base">{{ selected?.name }}</p>
-          <h2 class="text-xl">Kind</h2>
-          <p class="text-base">{{ selected?.kind }}</p>
-        </div>
+          <div>
+            <h2 class="text-xl">Name</h2>
+            <p class="text-base">{{ selected?.name }}</p>
+            <h2 class="text-xl">Kind</h2>
+            <p class="text-base">{{ selected?.kind }}</p>
+          </div>
 
-        <div
-          class="bg-gray-800 relative"
-          style="width: 2.89rem; height: 2.89rem"
-        >
-          <span
-            *ngIf="0 | pgSlotHotkey: hotkeys as hotkey"
-            class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
-            style="font-size: 0.5rem; line-height: 0.5rem"
+          <div
+            class="bg-gray-800 relative"
+            style="width: 2.89rem; height: 2.89rem"
           >
-            {{ hotkey }}
-          </span>
-
-          <pg-square-button
-            [pgIsActive]="isEditing"
-            pgThumbnailUrl="assets/generic/sysvar.png"
-            pgUpdateSysvarModal
-            [pgSysvar]="selected"
-            (pgOpenModal)="isEditing = true"
-            (pgCloseModal)="isEditing = false"
-            (pgUpdateSysvar)="onUpdateSysvar(selected.id, selected)"
-          ></pg-square-button>
-        </div>
-
-        <div
-          class="bg-gray-800 relative"
-          style="width: 2.89rem; height: 2.89rem"
-        >
-          <span
-            *ngIf="1 | pgSlotHotkey: hotkeys as hotkey"
-            class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
-            style="font-size: 0.5rem; line-height: 0.5rem"
-          >
-            {{ hotkey }}
-          </span>
-
-          <pg-square-button
-            [pgIsActive]="isDeleting"
-            pgThumbnailUrl="assets/generic/sysvar.png"
-            (pgConfirm)="onDeleteSysvar(selected.id)"
-            pgConfirmModal
-            pgMessage="Are you sure? This action cannot be reverted."
-            (pgOpenModal)="isDeleting = true"
-            (pgCloseModal)="isDeleting = false"
-          ></pg-square-button>
-        </div>
-
-        <div
-          class="bg-gray-800 relative"
-          style="width: 2.89rem; height: 2.89rem"
-        >
-          <ng-container *ngrxLet="hotkeys$; let hotkeys">
             <span
-              *ngIf="2 | pgSlotHotkey: hotkeys as hotkey"
+              *ngIf="0 | pgSlotHotkey: hotkeys as hotkey"
               class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
               style="font-size: 0.5rem; line-height: 0.5rem"
             >
               {{ hotkey }}
             </span>
-          </ng-container>
 
-          <pg-square-button
-            [pgIsActive]="isUpdatingThumbnail"
-            pgThumbnailUrl="assets/generic/sysvar.png"
-            pgUploadFileModal
-            (pgSubmit)="
-              onUploadThumbnail(selected.id, $event.fileId, $event.fileUrl)
-            "
-          ></pg-square-button>
+            <pg-square-button
+              [pgIsActive]="isEditing"
+              pgThumbnailUrl="assets/generic/sysvar.png"
+              pgUpdateSysvarModal
+              [pgSysvar]="selected"
+              (pgOpenModal)="isEditing = true"
+              (pgCloseModal)="isEditing = false"
+              (pgUpdateSysvar)="onUpdateSysvar(selected.id, selected)"
+            ></pg-square-button>
+          </div>
+
+          <div
+            class="bg-gray-800 relative"
+            style="width: 2.89rem; height: 2.89rem"
+          >
+            <span
+              *ngIf="1 | pgSlotHotkey: hotkeys as hotkey"
+              class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
+              style="font-size: 0.5rem; line-height: 0.5rem"
+            >
+              {{ hotkey }}
+            </span>
+
+            <pg-square-button
+              [pgIsActive]="isDeleting"
+              pgThumbnailUrl="assets/generic/sysvar.png"
+              (pgConfirm)="onDeleteSysvar(selected.id)"
+              pgConfirmModal
+              pgMessage="Are you sure? This action cannot be reverted."
+              (pgOpenModal)="isDeleting = true"
+              (pgCloseModal)="isDeleting = false"
+            ></pg-square-button>
+          </div>
+
+          <div
+            class="bg-gray-800 relative"
+            style="width: 2.89rem; height: 2.89rem"
+          >
+            <ng-container *ngrxLet="hotkeys$; let hotkeys">
+              <span
+                *ngIf="2 | pgSlotHotkey: hotkeys as hotkey"
+                class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
+                style="font-size: 0.5rem; line-height: 0.5rem"
+              >
+                {{ hotkey }}
+              </span>
+            </ng-container>
+
+            <pg-square-button
+              [pgIsActive]="isUpdatingThumbnail"
+              pgThumbnailUrl="assets/generic/sysvar.png"
+              pgUploadFileModal
+              (pgSubmit)="
+                onUploadThumbnail(selected.id, $event.fileId, $event.fileUrl)
+              "
+            ></pg-square-button>
+          </div>
         </div>
       </pg-secondary-dock>
     </ng-container>

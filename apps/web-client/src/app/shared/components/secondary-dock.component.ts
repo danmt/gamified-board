@@ -22,7 +22,7 @@ export type DockDirection = 'right' | 'left';
 
     <!-- borders -->
     <div
-      class="bp-skin-outer-metal-border-top absolute -top-4 w-5/6 left-0 right-0 mx-auto my-0 z-20"
+      class="bp-skin-outer-metal-border-top absolute -top-4 w-4/6 left-0 right-0 mx-auto my-0 z-20"
     ></div>
     <div
       class="bp-skin-outer-metal-border-right absolute -right-5 h-4/6 top-0 bottom-0 my-auto mx-0 z-20"
@@ -32,7 +32,9 @@ export type DockDirection = 'right' | 'left';
     ></div>
 
     <!-- modal content -->
-    <ng-content></ng-content>
+    <div class="z-50 w-full relative">
+      <ng-content></ng-content>
+    </div>
   `,
   standalone: true,
   imports: [CommonModule],
