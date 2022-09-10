@@ -9,6 +9,7 @@ import {
   openConfirmModal,
   SquareButtonComponent,
 } from '../../shared/components';
+import { SecondaryDockComponent } from '../../shared/components/secondary-dock.component';
 import { KeyboardListenerDirective } from '../../shared/directives';
 import { SlotHotkeyPipe } from '../../shared/pipes';
 import { isNotNull, isNull } from '../../shared/utils';
@@ -29,66 +30,80 @@ interface HotKey {
   selector: 'pg-instruction-signer-dock',
   template: `
     <ng-container *ngrxLet="hotkeys$; let hotkeys">
-      <div
+      <pg-secondary-dock
         *ngIf="selected$ | ngrxPush as selected"
-        class="p-4 bg-gray-700 flex gap-4 justify-center items-start"
+        class="text-white flex gap-4 justify-center items-start bp-font-game"
         pgKeyboardListener
         (pgKeyDown)="onKeyDown(hotkeys, selected, $event)"
       >
-        <img src="assets/generic/signer.png" />
+        <img src="assets/generic/signer.png" class="w-[140px]" />
 
-        {{ selected?.name }}
-
-        <div
-          class="bg-gray-800 relative"
-          style="width: 2.89rem; height: 2.89rem"
-        >
-          <span
-            *ngIf="0 | pgSlotHotkey: hotkeys as hotkey"
-            class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
-            style="font-size: 0.5rem; line-height: 0.5rem"
-          >
-            {{ hotkey }}
-          </span>
-
-          <pg-square-button
-            [pgIsActive]="isEditing"
-            pgThumbnailUrl="assets/generic/signer.png"
-            pgUpdateInstructionSignerModal
-            [pgInstructionSigner]="selected"
-            (pgOpenModal)="isEditing = true"
-            (pgCloseModal)="isEditing = false"
-            (pgUpdateInstructionSigner)="
-              onUpdateInstructionSigner(selected.ownerId, selected.id, $event)
-            "
-          ></pg-square-button>
+        <div>
+          <h2 class="text-xl">Name</h2>
+          <p class="text-base">{{ selected?.name }}</p>
+          <h2 class="text-xl">Kind</h2>
+          <p class="text-base">{{ selected?.kind }}</p>
         </div>
 
-        <div
-          class="bg-gray-800 relative"
-          style="width: 2.89rem; height: 2.89rem"
-        >
-          <span
-            *ngIf="1 | pgSlotHotkey: hotkeys as hotkey"
-            class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
-            style="font-size: 0.5rem; line-height: 0.5rem"
-          >
-            {{ hotkey }}
-          </span>
+        <div>
+          <h2 class="text-xl">Actions</h2>
+          <div class="flex gap-4 justify-center items-start">
+            <div
+              class="bg-gray-800 relative"
+              style="width: 2.89rem; height: 2.89rem"
+            >
+              <span
+                *ngIf="0 | pgSlotHotkey: hotkeys as hotkey"
+                class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
+                style="font-size: 0.5rem; line-height: 0.5rem"
+              >
+                {{ hotkey }}
+              </span>
 
-          <pg-square-button
-            [pgIsActive]="isDeleting"
-            pgThumbnailUrl="assets/generic/signer.png"
-            pgConfirmModal
-            pgMessage="Are you sure? This action cannot be reverted."
-            (pgConfirm)="
-              onDeleteInstructionSigner(selected.ownerId, selected.id)
-            "
-            (pgOpenModal)="isDeleting = true"
-            (pgCloseModal)="isDeleting = false"
-          ></pg-square-button>
+              <pg-square-button
+                [pgIsActive]="isEditing"
+                pgThumbnailUrl="assets/generic/signer.png"
+                pgUpdateInstructionSignerModal
+                [pgInstructionSigner]="selected"
+                (pgOpenModal)="isEditing = true"
+                (pgCloseModal)="isEditing = false"
+                (pgUpdateInstructionSigner)="
+                  onUpdateInstructionSigner(
+                    selected.ownerId,
+                    selected.id,
+                    $event
+                  )
+                "
+              ></pg-square-button>
+            </div>
+
+            <div
+              class="bg-gray-800 relative"
+              style="width: 2.89rem; height: 2.89rem"
+            >
+              <span
+                *ngIf="1 | pgSlotHotkey: hotkeys as hotkey"
+                class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
+                style="font-size: 0.5rem; line-height: 0.5rem"
+              >
+                {{ hotkey }}
+              </span>
+
+              <pg-square-button
+                [pgIsActive]="isDeleting"
+                pgThumbnailUrl="assets/generic/signer.png"
+                pgConfirmModal
+                pgMessage="Are you sure? This action cannot be reverted."
+                (pgConfirm)="
+                  onDeleteInstructionSigner(selected.ownerId, selected.id)
+                "
+                (pgOpenModal)="isDeleting = true"
+                (pgCloseModal)="isDeleting = false"
+              ></pg-square-button>
+            </div>
+          </div>
         </div>
-      </div>
+      </pg-secondary-dock>
     </ng-container>
   `,
   standalone: true,
@@ -101,6 +116,7 @@ interface HotKey {
     UpdateInstructionSignerModalDirective,
     KeyboardListenerDirective,
     ConfirmModalDirective,
+    SecondaryDockComponent,
   ],
 })
 export class InstructionSignerDockComponent {

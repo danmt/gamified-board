@@ -43,8 +43,8 @@ interface HotKey {
         ></div>
       </div>
 
-      <div class="bp-skin-dock-detail-left absolute z-40"></div>
-      <div class="bp-skin-dock-detail-right absolute z-40"></div>
+      <div class="bp-skin-dock-detail-left absolute z-40 -left-10"></div>
+      <div class="bp-skin-dock-detail-right absolute z-40 -right-11"></div>
       <ng-container
         *ngrxLet="hotkeys$; let hotkeys"
         pgKeyboardListener
