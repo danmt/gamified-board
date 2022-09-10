@@ -31,11 +31,16 @@ export type ArgumentReferenceView = {
 export type DocumentReferenceView = {
   kind: 'document';
   document: InstructionDocumentDto;
+};
+
+export type AttributeReferenceView = {
+  kind: 'attribute';
+  document: InstructionDocumentDto;
   attribute: CollectionAttributeDto;
 };
 
-export type ReferenceView = ArgumentReferenceView | DocumentReferenceView;
-
+/* export type ReferenceView = ArgumentReferenceView | DocumentReferenceView;
+ */
 export type ValueView = {
   type: string;
   value: string;
@@ -70,8 +75,8 @@ export type InstructionDocumentView = Entity<{
   method: string;
   ownerId: string;
   collection: CollectionView;
-  seeds: Option<ReferenceView | ValueView>[];
-  bump: Option<ReferenceView>;
+  seeds: Option<ArgumentReferenceView | AttributeReferenceView | ValueView>[];
+  bump: Option<ArgumentReferenceView | AttributeReferenceView>;
   payer: Option<DocumentReferenceView>;
   kind: 'instructionDocument';
 }>;
@@ -181,7 +186,7 @@ const populateBump = (
     return null;
   }
 
-  if (bump.kind === 'document') {
+  if (bump.kind === 'attribute') {
     const documentId = bump.documentId;
     const attributeId = bump.attributeId;
 
@@ -193,7 +198,7 @@ const populateBump = (
 
     return isNotNull(bumpDocument) && isNotNull(attribute)
       ? {
-          kind: 'document' as const,
+          kind: 'attribute' as const,
           document: bumpDocument,
           attribute,
         }
@@ -213,8 +218,7 @@ const populateBump = (
 
 const populatePayer = (
   document: InstructionDocumentDto,
-  documents: InstructionDocumentDto[],
-  collections: CollectionDto[]
+  documents: InstructionDocumentDto[]
 ) => {
   const payer = document.payer;
 
@@ -222,20 +226,13 @@ const populatePayer = (
     return null;
   }
 
-  const documentId = payer.documentId;
-  const attributeId = payer.attributeId;
+  const payerDocument =
+    documents.find(({ id }) => id === payer.documentId) ?? null;
 
-  const payerDocument = documents.find(({ id }) => id === documentId) ?? null;
-  const collection =
-    collections.find(({ id }) => id === payerDocument?.collectionId) ?? null;
-  const attribute =
-    collection?.attributes.find(({ id }) => id === attributeId) ?? null;
-
-  return isNotNull(payerDocument) && isNotNull(attribute)
+  return isNotNull(payerDocument)
     ? {
         kind: 'document' as const,
         document: payerDocument,
-        attribute,
       }
     : null;
 };
@@ -263,10 +260,12 @@ const populateInstructionDocument = (
     name: document.name,
     method: document.method,
     ownerId: owner.id,
-    payer: populatePayer(document, documents, collections),
+    payer: populatePayer(document, documents),
     seeds:
       document.seeds
-        ?.map<Option<ReferenceView | ValueView>>((seed) => {
+        ?.map<
+          Option<ArgumentReferenceView | AttributeReferenceView | ValueView>
+        >((seed) => {
           if (!('kind' in seed)) {
             return {
               value: seed.value,
@@ -285,7 +284,7 @@ const populateInstructionDocument = (
                   }
                 : null;
             }
-            case 'document': {
+            case 'attribute': {
               const document =
                 documents.find(({ id }) => id === seed.documentId) ?? null;
               const collection =

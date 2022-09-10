@@ -20,8 +20,11 @@ import {
 import { SlotHotkeyPipe } from '../../shared/pipes';
 import { generateId, isNotNull, isNull } from '../../shared/utils';
 import {
+  EditInstructionArgumentsSubmit,
   EditInstructionSubmit,
+  openEditInstructionArgumentsModal,
   openEditInstructionModal,
+  UpdateInstructionArgumentsModalDirective,
   UpdateInstructionModalDirective,
 } from '../components';
 import { InstructionApiService } from '../services';
@@ -63,12 +66,12 @@ interface HotKey {
           </span>
 
           <pg-square-button
-            [pgIsActive]="isEditing"
+            [pgIsActive]="isUpdating"
             pgThumbnailUrl="assets/generic/instruction.png"
             pgUpdateInstructionModal
             [pgInstruction]="selected"
-            (pgOpenModal)="isEditing = true"
-            (pgCloseModal)="isEditing = false"
+            (pgOpenModal)="isUpdating = true"
+            (pgCloseModal)="isUpdating = false"
             (pgUpdateInstruction)="onUpdateInstruction(selected.id, $event)"
           ></pg-square-button>
         </div>
@@ -116,8 +119,36 @@ interface HotKey {
             [pgIsActive]="isUpdatingThumbnail"
             pgThumbnailUrl="assets/generic/instruction.png"
             pgUploadFileModal
+            (pgOpenModal)="isUpdatingThumbnail = true"
+            (pgCloseModal)="isUpdatingThumbnail = false"
             (pgSubmit)="
               onUploadThumbnail(selected.id, $event.fileId, $event.fileUrl)
+            "
+          ></pg-square-button>
+        </div>
+
+        <div
+          class="bg-gray-800 relative"
+          style="width: 2.89rem; height: 2.89rem"
+          *ngIf="(currentApplicationId$ | ngrxPush) === selected.application.id"
+        >
+          <span
+            *ngIf="3 | pgSlotHotkey: hotkeys as hotkey"
+            class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
+            style="font-size: 0.5rem; line-height: 0.5rem"
+          >
+            {{ hotkey }}
+          </span>
+
+          <pg-square-button
+            [pgIsActive]="isUpdatingArguments"
+            pgThumbnailUrl="assets/generic/instruction.png"
+            pgUpdateInstructionArgumentsModal
+            [pgInstructionArguments]="selected.arguments"
+            (pgOpenModal)="isUpdatingArguments = true"
+            (pgCloseModal)="isUpdatingArguments = false"
+            (pgUpdateInstructionArguments)="
+              onUpdateInstructionArguments(selected.id, $event)
             "
           ></pg-square-button>
         </div>
@@ -131,6 +162,7 @@ interface HotKey {
     LetModule,
     SquareButtonComponent,
     UpdateInstructionModalDirective,
+    UpdateInstructionArgumentsModalDirective,
     UploadFileModalDirective,
     SlotHotkeyPipe,
     KeyboardListenerDirective,
@@ -177,11 +209,17 @@ export class InstructionDockComponent {
       code: 'KeyE',
       key: 'e',
     },
+    {
+      slot: 3,
+      code: 'KeyR',
+      key: 'r',
+    },
   ]);
 
-  isEditing = false;
+  isUpdating = false;
   isDeleting = false;
   isUpdatingThumbnail = false;
+  isUpdatingArguments = false;
 
   onUpdateInstruction(
     instructionId: string,
@@ -190,7 +228,17 @@ export class InstructionDockComponent {
     this._instructionApiService
       .updateInstruction(instructionId, {
         name: instructionData.name,
-        arguments: instructionData.arguments,
+      })
+      .subscribe();
+  }
+
+  onUpdateInstructionArguments(
+    instructionId: string,
+    instructionArgumentsData: EditInstructionArgumentsSubmit
+  ) {
+    this._instructionApiService
+      .updateInstruction(instructionId, {
+        arguments: instructionArgumentsData,
       })
       .subscribe();
   }
@@ -220,12 +268,12 @@ export class InstructionDockComponent {
     if (isNotNull(hotkey)) {
       switch (hotkey.slot) {
         case 0: {
-          this.isEditing = true;
+          this.isUpdating = true;
 
           openEditInstructionModal(this._dialog, { instruction })
             .closed.pipe(
               concatMap((instructionData) => {
-                this.isEditing = false;
+                this.isUpdating = false;
 
                 if (instructionData === undefined) {
                   return EMPTY;
@@ -235,7 +283,6 @@ export class InstructionDockComponent {
                   instruction.id,
                   {
                     name: instructionData.name,
-                    arguments: instructionData.arguments,
                   }
                 );
               })
@@ -299,6 +346,33 @@ export class InstructionDockComponent {
                 return this._instructionApiService.updateInstructionThumbnail(
                   instruction.id,
                   { fileId, fileUrl: payload.fileUrl }
+                );
+              })
+            )
+            .subscribe();
+
+          break;
+        }
+
+        case 3: {
+          this.isUpdatingArguments = true;
+
+          openEditInstructionArgumentsModal(this._dialog, {
+            instructionArguments: instruction.arguments,
+          })
+            .closed.pipe(
+              concatMap((instructionArgumentsData) => {
+                this.isUpdatingArguments = false;
+
+                if (instructionArgumentsData === undefined) {
+                  return EMPTY;
+                }
+
+                return this._instructionApiService.updateInstruction(
+                  instruction.id,
+                  {
+                    arguments: instructionArgumentsData,
+                  }
                 );
               })
             )

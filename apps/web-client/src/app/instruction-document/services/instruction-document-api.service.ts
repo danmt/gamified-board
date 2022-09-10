@@ -11,10 +11,13 @@ export interface ArgumentReference {
 export interface DocumentReference {
   kind: 'document';
   documentId: string;
-  attributeId: string;
 }
 
-export type Reference = ArgumentReference | DocumentReference;
+export interface AttributeReference {
+  kind: 'attribute';
+  documentId: string;
+  attributeId: string;
+}
 
 export type Value = {
   type: string;
@@ -25,8 +28,23 @@ export type InstructionDocumentDto = Entity<{
   name: string;
   method: string;
   collectionId: string;
-  seeds: (Reference | Value)[];
-  bump: Option<Reference>;
+  seeds: (ArgumentReference | AttributeReference | Value)[];
+  bump: Option<ArgumentReference | AttributeReference>;
+  payer: Option<DocumentReference>;
+}>;
+
+export type CreateInstructionDocumentDto = Entity<{
+  name: string;
+  method: string;
+  collectionId: string;
+  payer: Option<DocumentReference>;
+}>;
+
+export type UpdateInstructionDocumentDto = Partial<{
+  name: string;
+  method: string;
+  seeds: (ArgumentReference | AttributeReference | Value)[];
+  bump: Option<ArgumentReference | AttributeReference>;
   payer: Option<DocumentReference>;
 }>;
 
@@ -120,11 +138,7 @@ export class InstructionDocumentApiService {
   updateInstructionDocument(
     instructionId: string,
     documentId: string,
-    name: string,
-    method: string,
-    seeds: (Reference | Value)[],
-    bump: Option<Reference>,
-    payer: Option<DocumentReference>
+    changes: UpdateInstructionDocumentDto
   ) {
     return defer(() =>
       from(
@@ -150,11 +164,7 @@ export class InstructionDocumentApiService {
               ...documents.slice(0, documentIndex),
               {
                 ...documents[documentIndex],
-                name,
-                method,
-                seeds,
-                bump,
-                payer,
+                ...changes,
               },
               ...documents.slice(documentIndex + 1),
             ],
@@ -168,13 +178,7 @@ export class InstructionDocumentApiService {
 
   createInstructionDocument(
     ownerId: string,
-    newInstructionDocumentId: string,
-    name: string,
-    method: string,
-    collectionId: string,
-    seeds: (Reference | Value)[],
-    bump: Option<Reference>,
-    payer: Option<DocumentReference>
+    { id, name, method, collectionId, payer }: CreateInstructionDocumentDto
   ) {
     return defer(() =>
       from(
@@ -193,12 +197,12 @@ export class InstructionDocumentApiService {
                 ? instructionData['documents']
                 : []),
               {
-                id: newInstructionDocumentId,
+                id,
                 name,
                 method,
                 collectionId,
-                seeds,
-                bump,
+                seeds: [],
+                bump: null,
                 payer,
               },
             ],
