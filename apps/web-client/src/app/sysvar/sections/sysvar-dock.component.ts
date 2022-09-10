@@ -13,6 +13,7 @@ import {
   SquareButtonComponent,
   UploadFileModalDirective,
 } from '../../shared/components';
+import { SecondaryDockComponent } from '../../shared/components/secondary-dock.component';
 import {
   DefaultImageDirective,
   KeyboardListenerDirective,
@@ -36,18 +37,24 @@ interface HotKey {
   selector: 'pg-sysvar-dock',
   template: `
     <ng-container *ngrxLet="hotkeys$; let hotkeys">
-      <div
+      <pg-secondary-dock
         *ngIf="selected$ | ngrxPush as selected"
-        class="p-4 bg-gray-700 flex gap-4 justify-center items-start"
+        class="text-white flex gap-4 justify-center items-start bp-font-game"
         pgKeyboardListener
         (pgKeyDown)="onKeyDown(hotkeys, selected, $event)"
       >
         <img
           [src]="selected?.thumbnailUrl"
           pgDefaultImage="assets/generic/sysvar.png"
+          class="w-[140px]"
         />
 
-        {{ selected?.name }}
+        <div>
+          <h2 class="text-xl">Name</h2>
+          <p class="text-base">{{ selected?.name }}</p>
+          <h2 class="text-xl">Kind</h2>
+          <p class="text-base">{{ selected?.kind }}</p>
+        </div>
 
         <div
           class="bg-gray-800 relative"
@@ -118,7 +125,7 @@ interface HotKey {
             "
           ></pg-square-button>
         </div>
-      </div>
+      </pg-secondary-dock>
     </ng-container>
   `,
   standalone: true,
@@ -133,6 +140,7 @@ interface HotKey {
     KeyboardListenerDirective,
     ConfirmModalDirective,
     DefaultImageDirective,
+    SecondaryDockComponent,
   ],
 })
 export class SysvarDockComponent {
