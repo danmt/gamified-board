@@ -63,7 +63,14 @@ interface HotKey {
           </div>
 
           <div>
-            <h2 class="text-xl">Actions</h2>
+            <h2
+              class="text-xl"
+              *ngIf="
+                (currentApplicationId$ | ngrxPush) === selected.application.id
+              "
+            >
+              Actions
+            </h2>
             <div class="flex gap-4 justify-center items-start">
               <div
                 class="bg-gray-800 relative"

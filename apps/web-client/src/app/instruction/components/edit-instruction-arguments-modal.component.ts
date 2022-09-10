@@ -219,8 +219,11 @@ export class UpdateInstructionArgumentsModalDirective {
           </div>
         </div>
 
-        <div class="flex justify-center items-center mt-4">
-          <button type="submit" class="px-4 py-2 border-blue-500 border">
+        <div class="flex justify-center items-center mt-10 mb-10">
+          <button
+            type="submit"
+            class="bp-button-futuristic text-black bp-font-game uppercase"
+          >
             Save
           </button>
         </div>
