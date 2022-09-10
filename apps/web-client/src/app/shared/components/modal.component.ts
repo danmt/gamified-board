@@ -21,7 +21,7 @@ import { Component, EventEmitter, HostBinding, Output } from '@angular/core';
 
     <!-- bottom detail -->
     <div
-      class="bp-skin-metal-bottom-detail absolute -bottom-2.5 left-0 right-0 mx-auto z-20"
+      class="bp-skin-metal-bottom-detail absolute -bottom-2.5 left-0 right-0 mx-auto z-50"
     ></div>
 
     <!-- close button -->
@@ -38,21 +38,21 @@ import { Component, EventEmitter, HostBinding, Output } from '@angular/core';
       class="bp-skin-outer-metal-corner-right-top absolute -right-10 -top-8 z-30"
     ></div>
     <div
-      class="bp-skin-outer-metal-corner-left-bottom absolute -left-10 -bottom-8 z-30"
+      class="bp-skin-outer-metal-corner-left-bottom absolute -left-10 -bottom-8 z-50"
     ></div>
     <div
-      class="bp-skin-outer-metal-corner-right-bottom absolute -right-10 -bottom-8 z-30"
+      class="bp-skin-outer-metal-corner-right-bottom absolute -right-10 -bottom-8 z-50"
     ></div>
 
     <!-- outer borders -->
     <div
-      class="bp-skin-outer-metal-border-right absolute -right-10 h-5/6 top-0 bottom-0 my-auto mx-0 z-20"
+      class="bp-skin-outer-metal-border-right absolute -right-10 h-5/6 top-0 bottom-0 my-auto mx-0 z-50"
     ></div>
     <div
-      class="bp-skin-outer-metal-border-left absolute -left-10 h-5/6 top-0 bottom-0 my-auto mx-0 z-20"
+      class="bp-skin-outer-metal-border-left absolute -left-10 h-5/6 top-0 bottom-0 my-auto mx-0 z-50"
     ></div>
     <div
-      class="bp-skin-outer-metal-border-bottom absolute -bottom-8 w-5/6 left-0 right-0 mx-auto my-0 z-20"
+      class="bp-skin-outer-metal-border-bottom absolute -bottom-8 w-5/6 left-0 right-0 mx-auto my-0 z-50"
     ></div>
     <div
       class="bp-skin-outer-metal-border-top absolute -top-8 w-5/6 left-0 right-0 mx-auto my-0 z-20"
@@ -66,10 +66,10 @@ import { Component, EventEmitter, HostBinding, Output } from '@angular/core';
       class="bp-skin-inner-metal-corner-right-top absolute -right-8 -top-6 z-10"
     ></div>
     <div
-      class="bp-skin-inner-metal-corner-left-bottom absolute -left-8 -bottom-6 z-10"
+      class="bp-skin-inner-metal-corner-left-bottom absolute -left-8 -bottom-6 z-40"
     ></div>
     <div
-      class="bp-skin-inner-metal-corner-right-bottom absolute -right-8 -bottom-6 z-10"
+      class="bp-skin-inner-metal-corner-right-bottom absolute -right-8 -bottom-6 z-40"
     ></div>
 
     <!-- inner borders -->
@@ -87,7 +87,7 @@ import { Component, EventEmitter, HostBinding, Output } from '@angular/core';
     ></div>
 
     <!-- modal content -->
-    <div class="z-80 w-full relative">
+    <div class="z-30 w-full relative">
       <ng-content></ng-content>
     </div>
   `,
