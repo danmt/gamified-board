@@ -150,6 +150,30 @@ body,
   width: 50px;
 }
 
+.bp-skin-navigation-left-arrow {
+  background-image: url('./assets/skins/futuristic/yellow/navigation-left-arrow.png');
+  background-repeat: no-repeat;
+  width: 45px;
+  height: 16px;
+}
+
+.bp-skin-navigation-left-arrow:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.bp-skin-navigation-right-arrow {
+  background-image: url('./assets/skins/futuristic/yellow/navigation-right-arrow.png');
+  background-repeat: no-repeat;
+  width: 45px;
+  height: 16px;
+}
+
+.bp-skin-navigation-right-arrow:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .bp-input-futuristic {
   background-image: url('./assets/skins/futuristic/input-futuristic.png');
   background-repeat: no-repeat;

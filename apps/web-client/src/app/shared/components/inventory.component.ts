@@ -27,7 +27,7 @@ export type InventoryDirection = 'left' | 'right';
     <div
       class="bp-skin-detail-{{ direction }}  absolute -top-3 z-20 {{
         direction
-      }}-0"
+      }}-2"
     ></div>
 
     <!-- side border design -->
@@ -51,7 +51,7 @@ export type InventoryDirection = 'left' | 'right';
     <div
       class="bp-skin-detail-{{ direction }}  absolute -bottom-4 z-20 {{
         direction
-      }}-0"
+      }}-2"
     ></div>
 
     <!-- section content -->
@@ -65,21 +65,22 @@ export type InventoryDirection = 'left' | 'right';
       </div>
     </header>
 
-    <section class="max-w-[280px] p-4 flex flex-col gap-2 flex-1">
+    <section class="max-w-[280px] p-4 flex flex-col gap-2 flex-1 self-center">
       <div class="flex-1">
         <ng-content select="[pgInventoryBody]"></ng-content>
       </div>
 
-      <div class="flex justify-center gap-2">
-        <button (click)="onPreviousPage()" [disabled]="pgPage === 1">
-          previous
-        </button>
+      <div class="flex justify-center gap-4">
         <button
+          class="bp-skin-navigation-left-arrow"
+          (click)="onPreviousPage()"
+          [disabled]="pgPage === 1"
+        ></button>
+        <button
+          class="bp-skin-navigation-right-arrow"
           (click)="onNextPage()"
           [disabled]="pgPageSize * pgPage >= pgTotal"
-        >
-          next
-        </button>
+        ></button>
       </div>
     </section>
   `,
