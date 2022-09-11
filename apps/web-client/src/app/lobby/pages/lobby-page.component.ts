@@ -15,10 +15,13 @@ import {
   ApplicationApiService,
   CreateApplicationModalDirective,
   UpdateApplicationModalDirective,
-} from '../application';
-import { LobbyStore } from '../core';
-import { Option } from '../shared';
-import { EditWorkspaceModalDirective, WorkspaceApiService } from '../workspace';
+} from '../../application';
+import { Option } from '../../shared';
+import {
+  EditWorkspaceModalDirective,
+  WorkspaceApiService,
+} from '../../workspace';
+import { LobbyStore } from '../stores';
 
 @Component({
   selector: 'pg-lobby-page',

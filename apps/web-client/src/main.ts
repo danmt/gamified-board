@@ -34,17 +34,17 @@ bootstrapApplication(AppComponent, {
             {
               path: 'lobby',
               loadComponent: () =>
-                import('./app/pages').then((m) => m.LobbyPageComponent),
+                import('./app/lobby').then((m) => m.LobbyPageComponent),
             },
             {
               path: 'settings',
               loadComponent: () =>
-                import('./app/pages').then((m) => m.SettingsPageComponent),
+                import('./app/settings').then((m) => m.SettingsPageComponent),
             },
             {
               path: 'board/:workspaceId/:applicationId',
               loadComponent: () =>
-                import('./app/pages').then((m) => m.BoardPageComponent),
+                import('./app/board').then((m) => m.BoardPageComponent),
             },
             {
               path: '**',

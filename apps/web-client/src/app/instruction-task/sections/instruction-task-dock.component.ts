@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { LetModule, PushModule } from '@ngrx/component';
 import { combineLatest, concatMap, EMPTY, map, of, tap } from 'rxjs';
-import { BoardStore, InstructionTaskView } from '../../core';
+import { BoardStore, InstructionTaskView } from '../../board';
 import {
   ConfirmModalDirective,
   DefaultImageDirective,

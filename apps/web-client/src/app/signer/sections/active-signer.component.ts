@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Component, HostListener, inject } from '@angular/core';
 import { PushModule } from '@ngrx/component';
 import { concatMap, EMPTY, filter, map, take } from 'rxjs';
-import { BoardStore } from '../../core';
+import { BoardStore } from '../../board';
 import {
   InstructionSignerApiService,
   openEditInstructionSignerModal,
