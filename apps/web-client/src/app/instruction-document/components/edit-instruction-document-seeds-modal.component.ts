@@ -22,35 +22,29 @@ import {
   ReactiveFormsModule,
 } from '@angular/forms';
 import { Observable } from 'rxjs';
-import { ModalComponent } from '../../shared/components';
-import {
-  KeyboardListenerDirective,
-  StopKeydownPropagationDirective,
-} from '../../shared/directives';
 import {
   Entity,
   generateId,
   isNotNull,
   isNull,
+  KeyboardListenerDirective,
+  ModalComponent,
   Option,
-} from '../../shared/utils';
+  StopKeydownPropagationDirective,
+} from '../../shared';
 
 interface ArgumentReference {
   kind: 'argument';
-  argument: {
-    id: string;
-    name: string;
-    type: string;
-  };
+  id: string;
+  name: string;
+  type: string;
 }
 
 interface AttributeReference {
   kind: 'attribute';
-  attribute: {
-    id: string;
-    name: string;
-    type: string;
-  };
+  id: string;
+  name: string;
+  type: string;
   document: {
     id: string;
     name: string;
@@ -78,13 +72,13 @@ export interface EditInstructionDocumentSeedsData {
 
 export interface EditInstructionDocumentSeedsSubmit {
   seeds: (
-    | { kind: 'attribute'; documentId: string; attributeId: string }
-    | { kind: 'argument'; argumentId: string }
+    | { kind: 'attribute'; documentId: string; id: string }
+    | { kind: 'argument'; id: string }
     | { value: string; type: string }
   )[];
   bump: Option<
-    | { kind: 'attribute'; documentId: string; attributeId: string }
-    | { kind: 'argument'; argumentId: string }
+    | { kind: 'attribute'; documentId: string; id: string }
+    | { kind: 'argument'; id: string }
   >;
 }
 
@@ -248,7 +242,7 @@ export class UpdateInstructionDocumentSeedsModalDirective {
                           "
                           [ngValue]="argumentReference"
                         >
-                          Argument {{ argumentReference.argument.name }}
+                          Argument {{ argumentReference.name }}
                         </option>
                       </select>
                     </div>
@@ -276,7 +270,7 @@ export class UpdateInstructionDocumentSeedsModalDirective {
                           [ngValue]="attributeReference"
                         >
                           Attribute {{ attributeReference.document.name }}.{{
-                            attributeReference.attribute.name
+                            attributeReference.name
                           }}
                         </option>
                       </select>
@@ -344,12 +338,10 @@ export class UpdateInstructionDocumentSeedsModalDirective {
               [ngValue]="reference"
             >
               <ng-container *ngIf="reference.kind === 'attribute'">
-                Attribute {{ reference.document.name }}.{{
-                  reference.attribute.name
-                }}
+                Attribute {{ reference.document.name }}.{{ reference.name }}
               </ng-container>
               <ng-container *ngIf="reference.kind === 'argument'">
-                Argument {{ reference.argument.name }}
+                Argument {{ reference.name }}
               </ng-container>
             </option>
           </select>
@@ -424,7 +416,7 @@ export class EditInstructionDocumentSeedsModalComponent {
                       name: string;
                     };
                   }>
-                >({ argument: seed.argument }),
+                >({ argument: seed }),
               });
             } else {
               return this._formBuilder.group({
@@ -440,7 +432,7 @@ export class EditInstructionDocumentSeedsModalComponent {
                       name: string;
                     };
                   }>
-                >({ document: seed.document, attribute: seed.attribute }),
+                >({ document: seed.document, attribute: seed }),
               });
             }
           })
@@ -454,17 +446,13 @@ export class EditInstructionDocumentSeedsModalComponent {
               id: string;
               name: string;
             };
-            attribute: {
-              id: string;
-              name: string;
-            };
+            id: string;
+            name: string;
           }
         | {
             kind: 'argument';
-            argument: {
-              id: string;
-              name: string;
-            };
+            id: string;
+            name: string;
           }
       >
     >(this.instructionDocumentSeeds?.bump ?? null),
@@ -541,13 +529,13 @@ export class EditInstructionDocumentSeedsModalComponent {
           if (seed.kind === 'argument' && seed.reference) {
             return {
               kind: seed.kind,
-              argumentId: seed.reference.argument.id,
+              id: seed.reference.argument.id,
             };
           } else if (seed.kind === 'attribute' && seed.reference) {
             return {
               kind: seed.kind,
               documentId: seed.reference.document.id,
-              attributeId: seed.reference.attribute.id,
+              id: seed.reference.attribute.id,
             };
           } else if (seed.kind === null && seed.value && seed.type) {
             return {
@@ -565,11 +553,11 @@ export class EditInstructionDocumentSeedsModalComponent {
         seeds,
         bump:
           bump?.kind === 'argument'
-            ? { kind: 'argument', argumentId: bump.argument.id }
+            ? { kind: 'argument', id: bump.argument.id }
             : bump?.kind === 'attribute'
             ? {
                 kind: 'attribute',
-                attributeId: bump.attribute.id,
+                id: bump.attribute.id,
                 documentId: bump.document.id,
               }
             : null,
@@ -587,9 +575,9 @@ export class EditInstructionDocumentSeedsModalComponent {
     }
 
     if (reference.kind === 'argument') {
-      return `Argument: ${reference.argument.name}`;
+      return `Argument: ${reference.name}`;
     } else {
-      return `Attribute: ${reference.document.name}.${reference.attribute.name}`;
+      return `Attribute: ${reference.document.name}.${reference.name}`;
     }
   }
 

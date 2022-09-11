@@ -3,16 +3,17 @@ import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { LetModule, PushModule } from '@ngrx/component';
 import { combineLatest, concatMap, EMPTY, map, of, tap } from 'rxjs';
-import { BoardStore, InstructionSignerView } from '../../core/stores';
+import { BoardStore, InstructionSignerView } from '../../core';
 import {
   ConfirmModalDirective,
+  isNotNull,
+  isNull,
+  KeyboardListenerDirective,
   openConfirmModal,
+  SlotHotkeyPipe,
   SquareButtonComponent,
-} from '../../shared/components';
+} from '../../shared';
 import { SecondaryDockComponent } from '../../shared/components/secondary-dock.component';
-import { KeyboardListenerDirective } from '../../shared/directives';
-import { SlotHotkeyPipe } from '../../shared/pipes';
-import { isNotNull, isNull } from '../../shared/utils';
 import {
   EditInstructionSignerSubmit,
   openEditInstructionSignerModal,
@@ -173,11 +174,9 @@ export class InstructionSignerDockComponent {
     instructionSignerData: EditInstructionSignerSubmit
   ) {
     this._instructionSignerApiService
-      .updateInstructionSigner(
-        instructionId,
-        instructionSignerId,
-        instructionSignerData.name
-      )
+      .updateInstructionSigner(instructionId, instructionSignerId, {
+        name: instructionSignerData.name,
+      })
       .subscribe();
   }
 
@@ -216,7 +215,7 @@ export class InstructionSignerDockComponent {
                 return this._instructionSignerApiService.updateInstructionSigner(
                   instructionSigner.ownerId,
                   instructionSigner.id,
-                  instructionSignerData.name
+                  { name: instructionSignerData.name }
                 );
               })
             )

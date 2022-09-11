@@ -9,31 +9,9 @@ import {
   updateDoc,
 } from '@angular/fire/firestore';
 import { combineLatest, defer, from, map, Observable, of } from 'rxjs';
-import { InstructionApplicationDto } from '../../instruction-application/services';
-import { InstructionDocumentDto } from '../../instruction-document/services';
-import { InstructionSignerDto } from '../../instruction-signer/services';
-import { InstructionSysvarDto } from '../../instruction-sysvar/services';
-import { InstructionTaskDto } from '../../instruction-task/services';
-import { Entity } from '../../shared/utils';
-
-export type InstructionArgumentDto = Entity<{
-  name: string;
-  type: string;
-  isOption: boolean;
-}>;
-
-export type InstructionDto = Entity<{
-  name: string;
-  thumbnailUrl: string;
-  applicationId: string;
-  workspaceId: string;
-  documents: InstructionDocumentDto[];
-  applications: InstructionApplicationDto[];
-  tasks: InstructionTaskDto[];
-  arguments: InstructionArgumentDto[];
-  sysvars: InstructionSysvarDto[];
-  signers: InstructionSignerDto[];
-}>;
+import { InstructionArgumentDto } from '../../instruction-argument';
+import { Entity } from '../../shared';
+import { InstructionDto } from '../utils';
 
 export type CreateInstructionDto = Entity<{
   name: string;

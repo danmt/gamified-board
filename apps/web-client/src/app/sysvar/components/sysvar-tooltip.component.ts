@@ -10,15 +10,15 @@ import {
   Input,
   OnDestroy,
 } from '@angular/core';
-import { TooltipComponent } from '../../shared/components/tooltip.component';
-import { DefaultImageDirective } from '../../shared/directives';
 import {
+  DefaultImageDirective,
   getPosition,
   isNotNull,
   isNull,
   Option,
   Position,
-} from '../../shared/utils';
+} from '../../shared';
+import { TooltipComponent } from '../../shared/components/tooltip.component';
 
 export interface SysvarTooltip {
   kind: 'sysvar';

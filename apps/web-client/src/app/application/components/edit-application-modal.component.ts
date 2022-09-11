@@ -15,12 +15,15 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { ModalComponent } from '../../shared/components';
 import {
+  Entity,
+  generateId,
+  isNull,
   KeyboardListenerDirective,
+  ModalComponent,
+  Option,
   StopKeydownPropagationDirective,
-} from '../../shared/directives';
-import { Entity, generateId, isNull, Option } from '../../shared/utils';
+} from '../../shared';
 
 export type Application = Entity<{
   name: string;
@@ -96,15 +99,15 @@ export class UpdateApplicationModalDirective {
   @Output() pgCloseModal = new EventEmitter();
 
   @HostListener('click', []) onClick() {
+    if (isNull(this.pgApplication)) {
+      throw new Error('pgApplication is missing');
+    }
+
     this.pgOpenModal.emit();
 
     openEditApplicationModal(this._dialog, {
       application: this.pgApplication,
     }).closed.subscribe((applicationData) => {
-      if (isNull(this.pgApplication)) {
-        throw new Error('pgApplication is missing');
-      }
-
       this.pgCloseModal.emit();
 
       if (applicationData !== undefined) {

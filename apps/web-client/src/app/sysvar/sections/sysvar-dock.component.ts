@@ -4,22 +4,22 @@ import { Component, inject } from '@angular/core';
 import { Storage } from '@angular/fire/storage';
 import { LetModule, PushModule } from '@ngrx/component';
 import { combineLatest, concatMap, EMPTY, map, of, tap } from 'rxjs';
-import { BoardStore, SysvarView } from '../../core/stores';
+import { BoardStore, SysvarView } from '../../core';
 import {
   ConfirmModalDirective,
+  DefaultImageDirective,
+  generateId,
+  isNotNull,
+  isNull,
+  KeyboardListenerDirective,
   openConfirmModal,
   openUploadFileModal,
   openUploadFileProgressModal,
+  SlotHotkeyPipe,
   SquareButtonComponent,
   UploadFileModalDirective,
-} from '../../shared/components';
+} from '../../shared';
 import { SecondaryDockComponent } from '../../shared/components/secondary-dock.component';
-import {
-  DefaultImageDirective,
-  KeyboardListenerDirective,
-} from '../../shared/directives';
-import { SlotHotkeyPipe } from '../../shared/pipes';
-import { generateId, isNotNull, isNull } from '../../shared/utils';
 import {
   EditSysvarSubmit,
   openEditSysvarModal,
@@ -79,7 +79,7 @@ interface HotKey {
                   [pgSysvar]="selected"
                   (pgOpenModal)="isEditing = true"
                   (pgCloseModal)="isEditing = false"
-                  (pgUpdateSysvar)="onUpdateSysvar(selected.id, selected)"
+                  (pgUpdateSysvar)="onUpdateSysvar(selected.id, $event)"
                 ></pg-square-button>
               </div>
 

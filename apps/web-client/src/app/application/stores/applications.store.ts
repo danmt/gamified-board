@@ -6,9 +6,9 @@ import {
 } from '@ngrx/component-store';
 import { EMPTY, switchMap } from 'rxjs';
 import { PluginsService } from '../../plugins';
-import { isNull, Option } from '../../shared/utils';
-import { WorkspaceApiService } from '../../workspace/services';
-import { ApplicationDto } from '../services';
+import { isNull, Option } from '../../shared';
+import { WorkspaceApiService } from '../../workspace';
+import { ApplicationDto } from '../utils';
 
 interface ViewModel {
   workspaceId: Option<string>;

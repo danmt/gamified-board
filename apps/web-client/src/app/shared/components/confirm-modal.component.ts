@@ -8,7 +8,7 @@ import {
   Input,
   Output,
 } from '@angular/core';
-import { isNull, Option } from '../../shared/utils';
+import { isNull, Option } from '../../shared';
 import {
   KeyboardListenerDirective,
   StopKeydownPropagationDirective,

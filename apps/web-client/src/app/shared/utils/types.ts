@@ -1,3 +1,3 @@
 export type Option<T> = T | null;
 
-export type Entity<T> = T & { id: string };
+export type Entity<T = unknown> = T & { id: string };

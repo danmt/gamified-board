@@ -3,13 +3,15 @@ import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { LetModule, PushModule } from '@ngrx/component';
 import { of } from 'rxjs';
-import { SquareButtonComponent } from '../../shared/components';
 import {
   DefaultImageDirective,
+  Entity,
+  isNotNull,
   KeyboardListenerDirective,
-} from '../../shared/directives';
-import { SlotHotkeyPipe } from '../../shared/pipes';
-import { Entity, isNotNull, Option } from '../../shared/utils';
+  Option,
+  SlotHotkeyPipe,
+  SquareButtonComponent,
+} from '../../shared';
 import { SlotTooltipDirective } from '../components';
 import { BoardStore } from '../stores';
 

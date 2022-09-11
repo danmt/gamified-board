@@ -17,10 +17,12 @@ import {
 } from '@angular/forms';
 import { ModalComponent } from '../../shared/components';
 import {
+  Entity,
+  generateId,
   KeyboardListenerDirective,
+  Option,
   StopKeydownPropagationDirective,
-} from '../../shared/directives';
-import { Entity, generateId, Option } from '../../shared/utils';
+} from '../../shared';
 
 export type Sysvar = Entity<{
   name: string;

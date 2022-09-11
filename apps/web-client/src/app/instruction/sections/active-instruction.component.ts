@@ -3,17 +3,19 @@ import { CommonModule } from '@angular/common';
 import { Component, HostListener, inject } from '@angular/core';
 import { PushModule } from '@ngrx/component';
 import { combineLatest, concatMap, EMPTY, filter, map, take } from 'rxjs';
-import { BoardStore } from '../../core/stores';
-import { openEditInstructionTaskModal } from '../../instruction-task/components';
-import { InstructionTaskApiService } from '../../instruction-task/services';
-import { ActiveComponent } from '../../shared/components';
-import { FollowCursorDirective } from '../../shared/directives';
+import { BoardStore } from '../../core';
 import {
+  InstructionTaskApiService,
+  openEditInstructionTaskModal,
+} from '../../instruction-task';
+import {
+  ActiveComponent,
+  FollowCursorDirective,
   getFirstParentId,
   isChildOf,
   isNotNull,
   isNull,
-} from '../../shared/utils';
+} from '../../shared';
 
 @Component({
   selector: 'pg-active-instruction',
@@ -96,9 +98,11 @@ export class ActiveInstructionComponent {
 
               return this._instructionTaskApiService.createInstructionTask(
                 instructionId,
-                instructionTaskData.id,
-                instructionTaskData.name,
-                activeInstruction.id
+                {
+                  id: instructionTaskData.id,
+                  name: instructionTaskData.name,
+                  instructionId: activeInstruction.id,
+                }
               );
             })
           )

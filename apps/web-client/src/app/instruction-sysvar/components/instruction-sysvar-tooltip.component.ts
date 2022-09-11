@@ -10,14 +10,14 @@ import {
   Input,
   OnDestroy,
 } from '@angular/core';
-import { DefaultImageDirective } from '../../shared/directives';
 import {
+  DefaultImageDirective,
   getPosition,
   isNotNull,
   isNull,
   Option,
   Position,
-} from '../../shared/utils';
+} from '../../shared';
 
 export interface InstructionSysvarTooltip {
   kind: 'instructionSysvar';

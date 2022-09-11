@@ -1,6 +1,6 @@
 import { AnchorProvider, Spl } from '@heavy-duty/anchor';
 import { PublicKey, TransactionInstruction } from '@solana/web3.js';
-import { isNull, toInstructionArguments } from '../../../shared/utils';
+import { isNull, toInstructionArguments } from '../../../shared';
 import { IdlInstruction, PluginInterface } from '../../types';
 
 export class AssociatedTokenPlugin implements PluginInterface {

@@ -4,32 +4,30 @@ import { Component, inject } from '@angular/core';
 import { Storage } from '@angular/fire/storage';
 import { LetModule, PushModule } from '@ngrx/component';
 import { combineLatest, concatMap, EMPTY, map, of, tap } from 'rxjs';
-import { BoardStore, CollectionView } from '../../core/stores';
+import { BoardStore, CollectionView } from '../../core';
 import {
   ConfirmModalDirective,
+  DefaultImageDirective,
+  generateId,
+  isNotNull,
+  isNull,
+  KeyboardListenerDirective,
   openConfirmModal,
   openUploadFileModal,
   openUploadFileProgressModal,
+  SlotHotkeyPipe,
   SquareButtonComponent,
   UploadFileModalDirective,
-} from '../../shared/components';
+} from '../../shared';
 import { SecondaryDockComponent } from '../../shared/components/secondary-dock.component';
 import {
-  DefaultImageDirective,
-  KeyboardListenerDirective,
-} from '../../shared/directives';
-import { SlotHotkeyPipe } from '../../shared/pipes';
-import { generateId, isNotNull, isNull } from '../../shared/utils';
-import {
+  EditCollectionAttributesSubmit,
   EditCollectionSubmit,
+  openEditCollectionAttributesModal,
   openEditCollectionModal,
+  UpdateCollectionAttributesModalDirective,
   UpdateCollectionModalDirective,
 } from '../components';
-import {
-  EditCollectionAttributesSubmit,
-  openEditCollectionAttributesModal,
-  UpdateCollectionAttributesModalDirective,
-} from '../components/edit-collection-attributes-modal.component';
 import { CollectionApiService } from '../services';
 
 interface HotKey {

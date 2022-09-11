@@ -3,17 +3,19 @@ import { CommonModule } from '@angular/common';
 import { Component, HostListener, inject } from '@angular/core';
 import { PushModule } from '@ngrx/component';
 import { combineLatest, concatMap, EMPTY, filter, map, take } from 'rxjs';
-import { BoardStore } from '../../core/stores';
-import { openEditInstructionDocumentModal } from '../../instruction-document/components';
-import { InstructionDocumentApiService } from '../../instruction-document/services';
-import { ActiveComponent } from '../../shared/components';
-import { FollowCursorDirective } from '../../shared/directives';
+import { BoardStore } from '../../core';
 import {
+  InstructionDocumentApiService,
+  openEditInstructionDocumentModal,
+} from '../../instruction-document';
+import {
+  ActiveComponent,
+  FollowCursorDirective,
   getFirstParentId,
   isChildOf,
   isNotNull,
   isNull,
-} from '../../shared/utils';
+} from '../../shared';
 
 @Component({
   selector: 'pg-active-collection',
@@ -81,25 +83,22 @@ export class ActiveCollectionComponent {
   }
 
   private _useCollection(instructionId: string) {
-    const documentReferences$ =
-      this._boardStore.currentApplicationInstructions$.pipe(
-        map((instructions) => {
-          const instruction =
-            instructions?.find(({ id }) => id === instructionId) ?? null;
+    const references$ = this._boardStore.currentApplicationInstructions$.pipe(
+      map((instructions) => {
+        const instruction =
+          instructions?.find(({ id }) => id === instructionId) ?? null;
 
-          if (isNull(instruction)) {
-            return [];
-          }
+        if (isNull(instruction)) {
+          return [];
+        }
 
-          return instruction.documents.map((document) => ({
-            kind: 'document' as const,
-            document: {
-              id: document.id,
-              name: document.name,
-            },
-          }));
-        })
-      );
+        return instruction.documents.map((document) => ({
+          kind: 'document' as const,
+          id: document.id,
+          name: document.name,
+        }));
+      })
+    );
 
     this.activeCollection$
       .pipe(
@@ -108,7 +107,7 @@ export class ActiveCollectionComponent {
         concatMap((activeCollection) =>
           openEditInstructionDocumentModal(this._dialog, {
             instructionDocument: null,
-            documentReferences$,
+            references$,
           }).closed.pipe(
             concatMap((documentData) => {
               if (documentData === undefined) {

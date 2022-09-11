@@ -1,46 +1,65 @@
 import { inject, Injectable } from '@angular/core';
 import { ComponentStore, OnStoreInit } from '@ngrx/component-store';
 import { concatMap, of, tap, withLatestFrom } from 'rxjs';
-import { ApplicationDto } from '../../application/services';
-import { ApplicationsStore } from '../../application/stores';
+import { ApplicationDto, ApplicationsStore } from '../../application';
 import {
   CollectionAttributeDto,
   CollectionDto,
-} from '../../collection/services';
-import { CollectionsStore } from '../../collection/stores';
-import { InstructionApplicationDto } from '../../instruction-application/services';
-import { InstructionDocumentDto } from '../../instruction-document/services';
-import { InstructionSignerDto } from '../../instruction-signer/services';
-import { InstructionSysvarDto } from '../../instruction-sysvar/services';
-import { InstructionTaskDto } from '../../instruction-task/services';
-import {
-  InstructionArgumentDto,
-  InstructionDto,
-} from '../../instruction/services';
-import { InstructionsStore } from '../../instruction/stores';
-import { Entity, isNotNull, isNull, Option } from '../../shared/utils';
-import { SysvarDto } from '../../sysvar/services';
-import { SysvarsStore } from '../../sysvar/stores';
-import { WorkspaceStore } from '../../workspace/stores';
+  CollectionsStore,
+} from '../../collection';
+import { InstructionDto, InstructionsStore } from '../../instruction';
+import { InstructionApplicationDto } from '../../instruction-application';
+import { InstructionArgumentDto } from '../../instruction-argument';
+import { InstructionDocumentDto } from '../../instruction-document';
+import { InstructionSignerDto } from '../../instruction-signer';
+import { InstructionSysvarDto } from '../../instruction-sysvar';
+import { InstructionTaskDto } from '../../instruction-task';
+import { Entity, isNotNull, isNull, Option } from '../../shared';
+import { SysvarDto, SysvarsStore } from '../../sysvar';
+import { WorkspaceStore } from '../../workspace';
 
 export type ArgumentReferenceView = {
   kind: 'argument';
-  argument: InstructionArgumentDto;
-};
+} & InstructionArgumentDto;
 
 export type DocumentReferenceView = {
   kind: 'document';
-  document: InstructionDocumentDto;
-};
+} & InstructionDocumentDto;
+
+export type SignerReferenceView = {
+  kind: 'signer';
+} & InstructionSignerDto;
 
 export type AttributeReferenceView = {
   kind: 'attribute';
   document: InstructionDocumentDto;
-  attribute: CollectionAttributeDto;
-};
+} & CollectionAttributeDto;
 
-/* export type ReferenceView = ArgumentReferenceView | DocumentReferenceView;
- */
+export type TaskArgumentReferenceView = Entity<{
+  kind: 'argument';
+  ref: Option<InstructionArgumentDto>;
+}>;
+
+export type TaskDocumentReferenceView = Entity<{
+  kind: 'document';
+  ref: Option<InstructionDocumentDto>;
+}>;
+
+export type TaskSysvarReferenceView = Entity<{
+  kind: 'sysvar';
+  ref: Option<InstructionSysvarDto>;
+}>;
+
+export type TaskSignerReferenceView = Entity<{
+  kind: 'signer';
+  ref: Option<InstructionSignerDto>;
+}>;
+
+export type TaskApplicationReferenceView = Entity<{
+  kind: 'application';
+  ref: Option<InstructionApplicationDto>;
+}>;
+
 export type ValueView = {
   type: string;
   value: string;
@@ -77,7 +96,7 @@ export type InstructionDocumentView = Entity<{
   collection: CollectionView;
   seeds: Option<ArgumentReferenceView | AttributeReferenceView | ValueView>[];
   bump: Option<ArgumentReferenceView | AttributeReferenceView>;
-  payer: Option<DocumentReferenceView>;
+  payer: Option<DocumentReferenceView | SignerReferenceView>;
   kind: 'instructionDocument';
 }>;
 
@@ -93,7 +112,7 @@ export type InstructionView = Entity<{
   thumbnailUrl: string;
   workspaceId: string;
   application: ApplicationDto;
-  arguments: InstructionArgumentDto[];
+  arguments: InstructionArgumentView[];
   documents: InstructionDocumentView[];
   tasks: InstructionTaskView[];
   applications: InstructionApplicationView[];
@@ -105,7 +124,22 @@ export type InstructionView = Entity<{
 export type InstructionTaskView = Entity<{
   name: string;
   ownerId: string;
-  instruction: InstructionView;
+  instruction: InstructionDto;
+  arguments: (InstructionArgumentDto & {
+    reference: Option<InstructionArgumentDto>;
+  })[];
+  documents: (InstructionDocumentView & {
+    reference: Option<InstructionDocumentDto>;
+  })[];
+  applications: (InstructionApplicationView & {
+    reference: Option<InstructionApplicationDto>;
+  })[];
+  signers: (InstructionSignerView & {
+    reference: Option<InstructionSignerDto>;
+  })[];
+  sysvars: (InstructionSysvarView & {
+    reference: Option<InstructionSysvarDto>;
+  })[];
   kind: 'instructionTask';
 }>;
 
@@ -121,6 +155,13 @@ export type InstructionSignerView = Entity<{
   ownerId: string;
   saveChanges: boolean;
   kind: 'instructionSigner';
+}>;
+
+export type InstructionArgumentView = Entity<{
+  name: string;
+  type: string;
+  isOption: boolean;
+  ownerId: string;
 }>;
 
 const populateInstructionApplication = (
@@ -187,8 +228,7 @@ const populateBump = (
   }
 
   if (bump.kind === 'attribute') {
-    const documentId = bump.documentId;
-    const attributeId = bump.attributeId;
+    const [documentId, attributeId] = bump.id.split('/');
 
     const bumpDocument = documents.find(({ id }) => id === documentId) ?? null;
     const collection =
@@ -200,17 +240,17 @@ const populateBump = (
       ? {
           kind: 'attribute' as const,
           document: bumpDocument,
-          attribute,
+          ...attribute,
         }
       : null;
   } else {
-    const argumentId = bump.argumentId;
+    const argumentId = bump.id;
     const argument = args.find(({ id }) => id === argumentId) ?? null;
 
     return isNotNull(argument)
       ? {
           kind: 'argument' as const,
-          argument,
+          ...argument,
         }
       : null;
   }
@@ -218,29 +258,45 @@ const populateBump = (
 
 const populatePayer = (
   document: InstructionDocumentDto,
-  documents: InstructionDocumentDto[]
-) => {
+  documents: InstructionDocumentDto[],
+  signers: InstructionSignerDto[]
+): Option<DocumentReferenceView | SignerReferenceView> => {
   const payer = document.payer;
 
   if (isNull(payer)) {
     return null;
   }
 
-  const payerDocument =
-    documents.find(({ id }) => id === payer.documentId) ?? null;
+  switch (payer.kind) {
+    case 'document': {
+      const payerDocument = documents.find(({ id }) => id === payer.id) ?? null;
 
-  return isNotNull(payerDocument)
-    ? {
-        kind: 'document' as const,
-        document: payerDocument,
-      }
-    : null;
+      return isNotNull(payerDocument)
+        ? {
+            kind: 'document' as const,
+            ...payerDocument,
+          }
+        : null;
+    }
+
+    case 'signer': {
+      const payerSigner = signers.find(({ id }) => id === payer.id) ?? null;
+
+      return isNotNull(payerSigner)
+        ? {
+            kind: 'signer' as const,
+            ...payerSigner,
+          }
+        : null;
+    }
+  }
 };
 
 const populateInstructionDocument = (
   owner: InstructionDto,
   document: InstructionDocumentDto,
   documents: InstructionDocumentDto[],
+  signers: InstructionSignerDto[],
   args: InstructionArgumentDto[],
   collections: CollectionDto[],
   applications: ApplicationDto[]
@@ -260,7 +316,7 @@ const populateInstructionDocument = (
     name: document.name,
     method: document.method,
     ownerId: owner.id,
-    payer: populatePayer(document, documents),
+    payer: populatePayer(document, documents, signers),
     seeds:
       document.seeds
         ?.map<
@@ -275,31 +331,32 @@ const populateInstructionDocument = (
 
           switch (seed.kind) {
             case 'argument': {
-              const arg = args.find(({ id }) => id === seed.argumentId) ?? null;
+              const arg = args.find(({ id }) => id === seed.id) ?? null;
 
               return isNotNull(arg)
                 ? {
                     kind: seed.kind,
-                    argument: arg,
+                    ...arg,
                   }
                 : null;
             }
             case 'attribute': {
+              const [documentId, attributeId] = seed.id.split('/');
+
               const document =
-                documents.find(({ id }) => id === seed.documentId) ?? null;
+                documents.find(({ id }) => id === documentId) ?? null;
               const collection =
                 collections.find(({ id }) => id === document?.collectionId) ??
                 null;
               const attribute =
-                collection?.attributes.find(
-                  ({ id }) => id === seed.attributeId
-                ) ?? null;
+                collection?.attributes.find(({ id }) => id === attributeId) ??
+                null;
 
               return isNotNull(document) && isNotNull(attribute)
                 ? {
                     kind: seed.kind,
                     document,
-                    attribute,
+                    ...attribute,
                   }
                 : null;
             }
@@ -345,16 +402,77 @@ const populateInstructionTask = (
     id: task.id,
     name: task.name,
     ownerId: owner.id,
-    instruction: populateInstruction(
-      instruction,
-      applications,
-      collections,
-      instructions,
-      sysvars,
-      {
-        ignoreTasks: true,
-      }
-    ),
+    instruction,
+    documents: instruction.documents.map((document) => {
+      const reference =
+        task.references.find((reference) => reference.id === document.id) ??
+        null;
+      const documentReferenced =
+        owner.documents.find((document) => document.id === reference?.ref) ??
+        null;
+
+      return {
+        ...populateInstructionDocument(
+          owner,
+          document,
+          instruction.documents,
+          instruction.signers,
+          instruction.arguments,
+          collections,
+          applications
+        ),
+        reference: documentReferenced,
+      };
+    }),
+    applications: instruction.applications.map((application) => {
+      const reference =
+        task.references.find((reference) => reference.id === application.id) ??
+        null;
+      const applicationReferenced =
+        owner.applications.find(
+          (application) => application.id === reference?.ref
+        ) ?? null;
+
+      return {
+        ...populateInstructionApplication(owner, application, applications),
+        reference: applicationReferenced,
+      };
+    }),
+    arguments: instruction.arguments.map((argument) => {
+      const reference =
+        task.references.find((reference) => reference.id === argument.id) ??
+        null;
+      const argumentReferenced =
+        owner.arguments.find((argument) => argument.id === reference?.ref) ??
+        null;
+
+      return {
+        ...argument,
+        reference: argumentReferenced,
+      };
+    }),
+    signers: instruction.signers.map((signer) => {
+      const reference =
+        task.references.find((reference) => reference.id === signer.id) ?? null;
+      const signerReferenced =
+        owner.signers.find((signer) => signer.id === reference?.ref) ?? null;
+
+      return {
+        ...populateInstructionSigner(owner, signer),
+        reference: signerReferenced,
+      };
+    }),
+    sysvars: instruction.sysvars.map((sysvar) => {
+      const reference =
+        task.references.find((reference) => reference.id === sysvar.id) ?? null;
+      const sysvarReferenced =
+        owner.sysvars.find((sysvar) => sysvar.id === reference?.ref) ?? null;
+
+      return {
+        ...populateInstructionSysvar(owner, sysvar, sysvars),
+        reference: sysvarReferenced,
+      };
+    }),
     kind: 'instructionTask',
   };
 };
@@ -400,10 +518,7 @@ const populateInstruction = (
   applications: ApplicationDto[],
   collections: CollectionDto[],
   instructions: InstructionDto[],
-  sysvars: SysvarDto[],
-  options?: {
-    ignoreTasks: boolean;
-  }
+  sysvars: SysvarDto[]
 ): InstructionView => {
   const application =
     applications.find(
@@ -422,7 +537,10 @@ const populateInstruction = (
     thumbnailUrl: instruction.thumbnailUrl,
     application,
     workspaceId: instruction.workspaceId,
-    arguments: instruction.arguments,
+    arguments: instruction.arguments.map((arg) => ({
+      ...arg,
+      ownerId: instruction.id,
+    })),
     kind: 'instruction',
     signers: instruction.signers.map((signer) =>
       populateInstructionSigner(instruction, signer)
@@ -442,23 +560,22 @@ const populateInstruction = (
         instruction,
         document,
         instruction.documents,
+        instruction.signers,
         instruction.arguments,
         collections,
         applications
       )
     ),
-    tasks: options?.ignoreTasks
-      ? []
-      : instruction.tasks.map((instructionTask) =>
-          populateInstructionTask(
-            instruction,
-            instructionTask,
-            instructions,
-            applications,
-            collections,
-            sysvars
-          )
-        ),
+    tasks: instruction.tasks.map((instructionTask) =>
+      populateInstructionTask(
+        instruction,
+        instructionTask,
+        instructions,
+        applications,
+        collections,
+        sysvars
+      )
+    ),
   };
 };
 
@@ -501,7 +618,17 @@ interface ViewModel {
   isSysvarsSectionOpen: boolean;
   active: Option<{
     id: string;
-    kind: 'collection' | 'instruction' | 'application' | 'sysvar' | 'signer';
+    kind:
+      | 'collection'
+      | 'instruction'
+      | 'application'
+      | 'sysvar'
+      | 'signer'
+      | 'instructionDocument'
+      | 'instructionTask'
+      | 'instructionSigner'
+      | 'instructionSysvar'
+      | 'instructionApplication';
   }>;
   selected: Option<{
     id: string;
@@ -731,7 +858,17 @@ export class BoardStore
   readonly setActive = this.updater<
     Option<{
       id: string;
-      kind: 'application' | 'collection' | 'instruction' | 'sysvar' | 'signer';
+      kind:
+        | 'collection'
+        | 'instruction'
+        | 'application'
+        | 'sysvar'
+        | 'signer'
+        | 'instructionDocument'
+        | 'instructionTask'
+        | 'instructionSigner'
+        | 'instructionSysvar'
+        | 'instructionApplication';
     }>
   >((state, active) => ({
     ...state,

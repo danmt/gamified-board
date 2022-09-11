@@ -1,91 +1,45 @@
 import { inject, Injectable } from '@angular/core';
 import { doc, Firestore, runTransaction } from '@angular/fire/firestore';
 import { defer, from } from 'rxjs';
-import { Entity, isNull } from '../../shared/utils';
+import { Entity } from '../../shared';
+import { InstructionTaskDto, TaskReferenceDto } from '../utils';
 
-export type InstructionTaskDto = Entity<{
+export type CreateInstructionTaskDto = Entity<{
   name: string;
   instructionId: string;
+}>;
+
+export type UpdateInstructionTaskDto = Partial<{
+  name: string;
 }>;
 
 @Injectable({ providedIn: 'root' })
 export class InstructionTaskApiService {
   private readonly _firestore = inject(Firestore);
 
-  transferInstructionTask(
-    previousInstructionId: string,
-    newInstructionId: string,
-    instructionTaskId: string,
-    newIndex: number
+  createInstructionTask(
+    ownerId: string,
+    { id, name, instructionId }: CreateInstructionTaskDto
   ) {
-    const previousInstructionRef = doc(
-      this._firestore,
-      `instructions/${previousInstructionId}`
-    );
-
-    const newInstructionRef = doc(
-      this._firestore,
-      `instructions/${newInstructionId}`
-    );
+    const ownerRef = doc(this._firestore, `instructions/${ownerId}`);
 
     return defer(() =>
       from(
         runTransaction(this._firestore, async (transaction) => {
-          const previousInstruction = await transaction.get(
-            previousInstructionRef
-          );
-          const newInstruction = await transaction.get(newInstructionRef);
+          const owner = await transaction.get(ownerRef);
+          const ownerData = owner.data();
 
-          const previousInstructionTasks = (previousInstruction.data()?.[
-            'tasks'
-          ] ?? []) as InstructionTaskDto[];
-          const newInstructionTasks = (newInstruction.data()?.['tasks'] ??
-            []) as InstructionTaskDto[];
-          const task =
-            previousInstructionTasks.find(
-              (task) => task.id === instructionTaskId
-            ) ?? null;
-
-          if (isNull(task)) {
-            throw new Error('Task not found');
-          }
-
-          transaction.update(previousInstructionRef, {
-            tasks: previousInstructionTasks.filter(
-              (task: InstructionTaskDto) => task.id !== instructionTaskId
-            ),
-          });
-          transaction.update(newInstructionRef, {
+          // push task to the owner's tasks list
+          transaction.update(ownerRef, {
             tasks: [
-              ...newInstructionTasks.slice(0, newIndex),
-              task,
-              ...newInstructionTasks.slice(newIndex),
+              ...(ownerData && ownerData['tasks'] ? ownerData['tasks'] : []),
+              {
+                id,
+                name,
+                instructionId,
+                references: [],
+              },
             ],
-          });
-
-          return {};
-        })
-      )
-    );
-  }
-
-  deleteInstructionTask(instructionId: string, instructionTaskId: string) {
-    return defer(() =>
-      from(
-        runTransaction(this._firestore, async (transaction) => {
-          const instructionRef = doc(
-            this._firestore,
-            `instructions/${instructionId}`
-          );
-
-          const instruction = await transaction.get(instructionRef);
-
-          transaction.update(instructionRef, {
-            tasks: instruction
-              .data()
-              ?.['tasks'].filter(
-                (tasks: InstructionTaskDto) => tasks.id !== instructionTaskId
-              ),
           });
 
           return {};
@@ -97,16 +51,16 @@ export class InstructionTaskApiService {
   updateInstructionTask(
     instructionId: string,
     instructionTaskId: string,
-    name: string
+    changes: UpdateInstructionTaskDto
   ) {
+    const instructionRef = doc(
+      this._firestore,
+      `instructions/${instructionId}`
+    );
+
     return defer(() =>
       from(
         runTransaction(this._firestore, async (transaction) => {
-          const instructionRef = doc(
-            this._firestore,
-            `instructions/${instructionId}`
-          );
-
           const instruction = await transaction.get(instructionRef);
           const instructionTasks = (instruction.data()?.['tasks'] ??
             []) as InstructionTaskDto[];
@@ -124,7 +78,7 @@ export class InstructionTaskApiService {
               ...instructionTasks.slice(0, index),
               {
                 ...instructionTasks[index],
-                name,
+                ...changes,
               },
               ...instructionTasks.slice(index + 1),
             ],
@@ -136,34 +90,23 @@ export class InstructionTaskApiService {
     );
   }
 
-  createInstructionTask(
-    ownerId: string,
-    newInstructionTaskId: string,
-    name: string,
-    instructionId: string
-  ) {
+  deleteInstructionTask(instructionId: string, instructionTaskId: string) {
+    const instructionRef = doc(
+      this._firestore,
+      `instructions/${instructionId}`
+    );
+
     return defer(() =>
       from(
         runTransaction(this._firestore, async (transaction) => {
-          const instructionRef = doc(
-            this._firestore,
-            `instructions/${ownerId}`
-          );
           const instruction = await transaction.get(instructionRef);
-          const instructionData = instruction.data();
 
-          // push task to the instruction's tasks list
           transaction.update(instructionRef, {
-            tasks: [
-              ...(instructionData && instructionData['tasks']
-                ? instructionData['tasks']
-                : []),
-              {
-                id: newInstructionTaskId,
-                name,
-                instructionId,
-              },
-            ],
+            tasks: instruction
+              .data()
+              ?.['tasks'].filter(
+                (tasks: InstructionTaskDto) => tasks.id !== instructionTaskId
+              ),
           });
 
           return {};
@@ -172,30 +115,38 @@ export class InstructionTaskApiService {
     );
   }
 
-  updateInstructionTasksOrder(
+  setTaskReference(
     ownerId: string,
-    instructionTasksOrder: string[]
+    taskId: string,
+    reference: TaskReferenceDto
   ) {
+    const instructionRef = doc(this._firestore, `instructions/${ownerId}`);
+
     return defer(() =>
       from(
         runTransaction(this._firestore, async (transaction) => {
-          const instructionRef = doc(
-            this._firestore,
-            `instructions/${ownerId}`
-          );
-
           const instruction = await transaction.get(instructionRef);
           const tasks = (instruction.data()?.['tasks'] ??
             []) as InstructionTaskDto[];
 
-          transaction.update(instructionRef, {
-            tasks: instructionTasksOrder.map((instructionTaskId) => {
-              const instructionTaskIndex = tasks.findIndex(
-                (instructionTask) => instructionTask.id === instructionTaskId
-              );
+          const taskIndex = tasks.findIndex((task) => task.id === taskId);
+          const referenceIndex = tasks[taskIndex].references.findIndex(
+            ({ id }) => id === reference.id
+          );
 
-              return tasks[instructionTaskIndex];
-            }),
+          transaction.update(instructionRef, {
+            tasks: [
+              ...tasks.slice(0, taskIndex),
+              {
+                ...tasks[taskIndex],
+                references: [
+                  ...tasks[taskIndex].references.slice(0, referenceIndex),
+                  reference,
+                  ...tasks[taskIndex].references.slice(referenceIndex + 1),
+                ],
+              },
+              ...tasks.slice(taskIndex + 1),
+            ],
           });
 
           return {};

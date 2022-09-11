@@ -3,17 +3,19 @@ import { CommonModule } from '@angular/common';
 import { Component, HostListener, inject } from '@angular/core';
 import { PushModule } from '@ngrx/component';
 import { combineLatest, concatMap, EMPTY, filter, map, take } from 'rxjs';
-import { BoardStore } from '../../core/stores';
-import { openEditInstructionSysvarModal } from '../../instruction-sysvar/components';
-import { InstructionSysvarApiService } from '../../instruction-sysvar/services';
-import { ActiveComponent } from '../../shared/components';
-import { FollowCursorDirective } from '../../shared/directives';
+import { BoardStore } from '../../core';
 import {
+  InstructionSysvarApiService,
+  openEditInstructionSysvarModal,
+} from '../../instruction-sysvar';
+import {
+  ActiveComponent,
+  FollowCursorDirective,
   getFirstParentId,
   isChildOf,
   isNotNull,
   isNull,
-} from '../../shared/utils';
+} from '../../shared';
 
 @Component({
   selector: 'pg-active-sysvar',
@@ -90,9 +92,11 @@ export class ActiveSysvarComponent {
 
               return this._instructionSysvarApiService.createInstructionSysvar(
                 instructionId,
-                instructionSysvarData.id,
-                instructionSysvarData.name,
-                activeSysvar.id
+                {
+                  id: instructionSysvarData.id,
+                  name: instructionSysvarData.name,
+                  sysvarId: activeSysvar.id,
+                }
               );
             })
           )

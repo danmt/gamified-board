@@ -14,41 +14,41 @@ import { map } from 'rxjs';
 import {
   ActiveApplicationComponent,
   ApplicationDockComponent,
-} from '../application/sections';
-import { ApplicationsInventoryComponent } from '../application/sections/applications-inventory.component';
-import { ApplicationsStore } from '../application/stores';
+  ApplicationsInventoryComponent,
+  ApplicationsStore,
+} from '../application';
 import {
   ActiveCollectionComponent,
   CollectionDockComponent,
   CollectionsInventoryComponent,
-} from '../collection/sections';
-import { CollectionsStore } from '../collection/stores/collections.store';
+  CollectionsStore,
+} from '../collection';
+import { ActiveStore, BoardStore } from '../core';
 import {
   BoardSectionComponent,
   CenterDockSectionComponent,
   LeftDockSectionComponent,
   RightDockSectionComponent,
 } from '../core/sections';
-import { BoardStore } from '../core/stores';
-import { InstructionApplicationDockComponent } from '../instruction-application/sections';
-import { InstructionDocumentDockComponent } from '../instruction-document/sections';
-import { InstructionSignerDockComponent } from '../instruction-signer/sections';
-import { InstructionSysvarDockComponent } from '../instruction-sysvar/sections';
-import { InstructionTaskDockComponent } from '../instruction-task/sections';
 import {
   ActiveInstructionComponent,
   InstructionDockComponent,
   InstructionsInventoryComponent,
-} from '../instruction/sections';
-import { InstructionsStore } from '../instruction/stores';
-import { ActiveSignerComponent } from '../signer/sections';
+  InstructionsStore,
+} from '../instruction';
+import { InstructionApplicationDockComponent } from '../instruction-application';
+import { InstructionDocumentDockComponent } from '../instruction-document';
+import { InstructionSignerDockComponent } from '../instruction-signer';
+import { InstructionSysvarDockComponent } from '../instruction-sysvar';
+import { InstructionTaskDockComponent } from '../instruction-task';
+import { ActiveSignerComponent } from '../signer';
 import {
   ActiveSysvarComponent,
   SysvarDockComponent,
   SysvarsInventoryComponent,
-} from '../sysvar/sections';
-import { SysvarsStore } from '../sysvar/stores';
-import { WorkspaceStore } from '../workspace/stores';
+  SysvarsStore,
+} from '../sysvar';
+import { WorkspaceStore } from '../workspace';
 
 @Component({
   selector: 'pg-board-page',
@@ -160,6 +160,7 @@ import { WorkspaceStore } from '../workspace/stores';
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [
     provideComponentStore(BoardStore),
+    provideComponentStore(ActiveStore),
     provideComponentStore(WorkspaceStore),
     provideComponentStore(ApplicationsStore),
     provideComponentStore(CollectionsStore),

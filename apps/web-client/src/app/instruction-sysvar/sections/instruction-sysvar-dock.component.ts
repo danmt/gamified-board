@@ -3,19 +3,18 @@ import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { LetModule, PushModule } from '@ngrx/component';
 import { combineLatest, concatMap, EMPTY, map, of, tap } from 'rxjs';
-import { BoardStore, InstructionSysvarView } from '../../core/stores';
+import { BoardStore, InstructionSysvarView } from '../../core';
 import {
   ConfirmModalDirective,
-  openConfirmModal,
-  SquareButtonComponent,
-} from '../../shared/components';
-import { SecondaryDockComponent } from '../../shared/components/secondary-dock.component';
-import {
   DefaultImageDirective,
+  isNotNull,
+  isNull,
   KeyboardListenerDirective,
-} from '../../shared/directives';
-import { SlotHotkeyPipe } from '../../shared/pipes';
-import { isNotNull, isNull } from '../../shared/utils';
+  openConfirmModal,
+  SlotHotkeyPipe,
+  SquareButtonComponent,
+} from '../../shared';
+import { SecondaryDockComponent } from '../../shared/components/secondary-dock.component';
 import {
   EditInstructionSysvarSubmit,
   openEditInstructionSysvarModal,
@@ -182,11 +181,9 @@ export class InstructionSysvarDockComponent {
     instructionSysvarData: EditInstructionSysvarSubmit
   ) {
     this._instructionSysvarApiService
-      .updateInstructionSysvar(
-        instructionId,
-        instructionSysvarId,
-        instructionSysvarData.name
-      )
+      .updateInstructionSysvar(instructionId, instructionSysvarId, {
+        name: instructionSysvarData.name,
+      })
       .subscribe();
   }
 
@@ -225,7 +222,7 @@ export class InstructionSysvarDockComponent {
                 return this._instructionSysvarApiService.updateInstructionSysvar(
                   instructionSysvar.ownerId,
                   instructionSysvar.id,
-                  instructionSysvarData.name
+                  { name: instructionSysvarData.name }
                 );
               })
             )

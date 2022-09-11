@@ -3,19 +3,18 @@ import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { LetModule, PushModule } from '@ngrx/component';
 import { combineLatest, concatMap, EMPTY, map, of, tap } from 'rxjs';
-import { BoardStore, InstructionTaskView } from '../../core/stores';
+import { BoardStore, InstructionTaskView } from '../../core';
 import {
   ConfirmModalDirective,
-  openConfirmModal,
-  SquareButtonComponent,
-} from '../../shared/components';
-import { SecondaryDockComponent } from '../../shared/components/secondary-dock.component';
-import {
   DefaultImageDirective,
+  isNotNull,
+  isNull,
   KeyboardListenerDirective,
-} from '../../shared/directives';
-import { SlotHotkeyPipe } from '../../shared/pipes';
-import { isNotNull, isNull } from '../../shared/utils';
+  openConfirmModal,
+  SlotHotkeyPipe,
+  SquareButtonComponent,
+} from '../../shared';
+import { SecondaryDockComponent } from '../../shared/components/secondary-dock.component';
 import {
   EditInstructionTaskSubmit,
   openEditInstructionTaskModal,
@@ -182,11 +181,9 @@ export class InstructionTaskDockComponent {
     instructionTaskData: EditInstructionTaskSubmit
   ) {
     this._instructionTaskApiService
-      .updateInstructionTask(
-        instructionId,
-        instructionTaskId,
-        instructionTaskData.name
-      )
+      .updateInstructionTask(instructionId, instructionTaskId, {
+        name: instructionTaskData.name,
+      })
       .subscribe();
   }
 
@@ -222,7 +219,7 @@ export class InstructionTaskDockComponent {
                 return this._instructionTaskApiService.updateInstructionTask(
                   instructionTask.ownerId,
                   instructionTask.id,
-                  instructionTaskData.name
+                  { name: instructionTaskData.name }
                 );
               })
             )

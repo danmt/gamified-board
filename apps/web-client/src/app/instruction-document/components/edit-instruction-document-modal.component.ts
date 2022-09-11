@@ -17,43 +17,41 @@ import {
   Validators,
 } from '@angular/forms';
 import { Observable } from 'rxjs';
-import { ModalComponent } from '../../shared/components';
-import {
-  KeyboardListenerDirective,
-  StopKeydownPropagationDirective,
-} from '../../shared/directives';
 import {
   Entity,
   generateId,
   isNotNull,
   isNull,
+  KeyboardListenerDirective,
+  ModalComponent,
   Option,
-} from '../../shared/utils';
+  StopKeydownPropagationDirective,
+} from '../../shared';
 
-interface DocumentReference {
-  kind: 'document';
-  document: {
-    id: string;
-    name: string;
-  };
+type ReferenceKind = 'document' | 'signer';
+
+interface Reference {
+  kind: ReferenceKind;
+  id: string;
+  name: string;
 }
 
 type InstructionDocument = Entity<{
   name: string;
   method: string;
-  payer: Option<DocumentReference>;
+  payer: Option<Reference>;
 }>;
 
 export interface EditInstructionDocumentData {
   instructionDocument: Option<InstructionDocument>;
-  documentReferences$: Observable<DocumentReference[]>;
+  references$: Observable<Reference[]>;
 }
 
 export interface EditInstructionDocumentSubmit {
   id: string;
   name: string;
   method: string;
-  payer: Option<{ kind: 'document'; documentId: string }>;
+  payer: Option<{ kind: ReferenceKind; id: string }>;
 }
 
 export const openEditInstructionDocumentModal = (
@@ -73,8 +71,7 @@ export class UpdateInstructionDocumentModalDirective {
   private readonly _dialog = inject(Dialog);
 
   @Input() pgInstructionDocument: Option<InstructionDocument> = null;
-  @Input() pgDocumentReferences$: Option<Observable<DocumentReference[]>> =
-    null;
+  @Input() pgDocumentReferences$: Option<Observable<Reference[]>> = null;
 
   @Output() pgUpdateInstructionDocument =
     new EventEmitter<EditInstructionDocumentSubmit>();
@@ -94,7 +91,7 @@ export class UpdateInstructionDocumentModalDirective {
 
     openEditInstructionDocumentModal(this._dialog, {
       instructionDocument: this.pgInstructionDocument,
-      documentReferences$: this.pgDocumentReferences$,
+      references$: this.pgDocumentReferences$,
     }).closed.subscribe((instructionDocumentData) => {
       this.pgCloseModal.emit();
 
@@ -217,13 +214,14 @@ export class UpdateInstructionDocumentModalDirective {
           <select
             id="document-payer"
             formControlName="payer"
-            [compareWith]="compareDocumentsFn"
+            [compareWith]="compareReferencesFn"
           >
             <option
-              *ngFor="let documentReference of documentReferences$ | async"
-              [ngValue]="documentReference"
+              *ngFor="let reference of references$ | async"
+              [ngValue]="reference"
             >
-              Document {{ documentReference.document.name }}
+              <span class="uppercase">{{ reference.kind }}:</span>
+              {{ reference.name }}
             </option>
           </select>
         </div>
@@ -261,7 +259,7 @@ export class EditInstructionDocumentModalComponent {
   private readonly _data = inject<EditInstructionDocumentData>(DIALOG_DATA);
 
   readonly instructionDocument = this._data.instructionDocument;
-  readonly documentReferences$ = this._data.documentReferences$;
+  readonly references$ = this._data.references$;
   readonly form = this._formBuilder.group({
     id: this._formBuilder.control<string>(this.instructionDocument?.id ?? '', {
       validators: [Validators.required],
@@ -283,10 +281,9 @@ export class EditInstructionDocumentModalComponent {
     ),
     payer: this._formBuilder.control<
       Option<{
-        document: {
-          id: string;
-          name: string;
-        };
+        kind: ReferenceKind;
+        id: string;
+        name: string;
       }>
     >(this.instructionDocument?.payer ?? null),
   });
@@ -306,14 +303,9 @@ export class EditInstructionDocumentModalComponent {
   get payerControl() {
     return this.form.get('payer') as FormControl<
       Option<{
-        document: {
-          id: string;
-          name: string;
-        };
-        attribute: {
-          id: string;
-          name: string;
-        };
+        kind: ReferenceKind;
+        id: string;
+        name: string;
       }>
     >;
   }
@@ -331,8 +323,8 @@ export class EditInstructionDocumentModalComponent {
         method,
         payer: isNotNull(payer)
           ? {
-              kind: 'document',
-              documentId: payer.document.id,
+              kind: payer.kind,
+              id: payer.id,
             }
           : null,
       });
@@ -343,25 +335,27 @@ export class EditInstructionDocumentModalComponent {
     this._dialogRef.close();
   }
 
-  displayFn(reference: Option<DocumentReference>): string {
+  displayFn(reference: Option<Reference>): string {
     if (isNull(reference)) {
       return '';
     }
 
-    return `Document: ${reference.document.name}`;
+    switch (reference.kind) {
+      case 'document':
+        return `Document: ${reference.name}`;
+
+      case 'signer':
+        return `Signer: ${reference.name}`;
+    }
   }
 
-  compareDocumentsFn(
-    document1: Option<{
-      document: { id: string };
-    }>,
-    document2: Option<{
-      document: { id: string };
-    }>
+  compareReferencesFn(
+    reference1: Option<{ id: string }>,
+    reference2: Option<{ id: string }>
   ) {
     return (
-      (isNull(document1) && isNull(document2)) ||
-      document1?.document.id === document2?.document.id
+      (isNull(reference1) && isNull(reference2)) ||
+      reference1?.id === reference2?.id
     );
   }
 

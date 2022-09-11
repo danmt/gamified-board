@@ -3,9 +3,9 @@ import { Component, inject } from '@angular/core';
 import { PushModule } from '@ngrx/component';
 import {
   CornerDockComponent,
+  KeyboardListenerDirective,
   SquareButtonComponent,
-} from '../../shared/components';
-import { KeyboardListenerDirective } from '../../shared/directives';
+} from '../../shared';
 import { BoardStore } from '../stores';
 
 @Component({
