@@ -4,7 +4,7 @@ import { Component, inject } from '@angular/core';
 import { Storage } from '@angular/fire/storage';
 import { LetModule, PushModule } from '@ngrx/component';
 import { combineLatest, concatMap, EMPTY, map, of, tap } from 'rxjs';
-import { BoardStore, CollectionView } from '../../core';
+import { BoardStore, CollectionView } from '../../board';
 import {
   ConfirmModalDirective,
   DefaultImageDirective,

@@ -5,7 +5,7 @@ import { Component, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { LetModule, PushModule } from '@ngrx/component';
 import { BehaviorSubject, combineLatest, map } from 'rxjs';
-import { BoardStore } from '../../core';
+import { BoardStore } from '../../board';
 import {
   DefaultImageDirective,
   InventoryComponent,

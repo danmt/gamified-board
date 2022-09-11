@@ -16,39 +16,39 @@ import {
   ApplicationDockComponent,
   ApplicationsInventoryComponent,
   ApplicationsStore,
-} from '../application';
+} from '../../application';
 import {
   ActiveCollectionComponent,
   CollectionDockComponent,
   CollectionsInventoryComponent,
   CollectionsStore,
-} from '../collection';
-import { ActiveStore, BoardStore } from '../core';
-import {
-  BoardSectionComponent,
-  CenterDockSectionComponent,
-  LeftDockSectionComponent,
-  RightDockSectionComponent,
-} from '../core/sections';
+} from '../../collection';
 import {
   ActiveInstructionComponent,
   InstructionDockComponent,
   InstructionsInventoryComponent,
   InstructionsStore,
-} from '../instruction';
-import { InstructionApplicationDockComponent } from '../instruction-application';
-import { InstructionDocumentDockComponent } from '../instruction-document';
-import { InstructionSignerDockComponent } from '../instruction-signer';
-import { InstructionSysvarDockComponent } from '../instruction-sysvar';
-import { InstructionTaskDockComponent } from '../instruction-task';
-import { ActiveSignerComponent } from '../signer';
+} from '../../instruction';
+import { InstructionApplicationDockComponent } from '../../instruction-application';
+import { InstructionDocumentDockComponent } from '../../instruction-document';
+import { InstructionSignerDockComponent } from '../../instruction-signer';
+import { InstructionSysvarDockComponent } from '../../instruction-sysvar';
+import { InstructionTaskDockComponent } from '../../instruction-task';
+import { ActiveSignerComponent } from '../../signer';
 import {
   ActiveSysvarComponent,
   SysvarDockComponent,
   SysvarsInventoryComponent,
   SysvarsStore,
-} from '../sysvar';
-import { WorkspaceStore } from '../workspace';
+} from '../../sysvar';
+import { WorkspaceStore } from '../../workspace';
+import {
+  BoardSectionComponent,
+  CenterDockSectionComponent,
+  LeftDockSectionComponent,
+  RightDockSectionComponent,
+} from '../sections';
+import { ActiveStore, BoardStore } from '../stores';
 
 @Component({
   selector: 'pg-board-page',

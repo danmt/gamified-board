@@ -9,7 +9,7 @@ import {
   map,
   take,
 } from 'rxjs';
-import { ActiveStore, BoardStore } from '../../core';
+import { ActiveStore, BoardStore } from '../../board';
 import { InstructionTaskApiService } from '../../instruction-task';
 import {
   ActiveComponent,
