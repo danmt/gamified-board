@@ -13,22 +13,16 @@ export type DockDirection = 'right' | 'left';
     <div
       class="bp-skin-outer-metal-corner-right-top absolute -right-5 -top-4 z-30"
     ></div>
-    <div
-      class="bp-skin-dock-detail-left absolute -bottom-2.5 z-40 -left-8"
-    ></div>
-    <div
-      class="bp-skin-dock-detail-right absolute -bottom-2.5 z-40 -right-10"
-    ></div>
 
     <!-- borders -->
     <div
       class="bp-skin-outer-metal-border-top absolute -top-4 w-4/6 left-0 right-0 mx-auto my-0 z-20"
     ></div>
     <div
-      class="bp-skin-outer-metal-border-right absolute -right-5 h-4/6 top-0 bottom-0 my-auto mx-0 z-20"
+      class="bp-skin-outer-metal-border-right absolute -right-5 h-5/6 top-10 bottom-0 my-auto mx-0 z-20"
     ></div>
     <div
-      class="bp-skin-outer-metal-border-left absolute -left-5 h-4/6 top-0 bottom-0 my-auto mx-0 z-20"
+      class="bp-skin-outer-metal-border-left absolute -left-5 h-5/6 top-10 bottom-0 my-auto mx-0 z-20"
     ></div>
 
     <!-- modal content -->
@@ -40,5 +34,6 @@ export type DockDirection = 'right' | 'left';
   imports: [CommonModule],
 })
 export class SecondaryDockComponent {
-  @HostBinding('class') class = 'p-10 bp-bg-futuristic relative rounded-[35px]';
+  @HostBinding('class') class =
+    'p-10 bp-bg-futuristic relative rounded-t-[35px]';
 }

@@ -13,49 +13,25 @@ export type InventoryDirection = 'left' | 'right';
 @Component({
   selector: 'pg-inventory',
   template: `
-    <!-- right detail -->
-    <div
-      class="bp-skin-metal-{{ oppositeDirection }}-detail absolute {{
-        oppositeDirection === 'right' ? '-right-20' : '-left-20'
-      }} top-0 bottom-0 my-auto z-40"
-    ></div>
-
     <!-- top border design -->
     <div
       class="bp-skin-outer-metal-corner-{{ oppositeDirection }}-top absolute {{
-        oppositeDirection === 'right' ? '-right-10' : '-left-10'
-      }}  -top-8 z-30"
+        oppositeDirection === 'right' ? '-right-5' : '-left-5'
+      }} -top-5 z-30"
     ></div>
     <div
-      class="bp-skin-outer-metal-border-top absolute -top-8 w-10/12 {{
+      class="bp-skin-outer-metal-border-top absolute -top-5 w-10/12 {{
         oppositeDirection === 'right' ? '-left-6' : '-right-6'
       }} {{
         oppositeDirection === 'right' ? 'right-0' : 'left-0'
       }} mx-auto my-0 z-20"
     ></div>
-    <div
-      class="bp-skin-inner-metal-corner-{{ oppositeDirection }}-top absolute {{
-        oppositeDirection === 'right' ? '-right-8' : '-left-8'
-      }} -top-6 z-10"
-    ></div>
-    <div
-      class="bp-skin-inner-metal-border-top absolute -top-4 w-10/12 {{
-        oppositeDirection === 'right' ? '-left-6' : '-right-6'
-      }} {{
-        oppositeDirection === 'right' ? 'right-0' : 'left-0'
-      }} mx-auto my-0"
-    ></div>
 
     <!-- side border design -->
     <div
       class="bp-skin-outer-metal-border-{{ oppositeDirection }} absolute {{
-        oppositeDirection === 'right' ? '-right-10' : '-left-10'
-      }} h-5/6 top-0 bottom-0 my-auto mx-0 z-50"
-    ></div>
-    <div
-      class="bp-skin-inner-metal-border-{{ oppositeDirection }} absolute {{
-        oppositeDirection === 'right' ? '-right-6' : '-left-6'
-      }} h-3/5 top-0 bottom-0 my-auto mx-0"
+        oppositeDirection === 'right' ? '-right-5' : '-left-5'
+      }} h-5/6 top-0 bottom-0 my-auto mx-0 z-50 rounded-3xl"
     ></div>
 
     <!-- bottom border design -->
@@ -63,37 +39,24 @@ export type InventoryDirection = 'left' | 'right';
       class="bp-skin-outer-metal-corner-{{
         oppositeDirection
       }}-bottom absolute {{
-        oppositeDirection === 'right' ? '-right-10' : '-left-10'
-      }} -bottom-8 z-50"
+        oppositeDirection === 'right' ? '-right-5' : '-left-5'
+      }} -bottom-4 z-50"
     ></div>
     <div
-      class="bp-skin-outer-metal-border-bottom absolute -bottom-8 w-10/12 {{
+      class="bp-skin-outer-metal-border-bottom absolute -bottom-4 w-10/12 {{
         oppositeDirection === 'right' ? '-left-6' : '-right-6'
       }} {{
         oppositeDirection === 'right' ? 'right-0' : 'left-0'
       }} mx-auto my-0 z-40"
     ></div>
-    <div
-      class="bp-skin-inner-metal-corner-{{
-        oppositeDirection
-      }}-bottom absolute {{
-        oppositeDirection === 'right' ? '-right-8' : '-left-8'
-      }} -bottom-6 z-30"
-    ></div>
-    <div
-      class="bp-skin-inner-metal-border-bottom absolute -bottom-4 w-10/12 {{
-        oppositeDirection === 'right' ? '-left-6' : '-right-6'
-      }} {{
-        oppositeDirection === 'right' ? 'right-0' : 'left-0'
-      }} mx-auto my-0"
-    ></div>
 
     <!-- section content -->
     <header class="relative h-[80px]">
       <div
-        class="flex relative w-full bp-skin-title-box items-center justify-between pl-6 pr-8 mr-1.5"
+        class="flex relative w-full bp-skin-title-box items-center justify-between pl-6 pr-8 mr-1.5 rounded-t-[30px]"
       >
         <ng-content select="[pgInventoryTitle]"></ng-content>
+
         <div class="z-50">
           <ng-content select="[pgInventoryCreateButton]"></ng-content>
         </div>
@@ -125,7 +88,8 @@ export type InventoryDirection = 'left' | 'right';
   imports: [CommonModule],
 })
 export class InventoryComponent {
-  @HostBinding('class') class = 'flex flex-col relative z-40 bp-bg-futuristic';
+  @HostBinding('class') class =
+    'flex flex-col relative z-40 bp-bg-futuristic rounded-[30px]';
 
   @Input() pgPageSize = 24;
   @Input() pgPage = 1;
