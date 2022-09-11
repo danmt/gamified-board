@@ -12,6 +12,7 @@ import {
   SlotHotkeyPipe,
   SquareButtonComponent,
 } from '../../shared';
+import { DockComponent } from '../../shared/components/dock.component';
 import { SlotTooltipDirective } from '../components';
 import { BoardStore } from '../stores';
 
@@ -24,29 +25,11 @@ interface HotKey {
 @Component({
   selector: 'pg-center-dock-section',
   template: `
-    <div
-      class="bp-bg-futuristic flex justify-center items-center relative"
+    <pg-dock
+      class="flex justify-center items-center"
       *ngrxLet="slots$; let slots"
       style="width: 615px; height: 136px"
     >
-      <div class="flex">
-        <div
-          class="bp-skin-metal-corner-left-top absolute z-30"
-          style="left: -16px; top: -14px;"
-        ></div>
-        <div
-          class="bp-skin-metal-border-top flex-1 z-20"
-          style="width: 500px; position: absolute; top: -14px; left: 55px;"
-        ></div>
-        <div class="bp-skin-dock-detail-center absolute"></div>
-        <div
-          class="bp-skin-metal-corner-right-top absolute z-30"
-          style="right: -16px; top: -14px;"
-        ></div>
-      </div>
-
-      <div class="bp-skin-dock-detail-left absolute z-40 -left-10"></div>
-      <div class="bp-skin-dock-detail-right absolute z-40 -right-11"></div>
       <ng-container
         *ngrxLet="hotkeys$; let hotkeys"
         pgKeyboardListener
@@ -103,7 +86,7 @@ interface HotKey {
           </div>
         </div>
       </ng-container>
-    </div>
+    </pg-dock>
   `,
   standalone: true,
   imports: [
@@ -116,6 +99,7 @@ interface HotKey {
     DefaultImageDirective,
     KeyboardListenerDirective,
     SlotTooltipDirective,
+    DockComponent,
   ],
   styles: [
     `
