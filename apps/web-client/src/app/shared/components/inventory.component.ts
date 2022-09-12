@@ -70,7 +70,7 @@ export type InventoryDirection = 'left' | 'right';
         <ng-content select="[pgInventoryBody]"></ng-content>
       </div>
 
-      <div class="flex justify-center gap-4">
+      <div class="flex justify-center gap-8 relative top-3">
         <button
           class="bp-skin-navigation-left-arrow"
           (click)="onPreviousPage()"
