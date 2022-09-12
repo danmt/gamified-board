@@ -32,7 +32,7 @@ import { Component, EventEmitter, HostBinding, Output } from '@angular/core';
       class="bp-skin-outer-metal-border-left absolute -left-5 h-5/6 top-0 bottom-0 my-auto mx-0 z-20 rounded-2xl"
     ></div>
     <div
-      class="bp-skin-outer-metal-border-bottom absolute -bottom-4 w-5/6 left-0 right-0 mx-auto my-0 z-20 rounded-2xl"
+      class="bp-skin-outer-metal-border-bottom absolute -bottom-4 w-5/6 left-0 right-0 mx-auto my-0 z-40 rounded-2xl"
     ></div>
     <div
       class="bp-skin-outer-metal-border-top absolute -top-4 w-5/6 left-0 right-0 mx-auto my-0 z-20 rounded-2xl"

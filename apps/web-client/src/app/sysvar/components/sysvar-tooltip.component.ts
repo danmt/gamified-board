@@ -123,36 +123,36 @@ export class SysvarTooltipDirective implements OnDestroy {
 
       <div
         *ngIf="pgPosition === 'right'"
-        class="absolute -left-4 -translate-y-1/2 top-1/2  w-4 h-4 -rotate-90"
+        class="absolute -left-8 -translate-y-1/2 top-1/2  w-4 h-4 -rotate-90"
       >
-        <svg id="triangle" viewBox="0 0 100 100" fill="#414141">
+        <svg id="triangle" viewBox="0 0 100 100" fill="#565656">
           <polygon points="50 15, 100 100, 0 100" />
         </svg>
       </div>
 
       <div
         *ngIf="pgPosition === 'left'"
-        class="absolute -right-4 -translate-y-1/2 top-1/2  w-4 h-4 rotate-90"
+        class="absolute -right-8 -translate-y-1/2 top-1/2  w-4 h-4 rotate-90"
       >
-        <svg id="triangle" viewBox="0 0 100 100" fill="#414141">
+        <svg id="triangle" viewBox="0 0 100 100" fill="#565656">
           <polygon points="50 15, 100 100, 0 100" />
         </svg>
       </div>
 
       <div
         *ngIf="pgPosition === 'top'"
-        class="absolute -bottom-4 -translate-x-1/2 left-1/2  w-4 h-4 rotate-180"
+        class="absolute -bottom-8 -translate-x-1/2 left-1/2  w-4 h-4 rotate-180"
       >
-        <svg id="triangle" viewBox="0 0 100 100" fill="#414141">
+        <svg id="triangle" viewBox="0 0 100 100" fill="#565656">
           <polygon points="50 15, 100 100, 0 100" />
         </svg>
       </div>
 
       <div
         *ngIf="pgPosition === 'bottom'"
-        class="absolute -top-4 -translate-x-1/2 left-1/2  w-4 h-4 rotate"
+        class="absolute -top-8 -translate-x-1/2 left-1/2  w-4 h-4 rotate"
       >
-        <svg id="triangle" viewBox="0 0 100 100" fill="#414141">
+        <svg id="triangle" viewBox="0 0 100 100" fill="#565656">
           <polygon points="50 15, 100 100, 0 100" />
         </svg>
       </div>
