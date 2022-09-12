@@ -22,7 +22,6 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { ModalComponent } from '../../shared/components';
 import {
   Entity,
   generateId,
@@ -31,6 +30,7 @@ import {
   Option,
   StopKeydownPropagationDirective,
 } from '../../shared';
+import { ModalComponent } from '../../shared/components';
 
 export type CollectionAttributes = Entity<{
   name: string;
@@ -93,7 +93,7 @@ export class UpdateCollectionAttributesModalDirective {
   selector: 'pg-edit-collection-attributes-modal',
   template: `
     <pg-modal
-      class="text-white min-w-[450px]"
+      class="text-white min-w-[550px]"
       pgStopKeydownPropagation
       pgKeyboardListener
       (keydown)="onKeyDown($event)"
@@ -114,7 +114,7 @@ export class UpdateCollectionAttributesModalDirective {
       <form
         [formGroup]="form"
         (ngSubmit)="onSubmit()"
-        class="overflow-y-auto max-h-[515px] text-black"
+        class="overflow-y-auto max-h-[515px] text-white"
       >
         <div class="mb-4" formArrayName="attributes">
           <div
@@ -128,94 +128,93 @@ export class UpdateCollectionAttributesModalDirective {
                 let attributeForm of attributesControl.controls;
                 let i = index
               "
-              class="border-black border-2 p-2 bg-white relative"
+              class="bg-black bg-opacity-40 p-2 flex items-center rounded"
               cdkDrag
               [cdkDragData]="attributeForm.value"
             >
-              <div class="absolute right-2 top-2" cdkDragHandle>
-                <svg width="24px" fill="currentColor" viewBox="0 0 24 24">
+              <div cdkDragHandle>
+                <svg width="24px" fill="currentColor" viewBox="0 0 24 15">
                   <path
-                    d="M10 9h4V6h3l-5-5-5 5h3v3zm-1 1H6V7l-5 5 5 5v-3h3v-4zm14 2l-5-5v3h-3v4h3v3l5-5zm-9 3h-4v3H7l5 5 5-5h-3v-3z"
+                    d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"
                   ></path>
                   <path d="M0 0h24v24H0z" fill="none"></path>
                 </svg>
               </div>
 
-              <div [formGroup]="attributeForm">
+              <div
+                [formGroup]="attributeForm"
+                class="flex justify-between items-center w-full"
+              >
                 <div>
-                  <label
-                    class="block"
-                    [for]="'collection-attributes-' + i + '-id'"
-                  >
-                    Attribute ID
-                  </label>
-                  <input
-                    [id]="'collection-attributes-' + i + '-id'"
-                    formControlName="id"
-                    class="block border-b-2 border-black"
-                    type="text"
-                    [readonly]="attributeForm.get('isNew')?.value"
-                  />
-                  <p *ngIf="attributeForm.get('isNew')?.value">
-                    Hint: The ID cannot be changed afterwards.
-                  </p>
-                  <button
-                    *ngIf="attributeForm.get('isNew')?.value"
-                    type="button"
-                    (click)="attributeForm.get('id')?.setValue(onGenerateId())"
-                  >
-                    Generate
-                  </button>
-                </div>
-
-                <div>
-                  <label
-                    class="block"
-                    [for]="'collection-attributes-' + i + '-name'"
-                  >
-                    Attribute name
-                  </label>
                   <input
                     [id]="'collection-attributes-' + i + '-name'"
                     formControlName="name"
-                    class="block border-b-2 border-black"
+                    class="block border-b-2 border-black bg-transparent"
                     type="text"
+                    placeholder="Attribute name"
                   />
                 </div>
                 <div>
-                  <label
-                    class="block"
-                    [for]="'collection-attributes-' + i + '-type'"
-                  >
-                    Attribute type
-                  </label>
-
                   <select
-                    class="block"
+                    class="block bg-transparent"
                     formControlName="type"
                     [id]="'collection-attributes-' + i + '-type'"
                   >
-                    <option value="u8">u8</option>
-                    <option value="u16">u16</option>
-                    <option value="u32">u32</option>
-                    <option value="u64">u64</option>
-                    <option value="String">String</option>
-                    <option value="Pubkey">Public Key</option>
+                    <option
+                      class="text-black"
+                      value=""
+                      selected="selected"
+                      disabled
+                    >
+                      Attribute type
+                    </option>
+                    <option class="text-black" value="u8">u8</option>
+                    <option class="text-black" value="u16">u16</option>
+                    <option class="text-black" value="u32">u32</option>
+                    <option class="text-black" value="u64">u64</option>
+                    <option class="text-black" value="String">String</option>
+                    <option class="text-black" value="Pubkey">
+                      Public Key
+                    </option>
                   </select>
                 </div>
 
-                <div>
+                <div class="flex flex-col justify-center ml-5">
                   <input
                     formControlName="isOption"
                     type="checkbox"
                     [id]="'collection-attributes-' + i + '-is-option'"
                   />
-                  <label [for]="'collection-attributes-' + i + '-is-option'">
-                    Is Optional
+                  <label
+                    class="text-xs"
+                    [for]="'collection-attributes-' + i + '-is-option'"
+                  >
+                    Optional
                   </label>
                 </div>
 
-                <button (click)="onRemoveAttribute(i)" type="button">x</button>
+                <button
+                  class="ml-5"
+                  (click)="onRemoveAttribute(i)"
+                  type="button"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    fill="red"
+                    class="bi bi-trash"
+                    viewBox="0 0 16 16"
+                  >
+                    <path
+                      d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"
+                    />
+                    <path
+                      fill-rule="evenodd"
+                      d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"
+                    />
+                  </svg>
+                </button>
               </div>
             </div>
           </div>
@@ -259,10 +258,6 @@ export class EditCollectionAttributesModalComponent {
       ? this._formBuilder.array(
           this.collectionAttributes.map((attribute) =>
             this._formBuilder.group({
-              id: this._formBuilder.control<string>(attribute.id, {
-                validators: [Validators.required],
-                nonNullable: true,
-              }),
               name: this._formBuilder.control<string>(attribute.name, {
                 validators: [Validators.required],
                 nonNullable: true,
@@ -286,7 +281,6 @@ export class EditCollectionAttributesModalComponent {
   get attributesControl() {
     return this.form.get('attributes') as FormArray<
       FormGroup<{
-        id: FormControl<string>;
         name: FormControl<string>;
         type: FormControl<string>;
         isOption: FormControl<boolean>;
@@ -297,10 +291,6 @@ export class EditCollectionAttributesModalComponent {
 
   onAddAttribute() {
     const attributeForm = this._formBuilder.group({
-      id: this._formBuilder.control<string>('', {
-        validators: [Validators.required],
-        nonNullable: true,
-      }),
       name: this._formBuilder.control<string>('', {
         validators: [Validators.required],
         nonNullable: true,
@@ -361,10 +351,10 @@ export class EditCollectionAttributesModalComponent {
   }
 
   onSubmit() {
+    console.log('epalee', this.form);
     if (this.form.valid) {
       const attributes = this.attributesControl.controls.map(
         (attributeForm) => {
-          const idControl = attributeForm.get('id') as FormControl<string>;
           const nameControl = attributeForm.get('name') as FormControl<string>;
           const typeControl = attributeForm.get('type') as FormControl<string>;
           const isOptionControl = attributeForm.get(
@@ -372,7 +362,7 @@ export class EditCollectionAttributesModalComponent {
           ) as FormControl<boolean>;
 
           return {
-            id: idControl.value,
+            id: generateId(),
             name: nameControl.value,
             type: typeControl.value,
             isOption: isOptionControl.value,

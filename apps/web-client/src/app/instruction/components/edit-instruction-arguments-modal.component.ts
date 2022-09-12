@@ -93,7 +93,7 @@ export class UpdateInstructionArgumentsModalDirective {
   selector: 'pg-edit-instruction-modal',
   template: `
     <pg-modal
-      class="text-white"
+      class="text-white min-w-[550px]"
       pgStopKeydownPropagation
       pgKeyboardListener
       (keydown)="onKeyDown($event)"
@@ -114,7 +114,7 @@ export class UpdateInstructionArgumentsModalDirective {
       <form
         [formGroup]="form"
         (ngSubmit)="onSubmit()"
-        class="max-h-96 overflow-y-auto text-black"
+        class="overflow-y-auto max-h-[515px] text-white"
       >
         <div class="mb-4" formArrayName="arguments">
           <div
@@ -128,95 +128,92 @@ export class UpdateInstructionArgumentsModalDirective {
                 let argumentForm of argumentsControl.controls;
                 let i = index
               "
-              class="border-black border-2 p-2 bg-white relative"
+              class="bg-black bg-opacity-40 p-2 flex items-center rounded"
               cdkDrag
               [cdkDragData]="argumentForm.value"
             >
-              <div class="absolute right-2 top-2" cdkDragHandle>
-                <svg width="24px" fill="currentColor" viewBox="0 0 24 24">
+              <div cdkDragHandle>
+                <svg width="24px" fill="currentColor" viewBox="0 0 24 15">
                   <path
-                    d="M10 9h4V6h3l-5-5-5 5h3v3zm-1 1H6V7l-5 5 5 5v-3h3v-4zm14 2l-5-5v3h-3v4h3v3l5-5zm-9 3h-4v3H7l5 5 5-5h-3v-3z"
+                    d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"
                   ></path>
                   <path d="M0 0h24v24H0z" fill="none"></path>
                 </svg>
               </div>
 
-              <div [formGroup]="argumentForm">
+              <div
+                [formGroup]="argumentForm"
+                class="flex justify-between items-center w-full"
+              >
                 <div>
-                  <label
-                    class="block"
-                    [for]="'instruction-arguments-' + i + '-id'"
-                  >
-                    Argument ID
-                  </label>
-                  <input
-                    [id]="'instruction-arguments-' + i + '-id'"
-                    formControlName="id"
-                    class="block border-b-2 border-black"
-                    type="text"
-                    [readonly]="argumentForm.get('isNew')?.value"
-                  />
-                  <p *ngIf="argumentForm.get('isNew')?.value">
-                    Hint: The ID cannot be changed afterwards.
-                  </p>
-                  <button
-                    *ngIf="argumentForm.get('isNew')?.value"
-                    type="button"
-                    (click)="argumentForm.get('id')?.setValue(onGenerateId())"
-                  >
-                    Generate
-                  </button>
-                </div>
-
-                <div>
-                  <label
-                    class="block"
-                    [for]="'instruction-arguments-' + i + '-name'"
-                  >
-                    Argument name
-                  </label>
                   <input
                     [id]="'instruction-arguments-' + i + '-name'"
                     formControlName="name"
-                    class="block border-b-2 border-black"
+                    class="block border-b-2 border-black bg-transparent"
                     type="text"
+                    placeholder="Argument name"
                   />
                 </div>
 
                 <div>
-                  <label
-                    class="block"
-                    [for]="'instruction-arguments-' + i + '-type'"
-                  >
-                    Argument type
-                  </label>
-
                   <select
-                    class="block"
+                    class="block bg-transparent"
                     formControlName="type"
                     [id]="'instruction-arguments-' + i + '-type'"
                   >
-                    <option value="u8">u8</option>
-                    <option value="u16">u16</option>
-                    <option value="u32">u32</option>
-                    <option value="u64">u64</option>
-                    <option value="String">String</option>
-                    <option value="Pubkey">Public Key</option>
+                    <option
+                      class="text-black"
+                      value=""
+                      selected="selected"
+                      disabled
+                    >
+                      Attribute type
+                    </option>
+                    <option class="text-black" value="u8">u8</option>
+                    <option class="text-black" value="u16">u16</option>
+                    <option class="text-black" value="u32">u32</option>
+                    <option class="text-black" value="u64">u64</option>
+                    <option class="text-black" value="String">String</option>
+                    <option class="text-black" value="Pubkey"></option>
                   </select>
                 </div>
 
-                <div>
+                <div class="flex flex-col justify-center ml-5">
                   <input
                     formControlName="isOption"
                     type="checkbox"
                     [id]="'instruction-arguments-' + i + '-is-option'"
                   />
-                  <label for="'instruction-arguments-' + i + '-is-option'"
-                    >Is Optional</label
+                  <label
+                    for="'instruction-arguments-' + i + '-is-option'"
+                    class="text-xs"
                   >
+                    Optional
+                  </label>
                 </div>
 
-                <button (click)="onRemoveArgument(i)" type="button">x</button>
+                <button
+                  (click)="onRemoveArgument(i)"
+                  class="ml-5"
+                  type="button"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    fill="red"
+                    class="bi bi-trash"
+                    viewBox="0 0 16 16"
+                  >
+                    <path
+                      d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"
+                    />
+                    <path
+                      fill-rule="evenodd"
+                      d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"
+                    />
+                  </svg>
+                </button>
               </div>
             </div>
           </div>
@@ -260,10 +257,6 @@ export class EditInstructionArgumentsModalComponent {
       ? this._formBuilder.array(
           this.instructionArguments.map((argument) =>
             this._formBuilder.group({
-              id: this._formBuilder.control<string>(argument.id, {
-                validators: [Validators.required],
-                nonNullable: true,
-              }),
               name: this._formBuilder.control<string>(argument.name, {
                 validators: [Validators.required],
                 nonNullable: true,
@@ -287,7 +280,6 @@ export class EditInstructionArgumentsModalComponent {
   get argumentsControl() {
     return this.form.get('arguments') as FormArray<
       FormGroup<{
-        id: FormControl<string>;
         name: FormControl<string>;
         type: FormControl<string>;
         isOption: FormControl<boolean>;
@@ -298,10 +290,6 @@ export class EditInstructionArgumentsModalComponent {
 
   onAddArgument() {
     const argumentForm = this._formBuilder.group({
-      id: this._formBuilder.control<string>('', {
-        validators: [Validators.required],
-        nonNullable: true,
-      }),
       name: this._formBuilder.control<string>('', {
         validators: [Validators.required],
         nonNullable: true,
@@ -364,7 +352,6 @@ export class EditInstructionArgumentsModalComponent {
   onSubmit() {
     if (this.form.valid) {
       const args = this.argumentsControl.controls.map((argumentForm) => {
-        const idControl = argumentForm.get('id') as FormControl<string>;
         const nameControl = argumentForm.get('name') as FormControl<string>;
         const typeControl = argumentForm.get('type') as FormControl<string>;
         const isOptionControl = argumentForm.get(
@@ -372,7 +359,7 @@ export class EditInstructionArgumentsModalComponent {
         ) as FormControl<boolean>;
 
         return {
-          id: idControl.value,
+          id: generateId(),
           name: nameControl.value,
           type: typeControl.value,
           isOption: isOptionControl.value,
