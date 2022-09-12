@@ -50,7 +50,7 @@ interface HotKey {
           <img
             [src]="selected?.thumbnailUrl"
             pgDefaultImage="assets/generic/instruction.png"
-            class="w-[140px]"
+            class="w-[100px] h-[106px] overflow-hidden rounded-xl"
           />
 
           <div>
@@ -61,6 +61,7 @@ interface HotKey {
           </div>
 
           <div
+            class="ml-10"
             *ngIf="
               (currentApplicationId$ | ngrxPush) === selected.application.id
             "

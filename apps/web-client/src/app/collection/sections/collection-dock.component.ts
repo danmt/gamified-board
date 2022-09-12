@@ -50,7 +50,7 @@ interface HotKey {
           <img
             [src]="selected?.thumbnailUrl"
             pgDefaultImage="assets/generic/collection.png"
-            class="w-[140px]"
+            class="w-[100px] h-[106px] overflow-hidden rounded-xl"
           />
 
           <div>
@@ -60,22 +60,17 @@ interface HotKey {
             <p class="text-base">{{ selected?.kind }}</p>
           </div>
 
-          <div>
-            <h2
-              class="text-xl"
-              *ngIf="
-                (currentApplicationId$ | ngrxPush) === selected.application.id
-              "
-            >
-              Actions
-            </h2>
+          <div
+            class="ml-10"
+            *ngIf="
+              (currentApplicationId$ | ngrxPush) === selected.application.id
+            "
+          >
+            <h2 class="text-xl">Actions</h2>
             <div class="flex gap-4 justify-center items-start">
               <div
                 class="bg-gray-800 relative"
                 style="width: 2.89rem; height: 2.89rem"
-                *ngIf="
-                  (currentApplicationId$ | ngrxPush) === selected.application.id
-                "
               >
                 <span
                   *ngIf="0 | pgSlotHotkey: hotkeys as hotkey"
@@ -99,9 +94,6 @@ interface HotKey {
               <div
                 class="bg-gray-800 relative"
                 style="width: 2.89rem; height: 2.89rem"
-                *ngIf="
-                  (currentApplicationId$ | ngrxPush) === selected.application.id
-                "
               >
                 <span
                   *ngIf="1 | pgSlotHotkey: hotkeys as hotkey"
@@ -125,9 +117,6 @@ interface HotKey {
               <div
                 class="bg-gray-800 relative"
                 style="width: 2.89rem; height: 2.89rem"
-                *ngIf="
-                  (currentApplicationId$ | ngrxPush) === selected.application.id
-                "
               >
                 <ng-container *ngrxLet="hotkeys$; let hotkeys">
                   <span
@@ -156,9 +145,6 @@ interface HotKey {
               <div
                 class="bg-gray-800 relative"
                 style="width: 2.89rem; height: 2.89rem"
-                *ngIf="
-                  (currentApplicationId$ | ngrxPush) === selected.application.id
-                "
               >
                 <span
                   *ngIf="3 | pgSlotHotkey: hotkeys as hotkey"

@@ -134,7 +134,7 @@ export class UpdateInstructionModalDirective {
       (pgCloseModal)="onClose()"
     >
       <div class="flex justify-between w-full">
-        <h1 class="text-center text-3xl mb-4 bp-font-game uppercase">
+        <h1 class="text-center text-3xl mb-4 bp-font-game-title uppercase">
           {{ instruction === null ? 'Create' : 'Update' }} instruction
         </h1>
       </div>

@@ -26,10 +26,10 @@ import { Component, EventEmitter, HostBinding, Output } from '@angular/core';
 
     <!-- outer borders -->
     <div
-      class="bp-skin-outer-metal-border-right absolute -right-5 h-5/6 top-0 bottom-0 my-auto mx-0 z-20 rounded-2xl"
+      class="bp-skin-outer-metal-border-right absolute -right-5 h-[70%] top-0 bottom-0 my-auto mx-0 z-20 rounded-2xl"
     ></div>
     <div
-      class="bp-skin-outer-metal-border-left absolute -left-5 h-5/6 top-0 bottom-0 my-auto mx-0 z-20 rounded-2xl"
+      class="bp-skin-outer-metal-border-left absolute -left-5 h-[70%] top-0 bottom-0 my-auto mx-0 z-20 rounded-2xl"
     ></div>
     <div
       class="bp-skin-outer-metal-border-bottom absolute -bottom-4 w-5/6 left-0 right-0 mx-auto my-0 z-40 rounded-2xl"
@@ -48,7 +48,7 @@ import { Component, EventEmitter, HostBinding, Output } from '@angular/core';
 })
 export class ModalComponent {
   @HostBinding('class') class =
-    'flex bp-bg-futuristic shadow-xl relative min-h-[350px] min-w-[450px] px-12 pt-14 box-border rounded-[35px]';
+    'flex bp-bg-yellow-texture shadow-xl relative px-12 pt-14 box-border rounded-[35px]';
 
   @Output() pgCloseModal = new EventEmitter();
 

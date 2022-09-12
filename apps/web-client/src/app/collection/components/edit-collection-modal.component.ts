@@ -16,7 +16,6 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { ModalComponent } from '../../shared/components';
 import {
   Entity,
   generateId,
@@ -25,6 +24,7 @@ import {
   Option,
   StopKeydownPropagationDirective,
 } from '../../shared';
+import { ModalComponent } from '../../shared/components';
 
 export type Collection = Entity<{
   name: string;
@@ -133,7 +133,7 @@ export class UpdateCollectionModalDirective {
       (pgCloseModal)="onClose()"
     >
       <div class="flex justify-between w-full">
-        <h1 class="text-3xl mb-4 bp-font-game uppercase">
+        <h1 class="text-3xl mb-4 bp-font-game-title uppercase">
           {{ collection === null ? 'Create' : 'Update' }} collection
         </h1>
       </div>

@@ -67,17 +67,17 @@ export class ConfirmModalDirective {
   selector: 'pg-confirm-modal',
   template: `
     <pg-modal
-      class="text-white"
+      class="text-white "
       pgStopKeydownPropagation
       pgKeyboardListener
       (keydown)="onKeyDown($event)"
       (pgCloseModal)="onClose()"
     >
-      <h1 class="mb-10 bp-font-game text-3xl mt-12">
+      <h1 class=" bp-font-game-title text-3xl">
         {{ message }}
       </h1>
 
-      <div class="flex justify-center gap-2">
+      <div class="flex justify-center gap-2 mt-10 mb-10">
         <button
           class="bp-button-futuristic text-black bp-font-game uppercase"
           (click)="onConfirm()"

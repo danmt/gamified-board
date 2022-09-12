@@ -27,7 +27,7 @@ export type DockDirection = 'right' | 'left';
 })
 export class CornerDockComponent {
   @HostBinding('class') class =
-    'block bp-bg-futuristic relative rounded-tr-[35px]';
+    'block bp-bg-yellow-texture relative rounded-tr-[35px]';
 
   direction: DockDirection = 'right';
   oppositeDirection: DockDirection = 'left';

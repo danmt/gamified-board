@@ -47,7 +47,7 @@ interface HotKey {
           <img
             [src]="selected?.thumbnailUrl"
             pgDefaultImage="assets/generic/sysvar.png"
-            class="w-[140px]"
+            class="w-[100px] h-[106px] overflow-hidden rounded-xl"
           />
 
           <div>
@@ -57,7 +57,7 @@ interface HotKey {
             <p class="text-base">{{ selected?.kind }}</p>
           </div>
 
-          <div>
+          <div class="ml-10">
             <h2 class="text-xl">Actions</h2>
             <div class="flex gap-4 justify-center items-start">
               <div

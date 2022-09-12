@@ -88,7 +88,7 @@ export class UpdateInstructionTaskModalDirective {
       (pgCloseModal)="onClose()"
     >
       <div class="flex justify-between w-full mt-4">
-        <h1 class="text-center text-3xl mb-4 bp-font-game uppercase">
+        <h1 class="text-center text-3xl mb-4 bp-font-game-title uppercase">
           {{ instructionTask === null ? 'Create' : 'Update' }} task
         </h1>
       </div>

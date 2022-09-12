@@ -63,7 +63,7 @@ import { ActiveStore, BoardStore } from '../stores';
 
     <pg-center-dock-section
       *ngIf="(selected$ | ngrxPush) === null"
-      class="fixed -bottom-5 -translate-x-1/2 left-1/2"
+      class="fixed bottom-0 -translate-x-1/2 left-1/2"
     ></pg-center-dock-section>
 
     <pg-instruction-document-dock

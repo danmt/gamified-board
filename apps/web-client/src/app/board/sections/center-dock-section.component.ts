@@ -28,7 +28,7 @@ interface HotKey {
     <pg-dock
       class="flex justify-center items-center"
       *ngrxLet="slots$; let slots"
-      style="width: 615px; height: 136px"
+      style="width: 615px; height: 116px"
     >
       <ng-container
         *ngrxLet="hotkeys$; let hotkeys"

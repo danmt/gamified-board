@@ -153,14 +153,14 @@ export class UpdateInstructionDocumentSeedsModalDirective {
   selector: 'pg-edit-instruction-document-seeds-modal',
   template: `
     <pg-modal
-      class="text-white"
+      class="text-white min-w-[550px]"
       pgStopKeydownPropagation
       pgKeyboardListener
       (keydown)="onKeyDown($event)"
       (pgCloseModal)="onClose()"
     >
       <div class="flex justify-between w-full">
-        <h1 class="text-center text-3xl mb-4 bp-font-game uppercase">
+        <h1 class="text-center text-3xl mb-4 bp-font-game-title uppercase">
           Document seeds
         </h1>
       </div>
@@ -168,34 +168,58 @@ export class UpdateInstructionDocumentSeedsModalDirective {
       <form
         [formGroup]="form"
         (ngSubmit)="onSubmit()"
-        class="max-h-96 overflow-y-auto"
+        class="max-h-[515px] overflow-y-auto"
       >
         <div formArrayName="seeds">
-          <p>
-            <span>Document seeds</span>
-
+          <div class="flex w-full gap-1">
             <button
               (click)="onAddDocumentReference()"
               type="button"
-              class="px-4 py-2 border-blue-500 border"
+              class="flex-1 px-4 py-2 border-gray-600 border-2"
             >
               Document +
             </button>
             <button
               (click)="onAddArgumentReference()"
               type="button"
-              class="px-4 py-2 border-blue-500 border"
+              class="flex-1 px-4 py-2 border-gray-600 border-2"
             >
               Argument +
             </button>
             <button
               (click)="onAddValue()"
               type="button"
-              class="px-4 py-2 border-blue-500 border"
+              class="flex-1 px-4 py-2 border-gray-600 border-2"
             >
               Value +
             </button>
-          </p>
+          </div>
+
+          <div class="my-5" *ngIf="seedsControl.controls.length > 0">
+            <label for="document-bump" class="mr-4">Document bump</label>
+
+            <select
+              formControlName="bump"
+              id="document-bump"
+              [compareWith]="compareBump"
+              class="border-b-2 border-black bg-transparent text-white"
+            >
+              <option class="text-black" [ngValue]="null" selected disabled>
+                Not selected
+              </option>
+              <option
+                *ngFor="let reference of bumpReferences$ | async"
+                [ngValue]="reference"
+              >
+                <ng-container *ngIf="reference.kind === 'attribute'">
+                  Attribute {{ reference.document.name }}.{{ reference.name }}
+                </ng-container>
+                <ng-container *ngIf="reference.kind === 'argument'">
+                  Argument {{ reference.name }}
+                </ng-container>
+              </option>
+            </select>
+          </div>
 
           <div
             class="flex flex-col gap-2"
@@ -205,14 +229,19 @@ export class UpdateInstructionDocumentSeedsModalDirective {
           >
             <div
               *ngFor="let seedForm of seedsControl.controls; let i = index"
-              class="border-black border-2 p-2 bg-white relative text-black"
+              class="bg-black bg-opacity-40 p-2 flex items-center rounded"
               cdkDrag
               [cdkDragData]="seedForm.value"
             >
-              <div class="absolute right-2 top-2" cdkDragHandle>
-                <svg width="24px" fill="currentColor" viewBox="0 0 24 24">
+              <div cdkDragHandle>
+                <svg
+                  class="cursor-grab"
+                  width="24px"
+                  fill="currentColor"
+                  viewBox="0 0 24 15"
+                >
                   <path
-                    d="M10 9h4V6h3l-5-5-5 5h3v3zm-1 1H6V7l-5 5 5 5v-3h3v-4zm14 2l-5-5v3h-3v4h3v3l5-5zm-9 3h-4v3H7l5 5 5-5h-3v-3z"
+                    d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"
                   ></path>
                   <path d="M0 0h24v24H0z" fill="none"></path>
                 </svg>
@@ -220,23 +249,29 @@ export class UpdateInstructionDocumentSeedsModalDirective {
 
               <p *ngIf="seedForm.value === null">Invalid seed.</p>
 
-              <div [formGroup]="seedForm">
+              <div
+                class="overflow-y-auto text-white flex justify-between w-full"
+                [formGroup]="seedForm"
+              >
                 <div [ngSwitch]="seedForm.value.kind">
                   <div *ngSwitchCase="'argument'">
                     <div>
-                      <label
-                        class="block"
-                        [for]="'document-seeds-' + i + '-argument'"
-                      >
-                        Select argument
-                      </label>
-
                       <select
                         [id]="'document-seeds-' + i + '-argument'"
                         formControlName="reference"
                         [compareWith]="compareArgumentsFn"
+                        class="block bg-transparent"
                       >
                         <option
+                          class="text-black"
+                          [ngValue]="null"
+                          selected
+                          disabled
+                        >
+                          Select argument
+                        </option>
+                        <option
+                          class="text-black"
                           *ngFor="
                             let argumentReference of argumentReferences$ | async
                           "
@@ -250,19 +285,22 @@ export class UpdateInstructionDocumentSeedsModalDirective {
 
                   <div *ngSwitchCase="'attribute'">
                     <div>
-                      <label
-                        class="block"
-                        [for]="'document-seeds-' + i + '-document'"
-                      >
-                        Select document
-                      </label>
-
                       <select
                         [id]="'document-seeds-' + i + '-document'"
                         formControlName="reference"
                         [compareWith]="compareAttributesFn"
+                        class="block bg-transparent text-white"
                       >
                         <option
+                          class="text-black"
+                          [ngValue]="null"
+                          selected
+                          disabled
+                        >
+                          Select document
+                        </option>
+                        <option
+                          class="text-black"
                           *ngFor="
                             let attributeReference of attributeReferences$
                               | async
@@ -279,72 +317,68 @@ export class UpdateInstructionDocumentSeedsModalDirective {
 
                   <div *ngSwitchCase="'invalid'">Invalid seed</div>
 
-                  <div *ngSwitchDefault>
+                  <div *ngSwitchDefault class="flex gap-4">
                     <div>
-                      <label
-                        class="block"
-                        [for]="'document-seeds-' + i + '-value'"
-                      >
-                        Value
-                      </label>
                       <input
-                        class="block border-b-2 border-black"
+                        class="block border-b-2 border-black bg-transparent"
                         type="text"
                         [id]="'document-seeds-' + i + '-value'"
                         formControlName="value"
+                        placeholder="Value"
                       />
                     </div>
 
                     <div>
-                      <label
-                        class="block"
-                        [for]="'document-seeds-' + i + '-type'"
-                      >
-                        Type
-                      </label>
                       <select
                         class="block"
                         [id]="'document-seeds-' + i + '-type'"
                         formControlName="type"
+                        class="block bg-transparent"
                       >
-                        <option ngValue="u8">u8</option>
-                        <option ngValue="u16">u16</option>
-                        <option ngValue="u32">u32</option>
-                        <option ngValue="u64">u64</option>
-                        <option ngValue="String">String</option>
-                        <option ngValue="Pubkey">Public Key</option>
+                        <option
+                          class="text-black"
+                          value=""
+                          selected="selected"
+                          disabled
+                        >
+                          Type
+                        </option>
+                        <option class="text-black" ngValue="u8">u8</option>
+                        <option class="text-black" ngValue="u16">u16</option>
+                        <option class="text-black" ngValue="u32">u32</option>
+                        <option class="text-black" ngValue="u64">u64</option>
+                        <option class="text-black" ngValue="String">
+                          String
+                        </option>
+                        <option class="text-black" ngValue="Pubkey">
+                          Public Key
+                        </option>
                       </select>
                     </div>
                   </div>
                 </div>
 
-                <button (click)="onRemoveSeed(i)" type="button">x</button>
+                <button class="ml-5" (click)="onRemoveSeed(i)" type="button">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    fill="red"
+                    class="bi bi-trash"
+                    viewBox="0 0 16 16"
+                  >
+                    <path
+                      d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"
+                    />
+                    <path
+                      fill-rule="evenodd"
+                      d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"
+                    />
+                  </svg>
+                </button>
               </div>
             </div>
           </div>
-        </div>
-
-        <div *ngIf="seedsControl.controls.length > 0">
-          <label for="document-bump">Document bump</label>
-
-          <select
-            formControlName="bump"
-            id="document-bump"
-            [compareWith]="compareBump"
-          >
-            <option [ngValue]="null">Not selected</option>
-            <option
-              *ngFor="let reference of bumpReferences$ | async"
-              [ngValue]="reference"
-            >
-              <ng-container *ngIf="reference.kind === 'attribute'">
-                Attribute {{ reference.document.name }}.{{ reference.name }}
-              </ng-container>
-              <ng-container *ngIf="reference.kind === 'argument'">
-                Argument {{ reference.name }}
-              </ng-container>
-            </option>
-          </select>
         </div>
 
         <div class="flex justify-center items-center mt-10 mb-11">

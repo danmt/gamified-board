@@ -99,8 +99,8 @@ export class UpdateCollectionAttributesModalDirective {
       (keydown)="onKeyDown($event)"
       (pgCloseModal)="onClose()"
     >
-      <div class="flex items-center w-full mb-4 mt-6">
-        <h1 class="text-3xl bp-font-game uppercase mr-6">
+      <div class="flex items-center w-full mb-4">
+        <h1 class="text-3xl bp-font-game-title uppercase mr-6">
           Collection attributes
         </h1>
 
@@ -133,7 +133,12 @@ export class UpdateCollectionAttributesModalDirective {
               [cdkDragData]="attributeForm.value"
             >
               <div cdkDragHandle>
-                <svg width="24px" fill="currentColor" viewBox="0 0 24 15">
+                <svg
+                  class="cursor-grab"
+                  width="24px"
+                  fill="currentColor"
+                  viewBox="0 0 24 15"
+                >
                   <path
                     d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"
                   ></path>

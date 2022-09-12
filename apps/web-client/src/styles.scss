@@ -3,8 +3,24 @@
 @tailwind utilities;
 @import '@angular/cdk/overlay-prebuilt.css';
 
-.cdk-overlay-container {
-  z-index: 20 !important;
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400&display=swap');
+
+@font-face {
+  font-family: 'CaptureIt';
+  src: url('./assets/fonts/CaptureIt.ttf');
+}
+
+@font-face {
+  font-family: 'ExxaGame';
+  src: url('./assets/fonts/exxa_game.ttf');
+}
+
+.bp-font-game-title {
+  font-family: 'CaptureIt' !important;
+}
+
+.bp-font-game {
+  font-family: 'Space Grotesk' !important;
 }
 
 /* You can add global styles to this file, and also import other style files */
@@ -30,17 +46,13 @@ body,
   }
 }
 
-@font-face {
-  font-family: 'game-font';
-  src: url('./assets/fonts/exxa_game.ttf');
+.bp-bg-yellow-texture {
+  background-image: url('./assets/skins/futuristic/yellow/repeated-background.png');
+  background-repeat: repeat;
 }
 
-.bp-font-game {
-  font-family: 'game-font';
-}
-
-.bp-bg-futuristic {
-  background-image: url('./assets/skins/futuristic/repetead-background.png');
+.bp-bg-green-texture {
+  background-image: url('./assets/skins/futuristic/repeated-background.png');
   background-repeat: repeat;
 }
 
@@ -455,16 +467,19 @@ body,
 
 /* Handle */
 ::-webkit-scrollbar-thumb {
-  background: #3c7364;
+  background: #656565;
 }
 
 /* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {
-  background: #275045;
+  background: #565656;
 }
 
 //temp
-
 .cdk-drag-placeholder {
   opacity: 0.4;
+}
+
+.cdk-overlay-container {
+  z-index: 20 !important;
 }

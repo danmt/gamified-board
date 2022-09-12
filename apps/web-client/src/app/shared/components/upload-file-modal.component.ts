@@ -97,13 +97,14 @@ export class UploadFileModalDirective {
       (keydown)="onKeyDown($event)"
       (pgCloseModal)="onClose()"
     >
-      <h1 class="mt-8 mb-6 bp-font-game text-3xl">Upload Thumbnail</h1>
+      <h1 class="mb-6 bp-font-game-title text-3xl">Upload Thumbnail</h1>
 
       <form [formGroup]="form" (ngSubmit)="onSubmit()">
         <input
           type="file"
           (change)="onFileChange($event)"
           formControlName="file"
+          class="mb-5"
         />
 
         <img

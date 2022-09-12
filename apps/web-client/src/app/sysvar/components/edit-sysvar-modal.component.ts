@@ -15,7 +15,6 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { ModalComponent } from '../../shared/components';
 import {
   Entity,
   generateId,
@@ -23,6 +22,7 @@ import {
   Option,
   StopKeydownPropagationDirective,
 } from '../../shared';
+import { ModalComponent } from '../../shared/components';
 
 export type Sysvar = Entity<{
   name: string;
@@ -116,7 +116,7 @@ export class UpdateSysvarModalDirective {
         class="overflow-y-auto max-h-[500px]"
       >
         <div class="mb-4">
-          <label class="block bp-font-game text-xl" for="sysvar-id-input"
+          <label class="block bp-font-game-title text-xl" for="sysvar-id-input"
             >Sysvar ID</label
           >
           <div class="flex items-center justify-between w-full">

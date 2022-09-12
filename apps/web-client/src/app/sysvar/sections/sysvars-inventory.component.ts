@@ -29,7 +29,7 @@ import { SysvarApiService } from '../services';
       [pgPageSize]="pageSize"
       (pgSetPage)="onSetPage($event)"
     >
-      <h2 class="bp-font-game text-3xl" pgInventoryTitle>Sysvars</h2>
+      <h2 class="bp-font-game-title text-3xl" pgInventoryTitle>Sysvars</h2>
 
       <button
         class="bp-button-add-futuristic z-20"
@@ -69,7 +69,7 @@ import { SysvarApiService } from '../services';
             <div
               class="w-full h-full absolute z-20 bg-black bg-opacity-50"
             ></div>
-            <div class="bg-green-800 p-0.5 w-11 h-11">
+            <div class="bg-gray-600 p-0.5 w-11 h-11">
               <img
                 class="w-full h-full object-cover"
                 [src]="sysvar.thumbnailUrl"
@@ -86,7 +86,7 @@ import { SysvarApiService } from '../services';
             (cdkDragStarted)="onDragStart($event)"
             (cdkDragEnded)="onDragEnd()"
           >
-            <div class="bg-green-800 p-0.5 w-11 h-11">
+            <div class="bg-gray-600 p-0.5 w-11 h-11">
               <img
                 class="w-full h-full object-cover"
                 [src]="sysvar.thumbnailUrl"

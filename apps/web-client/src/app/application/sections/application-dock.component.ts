@@ -45,9 +45,9 @@ interface HotKey {
       >
         <div class="flex gap-4 justify-center items-start">
           <img
-            class="w-[140px] object-cover"
             [src]="selected?.thumbnailUrl"
             pgDefaultImage="assets/generic/application.png"
+            class="w-[100px] h-[106px] overflow-hidden rounded-xl"
           />
 
           <div>
@@ -57,7 +57,7 @@ interface HotKey {
             <p class="text-base">{{ selected?.kind }}</p>
           </div>
 
-          <div>
+          <div class="ml-10">
             <h2
               class="text-xl"
               *ngIf="(currentApplicationId$ | ngrxPush) === selected.id"

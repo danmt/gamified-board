@@ -89,7 +89,7 @@ export type InventoryDirection = 'left' | 'right';
 })
 export class InventoryComponent {
   @HostBinding('class') class =
-    'flex flex-col relative z-40 bp-bg-futuristic rounded-[30px]';
+    'flex flex-col relative z-40 bp-bg-yellow-texture rounded-[30px]';
 
   @Input() pgPageSize = 24;
   @Input() pgPage = 1;

@@ -16,7 +16,7 @@ export type DockDirection = 'right' | 'left';
 
     <!-- borders -->
     <div
-      class="bp-skin-outer-metal-border-top absolute -top-4 w-4/6 left-0 right-0 mx-auto my-0 z-20"
+      class="bp-skin-outer-metal-border-top absolute -top-4 w-[70%] left-0 right-0 mx-auto my-0 z-20"
     ></div>
     <div
       class="bp-skin-outer-metal-border-right absolute -right-5 h-5/6 top-10 bottom-0 my-auto mx-0 z-20"
@@ -35,5 +35,5 @@ export type DockDirection = 'right' | 'left';
 })
 export class SecondaryDockComponent {
   @HostBinding('class') class =
-    'p-10 bp-bg-futuristic relative rounded-t-[35px]';
+    'p-10 pb-5 bp-bg-yellow-texture relative rounded-t-[35px]';
 }

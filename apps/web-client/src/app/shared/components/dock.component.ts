@@ -35,5 +35,5 @@ export type DockDirection = 'right' | 'left';
 })
 export class DockComponent {
   @HostBinding('class') class =
-    'p-10 bp-bg-futuristic relative rounded-t-[35px]';
+    'p-10 pb-5 bp-bg-yellow-texture relative rounded-t-[35px]';
 }
