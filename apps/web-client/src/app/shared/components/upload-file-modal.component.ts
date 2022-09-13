@@ -120,12 +120,12 @@ export class UploadFileModalDirective {
           >
             Confirm
           </button>
-          <button
+          <!--<button
             class="bp-button-error-futuristic text-black bp-font-game uppercase"
             (click)="onClose()"
           >
             Cancel
-          </button>
+          </button>-->
         </div>
       </form>
     </pg-modal>

@@ -84,12 +84,12 @@ export class ConfirmModalDirective {
         >
           Confirm
         </button>
-        <button
+        <!--<button
           class="bp-button-error-futuristic text-black bp-font-game uppercase"
           (click)="onCancel()"
         >
           Cancel
-        </button>
+        </button>-->
       </div>
     </pg-modal>
   `,

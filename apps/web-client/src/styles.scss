@@ -208,10 +208,17 @@ body,
 .bp-button-futuristic {
   background-color: transparent;
   background-image: url('./assets/skins/futuristic/button-normal.png');
-  background-repeat: no-repeat;
-  width: 229px;
-  height: 69px;
-  font-size: 24px;
+  background-repeat: repeat;
+  min-width: 127px;
+  min-height: 39px;
+  font-size: 20px;
+  border-radius: 4px;
+  -webkit-box-shadow: 0px 7px 10px 1px rgba(0, 0, 0, 0.5);
+  -moz-box-shadow: 0px 7px 10px 1px rgba(0, 0, 0, 0.5);
+  box-shadow: 0px 7px 10px 1px rgba(0, 0, 0, 0.5);
+  color: white;
+  font-family: 'CaptureIt' !important;
+  border: 2px solid #515153;
 }
 
 .bp-button-futuristic:hover {
