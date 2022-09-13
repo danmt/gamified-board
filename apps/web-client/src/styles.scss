@@ -489,3 +489,7 @@ body,
 .cdk-overlay-container {
   z-index: 20 !important;
 }
+
+.tooltip-boards-heigh {
+  height: calc(100% - 40px) !important;
+}

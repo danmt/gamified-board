@@ -20,10 +20,10 @@ import { Component, HostBinding } from '@angular/core';
 
     <!-- outer borders-->
     <div
-      class="bp-skin-outer-mini-metal-border-right absolute right-0 h-[86%] top-0 bottom-0 my-auto mx-0 z-30 rounded-2xl"
+      class="bp-skin-outer-mini-metal-border-right absolute right-0 top-0 bottom-0 my-auto mx-0 z-30 rounded-2x tooltip-boards-heigh"
     ></div>
     <div
-      class="bp-skin-outer-mini-metal-border-left absolute left-0 h-[86%] top-0 bottom-0 my-auto mx-0 z-30 rounded-2xl"
+      class="bp-skin-outer-mini-metal-border-left absolute left-0  top-0 bottom-0 my-auto mx-0 z-30 rounded-2xl tooltip-boards-heigh"
     ></div>
     <div
       class="bp-skin-outer-mini-metal-border-top absolute top-0 w-5/6 left-0 right-0 mx-auto my-0 z-30 rounded-2xl"
