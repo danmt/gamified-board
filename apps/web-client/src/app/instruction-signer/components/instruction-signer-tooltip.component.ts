@@ -91,9 +91,7 @@ export class InstructionSignerTooltipDirective implements OnDestroy {
   selector: 'pg-instruction-signer-tooltip',
   template: `
     <pg-tooltip class="relative" *ngIf="pgInstructionSigner !== null">
-      <header
-        class="bp-bg-yellow-texture flex gap-2 items-center bp-font-game p-4"
-      >
+      <header class="p-2 flex gap-2 items-start bg-white bg-opacity-10">
         <img
           src="assets/generic/signer.png"
           pgDefaultImage="assets/generic/signer.png"

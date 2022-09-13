@@ -26,9 +26,8 @@ interface HotKey {
   selector: 'pg-center-dock-section',
   template: `
     <pg-dock
-      class="flex justify-center items-center"
+      class="flex justify-center items-center min-w-[615px] h-28"
       *ngrxLet="slots$; let slots"
-      style="width: 615px; height: 116px"
     >
       <ng-container
         *ngrxLet="hotkeys$; let hotkeys"
@@ -46,7 +45,6 @@ interface HotKey {
             cdkDropList
             (cdkDropListDropped)="onDropped($event)"
             class="relative"
-            style="width: 2.89rem; height: 2.89rem"
           >
             <ng-container *ngrxLet="hotkeys$; let hotkeys">
               <span

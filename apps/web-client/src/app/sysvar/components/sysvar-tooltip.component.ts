@@ -96,21 +96,17 @@ export class SysvarTooltipDirective implements OnDestroy {
       style="min-width: 250px; max-width: 350px"
       *ngIf="pgSysvar !== null"
     >
-      <div>
-        <header
-          class="bp-bg-yellow-texture flex gap-2 items-center bp-font-game p-4"
-        >
-          <img
-            [src]="pgSysvar.thumbnailUrl"
-            pgDefaultImage="assets/generic/sysvar.png"
-            class="w-12 h-10 object-cover"
-          />
+      <header class="p-2 flex gap-2 items-start bg-white bg-opacity-10">
+        <img
+          [src]="pgSysvar.thumbnailUrl"
+          pgDefaultImage="assets/generic/sysvar.png"
+          class="w-12 h-10 object-cover"
+        />
 
-          <div class="ml-4">
-            <h3 class="uppercase text-xl">{{ pgSysvar.name }}</h3>
-          </div>
-        </header>
-      </div>
+        <div class="ml-4">
+          <h3 class="uppercase text-xl">{{ pgSysvar.name }}</h3>
+        </div>
+      </header>
 
       <div
         *ngIf="pgPosition === 'right'"
