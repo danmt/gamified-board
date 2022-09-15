@@ -10,6 +10,7 @@ import {
   Input,
   OnDestroy,
 } from '@angular/core';
+import { TooltipComponent } from '../../shared/components/tooltip.component';
 import { DefaultImageDirective } from '../../shared/directives';
 import {
   getPosition,
@@ -93,7 +94,7 @@ export class InstructionTaskTooltipDirective implements OnDestroy {
 @Component({
   selector: 'pg-instruction-task-tooltip',
   template: `
-    <div
+    <pg-tooltip
       class="relative"
       style="min-width: 250px; max-width: 350px"
       *ngIf="pgInstructionTask !== null"
@@ -148,10 +149,10 @@ export class InstructionTaskTooltipDirective implements OnDestroy {
           <polygon points="50 15, 100 100, 0 100" />
         </svg>
       </div>
-    </div>
+    </pg-tooltip>
   `,
   standalone: true,
-  imports: [CommonModule, DefaultImageDirective],
+  imports: [CommonModule, DefaultImageDirective, TooltipComponent],
 })
 export class InstructionTaskTooltipComponent {
   @Input() pgInstructionTask: Option<InstructionTaskTooltip> = null;

@@ -104,22 +104,22 @@ import { ActiveStore, BoardStore } from '../stores';
 
     <pg-collections-inventory
       *ngIf="isCollectionsSectionOpen$ | ngrxPush"
-      class="fixed right-0 top-24"
+      class="fixed -right-4 top-24"
     ></pg-collections-inventory>
 
     <pg-sysvars-inventory
       *ngIf="isSysvarsSectionOpen$ | ngrxPush"
-      class="fixed right-0 top-24"
+      class="fixed -right-4 top-24"
     ></pg-sysvars-inventory>
 
     <pg-instructions-inventory
       *ngIf="isInstructionsSectionOpen$ | ngrxPush"
-      class="fixed left-0 top-24"
+      class="fixed -left-4 top-24"
     ></pg-instructions-inventory>
 
     <pg-applications-inventory
       *ngIf="isApplicationsSectionOpen$ | ngrxPush"
-      class="fixed left-0 top-24"
+      class="fixed -left-4 top-24"
     ></pg-applications-inventory>
 
     <pg-active-application></pg-active-application>

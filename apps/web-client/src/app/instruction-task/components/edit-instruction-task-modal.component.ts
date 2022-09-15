@@ -78,22 +78,19 @@ export class UpdateInstructionTaskModalDirective {
   selector: 'pg-edit-instruction-task-modal',
   template: `
     <pg-modal
-      class="px-6 pt-8 pb-4 text-white min-w-[400px] min-h-[300px]"
+      class="text-white min-w-[400px] min-h-[300px]"
       pgStopKeydownPropagation
       pgKeyboardListener
       (keydown)="onKeyDown($event)"
+      (pgCloseModal)="onClose()"
     >
       <div class="flex justify-between w-full">
-        <h1 class="text-center text-3xl mb-4 bp-font-game uppercase">
+        <h1 class="text-center text-3xl mb-4 bp-font-game-title uppercase">
           {{ instructionTask === null ? 'Create' : 'Update' }} task
         </h1>
-        <button
-          class="bp-button-close-futuristic z-20 outline-0"
-          (click)="onClose()"
-        ></button>
       </div>
 
-      <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="mb-14">
         <div class="mb-4">
           <label class="block bp-font-game text-xl" for="task-id-input"
             >Task ID</label

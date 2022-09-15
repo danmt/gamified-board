@@ -67,33 +67,29 @@ export class ConfirmModalDirective {
   selector: 'pg-confirm-modal',
   template: `
     <pg-modal
-      class="px-6 pt-10 pb-4 text-white"
+      class="text-white "
       pgStopKeydownPropagation
       pgKeyboardListener
       (keydown)="onKeyDown($event)"
+      (pgCloseModal)="onClose()"
     >
-      <button
-        class="bp-button-close-futuristic z-20 outline-0 absolute right-10 top-5"
-        (click)="onClose()"
-      ></button>
-
-      <h1 class="mt-10 mb-10 bp-font-game text-3xl">
+      <h1 class=" bp-font-game-title text-3xl">
         {{ message }}
       </h1>
 
-      <div class="flex justify-center gap-2">
+      <div class="flex justify-center gap-2 mt-10 mb-10">
         <button
           class="bp-button-futuristic text-black bp-font-game uppercase"
           (click)="onConfirm()"
         >
           Confirm
         </button>
-        <button
+        <!--<button
           class="bp-button-error-futuristic text-black bp-font-game uppercase"
           (click)="onCancel()"
         >
           Cancel
-        </button>
+        </button>-->
       </div>
     </pg-modal>
   `,
@@ -105,7 +101,7 @@ export class ConfirmModalDirective {
   ],
 })
 export class ConfirmModalComponent {
-  private readonly _dialogRef =
+  _dialogRef =
     inject<DialogRef<ConfirmPayload, ConfirmModalComponent>>(DialogRef);
   private readonly _data = inject<ConfirmData>(DIALOG_DATA);
 

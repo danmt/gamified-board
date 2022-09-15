@@ -81,27 +81,20 @@ export class UpdateInstructionApplicationModalDirective {
   selector: 'pg-edit-instruction-application-modal',
   template: `
     <pg-modal
-      class="px-6 pt-8 pb-4 text-white min-w-[400px] min-h-[300px]"
+      class="text-white min-w-[400px] min-h-[300px]"
       pgStopKeydownPropagation
       pgKeyboardListener
       (keydown)="onKeyDown($event)"
+      (pgCloseModal)="onClose()"
     >
       <div class="flex justify-between w-full">
-        <h1 class="text-center text-3xl mb-4 bp-font-game uppercase">
+        <h1 class="text-center text-3xl mb-4 bp-font-game-title uppercase">
           {{ instructionApplication === null ? 'Create' : 'Update' }}
           application
         </h1>
-        <button
-          class="bp-button-close-futuristic z-20 outline-0"
-          (click)="onClose()"
-        ></button>
       </div>
 
-      <form
-        [formGroup]="form"
-        (ngSubmit)="onSubmit()"
-        class="max-h-96 overflow-y-auto"
-      >
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="overflow-y-auto">
         <div class="mb-4">
           <label
             class="block bp-font-game text-xl"
@@ -146,7 +139,7 @@ export class UpdateInstructionApplicationModalDirective {
           />
         </div>
 
-        <div class="flex justify-center items-center mt-10">
+        <div class="flex justify-center items-center mt-10 mb-14">
           <button
             type="submit"
             class="bp-button-futuristic text-black bp-font-game uppercase"

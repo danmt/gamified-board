@@ -15,14 +15,14 @@ import { ApplicationTooltipDirective } from '../components';
   selector: 'pg-applications-inventory',
   template: `
     <pg-inventory
-      class="mt-10 min-w-[300px] min-h-[500px] max-h-[500px]"
+      class="mt-10 min-w-[300px] min-h-[520px] max-h-[520px]"
       pgDirection="left"
       [pgTotal]="(total$ | ngrxPush) ?? 0"
       [pgPage]="(page$ | ngrxPush) ?? 1"
       [pgPageSize]="pageSize"
       (pgSetPage)="onSetPage($event)"
     >
-      <h2 pgInventoryTitle class="bp-font-game text-3xl">Applications</h2>
+      <h2 pgInventoryTitle class="bp-font-game-title text-3xl">Applications</h2>
 
       <div
         pgInventoryBody
@@ -55,7 +55,7 @@ import { ApplicationTooltipDirective } from '../components';
             <div
               class="w-full h-full absolute z-20 bg-black bg-opacity-50"
             ></div>
-            <div class="bg-green-800 p-0.5 w-11 h-11">
+            <div class="bg-gray-600 p-0.5 w-11 h-11">
               <img
                 class="w-full h-full object-cover"
                 [src]="application.thumbnailUrl"
@@ -72,7 +72,7 @@ import { ApplicationTooltipDirective } from '../components';
             (cdkDragStarted)="onDragStart($event)"
             (cdkDragEnded)="onDragEnd()"
           >
-            <div class="bg-green-800 p-0.5 w-11 h-11">
+            <div class="bg-gray-600 p-0.5 w-11 h-11">
               <img
                 class="w-full h-full object-cover"
                 [src]="application.thumbnailUrl"

@@ -24,12 +24,13 @@ import { DefaultImageDirective } from '../directives';
         <img
           [src]="pgThumbnailUrl"
           [pgDefaultImage]="pgDefaultImageUrl"
-          class="w-9 h-9 object-cover"
+          class="w-9 h-9"
         />
       </figure>
     </button>
 
     <ng-template #emptySlot>
+      <div class="bp-skin-dock-icon-border absolute -top-0.5 -left-0.5"></div>
       <div class="w-9 h-9"></div>
     </ng-template>
   `,

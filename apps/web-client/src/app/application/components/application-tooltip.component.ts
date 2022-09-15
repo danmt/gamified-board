@@ -10,6 +10,7 @@ import {
   Input,
   OnDestroy,
 } from '@angular/core';
+import { TooltipComponent } from '../../shared/components/tooltip.component';
 import { DefaultImageDirective } from '../../shared/directives';
 import {
   getPosition,
@@ -96,12 +97,12 @@ export class ApplicationTooltipDirective implements OnDestroy {
 @Component({
   selector: 'pg-application-tooltip',
   template: `
-    <div
+    <pg-tooltip
       class="relative"
       style="min-width: 250px; max-width: 350px"
       *ngIf="pgApplication !== null"
     >
-      <header class="p-2 flex gap-2 items-start bg-slate-600">
+      <header class="p-2 flex gap-2 items-start bg-white bg-opacity-10">
         <img
           [src]="pgApplication.thumbnailUrl"
           pgDefaultImage="assets/generic/application.png"
@@ -109,30 +110,36 @@ export class ApplicationTooltipDirective implements OnDestroy {
         />
 
         <div>
-          <h3 class="uppercase text-xl">{{ pgApplication.name }}</h3>
+          <h3 class="uppercase text-xl bp-font-game">
+            {{ pgApplication.name }}
+          </h3>
         </div>
       </header>
 
-      <div class="p-2 bg-slate-700">
+      <div class="p-2 ">
         <p class="uppercase">Collections</p>
 
         <section class="flex gap-2 flex-wrap">
+          <article *ngIf="pgApplication.collections.length === 0">None</article>
           <article
             *ngFor="let collection of pgApplication.collections"
-            class="border border-slate-900 p-1"
+            class="border border-gray-400 p-1"
           >
             <p class="text-xs">{{ collection.name }}</p>
           </article>
         </section>
       </div>
 
-      <div class="p-2 bg-slate-700">
+      <div class="p-2">
         <p class="uppercase">Instructions</p>
 
         <section class="flex gap-2 flex-wrap">
+          <article *ngIf="pgApplication.instructions.length === 0">
+            None
+          </article>
           <article
             *ngFor="let instruction of pgApplication.instructions"
-            class="border border-slate-900 p-1"
+            class="border border-gray-400 p-1"
           >
             <p class="text-xs">{{ instruction.name }}</p>
           </article>
@@ -141,43 +148,43 @@ export class ApplicationTooltipDirective implements OnDestroy {
 
       <div
         *ngIf="pgPosition === 'right'"
-        class="absolute -left-4 -translate-y-1/2 top-1/2  w-4 h-4 -rotate-90"
+        class="absolute -left-8 -translate-y-1/2 top-1/2  w-4 h-4 -rotate-90"
       >
-        <svg id="triangle" viewBox="0 0 100 100" fill="#334155">
+        <svg id="triangle" viewBox="0 0 100 100" fill="#565656">
           <polygon points="50 15, 100 100, 0 100" />
         </svg>
       </div>
 
       <div
         *ngIf="pgPosition === 'left'"
-        class="absolute -right-4 -translate-y-1/2 top-1/2  w-4 h-4 rotate-90"
+        class="absolute -right-8 -translate-y-1/2 top-1/2  w-4 h-4 rotate-90"
       >
-        <svg id="triangle" viewBox="0 0 100 100" fill="#334155">
+        <svg id="triangle" viewBox="0 0 100 100" fill="#565656">
           <polygon points="50 15, 100 100, 0 100" />
         </svg>
       </div>
 
       <div
         *ngIf="pgPosition === 'top'"
-        class="absolute -bottom-4 -translate-x-1/2 left-1/2  w-4 h-4 rotate-180"
+        class="absolute -bottom-8 -translate-x-1/2 left-1/2  w-4 h-4 rotate-180"
       >
-        <svg id="triangle" viewBox="0 0 100 100" fill="#334155">
+        <svg id="triangle" viewBox="0 0 100 100" fill="#565656">
           <polygon points="50 15, 100 100, 0 100" />
         </svg>
       </div>
 
       <div
         *ngIf="pgPosition === 'bottom'"
-        class="absolute -top-4 -translate-x-1/2 left-1/2  w-4 h-4 rotate"
+        class="absolute -top-8 -translate-x-1/2 left-1/2  w-4 h-4 rotate"
       >
-        <svg id="triangle" viewBox="0 0 100 100" fill="#334155">
+        <svg id="triangle" viewBox="0 0 100 100" fill="#565656">
           <polygon points="50 15, 100 100, 0 100" />
         </svg>
       </div>
-    </div>
+    </pg-tooltip>
   `,
   standalone: true,
-  imports: [CommonModule, DefaultImageDirective],
+  imports: [CommonModule, DefaultImageDirective, TooltipComponent],
 })
 export class ApplicationTooltipComponent {
   @Input() pgApplication: Option<ApplicationTooltip> = null;

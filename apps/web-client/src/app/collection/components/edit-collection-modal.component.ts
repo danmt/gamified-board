@@ -16,6 +16,7 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
+import { ModalComponent } from '../../shared/components';
 import {
   KeyboardListenerDirective,
   StopKeydownPropagationDirective,
@@ -121,68 +122,71 @@ export class UpdateCollectionModalDirective {
 @Component({
   selector: 'pg-edit-collection-modal',
   template: `
-    <div
-      class="px-4 pt-8 pb-4 bg-white shadow-xl relative"
+    <pg-modal
+      class=" text-white min-w-[400px] min-h-[300px]"
       pgStopKeydownPropagation
       pgKeyboardListener
       (keydown)="onKeyDown($event)"
+      (pgCloseModal)="onClose()"
     >
-      <button
-        class="absolute top-2 right-2 rounded-full border border-black leading-none w-6 h-6"
-        (click)="onClose()"
-      >
-        x
-      </button>
-
-      <h1 class="text-center text-xl mb-4">
-        {{ collection === null ? 'Create' : 'Update' }} collection
-      </h1>
+      <div class="flex justify-between w-full">
+        <h1 class="text-3xl mb-4 bp-font-game-title uppercase">
+          {{ collection === null ? 'Create' : 'Update' }} collection
+        </h1>
+      </div>
 
       <form
         [formGroup]="form"
         (ngSubmit)="onSubmit()"
-        class="max-h-96 overflow-y-auto"
+        class="overflow-y-auto max-h-[515px]"
       >
-        <div>
-          <label class="block" for="collection-id-input">Collection ID</label>
-          <input
-            class="block border-b-2 border-black"
-            id="collection-id-input"
-            type="text"
-            formControlName="id"
-            [readonly]="collection !== null"
-          />
-          <p *ngIf="collection === null">
+        <div class="mb-4">
+          <label class="block bp-font-game text-xl" for="collection-id-input"
+            >Collection ID</label
+          >
+          <div class="flex items-center justify-between w-full">
+            <input
+              class="bp-input-futuristic p-4 outline-0"
+              id="collection-id-input"
+              type="text"
+              formControlName="id"
+              [readonly]="collection !== null"
+            />
+
+            <button
+              *ngIf="collection === null"
+              class="bp-button-generate-futuristic"
+              type="button"
+              (click)="idControl.setValue(onGenerateId())"
+            ></button>
+          </div>
+          <p class="bp-font-game text-sm" *ngIf="collection === null">
             Hint: The ID cannot be changed afterwards.
           </p>
-          <button
-            *ngIf="collection === null"
-            type="button"
-            (click)="idControl.setValue(onGenerateId())"
-          >
-            Generate
-          </button>
         </div>
 
-        <div>
-          <label class="block" for="collection-name-input">
+        <div class="mb-4">
+          <label class="block bp-font-game text-xl" for="collection-name-input">
             Collection name
           </label>
           <input
-            class="block border-b-2 border-black"
+            class="bp-input-futuristic p-4 outline-0"
             id="collection-name-input"
             type="text"
             formControlName="name"
           />
         </div>
 
-        <div class="flex justify-center items-center mt-4">
-          <button type="submit" class="px-4 py-2 border-blue-500 border">
+        <div class="flex justify-center items-center mt-10 mb-10">
+          <button
+            type="submit"
+            class="bp-button-futuristic text-black bp-font-game uppercase"
+          >
             {{ collection === null ? 'Send' : 'Save' }}
           </button>
         </div>
       </form>
-    </div>
+    </pg-modal>
   `,
   standalone: true,
   imports: [
@@ -191,6 +195,7 @@ export class UpdateCollectionModalDirective {
     DragDropModule,
     StopKeydownPropagationDirective,
     KeyboardListenerDirective,
+    ModalComponent,
   ],
 })
 export class EditCollectionModalComponent {
