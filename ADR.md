@@ -121,3 +121,9 @@ Problem #2: Real-time experience
 We need a way for the graph to stay in sync across clients. One way would be to track each change and mutate the graph's state in firebase, each client just "watches" the graph document as it updates.
 
 NOTE: Given how complex the real-time experience can get for a graph, it might be better to follow a different UI.
+
+UPDATE: Indeed, doing a graph UI is going to be a tough challenge in the given time. For the time sake, we'll let the user define each state of the flow as a "task card" and edges as the connections between these cards.
+
+One thing we have to have in mind with the new UI chosen is that we need to help the user "choose" the right connections. We have to avoid cycles at all costs, each task will have a list of "valid connections" which is just a list of connections that won't lead to a cycle.
+
+To connect a Task to another we click a button that "activates" the task, then the user clicks on a droplist for the task they want to connect to. The UI shows which connections are valid similar to other activate functionalities.

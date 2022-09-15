@@ -46,6 +46,8 @@ export class WorkspaceApiService {
   getFavoriteWorkspaceIds(userId: string) {
     const userRef = doc(this._firestore, `users/${userId}`);
 
+    console.log('da fu');
+
     return collectionData(
       query(
         collectionGroup(this._firestore, 'favorite-workspaces').withConverter<

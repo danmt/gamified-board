@@ -23,6 +23,7 @@ import {
   CollectionsInventoryComponent,
 } from '../../collection/sections';
 import { CollectionsStore } from '../../collection/stores';
+import { DrawerComponent } from '../../drawer/sections';
 import { InstructionApplicationDockComponent } from '../../instruction-application/sections';
 import { InstructionDocumentDockComponent } from '../../instruction-document/sections';
 import { InstructionSignerDockComponent } from '../../instruction-signer/sections';
@@ -53,7 +54,8 @@ import { ActiveStore, BoardStore } from '../stores';
 @Component({
   selector: 'pg-board-page',
   template: `
-    <pg-board-section></pg-board-section>
+    <!-- <pg-board-section></pg-board-section> -->
+    <pg-drawer></pg-drawer>
 
     <pg-left-dock-section class="fixed bottom-0 left-0"></pg-left-dock-section>
 
@@ -156,6 +158,7 @@ import { ActiveStore, BoardStore } from '../stores';
     ActiveInstructionComponent,
     ActiveSysvarComponent,
     ActiveSignerComponent,
+    DrawerComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [
