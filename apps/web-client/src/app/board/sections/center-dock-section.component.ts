@@ -58,7 +58,11 @@ interface HotKey {
               class="bp-skin-dock-icon-border absolute -top-0.5 -left-0.5"
             ></div>
 
-            <div cdkDrag [cdkDragData]="slot?.id">
+            <div
+              cdkDrag
+              [cdkDragData]="slot?.id"
+              class="w-[2.89rem] h-[2.89rem]"
+            >
               <pg-square-button
                 *ngIf="slot !== null"
                 [pgIsActive]="active?.id === slot.id"

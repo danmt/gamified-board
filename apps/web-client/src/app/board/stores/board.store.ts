@@ -368,7 +368,18 @@ export class BoardStore
         const slots = JSON.parse(slotsMap)[`${workspaceId}/${applicationId}`];
 
         this.patchState({
-          slots,
+          slots: slots ?? [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+          ],
         });
       }
     })
