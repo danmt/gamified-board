@@ -10,15 +10,15 @@ import {
   Input,
   OnDestroy,
 } from '@angular/core';
+import { TooltipComponent } from '../../shared/components/tooltip.component';
+import { DefaultImageDirective } from '../../shared/directives';
 import {
-  DefaultImageDirective,
   getPosition,
   isNotNull,
   isNull,
   Option,
   Position,
-} from '../../shared';
-import { TooltipComponent } from '../../shared/components/tooltip.component';
+} from '../../shared/utils';
 
 export interface InstructionSignerTooltip {
   kind: 'instructionSigner';

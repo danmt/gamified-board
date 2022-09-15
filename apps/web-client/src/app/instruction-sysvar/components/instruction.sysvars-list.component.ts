@@ -7,7 +7,8 @@ import {
   Input,
   Output,
 } from '@angular/core';
-import { DefaultImageDirective, Entity, Option } from '../../shared';
+import { DefaultImageDirective } from '../../shared/directives';
+import { Entity, Option } from '../../shared/utils';
 import { InstructionSysvarTooltipDirective } from '../components';
 
 type InstructionSysvar = Entity<{

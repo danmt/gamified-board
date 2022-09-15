@@ -1,5 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { isNull, Option } from '../../shared';
+import { isNull, Option } from '../../shared/utils';
 
 type Kind = 'arguments' | 'applications' | 'documents' | 'signers' | 'sysvars';
 

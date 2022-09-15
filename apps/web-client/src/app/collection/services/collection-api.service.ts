@@ -1,15 +1,21 @@
 import { inject, Injectable } from '@angular/core';
 import {
+  collectionData,
+  collectionGroup,
   deleteDoc,
   doc,
   docData,
+  documentId,
   Firestore,
+  orderBy,
+  query,
   runTransaction,
   setDoc,
   updateDoc,
+  where,
 } from '@angular/fire/firestore';
 import { combineLatest, defer, from, map, Observable, of } from 'rxjs';
-import { Entity } from '../../shared';
+import { Entity } from '../../shared/utils';
 import { CollectionAttributeDto, CollectionDto } from '../utils';
 
 export type CreateCollectionDto = Entity<{
@@ -52,6 +58,32 @@ export class CollectionApiService {
 
     return combineLatest(
       collectionIds.map((collectionId) => this.getCollection(collectionId))
+    );
+  }
+
+  getWorkspaceCollections(workspaceId: string): Observable<CollectionDto[]> {
+    const workspaceRef = doc(this._firestore, `workspaces/${workspaceId}`);
+
+    return collectionData(
+      query(
+        collectionGroup(this._firestore, 'collections').withConverter({
+          fromFirestore: (snapshot) => {
+            const data = snapshot.data();
+
+            return {
+              id: snapshot.id,
+              name: data['name'],
+              thumbnailUrl: data['thumbnailUrl'],
+              attributes: data['attributes'] ?? [],
+              workspaceId,
+              applicationId: data['applicationRef'].id,
+            };
+          },
+          toFirestore: (it) => it,
+        }),
+        where('workspaceRef', '==', workspaceRef),
+        orderBy(documentId())
+      )
     );
   }
 

@@ -15,33 +15,33 @@ import {
   ActiveApplicationComponent,
   ApplicationDockComponent,
   ApplicationsInventoryComponent,
-  ApplicationsStore,
-} from '../../application';
+} from '../../application/sections';
+import { ApplicationsStore } from '../../application/stores';
 import {
   ActiveCollectionComponent,
   CollectionDockComponent,
   CollectionsInventoryComponent,
-  CollectionsStore,
-} from '../../collection';
+} from '../../collection/sections';
+import { CollectionsStore } from '../../collection/stores';
+import { InstructionApplicationDockComponent } from '../../instruction-application/sections';
+import { InstructionDocumentDockComponent } from '../../instruction-document/sections';
+import { InstructionSignerDockComponent } from '../../instruction-signer/sections';
+import { InstructionSysvarDockComponent } from '../../instruction-sysvar/sections';
+import { InstructionTaskDockComponent } from '../../instruction-task/sections';
 import {
   ActiveInstructionComponent,
   InstructionDockComponent,
   InstructionsInventoryComponent,
-  InstructionsStore,
-} from '../../instruction';
-import { InstructionApplicationDockComponent } from '../../instruction-application';
-import { InstructionDocumentDockComponent } from '../../instruction-document';
-import { InstructionSignerDockComponent } from '../../instruction-signer';
-import { InstructionSysvarDockComponent } from '../../instruction-sysvar';
-import { InstructionTaskDockComponent } from '../../instruction-task';
-import { ActiveSignerComponent } from '../../signer';
+} from '../../instruction/sections';
+import { InstructionsStore } from '../../instruction/stores';
+import { ActiveSignerComponent } from '../../signer/sections';
 import {
   ActiveSysvarComponent,
   SysvarDockComponent,
   SysvarsInventoryComponent,
-  SysvarsStore,
-} from '../../sysvar';
-import { WorkspaceStore } from '../../workspace';
+} from '../../sysvar/sections';
+import { SysvarsStore } from '../../sysvar/stores';
+import { WorkspaceStore } from '../../workspace/stores';
 import {
   BoardSectionComponent,
   CenterDockSectionComponent,

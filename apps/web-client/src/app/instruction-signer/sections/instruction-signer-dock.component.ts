@@ -3,17 +3,17 @@ import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { LetModule, PushModule } from '@ngrx/component';
 import { combineLatest, concatMap, EMPTY, map, of, tap } from 'rxjs';
-import { BoardStore, InstructionSignerView } from '../../board';
+import { BoardStore } from '../../board/stores';
+import { InstructionSignerView } from '../../board/utils';
 import {
   ConfirmModalDirective,
-  isNotNull,
-  isNull,
-  KeyboardListenerDirective,
   openConfirmModal,
-  SlotHotkeyPipe,
   SquareButtonComponent,
-} from '../../shared';
+} from '../../shared/components';
 import { SecondaryDockComponent } from '../../shared/components/secondary-dock.component';
+import { KeyboardListenerDirective } from '../../shared/directives';
+import { SlotHotkeyPipe } from '../../shared/pipes';
+import { isNotNull, isNull } from '../../shared/utils';
 import {
   EditInstructionSignerSubmit,
   openEditInstructionSignerModal,

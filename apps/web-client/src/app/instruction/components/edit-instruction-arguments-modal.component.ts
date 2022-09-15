@@ -22,15 +22,12 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
+import { ModalComponent } from '../../shared/components';
 import {
-  Entity,
-  generateId,
-  isNull,
   KeyboardListenerDirective,
-  ModalComponent,
-  Option,
   StopKeydownPropagationDirective,
-} from '../../shared';
+} from '../../shared/directives';
+import { Entity, generateId, isNull, Option } from '../../shared/utils';
 
 export type InstructionArguments = Entity<{
   name: string;

@@ -12,15 +12,13 @@ import { LetModule, PushModule } from '@ngrx/component';
 import { provideComponentStore } from '@ngrx/component-store';
 import { startWith } from 'rxjs';
 import {
-  ApplicationApiService,
   CreateApplicationModalDirective,
   UpdateApplicationModalDirective,
-} from '../../application';
-import { Option } from '../../shared';
-import {
-  EditWorkspaceModalDirective,
-  WorkspaceApiService,
-} from '../../workspace';
+} from '../../application/components';
+import { ApplicationApiService } from '../../application/services';
+import { Option } from '../../shared/utils';
+import { EditWorkspaceModalDirective } from '../../workspace/components';
+import { WorkspaceApiService } from '../../workspace/services';
 import { LobbyStore } from '../stores';
 
 @Component({

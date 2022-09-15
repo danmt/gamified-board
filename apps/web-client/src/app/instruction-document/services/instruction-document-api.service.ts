@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { doc, Firestore, runTransaction } from '@angular/fire/firestore';
 import { defer, from } from 'rxjs';
-import { Entity, Option } from '../../shared';
+import { Entity, Option } from '../../shared/utils';
 import {
   ArgumentReference,
   AttributeReference,

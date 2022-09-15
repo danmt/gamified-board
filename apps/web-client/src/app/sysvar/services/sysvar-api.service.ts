@@ -11,7 +11,7 @@ import {
   updateDoc,
 } from '@angular/fire/firestore';
 import { combineLatest, defer, from, map, Observable, of } from 'rxjs';
-import { Entity } from '../../shared';
+import { Entity } from '../../shared/utils';
 import { SysvarDto } from '../utils';
 
 export type CreateSysvarDto = Entity<{

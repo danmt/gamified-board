@@ -5,9 +5,11 @@ import {
   tapResponse,
 } from '@ngrx/component-store';
 import { combineLatest, EMPTY, map, of, switchMap } from 'rxjs';
-import { ApplicationApiService, ApplicationDto } from '../../application';
-import { isNull, Option } from '../../shared';
-import { WorkspaceApiService, WorkspaceDto } from '../../workspace';
+import { ApplicationApiService } from '../../application/services';
+import { ApplicationDto } from '../../application/utils';
+import { isNull, Option } from '../../shared/utils';
+import { WorkspaceApiService } from '../../workspace/services';
+import { WorkspaceDto } from '../../workspace/utils';
 
 interface ViewModel {
   userId: Option<string>;
@@ -128,7 +130,7 @@ export class LobbyStore
         favoriteWorkspaceIds.map((favoriteWorkspaceId) =>
           combineLatest([
             this._workspaceApiService.getWorkspace(favoriteWorkspaceId),
-            this._workspaceApiService.getWorkspaceApplications(
+            this._applicationApiService.getWorkspaceApplications(
               favoriteWorkspaceId
             ),
           ]).pipe(

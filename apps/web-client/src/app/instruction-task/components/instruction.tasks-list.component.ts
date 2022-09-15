@@ -7,8 +7,9 @@ import {
   Input,
   Output,
 } from '@angular/core';
-import { Brick } from '../../board';
-import { DefaultImageDirective, Entity, Option } from '../../shared';
+import { Brick } from '../../board/utils';
+import { DefaultImageDirective } from '../../shared/directives';
+import { Entity, Option } from '../../shared/utils';
 import { InstructionTaskTooltipDirective } from '../components';
 import { InstructionTaskReferenceDropListIdPipe } from '../pipes';
 

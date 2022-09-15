@@ -1,37 +1,28 @@
 import { CommonModule } from '@angular/common';
 import { Component, HostBinding, inject } from '@angular/core';
 import { PushModule } from '@ngrx/component';
-import {
-  ActiveInstructionApplicationComponent,
-  InstructionApplicationsListComponent,
-} from '../../instruction-application';
-import { ActiveInstructionArgumentComponent } from '../../instruction-argument';
-import {
-  ActiveInstructionDocumentComponent,
-  InstructionDocumentsListComponent,
-} from '../../instruction-document';
-import {
-  ActiveInstructionSignerComponent,
-  InstructionSignersListComponent,
-} from '../../instruction-signer';
-import {
-  ActiveInstructionSysvarComponent,
-  InstructionSysvarsListComponent,
-} from '../../instruction-sysvar';
-import {
-  InstructionsTasksReferencesDropListsIdsPipe,
-  InstructionTaskApiService,
-  InstructionTasksListComponent,
-} from '../../instruction-task';
+import { InstructionApplicationsListComponent } from '../../instruction-application/components';
+import { ActiveInstructionApplicationComponent } from '../../instruction-application/sections';
+import { ActiveInstructionArgumentComponent } from '../../instruction-argument/sections';
+import { InstructionDocumentsListComponent } from '../../instruction-document/components';
+import { ActiveInstructionDocumentComponent } from '../../instruction-document/sections';
+import { InstructionSignersListComponent } from '../../instruction-signer/components';
+import { ActiveInstructionSignerComponent } from '../../instruction-signer/sections';
+import { InstructionSysvarsListComponent } from '../../instruction-sysvar/components';
+import { ActiveInstructionSysvarComponent } from '../../instruction-sysvar/sections';
+import { InstructionTasksListComponent } from '../../instruction-task/components';
+import { InstructionsTasksReferencesDropListsIdsPipe } from '../../instruction-task/pipes';
+import { InstructionTaskApiService } from '../../instruction-task/services';
 import {
   CursorScrollDirective,
-  Entity,
   FollowCursorDirective,
   KeyboardListenerDirective,
-  Option,
-} from '../../shared';
+} from '../../shared/directives';
+import { Entity, Option } from '../../shared/utils';
+
 import { RowComponent } from '../components';
-import { ActiveStore, BoardStore, Brick } from '../stores';
+import { ActiveStore, BoardStore } from '../stores';
+import { Brick } from '../utils';
 
 @Component({
   selector: 'pg-board-section',

@@ -1,12 +1,12 @@
-import { ApplicationDto } from '../../application';
-import { CollectionAttributeDto } from '../../collection';
-import { InstructionDto } from '../../instruction';
-import { InstructionApplicationDto } from '../../instruction-application';
-import { InstructionArgumentDto } from '../../instruction-argument';
-import { InstructionDocumentDto } from '../../instruction-document';
-import { InstructionSignerDto } from '../../instruction-signer';
-import { InstructionSysvarDto } from '../../instruction-sysvar';
-import { Entity, Option } from '../../shared';
+import { ApplicationDto } from '../../application/utils';
+import { CollectionAttributeDto } from '../../collection/utils';
+import { InstructionApplicationDto } from '../../instruction-application/utils';
+import { InstructionArgumentDto } from '../../instruction-argument/utils';
+import { InstructionDocumentDto } from '../../instruction-document/utils';
+import { InstructionSignerDto } from '../../instruction-signer/utils';
+import { InstructionSysvarDto } from '../../instruction-sysvar/utils';
+import { InstructionDto } from '../../instruction/utils';
+import { Entity, Option } from '../../shared/utils';
 
 export type ArgumentReferenceView = {
   kind: 'argument';
@@ -153,3 +153,26 @@ export type InstructionArgumentView = Entity<{
   isOption: boolean;
   ownerId: string;
 }>;
+
+type RawBrickKind = 'instruction' | 'collection' | 'application' | 'sysvar';
+
+interface RawBrick {
+  id: string;
+  kind: RawBrickKind;
+}
+
+type RefinedBrickKind =
+  | 'instructionArgument'
+  | 'instructionDocument'
+  | 'instructionApplication'
+  | 'instructionTask'
+  | 'instructionSigner'
+  | 'instructionSysvar';
+
+interface RefinedBrick {
+  id: string;
+  kind: RefinedBrickKind;
+  instructionId: string;
+}
+
+export type Brick = RawBrick | RefinedBrick;

@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { doc, Firestore, runTransaction } from '@angular/fire/firestore';
 import { defer, from } from 'rxjs';
-import { Entity } from '../../shared';
+import { Entity } from '../../shared/utils';
 import { InstructionApplicationDto } from '../utils';
 
 export type CreateInstructionApplicationDto = Entity<{

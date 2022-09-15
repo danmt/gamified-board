@@ -1,5 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { Option } from '../../shared';
+import { Option } from '../../shared/utils';
 
 @Pipe({
   name: 'pgInstructionTaskReferenceDropListId',

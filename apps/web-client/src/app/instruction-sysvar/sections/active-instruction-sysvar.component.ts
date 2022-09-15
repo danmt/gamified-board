@@ -9,16 +9,16 @@ import {
   map,
   take,
 } from 'rxjs';
-import { ActiveStore, BoardStore } from '../../board';
-import { InstructionTaskApiService } from '../../instruction-task';
+import { ActiveStore, BoardStore } from '../../board/stores';
+import { InstructionTaskApiService } from '../../instruction-task/services';
+import { ActiveComponent } from '../../shared/components';
+import { FollowCursorDirective } from '../../shared/directives';
 import {
-  ActiveComponent,
-  FollowCursorDirective,
   getFirstParentId,
   isNotNull,
   isNull,
   Option,
-} from '../../shared';
+} from '../../shared/utils';
 
 @Component({
   selector: 'pg-active-instruction-sysvar',

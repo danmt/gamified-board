@@ -1,14 +1,14 @@
-import { ApplicationDto } from '../../application';
-import { CollectionDto } from '../../collection';
-import { InstructionDto } from '../../instruction';
-import { InstructionApplicationDto } from '../../instruction-application';
-import { InstructionArgumentDto } from '../../instruction-argument';
-import { InstructionDocumentDto } from '../../instruction-document';
-import { InstructionSignerDto } from '../../instruction-signer';
-import { InstructionSysvarDto } from '../../instruction-sysvar';
-import { InstructionTaskDto } from '../../instruction-task';
-import { isNotNull, isNull, Option } from '../../shared';
-import { SysvarDto } from '../../sysvar';
+import { ApplicationDto } from '../../application/utils';
+import { CollectionDto } from '../../collection/utils';
+import { InstructionApplicationDto } from '../../instruction-application/utils';
+import { InstructionArgumentDto } from '../../instruction-argument/utils';
+import { InstructionDocumentDto } from '../../instruction-document/utils';
+import { InstructionSignerDto } from '../../instruction-signer/utils';
+import { InstructionSysvarDto } from '../../instruction-sysvar/utils';
+import { InstructionTaskDto } from '../../instruction-task/utils';
+import { InstructionDto } from '../../instruction/utils';
+import { isNotNull, isNull, Option } from '../../shared/utils';
+import { SysvarDto } from '../../sysvar/utils';
 import {
   ApplicationView,
   ArgumentReferenceView,

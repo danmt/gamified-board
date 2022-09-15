@@ -3,19 +3,17 @@ import { CommonModule } from '@angular/common';
 import { Component, HostListener, inject } from '@angular/core';
 import { PushModule } from '@ngrx/component';
 import { combineLatest, concatMap, EMPTY, filter, map, take } from 'rxjs';
-import { BoardStore } from '../../board';
+import { BoardStore } from '../../board/stores';
+import { openEditInstructionSysvarModal } from '../../instruction-sysvar/components';
+import { InstructionSysvarApiService } from '../../instruction-sysvar/services';
+import { ActiveComponent } from '../../shared/components';
+import { FollowCursorDirective } from '../../shared/directives';
 import {
-  InstructionSysvarApiService,
-  openEditInstructionSysvarModal,
-} from '../../instruction-sysvar';
-import {
-  ActiveComponent,
-  FollowCursorDirective,
   getFirstParentId,
   isChildOf,
   isNotNull,
   isNull,
-} from '../../shared';
+} from '../../shared/utils';
 
 @Component({
   selector: 'pg-active-sysvar',

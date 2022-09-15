@@ -1,12 +1,12 @@
 import { inject, Injectable } from '@angular/core';
 import { ComponentStore, OnStoreInit } from '@ngrx/component-store';
 import { concatMap, of, tap, withLatestFrom } from 'rxjs';
-import { ApplicationsStore } from '../../application';
-import { CollectionsStore } from '../../collection';
-import { InstructionsStore } from '../../instruction';
-import { isNotNull, isNull, Option } from '../../shared';
-import { SysvarsStore } from '../../sysvar';
-import { WorkspaceStore } from '../../workspace';
+import { ApplicationsStore } from '../../application/stores';
+import { CollectionsStore } from '../../collection/stores';
+import { InstructionsStore } from '../../instruction/stores';
+import { isNotNull, isNull, Option } from '../../shared/utils';
+import { SysvarsStore } from '../../sysvar/stores';
+import { WorkspaceStore } from '../../workspace/stores';
 import {
   populateApplication,
   populateCollection,

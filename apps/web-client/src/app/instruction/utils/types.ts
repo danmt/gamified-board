@@ -1,10 +1,10 @@
-import { InstructionApplicationDto } from '../../instruction-application';
-import { InstructionArgumentDto } from '../../instruction-argument';
-import { InstructionDocumentDto } from '../../instruction-document';
-import { InstructionSignerDto } from '../../instruction-signer';
-import { InstructionSysvarDto } from '../../instruction-sysvar';
-import { InstructionTaskDto } from '../../instruction-task';
-import { Entity } from '../../shared';
+import { InstructionApplicationDto } from '../../instruction-application/utils';
+import { InstructionArgumentDto } from '../../instruction-argument/utils';
+import { InstructionDocumentDto } from '../../instruction-document/utils';
+import { InstructionSignerDto } from '../../instruction-signer/utils';
+import { InstructionSysvarDto } from '../../instruction-sysvar/utils';
+import { InstructionTaskDto } from '../../instruction-task/utils';
+import { Entity } from '../../shared/utils';
 
 export type InstructionDto = Entity<{
   name: string;

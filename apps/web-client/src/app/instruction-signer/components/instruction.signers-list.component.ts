@@ -7,7 +7,7 @@ import {
   Input,
   Output,
 } from '@angular/core';
-import { Entity, Option } from '../../shared';
+import { Entity, Option } from '../../shared/utils';
 import { InstructionSignerTooltipDirective } from '../components';
 
 type InstructionSigner = Entity<{

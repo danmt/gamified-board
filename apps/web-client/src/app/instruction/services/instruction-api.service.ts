@@ -1,16 +1,22 @@
 import { inject, Injectable } from '@angular/core';
 import {
+  collectionData,
+  collectionGroup,
   deleteDoc,
   doc,
   docData,
+  documentId,
   Firestore,
+  orderBy,
+  query,
   runTransaction,
   setDoc,
   updateDoc,
+  where,
 } from '@angular/fire/firestore';
 import { combineLatest, defer, from, map, Observable, of } from 'rxjs';
-import { InstructionArgumentDto } from '../../instruction-argument';
-import { Entity } from '../../shared';
+import { InstructionArgumentDto } from '../../instruction-argument/utils';
+import { Entity } from '../../shared/utils';
 import { InstructionDto } from '../utils';
 
 export type CreateInstructionDto = Entity<{
@@ -58,6 +64,37 @@ export class InstructionApiService {
 
     return combineLatest(
       instructionIds.map((instructionId) => this.getInstruction(instructionId))
+    );
+  }
+
+  getWorkspaceInstructions(workspaceId: string): Observable<InstructionDto[]> {
+    const workspaceRef = doc(this._firestore, `workspaces/${workspaceId}`);
+
+    return collectionData(
+      query(
+        collectionGroup(this._firestore, 'instructions').withConverter({
+          fromFirestore: (snapshot) => {
+            const data = snapshot.data();
+
+            return {
+              id: snapshot.id,
+              name: data['name'],
+              thumbnailUrl: data['thumbnailUrl'],
+              arguments: data['arguments'] ?? [],
+              documents: data['documents'] ?? [],
+              tasks: data['tasks'] ?? [],
+              workspaceId,
+              applicationId: data['applicationRef'].id,
+              applications: data['applications'] ?? [],
+              sysvars: data['sysvars'] ?? [],
+              signers: data['signers'] ?? [],
+            };
+          },
+          toFirestore: (it) => it,
+        }),
+        where('workspaceRef', '==', workspaceRef),
+        orderBy(documentId())
+      )
     );
   }
 

@@ -1,4 +1,4 @@
-import { Entity, Option } from '../../shared';
+import { Entity, Option } from '../../shared/utils';
 
 export type TaskArgumentReferenceDto = Entity<{
   kind: 'argument';

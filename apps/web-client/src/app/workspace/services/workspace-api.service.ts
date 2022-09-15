@@ -15,13 +15,9 @@ import {
   runTransaction,
   startAt,
   updateDoc,
-  where,
 } from '@angular/fire/firestore';
 import { defer, from, map, Observable } from 'rxjs';
-import { ApplicationDto } from '../../application';
-import { CollectionDto } from '../../collection';
-import { InstructionDto } from '../../instruction';
-import { Entity } from '../../shared';
+import { Entity } from '../../shared/utils';
 import { WorkspaceDto } from '../utils';
 
 export type CreateWorkspaceDto = Entity<{
@@ -67,87 +63,6 @@ export class WorkspaceApiService {
         favoriteWorkspacesRefs.map(
           (favoriteWorkspacesRef) => favoriteWorkspacesRef.id
         )
-      )
-    );
-  }
-
-  getWorkspaceApplications(workspaceId: string): Observable<ApplicationDto[]> {
-    const workspaceRef = doc(this._firestore, `workspaces/${workspaceId}`);
-
-    return collectionData(
-      query(
-        collectionGroup(this._firestore, 'applications').withConverter({
-          fromFirestore: (snapshot) => {
-            const data = snapshot.data();
-
-            return {
-              id: snapshot.id,
-              name: data['name'],
-              thumbnailUrl: data['thumbnailUrl'],
-              workspaceId,
-            };
-          },
-          toFirestore: (it) => it,
-        }),
-        where('workspaceRef', '==', workspaceRef),
-        orderBy(documentId())
-      )
-    );
-  }
-
-  getWorkspaceCollections(workspaceId: string): Observable<CollectionDto[]> {
-    const workspaceRef = doc(this._firestore, `workspaces/${workspaceId}`);
-
-    return collectionData(
-      query(
-        collectionGroup(this._firestore, 'collections').withConverter({
-          fromFirestore: (snapshot) => {
-            const data = snapshot.data();
-
-            return {
-              id: snapshot.id,
-              name: data['name'],
-              thumbnailUrl: data['thumbnailUrl'],
-              attributes: data['attributes'] ?? [],
-              workspaceId,
-              applicationId: data['applicationRef'].id,
-            };
-          },
-          toFirestore: (it) => it,
-        }),
-        where('workspaceRef', '==', workspaceRef),
-        orderBy(documentId())
-      )
-    );
-  }
-
-  getWorkspaceInstructions(workspaceId: string): Observable<InstructionDto[]> {
-    const workspaceRef = doc(this._firestore, `workspaces/${workspaceId}`);
-
-    return collectionData(
-      query(
-        collectionGroup(this._firestore, 'instructions').withConverter({
-          fromFirestore: (snapshot) => {
-            const data = snapshot.data();
-
-            return {
-              id: snapshot.id,
-              name: data['name'],
-              thumbnailUrl: data['thumbnailUrl'],
-              arguments: data['arguments'] ?? [],
-              documents: data['documents'] ?? [],
-              tasks: data['tasks'] ?? [],
-              workspaceId,
-              applicationId: data['applicationRef'].id,
-              applications: data['applications'] ?? [],
-              sysvars: data['sysvars'] ?? [],
-              signers: data['signers'] ?? [],
-            };
-          },
-          toFirestore: (it) => it,
-        }),
-        where('workspaceRef', '==', workspaceRef),
-        orderBy(documentId())
       )
     );
   }

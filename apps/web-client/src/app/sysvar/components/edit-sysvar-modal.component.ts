@@ -15,14 +15,12 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import {
-  Entity,
-  generateId,
-  KeyboardListenerDirective,
-  Option,
-  StopKeydownPropagationDirective,
-} from '../../shared';
 import { ModalComponent } from '../../shared/components';
+import {
+  KeyboardListenerDirective,
+  StopKeydownPropagationDirective,
+} from '../../shared/directives';
+import { Entity, generateId, Option } from '../../shared/utils';
 
 export type Sysvar = Entity<{
   name: string;

@@ -1,4 +1,4 @@
-import { Entity } from '../../shared';
+import { Entity } from '../../shared/utils';
 
 export type InstructionArgumentDto = Entity<{
   name: string;
