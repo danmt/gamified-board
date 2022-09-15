@@ -16,12 +16,10 @@ import {
   Validators,
 } from '@angular/forms';
 import {
-  Entity,
-  generateId,
   KeyboardListenerDirective,
-  Option,
   StopKeydownPropagationDirective,
-} from '../../shared';
+} from '../../shared/directives';
+import { Entity, generateId, Option } from '../../shared/utils';
 
 export type Sysvar = Entity<{
   name: string;

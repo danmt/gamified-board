@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
-import { Option } from '../../shared';
+import { Option } from '../../shared/utils';
 
 interface Active {
   thumbnailUrl: string;

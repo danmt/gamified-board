@@ -6,8 +6,8 @@ import {
 } from '@ngrx/component-store';
 import { EMPTY, switchMap } from 'rxjs';
 import { PluginsService } from '../../plugins';
-import { isNull, Option } from '../../shared';
-import { WorkspaceApiService } from '../../workspace';
+import { isNull, Option } from '../../shared/utils';
+import { ApplicationApiService } from '../services';
 import { ApplicationDto } from '../utils';
 
 interface ViewModel {
@@ -26,7 +26,7 @@ export class ApplicationsStore
   implements OnStoreInit
 {
   private readonly _pluginsService = inject(PluginsService);
-  private readonly _workspaceApiService = inject(WorkspaceApiService);
+  private readonly _applicationApiService = inject(ApplicationApiService);
 
   readonly workspaceId$ = this.select(({ workspaceId }) => workspaceId);
   readonly applications$ = this.select(({ applications }) => applications);
@@ -44,7 +44,7 @@ export class ApplicationsStore
         return EMPTY;
       }
 
-      return this._workspaceApiService
+      return this._applicationApiService
         .getWorkspaceApplications(workspaceId)
         .pipe(
           tapResponse(

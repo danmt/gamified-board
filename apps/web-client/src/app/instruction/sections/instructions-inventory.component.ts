@@ -5,13 +5,10 @@ import { Component, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { LetModule, PushModule } from '@ngrx/component';
 import { BehaviorSubject, combineLatest, map } from 'rxjs';
-import { BoardStore } from '../../board';
-import {
-  DefaultImageDirective,
-  InventoryComponent,
-  isNull,
-  Option,
-} from '../../shared';
+import { BoardStore } from '../../board/stores';
+import { InventoryComponent } from '../../shared/components';
+import { DefaultImageDirective } from '../../shared/directives';
+import { isNull, Option } from '../../shared/utils';
 import {
   CreateInstructionModalDirective,
   InstructionTooltipDirective,

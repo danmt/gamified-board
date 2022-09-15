@@ -6,7 +6,7 @@ import {
   Input,
   Renderer2,
 } from '@angular/core';
-import { isNull, Option } from '../../shared';
+import { isNull, Option } from '../../shared/utils';
 
 @Directive({ selector: 'img[pgDefaultImage]', standalone: true })
 export class DefaultImageDirective {

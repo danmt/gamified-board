@@ -6,7 +6,7 @@ import {
   Input,
   Output,
 } from '@angular/core';
-import { Option } from '../../shared';
+import { Option } from '../../shared/utils';
 import { DefaultImageDirective } from '../directives';
 
 @Component({

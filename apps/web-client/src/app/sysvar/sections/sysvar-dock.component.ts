@@ -4,21 +4,22 @@ import { Component, inject } from '@angular/core';
 import { Storage } from '@angular/fire/storage';
 import { LetModule, PushModule } from '@ngrx/component';
 import { combineLatest, concatMap, EMPTY, map, of, tap } from 'rxjs';
-import { BoardStore, SysvarView } from '../../board';
+import { BoardStore } from '../../board/stores';
+import { SysvarView } from '../../board/utils';
 import {
   ConfirmModalDirective,
-  DefaultImageDirective,
-  generateId,
-  isNotNull,
-  isNull,
-  KeyboardListenerDirective,
   openConfirmModal,
   openUploadFileModal,
   openUploadFileProgressModal,
-  SlotHotkeyPipe,
   SquareButtonComponent,
   UploadFileModalDirective,
-} from '../../shared';
+} from '../../shared/components';
+import {
+  DefaultImageDirective,
+  KeyboardListenerDirective,
+} from '../../shared/directives';
+import { SlotHotkeyPipe } from '../../shared/pipes';
+import { generateId, isNotNull, isNull } from '../../shared/utils';
 import {
   EditSysvarSubmit,
   openEditSysvarModal,

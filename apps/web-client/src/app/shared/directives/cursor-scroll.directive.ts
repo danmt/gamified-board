@@ -1,6 +1,6 @@
 import { Directive, HostListener } from '@angular/core';
 import { map, Subscription } from 'rxjs';
-import { distance, isNotNull, isNull, Option } from '../../shared';
+import { distance, isNotNull, isNull, Option } from '../../shared/utils';
 
 @Directive({ selector: '[pgCursorScroll]', standalone: true })
 export class CursorScrollDirective {

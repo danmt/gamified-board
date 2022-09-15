@@ -5,7 +5,7 @@ import {
   tapResponse,
 } from '@ngrx/component-store';
 import { EMPTY, switchMap } from 'rxjs';
-import { isNull, Option } from '../../shared';
+import { isNull, Option } from '../../shared/utils';
 import { WorkspaceApiService } from '../services';
 import { WorkspaceDto } from '../utils';
 

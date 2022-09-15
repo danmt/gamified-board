@@ -5,20 +5,17 @@ import {
   deleteDoc,
   doc,
   docData,
-  DocumentData,
   documentId,
-  DocumentReference,
-  endAt,
   Firestore,
   orderBy,
   query,
   runTransaction,
   setDoc,
-  startAt,
   updateDoc,
+  where,
 } from '@angular/fire/firestore';
 import { defer, from, map, Observable } from 'rxjs';
-import { Entity } from '../../shared';
+import { Entity } from '../../shared/utils';
 import { ApplicationDto } from '../utils';
 
 export type CreateApplicationDto = Entity<{
@@ -55,52 +52,26 @@ export class ApplicationApiService {
     );
   }
 
-  getApplicationInstructionIds(applicationId: string) {
-    const applicationRef = doc(
-      this._firestore,
-      `applications/${applicationId}`
-    );
+  getWorkspaceApplications(workspaceId: string): Observable<ApplicationDto[]> {
+    const workspaceRef = doc(this._firestore, `workspaces/${workspaceId}`);
 
     return collectionData(
       query(
-        collectionGroup(this._firestore, 'instructions').withConverter<
-          DocumentReference<DocumentData>
-        >({
-          fromFirestore: (snapshot) => snapshot.data()['instructionRef'],
-          toFirestore: (it: DocumentData) => it,
-        }),
-        orderBy(documentId()),
-        startAt(applicationRef.path),
-        endAt(applicationRef.path + '\uf8ff')
-      )
-    ).pipe(
-      map((instructionsRefs) =>
-        instructionsRefs.map((instructionRef) => instructionRef.id)
-      )
-    );
-  }
+        collectionGroup(this._firestore, 'applications').withConverter({
+          fromFirestore: (snapshot) => {
+            const data = snapshot.data();
 
-  getApplicationCollectionIds(applicationId: string) {
-    const applicationRef = doc(
-      this._firestore,
-      `applications/${applicationId}`
-    );
-
-    return collectionData(
-      query(
-        collectionGroup(this._firestore, 'collections').withConverter<
-          DocumentReference<DocumentData>
-        >({
-          fromFirestore: (snapshot) => snapshot.data()['collectionRef'],
-          toFirestore: (it: DocumentData) => it,
+            return {
+              id: snapshot.id,
+              name: data['name'],
+              thumbnailUrl: data['thumbnailUrl'],
+              workspaceId,
+            };
+          },
+          toFirestore: (it) => it,
         }),
-        orderBy(documentId()),
-        startAt(applicationRef.path),
-        endAt(applicationRef.path + '\uf8ff')
-      )
-    ).pipe(
-      map((collectionsRefs) =>
-        collectionsRefs.map((collectionRef) => collectionRef.id)
+        where('workspaceRef', '==', workspaceRef),
+        orderBy(documentId())
       )
     );
   }

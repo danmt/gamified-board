@@ -3,19 +3,17 @@ import { CommonModule } from '@angular/common';
 import { Component, HostListener, inject } from '@angular/core';
 import { PushModule } from '@ngrx/component';
 import { combineLatest, concatMap, EMPTY, filter, map, take } from 'rxjs';
-import { BoardStore } from '../../board';
+import { BoardStore } from '../../board/stores';
+import { openEditInstructionDocumentModal } from '../../instruction-document/components';
+import { InstructionDocumentApiService } from '../../instruction-document/services';
+import { ActiveComponent } from '../../shared/components';
+import { FollowCursorDirective } from '../../shared/directives';
 import {
-  InstructionDocumentApiService,
-  openEditInstructionDocumentModal,
-} from '../../instruction-document';
-import {
-  ActiveComponent,
-  FollowCursorDirective,
   getFirstParentId,
   isChildOf,
   isNotNull,
   isNull,
-} from '../../shared';
+} from '../../shared/utils';
 
 @Component({
   selector: 'pg-active-collection',

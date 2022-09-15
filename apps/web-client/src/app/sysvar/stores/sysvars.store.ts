@@ -5,7 +5,7 @@ import {
   tapResponse,
 } from '@ngrx/component-store';
 import { switchMap } from 'rxjs';
-import { Option } from '../../shared';
+import { Option } from '../../shared/utils';
 import { SysvarApiService } from '../services';
 import { SysvarDto } from '../utils';
 

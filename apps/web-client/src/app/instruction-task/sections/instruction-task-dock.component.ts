@@ -3,17 +3,19 @@ import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { LetModule, PushModule } from '@ngrx/component';
 import { combineLatest, concatMap, EMPTY, map, of, tap } from 'rxjs';
-import { BoardStore, InstructionTaskView } from '../../board';
+import { BoardStore } from '../../board/stores';
+import { InstructionTaskView } from '../../board/utils';
 import {
   ConfirmModalDirective,
-  DefaultImageDirective,
-  isNotNull,
-  isNull,
-  KeyboardListenerDirective,
   openConfirmModal,
-  SlotHotkeyPipe,
   SquareButtonComponent,
-} from '../../shared';
+} from '../../shared/components';
+import {
+  DefaultImageDirective,
+  KeyboardListenerDirective,
+} from '../../shared/directives';
+import { SlotHotkeyPipe } from '../../shared/pipes';
+import { isNotNull, isNull } from '../../shared/utils';
 import {
   EditInstructionTaskSubmit,
   openEditInstructionTaskModal,

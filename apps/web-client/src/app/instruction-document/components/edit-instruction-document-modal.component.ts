@@ -17,16 +17,18 @@ import {
   Validators,
 } from '@angular/forms';
 import { Observable } from 'rxjs';
+import { ModalComponent } from '../../shared/components';
+import {
+  KeyboardListenerDirective,
+  StopKeydownPropagationDirective,
+} from '../../shared/directives';
 import {
   Entity,
   generateId,
   isNotNull,
   isNull,
-  KeyboardListenerDirective,
-  ModalComponent,
   Option,
-  StopKeydownPropagationDirective,
-} from '../../shared';
+} from '../../shared/utils';
 
 type ReferenceKind = 'document' | 'signer';
 

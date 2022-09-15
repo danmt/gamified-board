@@ -16,13 +16,10 @@ import {
   Validators,
 } from '@angular/forms';
 import {
-  Entity,
-  generateId,
-  isNull,
   KeyboardListenerDirective,
-  Option,
   StopKeydownPropagationDirective,
-} from '../../shared';
+} from '../../shared/directives';
+import { Entity, generateId, isNull, Option } from '../../shared/utils';
 
 export type Workspace = Entity<{
   name: string;
