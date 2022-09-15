@@ -50,7 +50,6 @@ export interface EditInstructionDocumentData {
 }
 
 export interface EditInstructionDocumentSubmit {
-  id: string;
   name: string;
   method: string;
   payer: Option<{ kind: ReferenceKind; id: string }>;
@@ -125,31 +124,6 @@ export class UpdateInstructionDocumentModalDirective {
         (ngSubmit)="onSubmit()"
         class="overflow-y-auto max-h-[565px]"
       >
-        <div class="mb-4">
-          <label class="block bp-font-game text-xl" for="document-id-input"
-            >Document ID</label
-          >
-          <div class="flex items-center justify-between w-full">
-            <input
-              class="bp-input-futuristic p-4 outline-0"
-              id="document-id-input"
-              type="text"
-              formControlName="id"
-              [readonly]="instructionDocument !== null"
-            />
-
-            <button
-              *ngIf="instructionDocument === null"
-              class="bp-button-generate-futuristic"
-              type="button"
-              (click)="idControl.setValue(onGenerateId())"
-            ></button>
-          </div>
-          <p class="bp-font-game text-sm" *ngIf="instructionDocument === null">
-            Hint: The ID cannot be changed afterwards.
-          </p>
-        </div>
-
         <div class="mb-4">
           <label class="block bp-font-game text-xl" for="document-name-input">
             Document name
@@ -263,10 +237,6 @@ export class EditInstructionDocumentModalComponent {
   readonly instructionDocument = this._data.instructionDocument;
   readonly references$ = this._data.references$;
   readonly form = this._formBuilder.group({
-    id: this._formBuilder.control<string>(this.instructionDocument?.id ?? '', {
-      validators: [Validators.required],
-      nonNullable: true,
-    }),
     name: this._formBuilder.control<string>(
       this.instructionDocument?.name ?? '',
       {
@@ -290,10 +260,6 @@ export class EditInstructionDocumentModalComponent {
     >(this.instructionDocument?.payer ?? null),
   });
 
-  get idControl() {
-    return this.form.get('id') as FormControl<string>;
-  }
-
   get nameControl() {
     return this.form.get('name') as FormControl<string>;
   }
@@ -314,13 +280,11 @@ export class EditInstructionDocumentModalComponent {
 
   onSubmit() {
     if (this.form.valid) {
-      const id = this.idControl.value;
       const name = this.nameControl.value;
       const method = this.methodControl.value;
       const payer = this.payerControl.value;
 
       this._dialogRef.close({
-        id,
         name,
         method,
         payer: isNotNull(payer)

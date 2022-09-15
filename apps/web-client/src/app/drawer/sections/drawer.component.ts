@@ -7,7 +7,6 @@ import {
   ViewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { provideComponentStore } from '@ngrx/component-store';
 import { concatMap, EMPTY } from 'rxjs';
 import { v4 as uuid } from 'uuid';
 import { EventApiService, GraphApiService } from '../services';
@@ -80,7 +79,6 @@ import { Direction } from '../utils';
   ],
   standalone: true,
   imports: [CommonModule, FormsModule],
-  providers: [provideComponentStore(DrawerStore)],
 })
 export class DrawerComponent implements AfterViewInit {
   private readonly _drawerStore = inject(DrawerStore);
@@ -149,6 +147,7 @@ export class DrawerComponent implements AfterViewInit {
               case 'DeleteEdge':
               case 'DeleteNode':
               case 'Init':
+              case 'Click':
               case 'ViewNode':
               case 'UpdateNode':
                 return EMPTY;

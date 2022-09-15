@@ -159,11 +159,14 @@ export class DrawerStore
     }
   }
 
-  async addNode(nodeData: NodeDataDefinition) {
+  async addNode(
+    nodeData: NodeDataDefinition,
+    position?: { x: number; y: number }
+  ) {
     const drawer = await firstValueFrom(this.drawer$);
 
     if (drawer !== null) {
-      drawer.addNode(nodeData);
+      drawer.addNode(nodeData, position);
     }
   }
 

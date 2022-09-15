@@ -30,7 +30,9 @@ export interface EditInstructionSysvarData {
   instructionSysvar: Option<InstructionSysvar>;
 }
 
-export type EditInstructionSysvarSubmit = InstructionSysvar;
+export type EditInstructionSysvarSubmit = {
+  name: string;
+};
 
 export const openEditInstructionSysvarModal = (
   dialog: Dialog,
@@ -92,30 +94,6 @@ export class UpdateInstructionSysvarModalDirective {
 
       <form [formGroup]="form" (ngSubmit)="onSubmit()">
         <div class="mb-4">
-          <label class="block bp-font-game text-xl" for="sysvar-id-input"
-            >Sysvar ID</label
-          >
-          <div class="flex items-center justify-between w-full">
-            <input
-              class="bp-input-futuristic p-4 outline-0"
-              id="sysvar-id-input"
-              type="text"
-              formControlName="id"
-              [readonly]="sysvar !== null"
-            />
-            <button
-              *ngIf="sysvar === null"
-              type="button"
-              (click)="idControl.setValue(onGenerateId())"
-              class="bp-button-generate-futuristic"
-            ></button>
-          </div>
-          <p *ngIf="sysvar === null">
-            Hint: The ID cannot be changed afterwards.
-          </p>
-        </div>
-
-        <div class="mb-4">
           <label class="block bp-font-game text-xl" for="sysvar-name-input">
             Sysvar name
           </label>
@@ -160,19 +138,11 @@ export class EditInstructionSysvarModalComponent {
 
   readonly sysvar = this._data.instructionSysvar;
   readonly form = this._formBuilder.group({
-    id: this._formBuilder.control<string>(this.sysvar?.id ?? '', {
-      validators: [Validators.required],
-      nonNullable: true,
-    }),
     name: this._formBuilder.control<string>(this.sysvar?.name ?? '', {
       validators: [Validators.required],
       nonNullable: true,
     }),
   });
-
-  get idControl() {
-    return this.form.get('id') as FormControl<string>;
-  }
 
   get nameControl() {
     return this.form.get('name') as FormControl<string>;
@@ -180,11 +150,9 @@ export class EditInstructionSysvarModalComponent {
 
   onSubmit() {
     if (this.form.valid) {
-      const id = this.idControl.value;
       const name = this.nameControl.value;
 
       this._dialogRef.close({
-        id,
         name,
       });
     }

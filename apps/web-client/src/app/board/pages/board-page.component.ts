@@ -24,6 +24,7 @@ import {
 } from '../../collection/sections';
 import { CollectionsStore } from '../../collection/stores';
 import { DrawerComponent } from '../../drawer/sections';
+import { DrawerStore } from '../../drawer/stores';
 import { InstructionApplicationDockComponent } from '../../instruction-application/sections';
 import { InstructionDocumentDockComponent } from '../../instruction-document/sections';
 import { InstructionSignerDockComponent } from '../../instruction-signer/sections';
@@ -169,6 +170,7 @@ import { ActiveStore, BoardStore } from '../stores';
     provideComponentStore(CollectionsStore),
     provideComponentStore(InstructionsStore),
     provideComponentStore(SysvarsStore),
+    provideComponentStore(DrawerStore),
   ],
 })
 export class BoardPageComponent implements OnInit {

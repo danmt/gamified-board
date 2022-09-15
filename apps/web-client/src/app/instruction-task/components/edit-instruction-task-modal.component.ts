@@ -30,7 +30,9 @@ export interface EditInstructionTaskData {
   instructionTask: Option<InstructionTask>;
 }
 
-export type EditInstructionTaskSubmit = InstructionTask;
+export type EditInstructionTaskSubmit = {
+  name: string;
+};
 
 export const openEditInstructionTaskModal = (
   dialog: Dialog,
@@ -92,29 +94,6 @@ export class UpdateInstructionTaskModalDirective {
 
       <form [formGroup]="form" (ngSubmit)="onSubmit()" class="mb-14">
         <div class="mb-4">
-          <label class="block bp-font-game text-xl" for="task-id-input"
-            >Task ID</label
-          >
-          <div class="flex items-center justify-between w-full">
-            <input
-              class="bp-input-futuristic p-4 outline-0"
-              id="task-id-input"
-              type="text"
-              formControlName="id"
-              [readonly]="instructionTask !== null"
-            />
-            <button
-              *ngIf="instructionTask === null"
-              class="bp-button-generate-futuristic"
-              (click)="idControl.setValue(onGenerateId())"
-            ></button>
-          </div>
-          <p class="bp-font-game text-sm" *ngIf="instructionTask === null">
-            Hint: The ID cannot be changed afterwards.
-          </p>
-        </div>
-
-        <div class="mb-4">
           <label class="block bp-font-game text-xl" for="task-name-input">
             Task name
           </label>
@@ -156,19 +135,11 @@ export class EditInstructionTaskModalComponent {
 
   readonly instructionTask = this._data.instructionTask;
   readonly form = this._formBuilder.group({
-    id: this._formBuilder.control<string>(this.instructionTask?.id ?? '', {
-      validators: [Validators.required],
-      nonNullable: true,
-    }),
     name: this._formBuilder.control<string>(this.instructionTask?.name ?? '', {
       validators: [Validators.required],
       nonNullable: true,
     }),
   });
-
-  get idControl() {
-    return this.form.get('id') as FormControl<string>;
-  }
 
   get nameControl() {
     return this.form.get('name') as FormControl<string>;
@@ -176,11 +147,9 @@ export class EditInstructionTaskModalComponent {
 
   onSubmit() {
     if (this.form.valid) {
-      const id = this.idControl.value;
       const name = this.nameControl.value;
 
       this._dialogRef.close({
-        id,
         name,
       });
     }

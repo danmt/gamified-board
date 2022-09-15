@@ -2,25 +2,37 @@ import * as cytoscape from 'cytoscape';
 import {
   AddNodeSuccessEvent,
   AddNodeToEdgeSuccessEvent,
+  ClickEvent,
   DeleteEdgeEvent,
   DeleteEdgeSuccessEvent,
   DeleteNodeEvent,
   DeleteNodeSuccessEvent,
   DrawerEvent,
   InitEvent,
+  Node,
   UpdateNodeEvent,
   ViewNodeEvent,
 } from './types';
 
 export const createNode = (
   graph: cytoscape.Core,
-  nodeData: cytoscape.NodeDataDefinition
+  nodeData: cytoscape.NodeDataDefinition,
+  position?: { x: number; y: number }
 ) => {
-  graph.add({ data: nodeData, group: 'nodes', classes: 'bp-bd-node' });
+  graph.add({
+    data: nodeData,
+    group: 'nodes',
+    classes: 'bp-bd-node',
+    position,
+  });
 };
 
 export const isInitEvent = (event: DrawerEvent): event is InitEvent => {
   return event.type === 'Init';
+};
+
+export const isClickEvent = (event: DrawerEvent): event is ClickEvent => {
+  return event.type === 'Click';
 };
 
 export const isAddNodeSuccessEvent = (
@@ -81,7 +93,7 @@ export const createGraph = (
     style: [
       // Style all nodes/edges
       {
-        selector: 'node[label]',
+        selector: 'node',
         style: {
           width: 280,
           height: 85,
@@ -168,29 +180,19 @@ export const createGraph = (
   }).nodeHtmlLabel([
     {
       query: '.bp-bd-node',
-      tpl: function (data: { label: string; kind: string; image: string }) {
-        return (
-          `
+      tpl: (data: Node) =>
+        `
         <div class="bd-custom-node">
-          <div class="bd-custom-node-image" 
-            style="
-                  --bd-bg-image: ` +
-          data.image +
-          `; 
-                  --bd-bg-width: 55px;
-                  "
-          > </div>
+          <div 
+            class="bd-custom-node-image" 
+            style="background-image: url(${data.image});"> 
+          </div>
+          <img src="">
           <div class="bd-custom-node-text">
-            <p> ` +
-          data.kind +
-          `</p>
-            <h1>` +
-          data.label +
-          `</h1>
+            <h2 class="text-xl mt-2">${data.label}</h2>
+            <p class="italic">${data.name}</p>
           </div>
         </div>
-        `
-        );
-      },
+        `,
     },
   ]);
