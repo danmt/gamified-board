@@ -7,8 +7,11 @@ import {
   ViewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { PushModule } from '@ngrx/component';
 import { concatMap, EMPTY } from 'rxjs';
 import { v4 as uuid } from 'uuid';
+import { BackgroundImageMoveDirective } from '../../shared/directives/background-position.directive';
+import { BackgroundImageZoomDirective } from '../../shared/directives/background-zoom.directive';
 import { EventApiService, GraphApiService } from '../services';
 import { DrawerStore } from '../stores';
 import { createGraph, Direction } from '../utils';
@@ -56,7 +59,15 @@ import { createGraph, Direction } from '../utils';
 
         <p>{{ clientId }}</p>
       </div>
-      <div id="cy" class="bp-bg-bricks" #drawerElement></div>
+      <div
+        id="cy"
+        class="bp-bg-bricks"
+        #drawerElement
+        pgBackgroundImageZoom
+        [pgZoomValue]="(zoomSize$ | ngrxPush) ?? '15%'"
+        pgBackgroundImageMove
+        [pgPanValue]="(panDrag$ | ngrxPush) ?? { x: '0', y: '0' }"
+      ></div>
     </div>
   `,
   styles: [
@@ -78,7 +89,13 @@ import { createGraph, Direction } from '../utils';
     `,
   ],
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [
+    CommonModule,
+    PushModule,
+    FormsModule,
+    BackgroundImageZoomDirective,
+    BackgroundImageMoveDirective,
+  ],
 })
 export class DrawerComponent implements AfterViewInit {
   private readonly _drawerStore = inject(DrawerStore);
@@ -90,6 +107,9 @@ export class DrawerComponent implements AfterViewInit {
 
   readonly clientId = uuid();
   readonly graphId = '5l7hFOgMPmJ1SBcZChwe';
+
+  readonly zoomSize$ = this._drawerStore.zoomSize$;
+  readonly panDrag$ = this._drawerStore.panDrag$;
 
   @ViewChild('drawerElement') drawerElementRef: ElementRef<HTMLElement> | null =
     null;
@@ -159,6 +179,8 @@ export class DrawerComponent implements AfterViewInit {
               case 'Click':
               case 'ViewNode':
               case 'UpdateNode':
+              case 'GraphScrolled':
+              case 'PanDragged':
                 return EMPTY;
               default: {
                 return this._eventApiService.emit(

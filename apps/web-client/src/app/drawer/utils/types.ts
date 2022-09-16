@@ -90,6 +90,21 @@ export interface DeleteEdgeSuccessEvent {
   payload: string;
 }
 
+export interface GraphScrolledEvent {
+  type: 'GraphScrolled';
+  payload: {
+    zoomSize: string;
+  };
+}
+
+export interface PanDraggedEvent {
+  type: 'PanDragged';
+  payload: {
+    x: string;
+    y: string;
+  };
+}
+
 export type DrawerEvent =
   | InitEvent
   | ClickEvent
@@ -101,4 +116,6 @@ export type DrawerEvent =
   | DeleteNodeSuccessEvent
   | ViewNodeEvent
   | DeleteEdgeEvent
-  | DeleteEdgeSuccessEvent;
+  | DeleteEdgeSuccessEvent
+  | GraphScrolledEvent
+  | PanDraggedEvent;
