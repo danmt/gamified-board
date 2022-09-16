@@ -1,9 +1,14 @@
 import { Injectable } from '@angular/core';
 import { ComponentStore, OnStoreInit } from '@ngrx/component-store';
 import { Core, EdgeDataDefinition, NodeDataDefinition } from 'cytoscape';
-import { EMPTY, firstValueFrom, switchMap, tap } from 'rxjs';
+import { EMPTY, filter, firstValueFrom, switchMap, tap } from 'rxjs';
 import { Option } from '../../shared/utils';
-import { Direction, Drawer } from '../utils';
+import {
+  Direction,
+  Drawer,
+  isGraphScrolledEvent,
+  isPanDraggedEvent,
+} from '../utils';
 
 interface ViewModel {
   graph: Option<Core>;
@@ -57,6 +62,16 @@ export class DrawerStore
       })
     ),
     (event) => event
+  );
+
+  readonly zoomSize$ = this.select(
+    this.event$.pipe(filter(isGraphScrolledEvent)),
+    (event) => event.payload.zoomSize
+  );
+
+  readonly panDrag$ = this.select(
+    this.event$.pipe(filter(isPanDraggedEvent)),
+    (event) => ({ x: event.payload.x, y: event.payload.y })
   );
 
   readonly setGraph = this.updater<Core>((state, graph) => {

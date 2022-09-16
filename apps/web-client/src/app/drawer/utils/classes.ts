@@ -27,6 +27,31 @@ export class Drawer {
     this.setupEdgeContextMenu();
     this.setupEdgeHandles();
     // Listen to events
+    this._graph.on('scrollzoom', (ev) => {
+      const zoomRatio = 20; // random value to set the amount of zoom made with every scroll
+      const zoomString = (ev.target.zoom() * zoomRatio).toString() + '%';
+
+      this._event.next({
+        type: 'GraphScrolled',
+        payload: {
+          zoomSize: zoomString,
+        },
+      });
+    });
+
+    this._graph.on('dragpan', (ev) => {
+      const pan = ev.target.pan();
+      const xCoord = pan.x.toString() + 'px';
+      const yCoord = pan.y.toString() + 'px';
+
+      this._event.next({
+        type: 'PanDragged',
+        payload: {
+          x: xCoord,
+          y: yCoord,
+        },
+      });
+    });
 
     this._graph.on('local.node-added', (ev, ...extraParams) => {
       const node = extraParams[0] as cytoscape.NodeDataDefinition;

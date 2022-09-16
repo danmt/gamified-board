@@ -8,8 +8,10 @@ import {
   DeleteNodeEvent,
   DeleteNodeSuccessEvent,
   DrawerEvent,
+  GraphScrolledEvent,
   InitEvent,
   Node,
+  PanDraggedEvent,
   UpdateNodeEvent,
   ViewNodeEvent,
 } from './types';
@@ -36,6 +38,18 @@ export const isInitEvent = (event: DrawerEvent): event is InitEvent => {
 
 export const isClickEvent = (event: DrawerEvent): event is ClickEvent => {
   return event.type === 'Click';
+};
+
+export const isGraphScrolledEvent = (
+  event: DrawerEvent
+): event is GraphScrolledEvent => {
+  return event.type === 'GraphScrolled';
+};
+
+export const isPanDraggedEvent = (
+  event: DrawerEvent
+): event is PanDraggedEvent => {
+  return event.type === 'PanDragged';
 };
 
 export const isAddNodeSuccessEvent = (
