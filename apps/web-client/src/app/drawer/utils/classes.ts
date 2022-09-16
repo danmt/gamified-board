@@ -242,7 +242,11 @@ export class Drawer {
     this._edgeHandles = this._graph.edgehandles({
       snap: true,
       canConnect: (source, target) => {
-        if (source.id() === target.id()) {
+        if (
+          !target.isNode() ||
+          source.id() === target.id() ||
+          target.data().kind === 'group'
+        ) {
           return false;
         }
 

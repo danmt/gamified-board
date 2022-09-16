@@ -29,43 +29,6 @@
   background-image: url('assets/bricks.webp');
 }
 
-.bd-custom-node-image {
-  background-color: transparent;
-  width: 50px;
-  height: 54px;
-  background-repeat: no-repeat;
-  background-size: cover;
-  position: absolute;
-  top: -30px;
-  left: -108px;
-  border-radius: 10px;
-  border: 2px solid #303030;
-  color: white;
-}
-
-.bd-custom-node-text {
-  background-color: transparent;
-  width: 200px;
-  height: 60px;
-  position: absolute;
-  top: -38px;
-  left: -40px;
-  border-radius: 10px;
-  color: white;
-  font-family: 'Courier New', Courier, monospace;
-}
-
-.bd-custom-node-text > p {
-  font-size: 10px;
-  margin-bottom: 0px;
-  color: #b6b6b6;
-}
-
-.bd-custom-node-text > h1 {
-  font-size: 14px;
-  margin-top: 5px;
-}
-
 html,
 body {
   height: 100%;
