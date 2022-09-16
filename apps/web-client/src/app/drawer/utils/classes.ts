@@ -37,6 +37,8 @@ export class Drawer {
           id: node.id ?? '',
           kind: node['kind'],
           label: node['label'],
+          ref: node['ref'],
+          name: node['name'],
           image: node['image'],
         },
       });
@@ -122,6 +124,8 @@ export class Drawer {
             id: node.id ?? '',
             kind: node['kind'],
             label: node['label'],
+            ref: node['ref'],
+            name: node['name'],
             image: node['image'],
           },
         },
@@ -158,6 +162,13 @@ export class Drawer {
           },
         },
       ]);
+    });
+
+    this._graph.on('click', (ev) => {
+      this._event.next({
+        type: 'Click',
+        payload: ev.position,
+      });
     });
   }
 
@@ -205,8 +216,8 @@ export class Drawer {
                 {
                   id: uuid(),
                   kind: 'faucet',
-                  label: 'TokenProgram\nINIT ACCOUNT 1',
-                  image: 'url(assets/images/initAccount1.png)',
+                  name: 'TokenProgram\nINIT ACCOUNT 1',
+                  image: 'assets/images/initAccount1.png',
                 },
                 edge.data().source,
                 edge.data().target,
@@ -231,7 +242,11 @@ export class Drawer {
     this._edgeHandles = this._graph.edgehandles({
       snap: true,
       canConnect: (source, target) => {
-        if (source.id() === target.id()) {
+        if (
+          !target.isNode() ||
+          source.id() === target.id() ||
+          target.data().kind === 'group'
+        ) {
           return false;
         }
 
@@ -269,8 +284,11 @@ export class Drawer {
     this.setupLayout(this._rankDir);
   }
 
-  addNode(node: cytoscape.NodeDataDefinition) {
-    createNode(this._graph, node);
+  addNode(
+    node: cytoscape.NodeDataDefinition,
+    position?: { x: number; y: number }
+  ) {
+    createNode(this._graph, node, position);
     this._graph.emit('local.node-added', [node]);
   }
 

@@ -1,28 +1,20 @@
-import { ElementRef, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { ComponentStore, OnStoreInit } from '@ngrx/component-store';
-import {
-  EdgeDataDefinition,
-  EdgeDefinition,
-  NodeDataDefinition,
-  NodeDefinition,
-} from 'cytoscape';
+import { Core, EdgeDataDefinition, NodeDataDefinition } from 'cytoscape';
 import { EMPTY, firstValueFrom, switchMap, tap } from 'rxjs';
-import { createGraph, Direction, Drawer } from '../utils';
+import { Option } from '../../shared/utils';
+import { Direction, Drawer } from '../utils';
 
 interface ViewModel {
-  drawer: Drawer | null;
-  nodes: NodeDefinition[];
-  edges: EdgeDefinition[];
-  elementRef: ElementRef<HTMLElement> | null;
+  graph: Option<Core>;
+  drawer: Option<Drawer>;
   direction: Direction;
   drawMode: boolean;
 }
 
 const initialState: ViewModel = {
   drawer: null,
-  nodes: [],
-  edges: [],
-  elementRef: null,
+  graph: null,
   direction: 'vertical',
   drawMode: false,
 };
@@ -36,19 +28,7 @@ export class DrawerStore
 
   readonly drawMode$ = this.select(({ drawMode }) => drawMode);
 
-  readonly graph$ = this.select(
-    this.select(({ elementRef }) => elementRef),
-    this.select(({ nodes }) => nodes),
-    this.select(({ edges }) => edges),
-    (elementRef, nodes, edges) => {
-      if (elementRef === null) {
-        return null;
-      }
-
-      return createGraph(elementRef.nativeElement, nodes, edges);
-    },
-    { debounce: true }
-  );
+  readonly graph$ = this.select(({ graph }) => graph);
 
   readonly drawer$ = this.select(
     this.graph$,
@@ -79,26 +59,13 @@ export class DrawerStore
     (event) => event
   );
 
-  readonly setNodes = this.updater<NodeDataDefinition[]>((state, nodes) => ({
-    ...state,
-    nodes: nodes.map((node) => ({
-      data: node,
-    })),
-  }));
+  readonly setGraph = this.updater<Core>((state, graph) => {
+    const drawer = new Drawer(graph);
 
-  readonly setEdges = this.updater<EdgeDataDefinition[]>((state, edges) => ({
-    ...state,
-    edges: edges.map((edge) => ({
-      data: edge,
-    })),
-  }));
+    drawer.initialize();
 
-  readonly setElementRef = this.updater<ElementRef<HTMLElement>>(
-    (state, elementRef) => ({
-      ...state,
-      elementRef,
-    })
-  );
+    return { ...state, graph, drawer };
+  });
 
   readonly setDirection = this.updater<Direction>((state, direction) => ({
     ...state,
@@ -111,7 +78,7 @@ export class DrawerStore
   }));
 
   private readonly _handleDrawModeChange = this.effect<{
-    drawer: Drawer | null;
+    drawer: Option<Drawer>;
     drawMode: boolean;
   }>(
     tap(({ drawer, drawMode }) => {
@@ -122,7 +89,7 @@ export class DrawerStore
   );
 
   private readonly _handleDirectionChange = this.effect<{
-    drawer: Drawer | null;
+    drawer: Option<Drawer>;
     direction: Direction;
   }>(
     tap(({ drawer, direction }) => {
@@ -159,11 +126,14 @@ export class DrawerStore
     }
   }
 
-  async addNode(nodeData: NodeDataDefinition) {
+  async addNode(
+    nodeData: NodeDataDefinition,
+    position?: { x: number; y: number }
+  ) {
     const drawer = await firstValueFrom(this.drawer$);
 
     if (drawer !== null) {
-      drawer.addNode(nodeData);
+      drawer.addNode(nodeData, position);
     }
   }
 

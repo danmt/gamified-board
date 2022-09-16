@@ -1,46 +1,65 @@
 import { Dialog } from '@angular/cdk/dialog';
 import { CommonModule } from '@angular/common';
-import { Component, HostListener, inject } from '@angular/core';
+import { Component, HostListener, inject, OnInit } from '@angular/core';
 import { PushModule } from '@ngrx/component';
-import { combineLatest, concatMap, EMPTY, filter, map, take } from 'rxjs';
+import { ComponentStore } from '@ngrx/component-store';
+import {
+  concatMap,
+  EMPTY,
+  exhaustMap,
+  filter,
+  of,
+  Subject,
+  tap,
+  withLatestFrom,
+} from 'rxjs';
 import { BoardStore } from '../../board/stores';
+import { DrawerStore } from '../../drawer/stores';
+import { ClickEvent, isClickEvent } from '../../drawer/utils';
 import { openEditInstructionTaskModal } from '../../instruction-task/components';
-import { InstructionTaskApiService } from '../../instruction-task/services';
 import { ActiveComponent } from '../../shared/components';
 import { FollowCursorDirective } from '../../shared/directives';
-import {
-  getFirstParentId,
-  isChildOf,
-  isNotNull,
-  isNull,
-} from '../../shared/utils';
+import { generateId, isChildOf, isNull } from '../../shared/utils';
+
+interface ViewModel {
+  canAdd: boolean;
+  isAdding: boolean;
+}
+
+const initialState: ViewModel = {
+  canAdd: false,
+  isAdding: false,
+};
 
 @Component({
   selector: 'pg-active-instruction',
   template: `
     <pg-active
-      *ngIf="activeInstruction$ | ngrxPush as instruction"
+      *ngIf="active$ | ngrxPush as active"
+      [pgActive]="active"
+      [pgCanAdd]="(canAdd$ | ngrxPush) ?? false"
       class="fixed z-10 pointer-events-none"
       pgFollowCursor
-      [pgActive]="instruction"
-      [pgCanAdd]="canAdd"
+      [ngClass]="{ hidden: (isAdding$ | ngrxPush) }"
     ></pg-active>
   `,
   standalone: true,
   imports: [CommonModule, PushModule, FollowCursorDirective, ActiveComponent],
 })
-export class ActiveInstructionComponent {
+export class ActiveInstructionComponent
+  extends ComponentStore<ViewModel>
+  implements OnInit
+{
   private readonly _boardStore = inject(BoardStore);
-  private readonly _instructionTaskApiService = inject(
-    InstructionTaskApiService
-  );
+  private readonly _drawerStore = inject(DrawerStore);
   private readonly _dialog = inject(Dialog);
 
-  readonly activeInstruction$ = combineLatest([
+  private readonly _mouseMove = new Subject<MouseEvent>();
+
+  readonly active$ = this.select(
     this._boardStore.instructions$,
     this._boardStore.active$,
-  ]).pipe(
-    map(([instructions, active]) => {
+    (instructions, active) => {
       if (
         isNull(instructions) ||
         isNull(active) ||
@@ -52,60 +71,71 @@ export class ActiveInstructionComponent {
       return (
         instructions.find((instruction) => instruction.id === active.id) ?? null
       );
+    }
+  );
+  readonly canAdd$ = this.select(({ canAdd }) => canAdd);
+  readonly isAdding$ = this.select(({ isAdding }) => isAdding);
+
+  private readonly _handleDrawerClick = this.effect<ClickEvent>(
+    exhaustMap((event) => {
+      return of(event).pipe(
+        withLatestFrom(this.active$),
+        concatMap(([, active]) => {
+          if (isNull(active)) {
+            return EMPTY;
+          }
+
+          this.patchState({ isAdding: true });
+
+          return openEditInstructionTaskModal(this._dialog, {
+            instructionTask: null,
+          }).closed.pipe(
+            tap((instructionTask) => {
+              this.patchState({ isAdding: false });
+
+              if (instructionTask) {
+                this._boardStore.setActive(null);
+                this._drawerStore.addNode(
+                  {
+                    id: generateId(),
+                    kind: active.kind,
+                    name: active.name,
+                    ref: active.id,
+                    label: instructionTask.name,
+                    image: active.thumbnailUrl,
+                  },
+                  event.payload
+                );
+              }
+            })
+          );
+        })
+      );
     })
   );
 
-  canAdd = false;
+  private readonly _handleMouseMove = this.effect<MouseEvent>(
+    tap((event) => {
+      this.patchState({
+        canAdd: isChildOf(event.target as HTMLElement, (element) =>
+          element.matches('pg-drawer')
+        ),
+      });
+    })
+  );
 
   @HostListener('window:mousemove', ['$event']) onMouseMove(event: MouseEvent) {
-    const isChildOfRow = isChildOf(event.target as HTMLElement, (element) =>
-      element.matches('pg-row')
-    );
-
-    if (isChildOfRow && !this.canAdd) {
-      this.canAdd = true;
-    } else if (!isChildOfRow && this.canAdd) {
-      this.canAdd = false;
-    }
+    this._mouseMove.next(event);
   }
 
-  @HostListener('window:click', ['$event']) onClick(event: MouseEvent) {
-    const instructionId = getFirstParentId(
-      event.target as HTMLElement,
-      (element) => element.matches('pg-row')
-    );
-
-    if (instructionId !== null) {
-      this._useInstruction(instructionId);
-    }
+  constructor() {
+    super(initialState);
   }
 
-  private _useInstruction(instructionId: string) {
-    this.activeInstruction$
-      .pipe(
-        take(1),
-        filter(isNotNull),
-        concatMap((activeInstruction) =>
-          openEditInstructionTaskModal(this._dialog, {
-            instructionTask: null,
-          }).closed.pipe(
-            concatMap((instructionTaskData) => {
-              if (instructionTaskData === undefined) {
-                return EMPTY;
-              }
-
-              return this._instructionTaskApiService.createInstructionTask(
-                instructionId,
-                {
-                  id: instructionTaskData.id,
-                  name: instructionTaskData.name,
-                  instructionId: activeInstruction.id,
-                }
-              );
-            })
-          )
-        )
-      )
-      .subscribe();
+  ngOnInit() {
+    this._handleDrawerClick(
+      this._drawerStore.event$.pipe(filter(isClickEvent))
+    );
+    this._handleMouseMove(this._mouseMove.asObservable());
   }
 }

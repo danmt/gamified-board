@@ -2,6 +2,9 @@ export interface Node {
   id: string;
   kind: string;
   label: string;
+  ref: string;
+  name: string;
+  image: string;
 }
 
 export interface Edge {
@@ -28,14 +31,14 @@ export interface InitEvent {
   type: 'Init';
 }
 
+export interface ClickEvent {
+  type: 'Click';
+  payload: { x: number; y: number };
+}
+
 export interface AddNodeSuccessEvent {
   type: 'AddNodeSuccess';
-  payload: {
-    id: string;
-    kind: string;
-    label: string;
-    image: string;
-  };
+  payload: Node;
 }
 
 export interface AddEdgeSuccessEvent {
@@ -53,12 +56,7 @@ export interface AddNodeToEdgeSuccessEvent {
     source: string;
     target: string;
     edgeId: string;
-    node: {
-      id: string;
-      kind: string;
-      label: string;
-      image: string;
-    };
+    node: Node;
   };
 }
 
@@ -94,6 +92,7 @@ export interface DeleteEdgeSuccessEvent {
 
 export type DrawerEvent =
   | InitEvent
+  | ClickEvent
   | AddNodeSuccessEvent
   | AddEdgeSuccessEvent
   | AddNodeToEdgeSuccessEvent

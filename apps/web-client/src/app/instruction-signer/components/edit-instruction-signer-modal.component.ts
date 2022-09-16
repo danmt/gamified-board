@@ -31,7 +31,10 @@ export interface EditInstructionSignerData {
   instructionSigner: Option<InstructionSigner>;
 }
 
-export type EditInstructionSignerSubmit = InstructionSigner;
+export type EditInstructionSignerSubmit = {
+  name: string;
+  saveChanges: boolean;
+};
 
 export const openEditInstructionSignerModal = (
   dialog: Dialog,
@@ -92,30 +95,6 @@ export class UpdateInstructionSignerModalDirective {
       </div>
 
       <form [formGroup]="form" (ngSubmit)="onSubmit()">
-        <div class="mb-4">
-          <label class="block bp-font-game text-xl" for="signer-id-input"
-            >Signer ID</label
-          >
-          <div class="flex items-center justify-between w-full">
-            <input
-              class="bp-input-futuristic p-4 outline-0"
-              id="signer-id-input"
-              type="text"
-              formControlName="id"
-              [readonly]="instructionSigner !== null"
-            />
-            <button
-              *ngIf="instructionSigner === null"
-              type="button"
-              class="bp-button-generate-futuristic"
-              (click)="idControl.setValue(onGenerateId())"
-            ></button>
-          </div>
-          <p class="bp-font-game text-sm" *ngIf="instructionSigner === null">
-            Hint: The ID cannot be changed afterwards.
-          </p>
-        </div>
-
         <div>
           <label class="block bp-font-game text-xl" for="signer-name-input">
             Signer name
@@ -170,10 +149,6 @@ export class EditInstructionSignerModalComponent {
 
   readonly instructionSigner = this._data.instructionSigner;
   readonly form = this._formBuilder.group({
-    id: this._formBuilder.control<string>(this.instructionSigner?.id ?? '', {
-      validators: [Validators.required],
-      nonNullable: true,
-    }),
     name: this._formBuilder.control<string>(
       this.instructionSigner?.name ?? '',
       {
@@ -190,10 +165,6 @@ export class EditInstructionSignerModalComponent {
     ),
   });
 
-  get idControl() {
-    return this.form.get('id') as FormControl<string>;
-  }
-
   get nameControl() {
     return this.form.get('name') as FormControl<string>;
   }
@@ -204,12 +175,10 @@ export class EditInstructionSignerModalComponent {
 
   onSubmit() {
     if (this.form.valid) {
-      const id = this.idControl.value;
       const name = this.nameControl.value;
       const saveChanges = this.saveChangesControl.value;
 
       this._dialogRef.close({
-        id,
         name,
         saveChanges,
       });

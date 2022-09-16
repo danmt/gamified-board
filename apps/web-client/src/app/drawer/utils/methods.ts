@@ -2,25 +2,40 @@ import * as cytoscape from 'cytoscape';
 import {
   AddNodeSuccessEvent,
   AddNodeToEdgeSuccessEvent,
+  ClickEvent,
   DeleteEdgeEvent,
   DeleteEdgeSuccessEvent,
   DeleteNodeEvent,
   DeleteNodeSuccessEvent,
   DrawerEvent,
   InitEvent,
+  Node,
   UpdateNodeEvent,
   ViewNodeEvent,
 } from './types';
 
 export const createNode = (
   graph: cytoscape.Core,
-  nodeData: cytoscape.NodeDataDefinition
+  nodeData: cytoscape.NodeDataDefinition,
+  position?: { x: number; y: number }
 ) => {
-  graph.add({ data: nodeData, group: 'nodes', classes: 'bp-bd-node' });
+  graph.add({
+    data: {
+      ...nodeData,
+      parent: nodeData['kind'],
+    },
+    group: 'nodes',
+    classes: 'bp-bd-node',
+    position,
+  });
 };
 
 export const isInitEvent = (event: DrawerEvent): event is InitEvent => {
   return event.type === 'Init';
+};
+
+export const isClickEvent = (event: DrawerEvent): event is ClickEvent => {
+  return event.type === 'Click';
 };
 
 export const isAddNodeSuccessEvent = (
@@ -73,37 +88,59 @@ export const createGraph = (
   container: HTMLElement,
   nodes: cytoscape.NodeDefinition[],
   edges: cytoscape.EdgeDefinition[]
-) =>
-  cytoscape({
+): cytoscape.Core => {
+  const nodeGroups: cytoscape.ElementDefinition[] = [
+    {
+      data: { id: 'collection', kind: 'group' },
+      group: 'nodes',
+    },
+    {
+      data: { id: 'application', kind: 'group' },
+      group: 'nodes',
+    },
+    {
+      data: { id: 'instruction', kind: 'group' },
+      group: 'nodes',
+    },
+    {
+      data: { id: 'sysvar', kind: 'group' },
+      group: 'nodes',
+    },
+    {
+      data: { id: 'signer', kind: 'group' },
+      group: 'nodes',
+    },
+  ];
+
+  return cytoscape({
     container,
     boxSelectionEnabled: false,
     autounselectify: true,
     style: [
       // Style all nodes/edges
       {
-        selector: 'node[label]',
+        selector: 'node[kind != "group"]',
         style: {
           width: 280,
           height: 85,
-          'background-width': '280px',
-          'background-height': '85px',
-          'border-color': '#565656',
-          'border-width': 0,
-          'border-opacity': 0,
-          'background-opacity': 0,
-          'font-size': '12px',
-          shape: 'round-rectangle',
-          'text-valign': 'center',
+        },
+      },
+      {
+        selector: 'node[kind = "group"]',
+        style: {
+          'text-valign': 'top',
           'text-halign': 'center',
-          'text-max-width': '150px',
-          'text-wrap': 'wrap',
-          'text-margin-x': 10,
-          'text-margin-y': -5,
-          'text-justification': 'left',
-          'line-height': 1.3,
-          'background-position-x': '0',
-          'background-image': 'url(assets/images/node.png)',
+          'text-margin-y': -16,
+          'font-size': '16px',
           color: 'white',
+          content: 'data(id)',
+          'text-transform': 'uppercase',
+          'padding-bottom': '16px',
+          'padding-top': '16px',
+          'padding-left': '16px',
+          'padding-right': '16px',
+          'background-color': '#dddddd',
+          'background-fit': 'cover',
         },
       },
       {
@@ -153,12 +190,17 @@ export const createGraph = (
         },
       },
     ],
-    elements: nodes
-      .map<cytoscape.ElementDefinition>((node) => ({
-        data: node.data,
-        group: 'nodes' as const,
-        classes: 'bp-bd-node',
-      }))
+    elements: nodeGroups
+      .concat(
+        nodes.map((node) => ({
+          data: {
+            ...node.data,
+            parent: node.data['kind'],
+          },
+          group: 'nodes' as const,
+          classes: 'bp-bd-node',
+        }))
+      )
       .concat(
         edges.map((edge) => ({
           data: edge.data,
@@ -168,29 +210,20 @@ export const createGraph = (
   }).nodeHtmlLabel([
     {
       query: '.bp-bd-node',
-      tpl: function (data: { label: string; kind: string; image: string }) {
-        return (
-          `
-        <div class="bd-custom-node">
-          <div class="bd-custom-node-image" 
-            style="
-                  --bd-bg-image: ` +
-          data.image +
-          `; 
-                  --bd-bg-width: 55px;
-                  "
-          > </div>
-          <div class="bd-custom-node-text">
-            <p> ` +
-          data.kind +
-          `</p>
-            <h1>` +
-          data.label +
-          `</h1>
+      tpl: (data: Node) => {
+        return `
+          <div class="w-[280px] h-[85px] flex gap-2 items-center px-8 bg-[length:280px_85px] bg-[url('assets/images/node.png')] z-50">
+            <div 
+                class="w-[56px] h-[52px] shrink-0 rounded-lg border-gray-700 border-2 bg-cover bg-center"
+                style="background-image: url(${data.image});">
+            </div>
+            <div style="font-family: 'Courier New', Courier, monospace">
+              <h2 class="text-xl mt-2 text-white">${data.label}</h2>
+              <p class="italic text-gray-400">${data.name}</p>
+            </div>
           </div>
-        </div>
-        `
-        );
+        `;
       },
     },
   ]);
+};

@@ -1,46 +1,65 @@
 import { Dialog } from '@angular/cdk/dialog';
 import { CommonModule } from '@angular/common';
-import { Component, HostListener, inject } from '@angular/core';
+import { Component, HostListener, inject, OnInit } from '@angular/core';
 import { PushModule } from '@ngrx/component';
-import { combineLatest, concatMap, EMPTY, filter, map, take } from 'rxjs';
+import { ComponentStore } from '@ngrx/component-store';
+import {
+  concatMap,
+  EMPTY,
+  exhaustMap,
+  filter,
+  of,
+  Subject,
+  tap,
+  withLatestFrom,
+} from 'rxjs';
 import { BoardStore } from '../../board/stores';
+import { DrawerStore } from '../../drawer/stores';
+import { ClickEvent, isClickEvent } from '../../drawer/utils';
 import { openEditInstructionDocumentModal } from '../../instruction-document/components';
-import { InstructionDocumentApiService } from '../../instruction-document/services';
 import { ActiveComponent } from '../../shared/components';
 import { FollowCursorDirective } from '../../shared/directives';
-import {
-  getFirstParentId,
-  isChildOf,
-  isNotNull,
-  isNull,
-} from '../../shared/utils';
+import { generateId, isChildOf, isNull } from '../../shared/utils';
+
+interface ViewModel {
+  canAdd: boolean;
+  isAdding: boolean;
+}
+
+const initialState: ViewModel = {
+  canAdd: false,
+  isAdding: false,
+};
 
 @Component({
   selector: 'pg-active-collection',
   template: `
     <pg-active
-      *ngIf="activeCollection$ | ngrxPush as collection"
+      *ngIf="active$ | ngrxPush as active"
+      [pgActive]="active"
+      [pgCanAdd]="(canAdd$ | ngrxPush) ?? false"
       class="fixed z-10 pointer-events-none"
       pgFollowCursor
-      [pgActive]="collection"
-      [pgCanAdd]="canAdd"
+      [ngClass]="{ hidden: (isAdding$ | ngrxPush) }"
     ></pg-active>
   `,
   standalone: true,
   imports: [CommonModule, PushModule, FollowCursorDirective, ActiveComponent],
 })
-export class ActiveCollectionComponent {
+export class ActiveCollectionComponent
+  extends ComponentStore<ViewModel>
+  implements OnInit
+{
   private readonly _boardStore = inject(BoardStore);
-  private readonly _instructionDocumentApiService = inject(
-    InstructionDocumentApiService
-  );
+  private readonly _drawerStore = inject(DrawerStore);
   private readonly _dialog = inject(Dialog);
 
-  readonly activeCollection$ = combineLatest([
+  private readonly _mouseMove = new Subject<MouseEvent>();
+
+  readonly active$ = this.select(
     this._boardStore.collections$,
     this._boardStore.active$,
-  ]).pipe(
-    map(([collections, active]) => {
+    (collections, active) => {
       if (
         isNull(collections) ||
         isNull(active) ||
@@ -52,80 +71,72 @@ export class ActiveCollectionComponent {
       return (
         collections.find((collection) => collection.id === active.id) ?? null
       );
+    }
+  );
+  readonly canAdd$ = this.select(({ canAdd }) => canAdd);
+  readonly isAdding$ = this.select(({ isAdding }) => isAdding);
+
+  private readonly _handleDrawerClick = this.effect<ClickEvent>(
+    exhaustMap((event) => {
+      return of(event).pipe(
+        withLatestFrom(this.active$),
+        concatMap(([, active]) => {
+          if (isNull(active)) {
+            return EMPTY;
+          }
+
+          this.patchState({ isAdding: true });
+
+          return openEditInstructionDocumentModal(this._dialog, {
+            instructionDocument: null,
+            references$: of([]),
+          }).closed.pipe(
+            tap((instructionDocument) => {
+              this.patchState({ isAdding: false });
+
+              if (instructionDocument) {
+                this._boardStore.setActive(null);
+                this._drawerStore.addNode(
+                  {
+                    id: generateId(),
+                    kind: active.kind,
+                    name: active.name,
+                    ref: active.id,
+                    label: instructionDocument.name,
+                    image: active.thumbnailUrl,
+                  },
+                  event.payload
+                );
+              }
+            })
+          );
+        })
+      );
     })
   );
 
-  canAdd = false;
+  private readonly _handleMouseMove = this.effect<MouseEvent>(
+    tap((event) => {
+      this.patchState({
+        canAdd: isChildOf(event.target as HTMLElement, (element) =>
+          element.matches('pg-drawer')
+        ),
+      });
+    })
+  );
 
   @HostListener('window:mousemove', ['$event']) onMouseMove(event: MouseEvent) {
-    const isChildOfRow = isChildOf(event.target as HTMLElement, (element) =>
-      element.matches('pg-row')
-    );
-
-    if (isChildOfRow && !this.canAdd) {
-      this.canAdd = true;
-    } else if (!isChildOfRow && this.canAdd) {
-      this.canAdd = false;
-    }
+    this._mouseMove.next(event);
   }
 
-  @HostListener('window:click', ['$event']) onClick(event: MouseEvent) {
-    const instructionId = getFirstParentId(
-      event.target as HTMLElement,
-      (element) => element.matches('pg-row')
-    );
-
-    if (instructionId !== null) {
-      this._useCollection(instructionId);
-    }
+  constructor() {
+    super(initialState);
   }
 
-  private _useCollection(instructionId: string) {
-    const references$ = this._boardStore.currentApplicationInstructions$.pipe(
-      map((instructions) => {
-        const instruction =
-          instructions?.find(({ id }) => id === instructionId) ?? null;
-
-        if (isNull(instruction)) {
-          return [];
-        }
-
-        return instruction.documents.map((document) => ({
-          kind: 'document' as const,
-          id: document.id,
-          name: document.name,
-        }));
-      })
+  ngOnInit() {
+    this._handleDrawerClick(
+      this._drawerStore.event$.pipe(filter(isClickEvent))
     );
-
-    this.activeCollection$
-      .pipe(
-        take(1),
-        filter(isNotNull),
-        concatMap((activeCollection) =>
-          openEditInstructionDocumentModal(this._dialog, {
-            instructionDocument: null,
-            references$,
-          }).closed.pipe(
-            concatMap((documentData) => {
-              if (documentData === undefined) {
-                return EMPTY;
-              }
-
-              return this._instructionDocumentApiService.createInstructionDocument(
-                instructionId,
-                {
-                  id: documentData.id,
-                  name: documentData.name,
-                  method: documentData.method,
-                  collectionId: activeCollection.id,
-                  payer: documentData.payer,
-                }
-              );
-            })
-          )
-        )
-      )
-      .subscribe();
+    this._handleMouseMove(this._mouseMove.asObservable());
   }
 }

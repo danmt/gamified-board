@@ -7,12 +7,11 @@ import {
   ViewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { provideComponentStore } from '@ngrx/component-store';
 import { concatMap, EMPTY } from 'rxjs';
 import { v4 as uuid } from 'uuid';
 import { EventApiService, GraphApiService } from '../services';
 import { DrawerStore } from '../stores';
-import { Direction } from '../utils';
+import { createGraph, Direction } from '../utils';
 
 @Component({
   selector: 'pg-drawer',
@@ -80,7 +79,6 @@ import { Direction } from '../utils';
   ],
   standalone: true,
   imports: [CommonModule, FormsModule],
-  providers: [provideComponentStore(DrawerStore)],
 })
 export class DrawerComponent implements AfterViewInit {
   private readonly _drawerStore = inject(DrawerStore);
@@ -98,12 +96,21 @@ export class DrawerComponent implements AfterViewInit {
 
   ngAfterViewInit() {
     if (this.drawerElementRef !== null) {
-      this._drawerStore.setElementRef(this.drawerElementRef);
+      const drawerNativeElement = this.drawerElementRef.nativeElement;
 
       this._graphApiService.getGraph(this.graphId).then((graph) => {
         if (graph !== null) {
-          this._drawerStore.setNodes(graph.nodes);
-          this._drawerStore.setEdges(graph.edges);
+          this._drawerStore.setGraph(
+            createGraph(
+              drawerNativeElement,
+              graph.nodes.map((node) => ({
+                data: node,
+              })),
+              graph.edges.map((edge) => ({
+                data: edge,
+              }))
+            )
+          );
 
           this._eventApiService.onServerCreate(
             this.clientId,
@@ -149,6 +156,7 @@ export class DrawerComponent implements AfterViewInit {
               case 'DeleteEdge':
               case 'DeleteNode':
               case 'Init':
+              case 'Click':
               case 'ViewNode':
               case 'UpdateNode':
                 return EMPTY;
