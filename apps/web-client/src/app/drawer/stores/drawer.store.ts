@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ComponentStore, OnStoreInit } from '@ngrx/component-store';
 import { Core, EdgeDataDefinition, NodeDataDefinition } from 'cytoscape';
-import { EMPTY, filter, firstValueFrom, map, switchMap, tap } from 'rxjs';
+import { EMPTY, filter, firstValueFrom, switchMap, tap } from 'rxjs';
 import { Option } from '../../shared/utils';
 import {
   Direction,
@@ -64,12 +64,10 @@ export class DrawerStore
     (event) => event
   );
 
-
   readonly zoomSize$ = this.select(
     this.event$.pipe(filter(isGraphScrolledEvent)),
     (event) => event.payload.zoomSize
   );
-  
 
   readonly panDrag$ = this.select(
     this.event$.pipe(filter(isPanDraggedEvent)),
