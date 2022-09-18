@@ -11,8 +11,14 @@ import {
   GraphScrolledEvent,
   InitEvent,
   Node,
+  OneTapEdgeEvent,
+  OneTapNodeEvent,
   PanDraggedEvent,
+  UpdateGraphSuccessEvent,
+  UpdateGraphThumbnailSuccessEvent,
   UpdateNodeEvent,
+  UpdateNodeSuccessEvent,
+  UpdateNodeThumbnailSuccessEvent,
   ViewNodeEvent,
 } from './types';
 
@@ -52,6 +58,30 @@ export const isPanDraggedEvent = (
   return event.type === 'PanDragged';
 };
 
+export const isOneTapNodeEvent = (
+  event: DrawerEvent
+): event is OneTapNodeEvent => {
+  return event.type === 'OneTapNode';
+};
+
+export const isOneTapEdgeEvent = (
+  event: DrawerEvent
+): event is OneTapEdgeEvent => {
+  return event.type === 'OneTapEdge';
+};
+
+export const isUpdateGraphSuccessEvent = (
+  event: DrawerEvent
+): event is UpdateGraphSuccessEvent => {
+  return event.type === 'UpdateGraphSuccess';
+};
+
+export const isUpdateGraphThumbnailSuccessEvent = (
+  event: DrawerEvent
+): event is UpdateGraphThumbnailSuccessEvent => {
+  return event.type === 'UpdateGraphThumbnailSuccess';
+};
+
 export const isAddNodeSuccessEvent = (
   event: DrawerEvent
 ): event is AddNodeSuccessEvent => {
@@ -68,6 +98,18 @@ export const isUpdateNodeEvent = (
   event: DrawerEvent
 ): event is UpdateNodeEvent => {
   return event.type === 'UpdateNode';
+};
+
+export const isUpdateNodeSuccessEvent = (
+  event: DrawerEvent
+): event is UpdateNodeSuccessEvent => {
+  return event.type === 'UpdateNodeSuccess';
+};
+
+export const isUpdateNodeThumbnailSuccessEvent = (
+  event: DrawerEvent
+): event is UpdateNodeThumbnailSuccessEvent => {
+  return event.type === 'UpdateNodeThumbnailSuccess';
 };
 
 export const isDeleteNodeEvent = (
@@ -101,31 +143,9 @@ export const isDeleteEdgeSuccessEvent = (
 export const createGraph = (
   container: HTMLElement,
   nodes: cytoscape.NodeDefinition[],
-  edges: cytoscape.EdgeDefinition[]
+  edges: cytoscape.EdgeDefinition[],
+  groups: cytoscape.ElementDefinition[]
 ): cytoscape.Core => {
-  const nodeGroups: cytoscape.ElementDefinition[] = [
-    {
-      data: { id: 'collection', kind: 'group' },
-      group: 'nodes',
-    },
-    {
-      data: { id: 'application', kind: 'group' },
-      group: 'nodes',
-    },
-    {
-      data: { id: 'instruction', kind: 'group' },
-      group: 'nodes',
-    },
-    {
-      data: { id: 'sysvar', kind: 'group' },
-      group: 'nodes',
-    },
-    {
-      data: { id: 'signer', kind: 'group' },
-      group: 'nodes',
-    },
-  ];
-
   return cytoscape({
     container,
     boxSelectionEnabled: false,
@@ -204,7 +224,7 @@ export const createGraph = (
         },
       },
     ],
-    elements: nodeGroups
+    elements: groups
       .concat(
         nodes.map((node) => ({
           data: {
@@ -213,6 +233,7 @@ export const createGraph = (
           },
           group: 'nodes' as const,
           classes: 'bp-bd-node',
+          selectable: true,
         }))
       )
       .concat(
@@ -229,11 +250,11 @@ export const createGraph = (
           <div class="w-[280px] h-[85px] flex gap-2 items-center px-8 bg-[length:280px_85px] bg-[url('assets/images/node.png')] z-50">
             <div 
                 class="w-[56px] h-[52px] shrink-0 rounded-lg border-gray-700 border-2 bg-cover bg-center"
-                style="background-image: url(${data.image});">
+                style="background-image: url(${data.thumbnailUrl});">
             </div>
             <div style="font-family: 'Courier New', Courier, monospace">
-              <h2 class="text-xl mt-2 text-white">${data.label}</h2>
-              <p class="italic text-gray-400">${data.name}</p>
+              <h2 class="text-xl mt-2 text-white">${data.name}</h2>
+              <p class="italic text-gray-400">${data.kind}</p>
             </div>
           </div>
         `;

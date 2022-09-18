@@ -6,18 +6,21 @@ import {
   inject,
   OnInit,
 } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { LetModule, PushModule } from '@ngrx/component';
 import { provideComponentStore } from '@ngrx/component-store';
-import { startWith } from 'rxjs';
+import { environment } from '../../../environments/environment';
 import {
   CreateApplicationModalDirective,
   UpdateApplicationModalDirective,
 } from '../../application/components';
-import { ApplicationApiService } from '../../application/services';
-import { Option } from '../../shared/utils';
-import { EditWorkspaceModalDirective } from '../../workspace/components';
+import { generateId } from '../../shared/utils';
+import {
+  CreateWorkspaceModalDirective,
+  CreateWorkspaceSubmit,
+  UpdateWorkspaceModalDirective,
+} from '../../workspace/components';
 import { WorkspaceApiService } from '../../workspace/services';
 import { LobbyStore } from '../stores';
 
@@ -31,114 +34,24 @@ import { LobbyStore } from '../stores';
         <div>
           <button
             class="border border-blue-500"
-            pgEditWorkspaceModal
-            (pgCreateWorkspace)="
-              onCreateWorkspace(userId, $event.id, $event.name)
-            "
+            pgCreateWorkspaceModal
+            (pgCreateWorkspace)="onCreateWorkspace(userId, $event)"
           >
             New workspace
           </button>
-          <button
-            *ngIf="selectedWorkspace$ | ngrxPush as selectedWorkspace"
-            class="border border-blue-500"
-            pgEditWorkspaceModal
-            (pgUpdateWorkspace)="
-              onUpdateWorkspace(selectedWorkspace.id, $event.name)
-            "
-            [pgWorkspace]="selectedWorkspace"
-          >
-            Update workspace
-          </button>
-          <button
-            *ngIf="selectedWorkspace$ | ngrxPush as selectedWorkspace"
-            class="border border-blue-500"
-            (click)="onDeleteWorkspace(selectedWorkspace.id, userId)"
-          >
-            Delete workspace
-          </button>
-          <button
-            *ngIf="selectedWorkspace$ | ngrxPush as selectedWorkspace"
-            class="border border-blue-500"
-            (click)="
-              onRemoveWorkspaceFromFavorites(selectedWorkspace.id, userId)
-            "
-          >
-            Remove workspace from favorites
-          </button>
         </div>
 
-        <select [formControl]="selectedWorkspaceIdControl">
-          <option [ngValue]="null">Select a workspace</option>
-          <option
-            *ngFor="let favoriteWorkspace of favoriteWorkspaces$ | ngrxPush"
-            [ngValue]="favoriteWorkspace.id"
-          >
-            {{ favoriteWorkspace.id }} - {{ favoriteWorkspace.name }}
-          </option>
-        </select>
-      </div>
-
-      <div>
-        <div>
-          <button
-            *ngIf="selectedWorkspace$ | ngrxPush as selectedWorkspace"
-            class="border border-blue-500"
-            pgCreateApplicationModal
-            [pgWorkspaceId]="selectedWorkspace?.id ?? null"
-            (pgCreateApplication)="
-              onCreateApplication($event.workspaceId, $event.id, $event.name)
-            "
-          >
-            New application
-          </button>
-          <button
-            *ngIf="selectedApplication$ | ngrxPush as selectedApplication"
-            class="border border-blue-500"
-            pgUpdateApplicationModal
-            (pgUpdateApplication)="
-              onUpdateApplication(selectedApplication.id, $event.name)
-            "
-            [pgApplication]="selectedApplication"
-          >
-            Update application
-          </button>
-          <button
-            *ngIf="selectedApplication$ | ngrxPush as selectedApplication"
-            class="border border-blue-500"
-            (click)="onDeleteApplication(selectedApplication.id)"
-          >
-            Delete application
-          </button>
-        </div>
-
-        <select [formControl]="selectedApplicationIdControl">
-          <option [ngValue]="null">Select a application</option>
-          <option
-            *ngFor="
-              let application of selectedWorkspaceApplications$ | ngrxPush
-            "
-            [ngValue]="application.id"
-          >
-            {{ application.id }} - {{ application.name }}
-          </option>
-        </select>
-      </div>
-
-      <div *ngrxLet="selectedApplication$; let selectedApplication">
-        <a
-          *ngIf="selectedApplication !== null; else noApplicationSelected"
-          [routerLink]="[
-            '/board',
-            selectedApplication.workspaceId,
-            selectedApplication.id
-          ]"
-        >
-          Go to board
-        </a>
-
-        <ng-template #noApplicationSelected>
-          <p class="text-red-500">Select application to start</p>
-        </ng-template>
+        <ul>
+          <li *ngFor="let userWorkspace of userWorkspaces$ | ngrxPush">
+            {{ userWorkspace.id }} - {{ userWorkspace.name }}
+            <a
+              [routerLink]="['/workspaces', userWorkspace.id]"
+              class="text-blue-500 underline"
+            >
+              view
+            </a>
+          </li>
+        </ul>
       </div>
     </div>
   `,
@@ -149,7 +62,8 @@ import { LobbyStore } from '../stores';
     ReactiveFormsModule,
     LetModule,
     PushModule,
-    EditWorkspaceModalDirective,
+    CreateWorkspaceModalDirective,
+    UpdateWorkspaceModalDirective,
     CreateApplicationModalDirective,
     UpdateApplicationModalDirective,
   ],
@@ -158,84 +72,23 @@ import { LobbyStore } from '../stores';
   providers: [provideComponentStore(LobbyStore)],
 })
 export class LobbyPageComponent implements OnInit {
-  private readonly _formBuilder = inject(FormBuilder);
   private readonly _lobbyStore = inject(LobbyStore);
   private readonly _workspaceApiService = inject(WorkspaceApiService);
-  private readonly _applicationApiService = inject(ApplicationApiService);
 
-  readonly userId = 'p7xARjRPxv8cvbBOR59C';
-  readonly selectedWorkspaceIdControl =
-    this._formBuilder.control<Option<string>>(null);
-  readonly selectedApplicationIdControl =
-    this._formBuilder.control<Option<string>>(null);
+  readonly userId = environment.userId;
 
-  readonly favoriteWorkspaces$ = this._lobbyStore.favoriteWorkspaces$;
-  readonly selectedWorkspaceApplications$ =
-    this._lobbyStore.selectedWorkspaceApplications$;
-  readonly selectedWorkspace$ = this._lobbyStore.selectedWorkspace$;
-  readonly selectedApplication$ = this._lobbyStore.selectedApplication$;
+  readonly userWorkspaces$ = this._lobbyStore.workspaces$;
 
   ngOnInit() {
     this._lobbyStore.setUserId(this.userId);
-    this._lobbyStore.setSelectedWorkspaceId(
-      this.selectedWorkspaceIdControl.valueChanges.pipe(
-        startWith<Option<string>>(null)
-      )
-    );
-    this._lobbyStore.setSelectedApplicationId(
-      this.selectedApplicationIdControl.valueChanges.pipe(
-        startWith<Option<string>>(null)
-      )
-    );
   }
 
-  onCreateWorkspace(
-    userId: string,
-    workspaceId: string,
-    workspaceName: string
-  ) {
+  onCreateWorkspace(userId: string, data: CreateWorkspaceSubmit) {
     this._workspaceApiService
-      .createWorkspace(userId, { id: workspaceId, name: workspaceName })
-      .subscribe();
-  }
-
-  onUpdateWorkspace(workspaceId: string, workspaceName: string) {
-    this._workspaceApiService
-      .updateWorkspace(workspaceId, { name: workspaceName })
-      .subscribe();
-  }
-
-  onDeleteWorkspace(workspaceId: string, userId: string) {
-    this._workspaceApiService.deleteWorkspace(workspaceId, userId).subscribe();
-  }
-
-  onRemoveWorkspaceFromFavorites(workspaceId: string, userId: string) {
-    this._workspaceApiService
-      .removeWorkspaceFromFavorites(workspaceId, userId)
-      .subscribe();
-  }
-
-  onCreateApplication(
-    workspaceId: string,
-    applicationId: string,
-    applicationName: string
-  ) {
-    this._applicationApiService
-      .createApplication({
-        id: applicationId,
-        workspaceId,
-        name: applicationName,
+      .createWorkspace(environment.clientId, userId, {
+        ...data,
+        id: generateId(),
       })
       .subscribe();
-  }
-
-  onUpdateApplication(applicationId: string, applicationName: string) {
-    this._applicationApiService
-      .updateApplication(applicationId, { name: applicationName })
-      .subscribe();
-  }
-
-  onDeleteApplication(applicationId: string) {
-    this._applicationApiService.deleteApplication(applicationId).subscribe();
   }
 }

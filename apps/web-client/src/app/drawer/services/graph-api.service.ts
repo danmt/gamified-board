@@ -18,6 +18,9 @@ export class GraphApiService {
 
     return {
       id: graph.id,
+      name: graphData['name'],
+      kind: graphData['kind'],
+      thumbnailUrl: graphData['thumbnailUrl'],
       nodes: graphData['nodes'],
       edges: graphData['edges'],
       lastEventId: graphData['lastEventId'],

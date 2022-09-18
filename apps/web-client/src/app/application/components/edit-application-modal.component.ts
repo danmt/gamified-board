@@ -30,10 +30,12 @@ export interface EditApplicationData {
   application: Option<Application>;
 }
 
-export type EditApplicationSubmit = Application;
+export type UpdateApplicationSubmit = {
+  name: string;
+};
 
-export type CreateApplicationSubmit = Application & {
-  workspaceId: string;
+export type CreateApplicationSubmit = {
+  name: string;
 };
 
 export const openEditApplicationModal = (
@@ -41,7 +43,7 @@ export const openEditApplicationModal = (
   data: EditApplicationData
 ) =>
   dialog.open<
-    EditApplicationSubmit,
+    CreateApplicationSubmit | UpdateApplicationSubmit,
     EditApplicationData,
     EditApplicationModalComponent
   >(EditApplicationModalComponent, {
@@ -55,19 +57,11 @@ export const openEditApplicationModal = (
 export class CreateApplicationModalDirective {
   private readonly _dialog = inject(Dialog);
 
-  @Input() pgWorkspaceId: Option<string> = null;
-
   @Output() pgCreateApplication = new EventEmitter<CreateApplicationSubmit>();
   @Output() pgOpenModal = new EventEmitter();
   @Output() pgCloseModal = new EventEmitter();
 
   @HostListener('click', []) onClick() {
-    if (isNull(this.pgWorkspaceId)) {
-      throw new Error('pgWorkspaceId is missing');
-    }
-
-    const workspaceId = this.pgWorkspaceId;
-
     this.pgOpenModal.emit();
 
     openEditApplicationModal(this._dialog, {
@@ -76,7 +70,7 @@ export class CreateApplicationModalDirective {
       this.pgCloseModal.emit();
 
       if (applicationData !== undefined) {
-        this.pgCreateApplication.emit({ ...applicationData, workspaceId });
+        this.pgCreateApplication.emit(applicationData);
       }
     });
   }
@@ -91,7 +85,7 @@ export class UpdateApplicationModalDirective {
 
   @Input() pgApplication: Option<Application> = null;
 
-  @Output() pgUpdateApplication = new EventEmitter<EditApplicationSubmit>();
+  @Output() pgUpdateApplication = new EventEmitter<UpdateApplicationSubmit>();
   @Output() pgOpenModal = new EventEmitter();
   @Output() pgCloseModal = new EventEmitter();
 
@@ -132,30 +126,6 @@ export class UpdateApplicationModalDirective {
 
       <form [formGroup]="form" (ngSubmit)="onSubmit()">
         <div class="mb-4">
-          <label class="block" for="application-id-input">Application ID</label>
-
-          <div class="flex items-center justify-between w-full">
-            <input
-              class="bp-input-futuristic p-4 outline-0"
-              id="application-id-input"
-              type="text"
-              formControlName="id"
-              [readonly]="application !== null"
-            />
-            <button
-              class="bp-button-generate-futuristic"
-              *ngIf="application === null"
-              type="button"
-              (click)="idControl.setValue(onGenerateId())"
-            ></button>
-          </div>
-
-          <p class="bp-font-game text-sm" *ngIf="application === null">
-            Hint: The ID cannot be changed afterwards.
-          </p>
-        </div>
-
-        <div class="mb-4">
           <label class="block" for="application-name-input">
             Application name
           </label>
@@ -189,27 +159,22 @@ export class UpdateApplicationModalDirective {
 })
 export class EditApplicationModalComponent {
   private readonly _dialogRef =
-    inject<DialogRef<EditApplicationSubmit, EditApplicationModalComponent>>(
-      DialogRef
-    );
+    inject<
+      DialogRef<
+        CreateApplicationSubmit | UpdateApplicationSubmit,
+        EditApplicationModalComponent
+      >
+    >(DialogRef);
   private readonly _formBuilder = inject(FormBuilder);
   private readonly _data = inject<EditApplicationData>(DIALOG_DATA);
 
   readonly application = this._data.application;
   readonly form = this._formBuilder.group({
-    id: this._formBuilder.control<string>(this.application?.id ?? '', {
-      validators: [Validators.required],
-      nonNullable: true,
-    }),
     name: this._formBuilder.control<string>(this.application?.name ?? '', {
       validators: [Validators.required],
       nonNullable: true,
     }),
   });
-
-  get idControl() {
-    return this.form.get('id') as FormControl<string>;
-  }
 
   get nameControl() {
     return this.form.get('name') as FormControl<string>;
@@ -217,11 +182,9 @@ export class EditApplicationModalComponent {
 
   onSubmit() {
     if (this.form.valid) {
-      const id = this.idControl.value;
       const name = this.nameControl.value;
 
       this._dialogRef.close({
-        id,
         name,
       });
     }

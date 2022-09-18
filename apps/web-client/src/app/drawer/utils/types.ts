@@ -4,7 +4,7 @@ export interface Node {
   label: string;
   ref: string;
   name: string;
-  image: string;
+  thumbnailUrl: string;
 }
 
 export interface Edge {
@@ -15,6 +15,9 @@ export interface Edge {
 
 export interface Graph {
   id: string;
+  name: string;
+  kind: string;
+  thumbnailUrl: string;
   nodes: Node[];
   edges: Edge[];
   lastEventId: string;
@@ -25,7 +28,24 @@ export type Direction = 'vertical' | 'horizontal';
 export type EventDto = {
   type: string;
   payload: unknown;
+  graphIds: string[];
 };
+
+export type DrawerEventName =
+  | 'Init'
+  | 'Click'
+  | 'OneTapNode'
+  | 'OneTapEdge'
+  | 'AddNodeSuccess'
+  | 'AddEdgeSuccess'
+  | 'AddNodeToEdgeSuccess'
+  | 'UpdateNode'
+  | 'DeleteNode'
+  | 'DeleteNodeSuccess'
+  | 'ViewNode'
+  | 'DeleteEdge'
+  | 'DeleteEdgeSuccess'
+  | 'GraphScrolled';
 
 export interface InitEvent {
   type: 'Init';
@@ -34,6 +54,29 @@ export interface InitEvent {
 export interface ClickEvent {
   type: 'Click';
   payload: { x: number; y: number };
+}
+
+export interface OneTapNodeEvent {
+  type: 'OneTapNode';
+  payload: Node;
+}
+
+export interface OneTapEdgeEvent {
+  type: 'OneTapEdge';
+  payload: string;
+}
+
+export interface UpdateGraphSuccessEvent {
+  type: 'UpdateGraphSuccess';
+  payload: Partial<Omit<Graph, 'id'>>;
+}
+
+export interface UpdateGraphThumbnailSuccessEvent {
+  type: 'UpdateGraphThumbnailSuccess';
+  payload: {
+    fileId: string;
+    fileUrl: string;
+  };
 }
 
 export interface AddNodeSuccessEvent {
@@ -63,6 +106,23 @@ export interface AddNodeToEdgeSuccessEvent {
 export interface UpdateNodeEvent {
   type: 'UpdateNode';
   payload: string;
+}
+
+export interface UpdateNodeSuccessEvent {
+  type: 'UpdateNodeSuccess';
+  payload: {
+    id: string;
+    changes: Partial<Omit<Node, 'id'>>;
+  };
+}
+
+export interface UpdateNodeThumbnailSuccessEvent {
+  type: 'UpdateNodeThumbnailSuccess';
+  payload: {
+    id: string;
+    fileId: string;
+    fileUrl: string;
+  };
 }
 
 export interface DeleteNodeEvent {
@@ -108,14 +168,20 @@ export interface PanDraggedEvent {
 export type DrawerEvent =
   | InitEvent
   | ClickEvent
+  | UpdateGraphSuccessEvent
+  | UpdateGraphThumbnailSuccessEvent
   | AddNodeSuccessEvent
   | AddEdgeSuccessEvent
   | AddNodeToEdgeSuccessEvent
   | UpdateNodeEvent
+  | UpdateNodeSuccessEvent
+  | UpdateNodeThumbnailSuccessEvent
   | DeleteNodeEvent
   | DeleteNodeSuccessEvent
   | ViewNodeEvent
   | DeleteEdgeEvent
   | DeleteEdgeSuccessEvent
   | GraphScrolledEvent
-  | PanDraggedEvent;
+  | PanDraggedEvent
+  | OneTapNodeEvent
+  | OneTapEdgeEvent;

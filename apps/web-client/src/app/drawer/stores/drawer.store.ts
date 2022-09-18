@@ -1,17 +1,18 @@
 import { Injectable } from '@angular/core';
 import { ComponentStore, OnStoreInit } from '@ngrx/component-store';
-import { Core, EdgeDataDefinition, NodeDataDefinition } from 'cytoscape';
-import { EMPTY, filter, firstValueFrom, switchMap, tap } from 'rxjs';
-import { Option } from '../../shared/utils';
+import { EdgeDataDefinition, NodeDataDefinition } from 'cytoscape';
+import { EMPTY, filter, firstValueFrom, of, switchMap, tap } from 'rxjs';
+import { isNull, Option } from '../../shared/utils';
 import {
   Direction,
   Drawer,
+  Graph,
   isGraphScrolledEvent,
   isPanDraggedEvent,
+  Node,
 } from '../utils';
 
 interface ViewModel {
-  graph: Option<Core>;
   drawer: Option<Drawer>;
   direction: Direction;
   drawMode: boolean;
@@ -19,7 +20,6 @@ interface ViewModel {
 
 const initialState: ViewModel = {
   drawer: null,
-  graph: null,
   direction: 'vertical',
   drawMode: false,
 };
@@ -30,27 +30,20 @@ export class DrawerStore
   implements OnStoreInit
 {
   readonly direction$ = this.select(({ direction }) => direction);
-
   readonly drawMode$ = this.select(({ drawMode }) => drawMode);
+  readonly drawer$ = this.select(({ drawer }) => drawer);
+  readonly graph$ = this.select(
+    this.drawer$.pipe(
+      switchMap((drawer) => {
+        if (isNull(drawer)) {
+          return of(null);
+        }
 
-  readonly graph$ = this.select(({ graph }) => graph);
-
-  readonly drawer$ = this.select(
-    this.graph$,
-    (graph) => {
-      if (graph === null) {
-        return null;
-      }
-
-      const drawer = new Drawer(graph);
-
-      drawer.initialize();
-
-      return drawer;
-    },
-    { debounce: true }
+        return drawer.graph$;
+      })
+    ),
+    (graph) => graph
   );
-
   readonly event$ = this.select(
     this.drawer$.pipe(
       switchMap((drawer) => {
@@ -63,24 +56,19 @@ export class DrawerStore
     ),
     (event) => event
   );
-
   readonly zoomSize$ = this.select(
     this.event$.pipe(filter(isGraphScrolledEvent)),
     (event) => event.payload.zoomSize
   );
-
   readonly panDrag$ = this.select(
     this.event$.pipe(filter(isPanDraggedEvent)),
     (event) => ({ x: event.payload.x, y: event.payload.y })
   );
 
-  readonly setGraph = this.updater<Core>((state, graph) => {
-    const drawer = new Drawer(graph);
-
-    drawer.initialize();
-
-    return { ...state, graph, drawer };
-  });
+  readonly setDrawer = this.updater<Option<Drawer>>((state, drawer) => ({
+    ...state,
+    drawer,
+  }));
 
   readonly setDirection = this.updater<Direction>((state, direction) => ({
     ...state,
@@ -141,6 +129,22 @@ export class DrawerStore
     }
   }
 
+  async updateGraph(changes: Partial<Omit<Graph, 'id'>>) {
+    const drawer = await firstValueFrom(this.drawer$);
+
+    if (drawer !== null) {
+      drawer.updateGraph(changes);
+    }
+  }
+
+  async updateGraphThumbnail(fileId: string, fileUrl: string) {
+    const drawer = await firstValueFrom(this.drawer$);
+
+    if (drawer !== null) {
+      drawer.updateGraphThumbnail(fileId, fileUrl);
+    }
+  }
+
   async addNode(
     nodeData: NodeDataDefinition,
     position?: { x: number; y: number }
@@ -149,6 +153,46 @@ export class DrawerStore
 
     if (drawer !== null) {
       drawer.addNode(nodeData, position);
+    }
+  }
+
+  async updateNode(nodeId: string, changes: NodeDataDefinition) {
+    const drawer = await firstValueFrom(this.drawer$);
+
+    if (drawer !== null) {
+      drawer.updateNode(nodeId, changes);
+    }
+  }
+
+  async updateNodeThumbnail(nodeId: string, fileId: string, fileUrl: string) {
+    const drawer = await firstValueFrom(this.drawer$);
+
+    if (drawer !== null) {
+      drawer.updateNodeThumbnail(nodeId, fileId, fileUrl);
+    }
+  }
+
+  async removeNode(nodeId: string) {
+    const drawer = await firstValueFrom(this.drawer$);
+
+    if (drawer !== null) {
+      drawer.removeNode(nodeId);
+    }
+  }
+
+  async handleGraphUpdated(changes: Partial<Omit<Graph, 'id'>>) {
+    const drawer = await firstValueFrom(this.drawer$);
+
+    if (drawer !== null) {
+      drawer.handleGraphUpdated(changes);
+    }
+  }
+
+  async handleGraphThumbnailUpdated(fileId: string, fileUrl: string) {
+    const drawer = await firstValueFrom(this.drawer$);
+
+    if (drawer !== null) {
+      drawer.handleGraphThumbnailUpdated(fileId, fileUrl);
     }
   }
 
@@ -175,6 +219,26 @@ export class DrawerStore
 
     if (drawer !== null) {
       drawer.handleNodeAddedToEdge(node, source, target, edgeId);
+    }
+  }
+
+  async handleNodeUpdated(nodeId: string, changes: Partial<Omit<Node, 'id'>>) {
+    const drawer = await firstValueFrom(this.drawer$);
+
+    if (drawer !== null) {
+      drawer.handleNodeUpdated(nodeId, changes);
+    }
+  }
+
+  async handleNodeThumbnailUpdated(
+    nodeId: string,
+    fileId: string,
+    fileUrl: string
+  ) {
+    const drawer = await firstValueFrom(this.drawer$);
+
+    if (drawer !== null) {
+      drawer.handleNodeThumbnailUpdated(nodeId, fileId, fileUrl);
     }
   }
 

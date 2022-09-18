@@ -2,6 +2,8 @@
 // `ng build` replaces `environment.ts` with `environment.prod.ts`.
 // The list of file replacements can be found in `angular.json`.
 
+import { v4 as uuid } from 'uuid';
+
 export const environment = {
   production: false,
   firebaseConfig: {
@@ -14,6 +16,8 @@ export const environment = {
     measurementId: 'G-FKXKLP8BDP',
   },
   useEmulators: true,
+  clientId: uuid(),
+  userId: 'p7xARjRPxv8cvbBOR59C',
 };
 
 /*

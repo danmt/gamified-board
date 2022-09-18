@@ -22,9 +22,9 @@ import {
 import { SlotHotkeyPipe } from '../../shared/pipes';
 import { generateId, isNotNull, isNull } from '../../shared/utils';
 import {
-  EditApplicationSubmit,
   openEditApplicationModal,
   UpdateApplicationModalDirective,
+  UpdateApplicationSubmit,
 } from '../components';
 import { ApplicationApiService } from '../services';
 
@@ -215,7 +215,7 @@ export class ApplicationDockComponent {
 
   onUpdateApplication(
     applicationId: string,
-    applicationData: EditApplicationSubmit
+    applicationData: UpdateApplicationSubmit
   ) {
     this._applicationApiService
       .updateApplication(applicationId, {

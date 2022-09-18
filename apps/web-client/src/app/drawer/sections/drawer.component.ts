@@ -4,17 +4,18 @@ import {
   Component,
   ElementRef,
   inject,
+  Input,
   ViewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { PushModule } from '@ngrx/component';
-import { concatMap, EMPTY } from 'rxjs';
-import { v4 as uuid } from 'uuid';
+import { environment } from '../../../environments/environment';
 import { BackgroundImageMoveDirective } from '../../shared/directives/background-position.directive';
 import { BackgroundImageZoomDirective } from '../../shared/directives/background-zoom.directive';
-import { EventApiService, GraphApiService } from '../services';
+import { isNotNull, Option } from '../../shared/utils';
+import { GraphApiService } from '../services';
 import { DrawerStore } from '../stores';
-import { createGraph, Direction } from '../utils';
+import { Direction, Drawer } from '../utils';
 
 @Component({
   selector: 'pg-drawer',
@@ -55,7 +56,6 @@ import { createGraph, Direction } from '../utils';
         </fieldset>
 
         <button (click)="onOrganize()">Organize</button>
-        <button (click)="onAddNode()">Add Node</button>
 
         <p>{{ clientId }}</p>
       </div>
@@ -99,100 +99,33 @@ import { createGraph, Direction } from '../utils';
 })
 export class DrawerComponent implements AfterViewInit {
   private readonly _drawerStore = inject(DrawerStore);
-  private readonly _eventApiService = inject(EventApiService);
   private readonly _graphApiService = inject(GraphApiService);
 
   readonly drawMode$ = this._drawerStore.drawMode$;
   readonly direction$ = this._drawerStore.direction$;
+  readonly clientId = environment.clientId;
 
-  readonly clientId = uuid();
-  readonly graphId = '5l7hFOgMPmJ1SBcZChwe';
+  @Input() pgGraphId: Option<string> = null;
+  @Input() pgGroups: string[] = [];
+  @ViewChild('drawerElement')
+  pgDrawerElementRef: ElementRef<HTMLElement> | null = null;
 
   readonly zoomSize$ = this._drawerStore.zoomSize$;
   readonly panDrag$ = this._drawerStore.panDrag$;
 
-  @ViewChild('drawerElement') drawerElementRef: ElementRef<HTMLElement> | null =
-    null;
+  async ngAfterViewInit() {
+    if (isNotNull(this.pgDrawerElementRef) && isNotNull(this.pgGraphId)) {
+      const graph = await this._graphApiService.getGraph(this.pgGraphId);
 
-  ngAfterViewInit() {
-    if (this.drawerElementRef !== null) {
-      const drawerNativeElement = this.drawerElementRef.nativeElement;
-
-      this._graphApiService.getGraph(this.graphId).then((graph) => {
-        if (graph !== null) {
-          this._drawerStore.setGraph(
-            createGraph(
-              drawerNativeElement,
-              graph.nodes.map((node) => ({
-                data: node,
-              })),
-              graph.edges.map((edge) => ({
-                data: edge,
-              }))
-            )
-          );
-
-          this._eventApiService.onServerCreate(
-            this.clientId,
-            this.graphId,
-            graph.lastEventId,
-            (event) => {
-              console.log('server event', event);
-
-              switch (event.type) {
-                case 'AddNodeSuccess': {
-                  this._drawerStore.handleNodeAdded(event.payload);
-                  break;
-                }
-                case 'DeleteNodeSuccess': {
-                  this._drawerStore.handleNodeRemoved(event.payload);
-                  break;
-                }
-                case 'AddEdgeSuccess': {
-                  this._drawerStore.handleEdgeAdded(event.payload);
-                  break;
-                }
-                case 'DeleteEdgeSuccess': {
-                  this._drawerStore.handleEdgeRemoved(event.payload);
-                  break;
-                }
-                case 'AddNodeToEdgeSuccess': {
-                  this._drawerStore.handleNodeAddedToEdge(event.payload);
-                  break;
-                }
-              }
-            }
-          );
-        }
-      });
-
-      this._drawerStore.event$
-        .pipe(
-          concatMap((event) => {
-            console.log('local event', event);
-
-            switch (event.type) {
-              // Ignoring these events for now
-              case 'DeleteEdge':
-              case 'DeleteNode':
-              case 'Init':
-              case 'Click':
-              case 'ViewNode':
-              case 'UpdateNode':
-              case 'GraphScrolled':
-              case 'PanDragged':
-                return EMPTY;
-              default: {
-                return this._eventApiService.emit(
-                  this.clientId,
-                  this.graphId,
-                  event
-                );
-              }
-            }
-          })
-        )
-        .subscribe();
+      if (isNotNull(graph)) {
+        const drawer = new Drawer(
+          graph,
+          this.pgGroups,
+          this.pgDrawerElementRef.nativeElement
+        );
+        drawer.initialize();
+        this._drawerStore.setDrawer(drawer);
+      }
     }
   }
 
@@ -206,14 +139,5 @@ export class DrawerComponent implements AfterViewInit {
 
   onOrganize() {
     this._drawerStore.restartLayout();
-  }
-
-  onAddNode() {
-    this._drawerStore.addNode({
-      id: uuid(),
-      kind: 'faucet',
-      label: 'TokenProgram\nINIT ACCOUNT 2',
-      image: 'url(assets/images/initAccount1.png)',
-    });
   }
 }

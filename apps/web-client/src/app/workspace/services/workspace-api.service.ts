@@ -2,23 +2,18 @@ import { inject, Injectable } from '@angular/core';
 import {
   collectionData,
   collectionGroup,
-  deleteDoc,
   doc,
   docData,
-  DocumentData,
   documentId,
-  DocumentReference,
-  endAt,
   Firestore,
   orderBy,
   query,
-  runTransaction,
-  startAt,
-  updateDoc,
+  where,
 } from '@angular/fire/firestore';
-import { defer, from, map, Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
+import { EventApiService } from '../../drawer/services';
 import { Entity } from '../../shared/utils';
-import { WorkspaceDto } from '../utils';
+import { WorkspaceGraph } from '../utils';
 
 export type CreateWorkspaceDto = Entity<{
   name: string;
@@ -28,116 +23,100 @@ export type UpdateWorkspaceDto = Partial<{
   name: string;
 }>;
 
+export interface UpdateWorkspaceThumbnailDto {
+  fileId: string;
+  fileUrl: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class WorkspaceApiService {
   private readonly _firestore = inject(Firestore);
+  private readonly _eventApiService = inject(EventApiService);
 
-  getWorkspace(workspaceId: string): Observable<WorkspaceDto> {
-    const workspaceRef = doc(this._firestore, `workspaces/${workspaceId}`);
+  getWorkspace(workspaceId: string): Observable<WorkspaceGraph> {
+    const workspaceRef = doc(this._firestore, `graphs/${workspaceId}`);
 
     return docData(workspaceRef).pipe(
       map((workspace) => ({
         id: workspaceId,
+        kind: workspace['kind'],
         name: workspace['name'],
+        thumbnailUrl: workspace['thumbnailUrl'],
+        nodes: workspace['nodes'],
+        edges: workspace['edges'],
       }))
     );
   }
 
-  getFavoriteWorkspaceIds(userId: string) {
-    const userRef = doc(this._firestore, `users/${userId}`);
-
-    console.log('da fu');
-
+  getWorkspacesByOwner(ownerId: string): Observable<WorkspaceGraph[]> {
     return collectionData(
       query(
-        collectionGroup(this._firestore, 'favorite-workspaces').withConverter<
-          DocumentReference<DocumentData>
-        >({
-          fromFirestore: (snapshot) => snapshot.data()['workspaceRef'],
-          toFirestore: (it: DocumentData) => it,
+        collectionGroup(this._firestore, 'graphs').withConverter({
+          fromFirestore: (snapshot) => {
+            const data = snapshot.data();
+
+            return {
+              id: snapshot.id,
+              kind: data['kind'],
+              name: data['name'],
+              thumbnailUrl: data['thumbnailUrl'],
+              nodes: data['nodes'],
+              edges: data['edges'],
+            };
+          },
+          toFirestore: (it) => it,
         }),
-        orderBy(documentId()),
-        startAt(userRef.path),
-        endAt(userRef.path + '\uf8ff')
-      )
-    ).pipe(
-      map((favoriteWorkspacesRefs) =>
-        favoriteWorkspacesRefs.map(
-          (favoriteWorkspacesRef) => favoriteWorkspacesRef.id
-        )
+        where('userId', '==', ownerId),
+        where('kind', '==', 'workspace'),
+        orderBy(documentId())
       )
     );
   }
 
-  createWorkspace(userId: string, { id, name }: CreateWorkspaceDto) {
-    return defer(() =>
-      from(
-        runTransaction(this._firestore, async (transaction) => {
-          const newWorkspaceRef = doc(this._firestore, `workspaces/${id}`);
-          const newFavoriteWorkspaceRef = doc(
-            this._firestore,
-            `users/${userId}/favorite-workspaces/${id}`
-          );
-
-          // create the new workspace
-          transaction.set(newWorkspaceRef, {
-            name,
-          });
-
-          // push workspace to user favorite workspaces
-          transaction.set(newFavoriteWorkspaceRef, {
-            workspaceRef: newWorkspaceRef,
-          });
-
-          return {};
-        })
-      )
-    );
+  createWorkspace(
+    clientId: string,
+    userId: string,
+    { id, name }: CreateWorkspaceDto
+  ) {
+    return this._eventApiService.emit(clientId, {
+      type: 'createWorkspace',
+      payload: {
+        id,
+        name,
+        userId,
+      },
+      graphIds: [id],
+    });
   }
 
-  updateWorkspace(workspaceId: string, changes: UpdateWorkspaceDto) {
-    return defer(() =>
-      from(
-        updateDoc(doc(this._firestore, `workspaces/${workspaceId}`), changes)
-      )
-    );
+  updateWorkspace(clientId: string, id: string, changes: UpdateWorkspaceDto) {
+    return this._eventApiService.emit(clientId, {
+      type: 'updateWorkspace',
+      payload: {
+        id,
+        changes,
+      },
+      graphIds: [id],
+    });
   }
 
-  deleteWorkspace(workspaceId: string, userId: string) {
-    return defer(() =>
-      from(
-        runTransaction(this._firestore, async (transaction) => {
-          const workspaceRef = doc(
-            this._firestore,
-            `workspaces/${workspaceId}`
-          );
-          const favoriteWorkspaceRef = doc(
-            this._firestore,
-            `users/${userId}/favorite-workspaces/${workspaceId}`
-          );
-
-          // delete workspace
-          transaction.delete(workspaceRef);
-
-          // remove workspace from user favorite workspaces
-          transaction.delete(favoriteWorkspaceRef);
-
-          return {};
-        })
-      )
-    );
+  deleteWorkspace(clientId: string, id: string) {
+    return this._eventApiService.emit(clientId, {
+      type: 'deleteWorkspace',
+      payload: { id },
+      graphIds: [id],
+    });
   }
 
-  removeWorkspaceFromFavorites(workspaceId: string, userId: string) {
-    return defer(() =>
-      from(
-        deleteDoc(
-          doc(
-            this._firestore,
-            `users/${userId}/favorite-workspaces/${workspaceId}`
-          )
-        )
-      )
-    );
+  updateWorkspaceThumbnail(
+    clientId: string,
+    id: string,
+    { fileId, fileUrl }: UpdateWorkspaceThumbnailDto
+  ) {
+    return this._eventApiService.emit(clientId, {
+      type: 'updateWorkspaceThumbnail',
+      payload: { id, fileId, fileUrl },
+      graphIds: [id],
+    });
   }
 }

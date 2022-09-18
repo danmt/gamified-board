@@ -353,7 +353,6 @@ export class EditCollectionAttributesModalComponent {
   }
 
   onSubmit() {
-    console.log('epalee', this.form);
     if (this.form.valid) {
       const attributes = this.attributesControl.controls.map(
         (attributeForm) => {

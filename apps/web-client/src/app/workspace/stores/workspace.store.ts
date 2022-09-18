@@ -7,11 +7,11 @@ import {
 import { EMPTY, switchMap } from 'rxjs';
 import { isNull, Option } from '../../shared/utils';
 import { WorkspaceApiService } from '../services';
-import { WorkspaceDto } from '../utils';
+import { WorkspaceGraph } from '../utils';
 
 interface ViewModel {
   workspaceId: Option<string>;
-  workspace: Option<WorkspaceDto>;
+  workspace: Option<WorkspaceGraph>;
 }
 
 const initialState: ViewModel = {
