@@ -26,7 +26,7 @@ import { openEditInstructionApplicationModal } from '../../instruction-applicati
 import { ActiveComponent } from '../../shared/components';
 import {
   FollowCursorDirective,
-  KeyboardListenerDirective,
+  KeyDownDirective,
 } from '../../shared/directives';
 import {
   Entity,
@@ -77,8 +77,9 @@ const initialState: ViewModel = {
       class="fixed z-10 pointer-events-none"
       pgFollowCursor
       [ngClass]="{ hidden: (isAdding$ | ngrxPush) }"
-      pgKeyboardListener
-      (pgKeyDown)="onKeyDown($event)"
+      pgKeyDown
+      pgKey="Escape"
+      (pgKeyDown)="onEscapePressed()"
     ></pg-active>
   `,
   standalone: true,
@@ -87,7 +88,7 @@ const initialState: ViewModel = {
     PushModule,
     FollowCursorDirective,
     ActiveComponent,
-    KeyboardListenerDirective,
+    KeyDownDirective,
   ],
 })
 export class ActiveApplicationComponent
@@ -155,7 +156,7 @@ export class ActiveApplicationComponent
     tap((event) => {
       this.patchState({
         canAdd: isChildOf(event.target as HTMLElement, (element) =>
-          element.matches('pg-drawer')
+          element.matches('#cy')
         ),
       });
     })
@@ -173,10 +174,7 @@ export class ActiveApplicationComponent
     this._handleMouseMove(this._mouseMove.asObservable());
   }
 
-  onKeyDown(event: KeyboardEvent) {
-    if (event.key === 'Escape') {
-      event.stopPropagation();
-      this.pgDeactivate.emit();
-    }
+  onEscapePressed() {
+    this.pgDeactivate.emit();
   }
 }

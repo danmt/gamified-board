@@ -576,6 +576,8 @@ export class WorkspacePageComponent
       )
     );
 
+    // when there's an active and a click on the drawer occurs, add the node
+
     this._handleServerNodeCreate(this.workspaceId$);
     this._handleServerNodeUpdate(this.workspaceId$);
     this._handleServerNodeThumbnailUpdate(this.workspaceId$);

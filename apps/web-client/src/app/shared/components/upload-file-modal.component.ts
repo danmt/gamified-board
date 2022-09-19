@@ -45,7 +45,11 @@ export const openUploadFileModal = (dialog: Dialog) =>
     UploadFileModalComponent
   );
 
-@Directive({ selector: '[pgUploadFileModal]', standalone: true })
+@Directive({
+  selector: '[pgUploadFileModal]',
+  standalone: true,
+  exportAs: 'modal',
+})
 export class UploadFileModalDirective {
   private readonly _dialog = inject(Dialog);
   private readonly _storage = inject(Storage);
@@ -55,6 +59,10 @@ export class UploadFileModalDirective {
   @Output() pgSubmit = new EventEmitter<{ fileId: string; fileUrl: string }>();
 
   @HostListener('click') onClick() {
+    this.open();
+  }
+
+  open() {
     this.pgOpenModal.emit();
     const fileId = generateId();
     const fileName = `${fileId}.png`;

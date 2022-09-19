@@ -29,7 +29,11 @@ export const openConfirmModal = (dialog: Dialog, data: ConfirmData) =>
     }
   );
 
-@Directive({ selector: '[pgConfirmModal]', standalone: true })
+@Directive({
+  selector: '[pgConfirmModal]',
+  standalone: true,
+  exportAs: 'modal',
+})
 export class ConfirmModalDirective {
   private readonly _dialog = inject(Dialog);
 
@@ -41,6 +45,10 @@ export class ConfirmModalDirective {
   @Output() pgCloseModal = new EventEmitter();
 
   @HostListener('click', []) onClick() {
+    this.open();
+  }
+
+  open() {
     if (isNull(this.pgMessage)) {
       throw new Error('Message is missing.');
     }

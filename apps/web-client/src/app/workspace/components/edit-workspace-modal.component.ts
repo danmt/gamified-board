@@ -81,6 +81,7 @@ export class CreateWorkspaceModalDirective {
 @Directive({
   selector: '[pgUpdateWorkspaceModal]',
   standalone: true,
+  exportAs: 'modal',
 })
 export class UpdateWorkspaceModalDirective {
   private readonly _dialog = inject(Dialog);
@@ -92,6 +93,10 @@ export class UpdateWorkspaceModalDirective {
   @Output() pgCloseModal = new EventEmitter();
 
   @HostListener('click', []) onClick() {
+    this.open();
+  }
+
+  open() {
     if (isNull(this.pgWorkspace)) {
       throw new Error('pgWorkspace is missing');
     }

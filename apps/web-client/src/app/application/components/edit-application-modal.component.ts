@@ -53,6 +53,7 @@ export const openEditApplicationModal = (
 @Directive({
   selector: '[pgCreateApplicationModal]',
   standalone: true,
+  exportAs: 'modal',
 })
 export class CreateApplicationModalDirective {
   private readonly _dialog = inject(Dialog);
@@ -62,6 +63,10 @@ export class CreateApplicationModalDirective {
   @Output() pgCloseModal = new EventEmitter();
 
   @HostListener('click', []) onClick() {
+    this.open();
+  }
+
+  open() {
     this.pgOpenModal.emit();
 
     openEditApplicationModal(this._dialog, {
@@ -79,6 +84,7 @@ export class CreateApplicationModalDirective {
 @Directive({
   selector: '[pgUpdateApplicationModal]',
   standalone: true,
+  exportAs: 'modal',
 })
 export class UpdateApplicationModalDirective {
   private readonly _dialog = inject(Dialog);
@@ -90,6 +96,10 @@ export class UpdateApplicationModalDirective {
   @Output() pgCloseModal = new EventEmitter();
 
   @HostListener('click', []) onClick() {
+    this.open();
+  }
+
+  open() {
     if (isNull(this.pgApplication)) {
       throw new Error('pgApplication is missing');
     }
