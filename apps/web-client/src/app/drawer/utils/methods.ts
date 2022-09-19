@@ -8,9 +8,11 @@ import {
   DeleteNodeEvent,
   DeleteNodeSuccessEvent,
   DrawerEvent,
+  GraphDataType,
   GraphScrolledEvent,
   InitEvent,
   Node,
+  NodeDataType,
   OneTapEdgeEvent,
   OneTapNodeEvent,
   PanDraggedEvent,
@@ -30,7 +32,7 @@ export const createNode = (
   graph.add({
     data: {
       ...nodeData,
-      parent: nodeData['kind'],
+      parent: nodeData['kind'] ?? null,
     },
     group: 'nodes',
     classes: 'bp-bd-node',
@@ -38,109 +40,165 @@ export const createNode = (
   });
 };
 
-export const isInitEvent = (event: DrawerEvent): event is InitEvent => {
+export const isInitEvent = <T extends GraphDataType, U extends NodeDataType>(
+  event: DrawerEvent<T, U>
+): event is InitEvent => {
   return event.type === 'Init';
 };
 
-export const isClickEvent = (event: DrawerEvent): event is ClickEvent => {
+export const isClickEvent = <T extends GraphDataType, U extends NodeDataType>(
+  event: DrawerEvent<T, U>
+): event is ClickEvent => {
   return event.type === 'Click';
 };
 
-export const isGraphScrolledEvent = (
-  event: DrawerEvent
+export const isGraphScrolledEvent = <
+  T extends GraphDataType,
+  U extends NodeDataType
+>(
+  event: DrawerEvent<T, U>
 ): event is GraphScrolledEvent => {
   return event.type === 'GraphScrolled';
 };
 
-export const isPanDraggedEvent = (
-  event: DrawerEvent
+export const isPanDraggedEvent = <
+  T extends GraphDataType,
+  U extends NodeDataType
+>(
+  event: DrawerEvent<T, U>
 ): event is PanDraggedEvent => {
   return event.type === 'PanDragged';
 };
 
-export const isOneTapNodeEvent = (
-  event: DrawerEvent
-): event is OneTapNodeEvent => {
+export const isOneTapNodeEvent = <
+  T extends GraphDataType,
+  U extends NodeDataType
+>(
+  event: DrawerEvent<T, U>
+): event is OneTapNodeEvent<U> => {
   return event.type === 'OneTapNode';
 };
 
-export const isOneTapEdgeEvent = (
-  event: DrawerEvent
+export const isOneTapEdgeEvent = <
+  T extends GraphDataType,
+  U extends NodeDataType
+>(
+  event: DrawerEvent<T, U>
 ): event is OneTapEdgeEvent => {
   return event.type === 'OneTapEdge';
 };
 
-export const isUpdateGraphSuccessEvent = (
-  event: DrawerEvent
-): event is UpdateGraphSuccessEvent => {
+export const isUpdateGraphSuccessEvent = <
+  T extends GraphDataType,
+  U extends NodeDataType
+>(
+  event: DrawerEvent<T, U>
+): event is UpdateGraphSuccessEvent<T> => {
   return event.type === 'UpdateGraphSuccess';
 };
 
-export const isUpdateGraphThumbnailSuccessEvent = (
-  event: DrawerEvent
+export const isUpdateGraphThumbnailSuccessEvent = <
+  T extends GraphDataType,
+  U extends NodeDataType
+>(
+  event: DrawerEvent<T, U>
 ): event is UpdateGraphThumbnailSuccessEvent => {
   return event.type === 'UpdateGraphThumbnailSuccess';
 };
 
-export const isAddNodeSuccessEvent = (
-  event: DrawerEvent
-): event is AddNodeSuccessEvent => {
+export const isAddNodeSuccessEvent = <
+  T extends GraphDataType,
+  U extends NodeDataType
+>(
+  event: DrawerEvent<T, U>
+): event is AddNodeSuccessEvent<U> => {
   return event.type === 'AddNodeSuccess';
 };
 
-export const isAddNodeToEdgeSuccessEvent = (
-  event: DrawerEvent
-): event is AddNodeToEdgeSuccessEvent => {
+export const isAddNodeToEdgeSuccessEvent = <
+  T extends GraphDataType,
+  U extends NodeDataType
+>(
+  event: DrawerEvent<T, U>
+): event is AddNodeToEdgeSuccessEvent<U> => {
   return event.type === 'AddNodeToEdgeSuccess';
 };
 
-export const isUpdateNodeEvent = (
-  event: DrawerEvent
+export const isUpdateNodeEvent = <
+  T extends GraphDataType,
+  U extends NodeDataType
+>(
+  event: DrawerEvent<T, U>
 ): event is UpdateNodeEvent => {
   return event.type === 'UpdateNode';
 };
 
-export const isUpdateNodeSuccessEvent = (
-  event: DrawerEvent
-): event is UpdateNodeSuccessEvent => {
+export const isUpdateNodeSuccessEvent = <
+  T extends GraphDataType,
+  U extends NodeDataType
+>(
+  event: DrawerEvent<T, U>
+): event is UpdateNodeSuccessEvent<U> => {
   return event.type === 'UpdateNodeSuccess';
 };
 
-export const isUpdateNodeThumbnailSuccessEvent = (
-  event: DrawerEvent
+export const isUpdateNodeThumbnailSuccessEvent = <
+  T extends GraphDataType,
+  U extends NodeDataType
+>(
+  event: DrawerEvent<T, U>
 ): event is UpdateNodeThumbnailSuccessEvent => {
   return event.type === 'UpdateNodeThumbnailSuccess';
 };
 
-export const isDeleteNodeEvent = (
-  event: DrawerEvent
+export const isDeleteNodeEvent = <
+  T extends GraphDataType,
+  U extends NodeDataType
+>(
+  event: DrawerEvent<T, U>
 ): event is DeleteNodeEvent => {
   return event.type === 'DeleteNode';
 };
 
-export const isDeleteNodeSuccessEvent = (
-  event: DrawerEvent
+export const isDeleteNodeSuccessEvent = <
+  T extends GraphDataType,
+  U extends NodeDataType
+>(
+  event: DrawerEvent<T, U>
 ): event is DeleteNodeSuccessEvent => {
   return event.type === 'DeleteNodeSuccess';
 };
 
-export const isViewNodeEvent = (event: DrawerEvent): event is ViewNodeEvent => {
+export const isViewNodeEvent = <
+  T extends GraphDataType,
+  U extends NodeDataType
+>(
+  event: DrawerEvent<T, U>
+): event is ViewNodeEvent => {
   return event.type === 'ViewNode';
 };
 
-export const isDeleteEdgeEvent = (
-  event: DrawerEvent
+export const isDeleteEdgeEvent = <
+  T extends GraphDataType,
+  U extends NodeDataType
+>(
+  event: DrawerEvent<T, U>
 ): event is DeleteEdgeEvent => {
   return event.type === 'DeleteEdge';
 };
 
-export const isDeleteEdgeSuccessEvent = (
-  event: DrawerEvent
+export const isDeleteEdgeSuccessEvent = <
+  T extends GraphDataType,
+  U extends NodeDataType
+>(
+  event: DrawerEvent<T, U>
 ): event is DeleteEdgeSuccessEvent => {
   return event.type === 'DeleteEdgeSuccess';
 };
 
-export const createGraph = (
+export const createGraph = <
+  NodeDataType extends { name: string; thumbnailUrl: string; kind: string }
+>(
   container: HTMLElement,
   nodes: cytoscape.NodeDefinition[],
   edges: cytoscape.EdgeDefinition[],
@@ -229,7 +287,7 @@ export const createGraph = (
         nodes.map((node) => ({
           data: {
             ...node.data,
-            parent: node.data['kind'],
+            parent: node.data['kind'] ?? null,
           },
           group: 'nodes' as const,
           classes: 'bp-bd-node',
@@ -245,16 +303,16 @@ export const createGraph = (
   }).nodeHtmlLabel([
     {
       query: '.bp-bd-node',
-      tpl: (data: Node) => {
+      tpl: (node: Node<NodeDataType>) => {
         return `
           <div class="w-[280px] h-[85px] flex gap-2 items-center px-8 bg-[length:280px_85px] bg-[url('assets/images/node.png')] z-50">
             <div 
                 class="w-[56px] h-[52px] shrink-0 rounded-lg border-gray-700 border-2 bg-cover bg-center"
-                style="background-image: url(${data.thumbnailUrl});">
+                style="background-image: url(${node.data.thumbnailUrl});">
             </div>
             <div style="font-family: 'Courier New', Courier, monospace">
-              <h2 class="text-xl mt-2 text-white">${data.name}</h2>
-              <p class="italic text-gray-400">${data.kind}</p>
+              <h2 class="text-xl mt-2 text-white">${node.data.name}</h2>
+              <p class="italic text-gray-400">${node.data.kind}</p>
             </div>
           </div>
         `;

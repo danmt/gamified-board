@@ -34,6 +34,7 @@ import {
   UpdateWorkspaceModalDirective,
   UpdateWorkspaceSubmit,
 } from '../components';
+import { WorkspaceGraphData, WorkspaceNodeData } from '../utils';
 import { ActiveApplicationComponent } from './active-application.component';
 
 interface HotKey {
@@ -43,7 +44,7 @@ interface HotKey {
 }
 
 interface ViewModel {
-  workspace: Option<Graph>;
+  workspace: Option<Graph<WorkspaceGraphData, WorkspaceNodeData>>;
   isCreating: boolean;
   isUpdating: boolean;
   isUpdatingThumbnail: boolean;
@@ -93,14 +94,14 @@ const initialState: ViewModel = {
       >
         <div class="flex gap-4 justify-center items-start">
           <img
-            [src]="workspace.thumbnailUrl"
+            [src]="workspace.data.thumbnailUrl"
             pgDefaultImageUrl="assets/generic/workspace.png"
             class="w-[100px] h-[106px] overflow-hidden rounded-xl"
           />
 
           <div>
             <h2 class="text-xl">Name</h2>
-            <p class="text-base">{{ workspace?.name }}</p>
+            <p class="text-base">{{ workspace.data.name }}</p>
           </div>
 
           <div class="ml-10">
@@ -244,7 +245,9 @@ export class WorkspaceDockComponent extends ComponentStore<ViewModel> {
   readonly hotkeys$ = this.select(({ hotkeys }) => hotkeys);
   readonly workspace$ = this.select(({ workspace }) => workspace);
 
-  @Input() set pgWorkspace(workspace: Option<Graph>) {
+  @Input() set pgWorkspace(
+    workspace: Option<Graph<WorkspaceGraphData, WorkspaceNodeData>>
+  ) {
     this.patchState({ workspace });
   }
   @Output() pgApplicationActivate = new EventEmitter();
@@ -308,7 +311,11 @@ export class WorkspaceDockComponent extends ComponentStore<ViewModel> {
     this.pgApplicationActivate.emit();
   }
 
-  onKeyDown(hotkeys: HotKey[], workspace: Graph, event: KeyboardEvent) {
+  onKeyDown(
+    hotkeys: HotKey[],
+    workspace: Graph<WorkspaceGraphData, WorkspaceNodeData>,
+    event: KeyboardEvent
+  ) {
     const hotkey = hotkeys.find(({ code }) => code === event.code) ?? null;
 
     if (isNotNull(hotkey)) {

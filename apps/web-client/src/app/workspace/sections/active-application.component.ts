@@ -36,11 +36,10 @@ import {
   isNull,
   Option,
 } from '../../shared/utils';
-import { WorkspaceNodeType } from '../utils';
 
 export interface AddNodeDto {
   data: Entity<{
-    kind: WorkspaceNodeType;
+    kind: string;
     name: string;
     thumbnailUrl: string;
   }>;

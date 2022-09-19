@@ -19,7 +19,7 @@ import { ClickEvent, isClickEvent } from '../../drawer/utils';
 import { openEditInstructionSysvarModal } from '../../instruction-sysvar/components';
 import { ActiveComponent } from '../../shared/components';
 import { FollowCursorDirective } from '../../shared/directives';
-import { generateId, isChildOf, isNull } from '../../shared/utils';
+import { isChildOf, isNull } from '../../shared/utils';
 
 interface ViewModel {
   canAdd: boolean;
@@ -89,7 +89,7 @@ export class ActiveSysvarComponent
 
               if (instructionSysvar) {
                 this._boardStore.setActive(null);
-                this._drawerStore.addNode(
+                /* this._drawerStore.addNode(
                   {
                     id: generateId(),
                     kind: active.kind,
@@ -99,7 +99,7 @@ export class ActiveSysvarComponent
                     image: active.thumbnailUrl,
                   },
                   event.payload
-                );
+                ); */
               }
             })
           );

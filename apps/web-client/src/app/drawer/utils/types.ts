@@ -1,10 +1,12 @@
-export interface Node {
-  id: string;
-  kind: string;
-  label: string;
-  ref: string;
+export interface NodeDataType {
   name: string;
+  kind: string;
   thumbnailUrl: string;
+}
+
+export interface Node<T = NodeDataType> {
+  id: string;
+  data: T;
 }
 
 export interface Edge {
@@ -13,15 +15,19 @@ export interface Edge {
   target: string;
 }
 
-export interface Graph {
-  id: string;
+export interface GraphDataType {
   name: string;
   kind: string;
   thumbnailUrl: string;
-  nodes: Node[];
+}
+
+export type Graph<T extends GraphDataType, U extends NodeDataType> = {
+  id: string;
+  nodes: Node<U>[];
   edges: Edge[];
   lastEventId: string;
-}
+  data: T;
+};
 
 export type Direction = 'vertical' | 'horizontal';
 
@@ -56,9 +62,9 @@ export interface ClickEvent {
   payload: { x: number; y: number };
 }
 
-export interface OneTapNodeEvent {
+export interface OneTapNodeEvent<T extends NodeDataType> {
   type: 'OneTapNode';
-  payload: Node;
+  payload: Node<T>;
 }
 
 export interface OneTapEdgeEvent {
@@ -66,9 +72,9 @@ export interface OneTapEdgeEvent {
   payload: string;
 }
 
-export interface UpdateGraphSuccessEvent {
+export interface UpdateGraphSuccessEvent<T extends GraphDataType> {
   type: 'UpdateGraphSuccess';
-  payload: Partial<Omit<Graph, 'id'>>;
+  payload: Partial<T>;
 }
 
 export interface UpdateGraphThumbnailSuccessEvent {
@@ -79,9 +85,9 @@ export interface UpdateGraphThumbnailSuccessEvent {
   };
 }
 
-export interface AddNodeSuccessEvent {
+export interface AddNodeSuccessEvent<T extends NodeDataType> {
   type: 'AddNodeSuccess';
-  payload: Node;
+  payload: Node<T>;
 }
 
 export interface AddEdgeSuccessEvent {
@@ -93,13 +99,13 @@ export interface AddEdgeSuccessEvent {
   };
 }
 
-export interface AddNodeToEdgeSuccessEvent {
+export interface AddNodeToEdgeSuccessEvent<T extends NodeDataType> {
   type: 'AddNodeToEdgeSuccess';
   payload: {
     source: string;
     target: string;
     edgeId: string;
-    node: Node;
+    node: Node<T>;
   };
 }
 
@@ -108,11 +114,11 @@ export interface UpdateNodeEvent {
   payload: string;
 }
 
-export interface UpdateNodeSuccessEvent {
+export interface UpdateNodeSuccessEvent<T extends NodeDataType> {
   type: 'UpdateNodeSuccess';
   payload: {
     id: string;
-    changes: Partial<Omit<Node, 'id'>>;
+    changes: Partial<T>;
   };
 }
 
@@ -165,16 +171,16 @@ export interface PanDraggedEvent {
   };
 }
 
-export type DrawerEvent =
+export type DrawerEvent<T extends GraphDataType, U extends NodeDataType> =
   | InitEvent
   | ClickEvent
-  | UpdateGraphSuccessEvent
+  | UpdateGraphSuccessEvent<T>
   | UpdateGraphThumbnailSuccessEvent
-  | AddNodeSuccessEvent
+  | AddNodeSuccessEvent<U>
   | AddEdgeSuccessEvent
-  | AddNodeToEdgeSuccessEvent
+  | AddNodeToEdgeSuccessEvent<U>
   | UpdateNodeEvent
-  | UpdateNodeSuccessEvent
+  | UpdateNodeSuccessEvent<U>
   | UpdateNodeThumbnailSuccessEvent
   | DeleteNodeEvent
   | DeleteNodeSuccessEvent
@@ -183,5 +189,5 @@ export type DrawerEvent =
   | DeleteEdgeSuccessEvent
   | GraphScrolledEvent
   | PanDraggedEvent
-  | OneTapNodeEvent
+  | OneTapNodeEvent<U>
   | OneTapEdgeEvent;

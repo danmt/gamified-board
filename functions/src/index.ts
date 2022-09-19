@@ -271,8 +271,12 @@ export const createWorkspace = functions.pubsub
     };
 
     await workspaceRef.set({
-      ...workspace,
-      kind: 'workspace',
+      data: {
+        kind: 'workspace',
+        name: workspace.name,
+        thumbnailUrl: workspace.thumbnailUrl,
+        userId: workspace.userId,
+      },
       nodes: [],
       edges: [],
       lastEventId: messageBody.id,
@@ -340,10 +344,18 @@ export const updateWorkspace = functions.pubsub
       : null;
     const workspaceRef = firestore.doc(`graphs/${messageBody.data.payload.id}`);
 
-    await workspaceRef.update({
-      ...messageBody.data.payload.changes,
-      lastEventId: messageBody.id,
-      updatedAt: context.timestamp,
+    firestore.runTransaction(async (transaction) => {
+      const workspace = await transaction.get(workspaceRef);
+      const workspaceData = workspace.data();
+
+      transaction.update(workspaceRef, {
+        data: {
+          ...workspaceData?.['data'],
+          ...messageBody.data.payload.changes,
+        },
+        lastEventId: messageBody.id,
+        updatedAt: context.timestamp,
+      });
     });
 
     pubsub.topic('events').publishJSON(
@@ -408,12 +420,14 @@ export const updateWorkspaceThumbnail = functions.pubsub
     const messageBody = message.data
       ? JSON.parse(Buffer.from(message.data, 'base64').toString())
       : null;
+    const graphRef = firestore.doc(`graphs/${messageBody.data.payload.id}`);
+    const uploadRef = firestore.doc(
+      `uploads/${messageBody.data.payload.fileId}`
+    );
 
     await firestore.runTransaction(async (transaction) => {
-      const graphRef = firestore.doc(`graphs/${messageBody.data.payload.id}`);
-      const uploadRef = firestore.doc(
-        `uploads/${messageBody.data.payload.fileId}`
-      );
+      const workspace = await transaction.get(graphRef);
+      const workspaceData = workspace.data();
 
       transaction.set(uploadRef, {
         kind: 'workspace',
@@ -421,7 +435,10 @@ export const updateWorkspaceThumbnail = functions.pubsub
         createdAt: context.timestamp,
       });
       transaction.update(graphRef, {
-        thumbnailUrl: messageBody.data.payload.fileUrl,
+        data: {
+          ...workspaceData?.['data'],
+          thumbnailUrl: messageBody.data.payload.fileUrl,
+        },
         lastEventId: messageBody.id,
         updatedAt: context.timestamp,
       });
@@ -544,8 +561,13 @@ export const createApplication = functions.pubsub
         nodes: [
           ...nodes,
           {
-            ...messageBody.data.payload,
-            thumbnailUrl: 'assets/generic/application.png',
+            id: messageBody.data.payload.id,
+            data: {
+              name: messageBody.data.payload.name,
+              kind: messageBody.data.payload.kind,
+              workspaceId: messageBody.data.payload.workspaceId,
+              thumbnailUrl: 'assets/generic/application.png',
+            },
             createdAt: context.timestamp,
           },
         ],
@@ -554,8 +576,12 @@ export const createApplication = functions.pubsub
       });
 
       transaction.set(applicationRef, {
-        ...messageBody.data.payload,
-        thumbnailUrl: 'assets/generic/application.png',
+        data: {
+          name: messageBody.data.payload.name,
+          kind: messageBody.data.payload.kind,
+          workspaceId: messageBody.data.payload.workspaceId,
+          thumbnailUrl: 'assets/generic/application.png',
+        },
         nodes: [],
         edges: [],
         lastEventId: messageBody.id,
@@ -639,6 +665,7 @@ export const updateApplication = functions.pubsub
     const messageBody = message.data
       ? JSON.parse(Buffer.from(message.data, 'base64').toString())
       : null;
+
     const applicationRef = firestore.doc(
       `graphs/${messageBody.data.payload.id}`
     );
@@ -647,11 +674,14 @@ export const updateApplication = functions.pubsub
       async (transaction) => {
         const application = await transaction.get(applicationRef);
         const applicationData = application.data();
-        const workspaceId = applicationData?.['workspaceId'];
+
+        const workspaceId = applicationData?.['data']['workspaceId'];
         const workspaceRef = firestore.doc(`graphs/${workspaceId}`);
         const workspace = await transaction.get(workspaceRef);
         const workspaceData = workspace.data();
-        const nodes: { id: string }[] = workspaceData?.['nodes'] ?? [];
+
+        const nodes: { id: string; data: any }[] =
+          workspaceData?.['nodes'] ?? [];
         const nodeIndex = nodes.findIndex(
           (node) => node.id === messageBody.data.payload.id
         );
@@ -661,7 +691,10 @@ export const updateApplication = functions.pubsub
             ...nodes.slice(0, nodeIndex),
             {
               ...nodes[nodeIndex],
-              ...messageBody.data.payload.changes,
+              data: {
+                ...nodes[nodeIndex].data,
+                ...messageBody.data.payload.changes,
+              },
             },
             ...nodes.slice(nodeIndex + 1),
           ],
@@ -670,7 +703,10 @@ export const updateApplication = functions.pubsub
         });
 
         transaction.update(applicationRef, {
-          ...messageBody.data.payload.changes,
+          data: {
+            ...applicationData?.['data'],
+            ...messageBody.data.payload.changes,
+          },
           lastEventId: messageBody.id,
           updatedAt: context.timestamp,
         });
@@ -762,11 +798,12 @@ export const updateApplicationThumbnail = functions.pubsub
       async (transaction) => {
         const application = await transaction.get(applicationRef);
         const applicationData = application.data();
-        const workspaceId = applicationData?.['workspaceId'];
+        const workspaceId = applicationData?.['data']['workspaceId'];
         const workspaceRef = firestore.doc(`graphs/${workspaceId}`);
         const workspace = await transaction.get(workspaceRef);
         const workspaceData = workspace.data();
-        const nodes: { id: string }[] = workspaceData?.['nodes'] ?? [];
+        const nodes: { id: string; data: any }[] =
+          workspaceData?.['nodes'] ?? [];
         const nodeIndex = nodes.findIndex(
           (node) => node.id === messageBody.data.payload.id
         );
@@ -781,7 +818,10 @@ export const updateApplicationThumbnail = functions.pubsub
             ...nodes.slice(0, nodeIndex),
             {
               ...nodes[nodeIndex],
-              thumbnailUrl: messageBody.data.payload.fileUrl,
+              data: {
+                ...nodes[nodeIndex].data,
+                thumbnailUrl: messageBody.data.payload.fileUrl,
+              },
             },
             ...nodes.slice(nodeIndex + 1),
           ],
@@ -789,7 +829,10 @@ export const updateApplicationThumbnail = functions.pubsub
           updatedAt: context.timestamp,
         });
         transaction.update(applicationRef, {
-          thumbnailUrl: messageBody.data.payload.fileUrl,
+          data: {
+            ...applicationData?.['data'],
+            thumbnailUrl: messageBody.data.payload.fileUrl,
+          },
           lastEventId: context.eventId,
           updatedAt: context.timestamp,
         });
@@ -882,7 +925,7 @@ export const deleteApplication = functions.pubsub
       async (transaction) => {
         const application = await transaction.get(applicationRef);
         const applicationData = application.data();
-        const workspaceId = applicationData?.['workspaceId'];
+        const workspaceId = applicationData?.['data']['workspaceId'];
         const workspaceRef = firestore.doc(`graphs/${workspaceId}`);
         const workspace = await transaction.get(workspaceRef);
         const workspaceData = workspace.data();

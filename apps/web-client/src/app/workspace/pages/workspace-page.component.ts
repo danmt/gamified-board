@@ -1,12 +1,22 @@
 import { CommonModule } from '@angular/common';
-import { Component, HostBinding, inject, OnInit } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  HostBinding,
+  inject,
+  OnInit,
+  ViewChild,
+} from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { LetModule, PushModule } from '@ngrx/component';
 import { ComponentStore, provideComponentStore } from '@ngrx/component-store';
 import {
   concatMap,
+  defer,
   EMPTY,
   filter,
+  from,
   map,
   of,
   switchMap,
@@ -16,12 +26,11 @@ import {
 import { environment } from '../../../environments/environment';
 import { UpdateApplicationSubmit } from '../../application/components';
 import { ApplicationApiService } from '../../application/services';
-import { DrawerComponent } from '../../drawer/sections';
-import { EventApiService } from '../../drawer/services';
-import { DrawerStore } from '../../drawer/stores';
+import { EventApiService, GraphApiService } from '../../drawer/services';
 import {
   AddNodeSuccessEvent,
   DeleteNodeSuccessEvent,
+  Drawer,
   isAddNodeSuccessEvent,
   isClickEvent,
   isDeleteNodeSuccessEvent,
@@ -30,14 +39,18 @@ import {
   isUpdateGraphThumbnailSuccessEvent,
   isUpdateNodeSuccessEvent,
   isUpdateNodeThumbnailSuccessEvent,
+  isViewNodeEvent,
   Node,
   OneTapNodeEvent,
   UpdateGraphSuccessEvent,
   UpdateGraphThumbnailSuccessEvent,
   UpdateNodeSuccessEvent,
   UpdateNodeThumbnailSuccessEvent,
+  ViewNodeEvent,
 } from '../../drawer/utils';
-import { isNull, Option } from '../../shared/utils';
+import { BackgroundImageMoveDirective } from '../../shared/directives/background-position.directive';
+import { BackgroundImageZoomDirective } from '../../shared/directives/background-zoom.directive';
+import { isNotNull, isNull, Option } from '../../shared/utils';
 import { UpdateWorkspaceSubmit } from '../components';
 import {
   ActiveApplicationComponent,
@@ -46,12 +59,13 @@ import {
   WorkspaceDockComponent,
 } from '../sections';
 import { WorkspaceApiService } from '../services';
-import { WorkspaceStore } from '../stores';
+import { WorkspaceDrawerStore } from '../stores/workspace-drawer.store';
+import { WorkspaceGraphData, WorkspaceNodeData } from '../utils';
 
 interface ViewModel {
   isCreatingApplication: boolean;
   workspaceId: Option<string>;
-  selected: Option<Node>;
+  selected: Option<Node<WorkspaceNodeData>>;
 }
 
 const initialState: ViewModel = {
@@ -63,7 +77,15 @@ const initialState: ViewModel = {
 @Component({
   selector: 'pg-workspace-page',
   template: `
-    <pg-drawer [pgGraphId]="(workspaceId$ | ngrxPush) ?? null"></pg-drawer>
+    <div
+      id="cy"
+      class="bp-bg-bricks h-screen"
+      #drawerElement
+      pgBackgroundImageZoom
+      [pgZoomValue]="(zoomSize$ | ngrxPush) ?? '15%'"
+      pgBackgroundImageMove
+      [pgPanValue]="(panDrag$ | ngrxPush) ?? { x: '0', y: '0' }"
+    ></div>
 
     <ng-container *ngrxLet="selected$; let selected">
       <pg-workspace-dock
@@ -92,13 +114,14 @@ const initialState: ViewModel = {
     </ng-container>
 
     <pg-active-application
+      *ngIf="workspace$ | ngrxPush as workspace"
       [pgActive]="
         (isCreatingApplication$ | ngrxPush)
           ? { thumbnailUrl: 'assets/generic/application.png' }
           : null
       "
       [pgClickEvent]="(drawerClick$ | ngrxPush) ?? null"
-      (pgAddNode)="onAddNode($event)"
+      (pgAddNode)="onAddNode(workspace.id, $event)"
       (pgDeactivate)="onApplicationDeactivate()"
     ></pg-active-application>
   `,
@@ -107,52 +130,57 @@ const initialState: ViewModel = {
     CommonModule,
     LetModule,
     PushModule,
-    DrawerComponent,
     WorkspaceDockComponent,
     ApplicationDockComponent,
     ActiveApplicationComponent,
+    BackgroundImageZoomDirective,
+    BackgroundImageMoveDirective,
   ],
-  providers: [
-    provideComponentStore(DrawerStore),
-    provideComponentStore(WorkspaceStore),
-  ],
+  providers: [provideComponentStore(WorkspaceDrawerStore)],
 })
 export class WorkspacePageComponent
   extends ComponentStore<ViewModel>
-  implements OnInit
+  implements OnInit, AfterViewInit
 {
   private readonly _router = inject(Router);
   private readonly _eventApiService = inject(EventApiService);
   private readonly _workspaceApiService = inject(WorkspaceApiService);
   private readonly _applicationApiService = inject(ApplicationApiService);
+  private readonly _graphApiService = inject(GraphApiService);
   private readonly _activatedRoute = inject(ActivatedRoute);
-  private readonly _drawerStore = inject(DrawerStore);
+  private readonly _workspaceDrawerStore = inject(WorkspaceDrawerStore);
 
   readonly isCreatingApplication$ = this.select(
     ({ isCreatingApplication }) => isCreatingApplication
   );
   readonly selected$ = this.select(({ selected }) => selected);
-
   readonly workspaceId$ = this._activatedRoute.paramMap.pipe(
     map((paramMap) => paramMap.get('workspaceId'))
   );
-  readonly workspace$ = this._drawerStore.graph$;
-  readonly drawerClick$ = this._drawerStore.event$.pipe(filter(isClickEvent));
+  readonly workspace$ = this._workspaceDrawerStore.graph$;
+  readonly drawerClick$ = this._workspaceDrawerStore.event$.pipe(
+    filter(isClickEvent)
+  );
+  readonly zoomSize$ = this._workspaceDrawerStore.zoomSize$;
+  readonly panDrag$ = this._workspaceDrawerStore.panDrag$;
 
   @HostBinding('class') class = 'block relative min-h-screen min-w-screen';
+  @ViewChild('drawerElement')
+  pgDrawerElementRef: ElementRef<HTMLElement> | null = null;
 
-  private patchSelected = this.updater<{ id: string; changes: Partial<Node> }>(
-    (state, { id, changes }) => {
-      if (isNull(state.selected) || state.selected.id !== id) {
-        return state;
-      }
-
-      return {
-        ...state,
-        selected: { ...state.selected, ...changes },
-      };
+  private patchSelected = this.updater<{
+    id: string;
+    changes: Partial<WorkspaceGraphData>;
+  }>((state, { id, changes }) => {
+    if (isNull(state.selected) || state.selected.id !== id) {
+      return state;
     }
-  );
+
+    return {
+      ...state,
+      selected: { ...state.selected, ...changes },
+    };
+  });
 
   private clearSelected = this.updater<string>((state, id) => {
     if (isNull(state.selected) || state.selected.id !== id) {
@@ -165,25 +193,44 @@ export class WorkspacePageComponent
     };
   });
 
-  private readonly _handleUpdateGraphSuccess =
-    this.effect<UpdateGraphSuccessEvent>(
-      concatMap((event) =>
-        of(null).pipe(
-          withLatestFrom(this.workspaceId$),
-          concatMap(([, workspaceId]) => {
-            if (isNull(workspaceId)) {
-              return EMPTY;
-            }
-
-            return this._workspaceApiService.updateWorkspace(
-              environment.clientId,
+  private readonly _handleViewNode = this.effect<ViewNodeEvent>(
+    concatMap((event) =>
+      of(null).pipe(
+        withLatestFrom(this.workspaceId$),
+        tap(([, workspaceId]) => {
+          if (isNotNull(workspaceId)) {
+            this._router.navigate([
+              '/workspaces',
               workspaceId,
-              event.payload
-            );
-          })
-        )
+              'applications',
+              event.payload,
+            ]);
+          }
+        })
       )
-    );
+    )
+  );
+
+  private readonly _handleUpdateGraphSuccess = this.effect<
+    UpdateGraphSuccessEvent<WorkspaceGraphData>
+  >(
+    concatMap((event) =>
+      of(null).pipe(
+        withLatestFrom(this.workspaceId$),
+        concatMap(([, workspaceId]) => {
+          if (isNull(workspaceId)) {
+            return EMPTY;
+          }
+
+          return this._workspaceApiService.updateWorkspace(
+            environment.clientId,
+            workspaceId,
+            event.payload
+          );
+        })
+      )
+    )
+  );
 
   private readonly _handleUpdateGraphThumbnailSuccess =
     this.effect<UpdateGraphThumbnailSuccessEvent>(
@@ -205,7 +252,9 @@ export class WorkspacePageComponent
       )
     );
 
-  private readonly _handleAddNodeSuccess = this.effect<AddNodeSuccessEvent>(
+  private readonly _handleAddNodeSuccess = this.effect<
+    AddNodeSuccessEvent<WorkspaceNodeData>
+  >(
     concatMap((event) =>
       of(null).pipe(
         withLatestFrom(this.workspaceId$),
@@ -217,7 +266,9 @@ export class WorkspacePageComponent
           return this._applicationApiService.createApplication2(
             environment.clientId,
             {
-              ...event.payload,
+              id: event.payload.id,
+              name: event.payload.data.name,
+              kind: event.payload.data.kind,
               workspaceId,
             }
           );
@@ -226,31 +277,32 @@ export class WorkspacePageComponent
     )
   );
 
-  private readonly _handleUpdateNodeSuccess =
-    this.effect<UpdateNodeSuccessEvent>(
-      concatMap((event) =>
-        of(null).pipe(
-          withLatestFrom(this.workspaceId$),
-          concatMap(([, workspaceId]) => {
-            if (isNull(workspaceId)) {
-              return EMPTY;
-            }
+  private readonly _handleUpdateNodeSuccess = this.effect<
+    UpdateNodeSuccessEvent<WorkspaceNodeData>
+  >(
+    concatMap((event) =>
+      of(null).pipe(
+        withLatestFrom(this.workspaceId$),
+        concatMap(([, workspaceId]) => {
+          if (isNull(workspaceId)) {
+            return EMPTY;
+          }
 
-            this.patchSelected({
-              id: event.payload.id,
-              changes: event.payload.changes,
-            });
+          this.patchSelected({
+            id: event.payload.id,
+            changes: event.payload.changes,
+          });
 
-            return this._applicationApiService.updateApplication2(
-              environment.clientId,
-              workspaceId,
-              event.payload.id,
-              event.payload.changes
-            );
-          })
-        )
+          return this._applicationApiService.updateApplication2(
+            environment.clientId,
+            workspaceId,
+            event.payload.id,
+            event.payload.changes
+          );
+        })
       )
-    );
+    )
+  );
 
   private readonly _handleUpdateNodeThumbnailSuccess =
     this.effect<UpdateNodeThumbnailSuccessEvent>(
@@ -313,7 +365,9 @@ export class WorkspacePageComponent
         .pipe(
           filter((event) => event['clientId'] !== environment.clientId),
           tap((event) =>
-            this._drawerStore.handleGraphUpdated(event['payload'].changes)
+            this._workspaceDrawerStore.handleGraphUpdated(
+              event['payload'].changes
+            )
           )
         );
     })
@@ -332,7 +386,7 @@ export class WorkspacePageComponent
         .pipe(
           filter((event) => event['clientId'] !== environment.clientId),
           tap((event) =>
-            this._drawerStore.handleGraphThumbnailUpdated(
+            this._workspaceDrawerStore.handleGraphThumbnailUpdated(
               event['payload'].fileId,
               event['payload'].fileUrl
             )
@@ -366,7 +420,17 @@ export class WorkspacePageComponent
         .onServerCreate(workspaceId, ['createApplicationSuccess'])
         .pipe(
           filter((event) => event['clientId'] !== environment.clientId),
-          tap((event) => this._drawerStore.handleNodeAdded(event['payload']))
+          tap((event) =>
+            this._workspaceDrawerStore.handleNodeAdded({
+              id: event['payload'].id,
+              data: {
+                kind: event['payload'].kind,
+                name: event['payload'].name,
+                thumbnailUrl: event['payload'].thumbnailUrl,
+                workspaceId: event['payload'].workspaceId,
+              },
+            })
+          )
         );
     })
   );
@@ -386,7 +450,7 @@ export class WorkspacePageComponent
               id: event['payload'].id,
               changes: event['payload'].changes,
             });
-            this._drawerStore.handleNodeUpdated(
+            this._workspaceDrawerStore.handleNodeUpdated(
               event['payload'].id,
               event['payload'].changes
             );
@@ -414,7 +478,7 @@ export class WorkspacePageComponent
                 thumbnailUrl: event['payload'].fileUrl,
               },
             });
-            this._drawerStore.handleNodeThumbnailUpdated(
+            this._workspaceDrawerStore.handleNodeThumbnailUpdated(
               event['payload'].id,
               event['payload'].fileId,
               event['payload'].fileUrl
@@ -436,41 +500,81 @@ export class WorkspacePageComponent
           filter((event) => event['clientId'] !== environment.clientId),
           tap((event) => {
             this.clearSelected(event['payload'].id);
-            this._drawerStore.handleNodeRemoved(event['payload'].id);
+            this._workspaceDrawerStore.handleNodeRemoved(event['payload'].id);
           })
         );
     })
   );
 
-  readonly setSelected = this.updater<OneTapNodeEvent>((state, event) => ({
-    ...state,
-    selected: event.payload,
-  }));
+  private readonly _loadDrawer = this.effect<{
+    workspaceId: Option<string>;
+    drawerElement: HTMLElement;
+  }>(
+    concatMap(({ workspaceId, drawerElement }) => {
+      if (isNull(workspaceId)) {
+        return EMPTY;
+      }
+
+      return defer(() =>
+        from(
+          this._graphApiService.getGraph<WorkspaceGraphData, WorkspaceNodeData>(
+            workspaceId
+          )
+        ).pipe(
+          tap((graph) => {
+            if (graph) {
+              const drawer = new Drawer(graph, [], drawerElement);
+              drawer.initialize();
+              this._workspaceDrawerStore.setDrawer(drawer);
+            }
+          })
+        )
+      );
+    })
+  );
+
+  readonly setSelected = this.updater<OneTapNodeEvent<WorkspaceNodeData>>(
+    (state, event) => ({
+      ...state,
+      selected: event.payload,
+    })
+  );
 
   constructor() {
     super(initialState);
   }
 
   ngOnInit() {
+    this._handleViewNode(
+      this._workspaceDrawerStore.event$.pipe(filter(isViewNodeEvent))
+    );
     this._handleUpdateGraphSuccess(
-      this._drawerStore.event$.pipe(filter(isUpdateGraphSuccessEvent))
+      this._workspaceDrawerStore.event$.pipe(filter(isUpdateGraphSuccessEvent))
     );
     this._handleUpdateGraphThumbnailSuccess(
-      this._drawerStore.event$.pipe(filter(isUpdateGraphThumbnailSuccessEvent))
+      this._workspaceDrawerStore.event$.pipe(
+        filter(isUpdateGraphThumbnailSuccessEvent)
+      )
     );
     this._handleAddNodeSuccess(
-      this._drawerStore.event$.pipe(filter(isAddNodeSuccessEvent))
+      this._workspaceDrawerStore.event$.pipe(filter(isAddNodeSuccessEvent))
     );
     this._handleUpdateNodeSuccess(
-      this._drawerStore.event$.pipe(filter(isUpdateNodeSuccessEvent))
+      this._workspaceDrawerStore.event$.pipe(filter(isUpdateNodeSuccessEvent))
     );
     this._handleUpdateNodeThumbnailSuccess(
-      this._drawerStore.event$.pipe(filter(isUpdateNodeThumbnailSuccessEvent))
+      this._workspaceDrawerStore.event$.pipe(
+        filter(isUpdateNodeThumbnailSuccessEvent)
+      )
     );
     this._handleDeleteNodeSuccess(
-      this._drawerStore.event$.pipe(filter(isDeleteNodeSuccessEvent))
+      this._workspaceDrawerStore.event$.pipe(filter(isDeleteNodeSuccessEvent))
     );
-    this.setSelected(this._drawerStore.event$.pipe(filter(isOneTapNodeEvent)));
+    this.setSelected(
+      this._workspaceDrawerStore.event$.pipe(
+        filter(isOneTapNodeEvent<WorkspaceGraphData, WorkspaceNodeData>)
+      )
+    );
 
     this._handleServerNodeCreate(this.workspaceId$);
     this._handleServerNodeUpdate(this.workspaceId$);
@@ -479,6 +583,19 @@ export class WorkspacePageComponent
     this._handleServerGraphUpdate(this.workspaceId$);
     this._handleServerGraphThumbnailUpdate(this.workspaceId$);
     this._handleServerGraphDelete(this.workspaceId$);
+  }
+
+  async ngAfterViewInit() {
+    if (isNotNull(this.pgDrawerElementRef)) {
+      const drawerElement = this.pgDrawerElementRef.nativeElement;
+
+      this._loadDrawer(
+        this.select(this.workspaceId$, (workspaceId) => ({
+          workspaceId,
+          drawerElement,
+        }))
+      );
+    }
   }
 
   onApplicationActivate() {
@@ -493,12 +610,15 @@ export class WorkspacePageComponent
     this.patchState({ selected: null });
   }
 
-  onAddNode(event: AddNodeDto) {
-    this._drawerStore.addNode(event.data, event.options.position);
+  onAddNode(workspaceId: string, event: AddNodeDto) {
+    this._workspaceDrawerStore.addNode(
+      { id: event.data.id, data: { ...event.data, workspaceId } },
+      event.options.position
+    );
   }
 
   onUpdateGraph(changes: UpdateWorkspaceSubmit) {
-    this._drawerStore.updateGraph(changes);
+    this._workspaceDrawerStore.updateGraph(changes);
   }
 
   onDeleteGraph(graphId: string) {
@@ -508,18 +628,18 @@ export class WorkspacePageComponent
   }
 
   onUpdateGraphThumbnail(fileId: string, fileUrl: string) {
-    this._drawerStore.updateGraphThumbnail(fileId, fileUrl);
+    this._workspaceDrawerStore.updateGraphThumbnail(fileId, fileUrl);
   }
 
   onUpdateNode(nodeId: string, changes: UpdateApplicationSubmit) {
-    this._drawerStore.updateNode(nodeId, changes);
+    this._workspaceDrawerStore.updateNode(nodeId, changes);
   }
 
   onUpdateNodeThumbnail(nodeId: string, fileId: string, fileUrl: string) {
-    this._drawerStore.updateNodeThumbnail(nodeId, fileId, fileUrl);
+    this._workspaceDrawerStore.updateNodeThumbnail(nodeId, fileId, fileUrl);
   }
 
   onRemoveNode(nodeId: string) {
-    this._drawerStore.removeNode(nodeId);
+    this._workspaceDrawerStore.removeNode(nodeId);
   }
 }

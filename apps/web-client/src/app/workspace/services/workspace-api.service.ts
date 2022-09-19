@@ -13,7 +13,7 @@ import {
 import { map, Observable } from 'rxjs';
 import { EventApiService } from '../../drawer/services';
 import { Entity } from '../../shared/utils';
-import { WorkspaceGraph } from '../utils';
+import { WorkspaceDto } from '../utils';
 
 export type CreateWorkspaceDto = Entity<{
   name: string;
@@ -33,7 +33,7 @@ export class WorkspaceApiService {
   private readonly _firestore = inject(Firestore);
   private readonly _eventApiService = inject(EventApiService);
 
-  getWorkspace(workspaceId: string): Observable<WorkspaceGraph> {
+  getWorkspace(workspaceId: string): Observable<WorkspaceDto> {
     const workspaceRef = doc(this._firestore, `graphs/${workspaceId}`);
 
     return docData(workspaceRef).pipe(
@@ -48,7 +48,7 @@ export class WorkspaceApiService {
     );
   }
 
-  getWorkspacesByOwner(ownerId: string): Observable<WorkspaceGraph[]> {
+  getWorkspacesByOwner(ownerId: string): Observable<WorkspaceDto[]> {
     return collectionData(
       query(
         collectionGroup(this._firestore, 'graphs').withConverter({
@@ -66,8 +66,8 @@ export class WorkspaceApiService {
           },
           toFirestore: (it) => it,
         }),
-        where('userId', '==', ownerId),
-        where('kind', '==', 'workspace'),
+        where('data.userId', '==', ownerId),
+        where('data.kind', '==', 'workspace'),
         orderBy(documentId())
       )
     );

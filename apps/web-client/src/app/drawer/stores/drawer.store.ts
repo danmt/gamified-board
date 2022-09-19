@@ -1,32 +1,25 @@
-import { Injectable } from '@angular/core';
 import { ComponentStore, OnStoreInit } from '@ngrx/component-store';
-import { EdgeDataDefinition, NodeDataDefinition } from 'cytoscape';
+import { EdgeDataDefinition } from 'cytoscape';
 import { EMPTY, filter, firstValueFrom, of, switchMap, tap } from 'rxjs';
 import { isNull, Option } from '../../shared/utils';
 import {
   Direction,
   Drawer,
-  Graph,
+  GraphDataType,
   isGraphScrolledEvent,
   isPanDraggedEvent,
   Node,
+  NodeDataType,
 } from '../utils';
 
-interface ViewModel {
-  drawer: Option<Drawer>;
+interface ViewModel<T extends GraphDataType, U extends NodeDataType> {
+  drawer: Option<Drawer<T, U>>;
   direction: Direction;
   drawMode: boolean;
 }
 
-const initialState: ViewModel = {
-  drawer: null,
-  direction: 'vertical',
-  drawMode: false,
-};
-
-@Injectable()
-export class DrawerStore
-  extends ComponentStore<ViewModel>
+export class DrawerStore<T extends GraphDataType, U extends NodeDataType>
+  extends ComponentStore<ViewModel<T, U>>
   implements OnStoreInit
 {
   readonly direction$ = this.select(({ direction }) => direction);
@@ -65,7 +58,7 @@ export class DrawerStore
     (event) => ({ x: event.payload.x, y: event.payload.y })
   );
 
-  readonly setDrawer = this.updater<Option<Drawer>>((state, drawer) => ({
+  readonly setDrawer = this.updater<Option<Drawer<T, U>>>((state, drawer) => ({
     ...state,
     drawer,
   }));
@@ -81,7 +74,7 @@ export class DrawerStore
   }));
 
   private readonly _handleDrawModeChange = this.effect<{
-    drawer: Option<Drawer>;
+    drawer: Option<Drawer<T, U>>;
     drawMode: boolean;
   }>(
     tap(({ drawer, drawMode }) => {
@@ -92,7 +85,7 @@ export class DrawerStore
   );
 
   private readonly _handleDirectionChange = this.effect<{
-    drawer: Option<Drawer>;
+    drawer: Option<Drawer<T, U>>;
     direction: Direction;
   }>(
     tap(({ drawer, direction }) => {
@@ -103,7 +96,11 @@ export class DrawerStore
   );
 
   constructor() {
-    super(initialState);
+    super({
+      drawer: null,
+      direction: 'vertical',
+      drawMode: false,
+    });
   }
 
   ngrxOnStoreInit() {
@@ -129,7 +126,7 @@ export class DrawerStore
     }
   }
 
-  async updateGraph(changes: Partial<Omit<Graph, 'id'>>) {
+  async updateGraph(changes: Partial<T>) {
     const drawer = await firstValueFrom(this.drawer$);
 
     if (drawer !== null) {
@@ -145,10 +142,7 @@ export class DrawerStore
     }
   }
 
-  async addNode(
-    nodeData: NodeDataDefinition,
-    position?: { x: number; y: number }
-  ) {
+  async addNode(nodeData: Node<U>, position?: { x: number; y: number }) {
     const drawer = await firstValueFrom(this.drawer$);
 
     if (drawer !== null) {
@@ -156,7 +150,7 @@ export class DrawerStore
     }
   }
 
-  async updateNode(nodeId: string, changes: NodeDataDefinition) {
+  async updateNode(nodeId: string, changes: Partial<U>) {
     const drawer = await firstValueFrom(this.drawer$);
 
     if (drawer !== null) {
@@ -180,7 +174,7 @@ export class DrawerStore
     }
   }
 
-  async handleGraphUpdated(changes: Partial<Omit<Graph, 'id'>>) {
+  async handleGraphUpdated(changes: Partial<T>) {
     const drawer = await firstValueFrom(this.drawer$);
 
     if (drawer !== null) {
@@ -196,11 +190,11 @@ export class DrawerStore
     }
   }
 
-  async handleNodeAdded(nodeData: NodeDataDefinition) {
+  async handleNodeAdded(node: Node<U>) {
     const drawer = await firstValueFrom(this.drawer$);
 
     if (drawer !== null) {
-      drawer.handleNodeAdded(nodeData);
+      drawer.handleNodeAdded(node);
     }
   }
 
@@ -210,7 +204,7 @@ export class DrawerStore
     target,
     edgeId,
   }: {
-    node: NodeDataDefinition;
+    node: U;
     source: string;
     target: string;
     edgeId: string;
@@ -222,7 +216,7 @@ export class DrawerStore
     }
   }
 
-  async handleNodeUpdated(nodeId: string, changes: Partial<Omit<Node, 'id'>>) {
+  async handleNodeUpdated(nodeId: string, changes: Partial<U>) {
     const drawer = await firstValueFrom(this.drawer$);
 
     if (drawer !== null) {

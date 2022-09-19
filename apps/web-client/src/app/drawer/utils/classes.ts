@@ -3,28 +3,29 @@ import { MenuInstance } from 'cytoscape-cxtmenu';
 import { DagreLayoutOptions } from 'cytoscape-dagre';
 import { EdgeHandlesInstance } from 'cytoscape-edgehandles';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { v4 as uuid } from 'uuid';
 import { Option } from '../../shared/utils';
 import { createGraph, createNode } from './methods';
-import { DrawerEvent, Graph, Node } from './types';
+import { DrawerEvent, Graph, GraphDataType, Node, NodeDataType } from './types';
 
-export class Drawer {
+export class Drawer<T extends GraphDataType, U extends NodeDataType> {
   private _layout: cytoscape.Layouts | null = null;
   private _nodeCxtMenu: MenuInstance | null = null;
   private _edgeCxtMenu: MenuInstance | null = null;
   private _edgeHandles: EdgeHandlesInstance | null = null;
   private _rankDir: 'TB' | 'LR' = 'TB';
 
-  private readonly _event = new BehaviorSubject<DrawerEvent>({ type: 'Init' });
-  private readonly _graph: BehaviorSubject<Graph>;
-  private readonly _selected = new BehaviorSubject<Option<any>>(null);
+  private readonly _event = new BehaviorSubject<DrawerEvent<T, U>>({
+    type: 'Init',
+  });
+  private readonly _graph: BehaviorSubject<Graph<T, U>>;
+  private readonly _selected = new BehaviorSubject<Option<Node<U>>>(null);
   private readonly _cy: cytoscape.Core;
   readonly event$ = this._event.asObservable();
-  readonly graph$: Observable<Graph>;
+  readonly graph$: Observable<Graph<T, U>>;
   readonly selected$ = this._selected.asObservable();
 
-  constructor(graph: Graph, groups: string[], element: HTMLElement) {
-    this._cy = createGraph(
+  constructor(graph: Graph<T, U>, groups: string[], element: HTMLElement) {
+    this._cy = createGraph<U>(
       element,
       graph.nodes.map((node) => ({
         data: node,
@@ -77,7 +78,7 @@ export class Drawer {
     });
 
     this._cy.on('local.graph-updated', (ev, ...extraParams) => {
-      const changes = extraParams[0] as Partial<Omit<Graph, 'id'>>;
+      const changes = extraParams[0] as Partial<T>;
 
       this._event.next({
         type: 'UpdateGraphSuccess',
@@ -86,12 +87,15 @@ export class Drawer {
     });
 
     this._cy.on('server.graph-updated', (ev, ...extraParams) => {
-      const changes = extraParams[0] as Partial<Omit<Graph, 'id'>>;
+      const changes = extraParams[0] as Partial<T>;
 
       const graph = this._graph.getValue();
       this._graph.next({
         ...graph,
-        ...changes,
+        data: {
+          ...graph.data,
+          ...changes,
+        },
       });
     });
 
@@ -114,7 +118,10 @@ export class Drawer {
       const graph = this._graph.getValue();
       this._graph.next({
         ...graph,
-        thumbnailUrl: fileUrl,
+        data: {
+          ...graph.data,
+          thumbnailUrl: fileUrl,
+        },
       });
     });
 
@@ -123,28 +130,19 @@ export class Drawer {
 
       this._event.next({
         type: 'AddNodeSuccess',
-        payload: {
-          id: node.id ?? '',
-          kind: node['kind'],
-          label: node['label'],
-          ref: node['ref'],
-          name: node['name'],
-          thumbnailUrl: node['thumbnailUrl'],
-        },
+        payload: node as Node<U>,
       });
     });
 
     this._cy.on('server.node-added', (ev, ...extraParams) => {
-      const node = extraParams[0] as cytoscape.NodeDataDefinition;
+      const node = extraParams[0] as Node<U>;
 
       createNode(this._cy, node);
     });
 
     this._cy.on('local.node-updated', (ev, ...extraParams) => {
       const nodeId = extraParams[0] as string;
-      const changes = [...(extraParams as unknown[])][1] as Partial<
-        Omit<Node, 'id'>
-      >;
+      const changes = [...(extraParams as unknown[])][1] as Partial<U>;
 
       this._event.next({
         type: 'UpdateNodeSuccess',
@@ -157,12 +155,11 @@ export class Drawer {
 
     this._cy.on('server.node-updated', (ev, ...extraParams) => {
       const nodeId = extraParams[0] as string;
-      const changes = [...(extraParams as unknown[])][1] as Partial<
-        Omit<Node, 'id'>
-      >;
+      const changes = [...(extraParams as unknown[])][1] as Partial<U>;
 
       const node = this._cy.getElementById(nodeId);
-      node.data(changes);
+      const nodeData = node.data();
+      node.data({ ...nodeData, data: { ...nodeData.data, ...changes } });
     });
 
     this._cy.on('local.node-thumbnail-updated', (ev, ...extraParams) => {
@@ -185,7 +182,11 @@ export class Drawer {
       const fileUrl = [...(extraParams as unknown[])][2] as string;
 
       const node = this._cy.getElementById(nodeId);
-      node.data({ thumbnailUrl: fileUrl });
+      const nodeData = node.data();
+      node.data({
+        ...nodeData,
+        data: { ...nodeData.data, thumbnailUrl: fileUrl },
+      });
     });
 
     this._cy.on('local.node-deleted', (_, ...extraParams) => {
@@ -260,11 +261,7 @@ export class Drawer {
           edgeId,
           node: {
             id: node.id ?? '',
-            kind: node['kind'],
-            label: node['label'],
-            ref: node['ref'],
-            name: node['name'],
-            thumbnailUrl: node['thumbnailUrl'],
+            data: node as U,
           },
         },
       });
@@ -361,24 +358,6 @@ export class Drawer {
       selector: 'edge',
       commands: [
         {
-          content: 'add',
-          select: (edge) => {
-            if (edge.isEdge()) {
-              this.addNodeToEdge(
-                {
-                  id: uuid(),
-                  kind: 'faucet',
-                  name: 'TokenProgram\nINIT ACCOUNT 1',
-                  thumbnailUrl: 'assets/images/initAccount1.png',
-                },
-                edge.data().source,
-                edge.data().target,
-                edge.id()
-              );
-            }
-          },
-        },
-        {
           content: 'delete',
           select: (edge) => {
             if (edge.isEdge()) {
@@ -436,11 +415,14 @@ export class Drawer {
     this.setupLayout(this._rankDir);
   }
 
-  updateGraph(changes: Partial<Omit<Graph, 'id'>>) {
+  updateGraph(changes: Partial<T>) {
     const graph = this._graph.getValue();
     this._graph.next({
       ...graph,
-      ...changes,
+      data: {
+        ...graph.data,
+        ...changes,
+      },
     });
     this._cy.emit('local.graph-updated', [changes]);
   }
@@ -449,25 +431,20 @@ export class Drawer {
     const graph = this._graph.getValue();
     this._graph.next({
       ...graph,
-      thumbnailUrl: fileUrl,
+      data: {
+        ...graph.data,
+        thumbnailUrl: fileUrl,
+      },
     });
     this._cy.emit('local.graph-thumbnail-updated', [fileId, fileUrl]);
   }
 
-  addNode(
-    node: cytoscape.NodeDataDefinition,
-    position?: { x: number; y: number }
-  ) {
+  addNode(node: Node<U>, position?: { x: number; y: number }) {
     createNode(this._cy, node, position);
     this._cy.emit('local.node-added', [node]);
   }
 
-  addNodeToEdge(
-    node: cytoscape.NodeDataDefinition,
-    source: string,
-    target: string,
-    edgeId: string
-  ) {
+  addNodeToEdge(node: Node<U>, source: string, target: string, edgeId: string) {
     this._cy.remove(`edge[id = '${edgeId}']`);
     this._cy.add([
       {
@@ -493,15 +470,20 @@ export class Drawer {
     this._cy.emit('local.node-added-to-edge', [node, source, target, edgeId]);
   }
 
-  updateNode(nodeId: string, changes: cytoscape.NodeDataDefinition) {
+  updateNode(nodeId: string, changes: Partial<U>) {
     const node = this._cy.getElementById(nodeId);
-    node.data(changes);
+    const nodeData = node.data();
+    node.data({ ...nodeData, data: { ...nodeData.data, ...changes } });
     this._cy.emit('local.node-updated', [nodeId, changes]);
   }
 
   updateNodeThumbnail(nodeId: string, fileId: string, fileUrl: string) {
     const node = this._cy.getElementById(nodeId);
-    node.data({ thumbnailUrl: fileUrl });
+    const nodeData = node.data();
+    node.data({
+      ...nodeData,
+      data: { ...nodeData.data, thumbnailUrl: fileUrl },
+    });
     this._cy.emit('local.node-thumbnail-updated', [nodeId, fileId, fileUrl]);
   }
 
@@ -510,7 +492,7 @@ export class Drawer {
     this._cy.emit('local.node-deleted', [nodeId]);
   }
 
-  handleGraphUpdated(changes: Partial<Omit<Graph, 'id'>>) {
+  handleGraphUpdated(changes: Partial<T>) {
     this._cy.emit('server.graph-updated', [changes]);
   }
 
@@ -518,11 +500,11 @@ export class Drawer {
     this._cy.emit('server.graph-thumbnail-updated', [fileId, fileUrl]);
   }
 
-  handleNodeAdded(node: cytoscape.NodeDataDefinition) {
+  handleNodeAdded(node: Node<U>) {
     this._cy.emit('server.node-added', [node]);
   }
 
-  handleNodeUpdated(nodeId: string, changes: cytoscape.NodeDataDefinition) {
+  handleNodeUpdated(nodeId: string, changes: Partial<U>) {
     this._cy.emit('server.node-updated', [nodeId, changes]);
   }
 
@@ -531,7 +513,7 @@ export class Drawer {
   }
 
   handleNodeAddedToEdge(
-    node: cytoscape.NodeDataDefinition,
+    node: U,
     source: string,
     target: string,
     edgeId: string

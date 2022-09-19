@@ -23,7 +23,9 @@ import {
 import { Entity, isNull, Option } from '../../shared/utils';
 
 export type Workspace = Entity<{
-  name: string;
+  data: {
+    name: string;
+  };
 }>;
 
 export interface EditWorkspaceData {
@@ -170,7 +172,7 @@ export class EditWorkspaceModalComponent {
 
   readonly workspace = this._data.workspace;
   readonly form = this._formBuilder.group({
-    name: this._formBuilder.control<string>(this.workspace?.name ?? '', {
+    name: this._formBuilder.control<string>(this.workspace?.data.name ?? '', {
       validators: [Validators.required],
       nonNullable: true,
     }),

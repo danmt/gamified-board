@@ -19,7 +19,7 @@ import { ClickEvent, isClickEvent } from '../../drawer/utils';
 import { openEditInstructionApplicationModal } from '../../instruction-application/components';
 import { ActiveComponent } from '../../shared/components';
 import { FollowCursorDirective } from '../../shared/directives';
-import { generateId, isChildOf, isNull } from '../../shared/utils';
+import { isChildOf, isNull } from '../../shared/utils';
 
 interface ViewModel {
   canAdd: boolean;
@@ -95,7 +95,7 @@ export class ActiveApplicationComponent
 
               if (instructionApplication) {
                 this._boardStore.setActive(null);
-                this._drawerStore.addNode(
+                /* this._drawerStore.addNode(
                   {
                     id: generateId(),
                     kind: active.kind,
@@ -105,7 +105,7 @@ export class ActiveApplicationComponent
                     image: active.thumbnailUrl,
                   },
                   event.payload
-                );
+                ); */
               }
             })
           );

@@ -34,6 +34,7 @@ import {
 } from '../../shared/directives';
 import { SlotHotkeyPipe } from '../../shared/pipes';
 import { generateId, isNotNull, Option } from '../../shared/utils';
+import { WorkspaceNodeData } from '../utils';
 import { ActiveApplicationComponent } from './active-application.component';
 
 interface HotKey {
@@ -43,7 +44,7 @@ interface HotKey {
 }
 
 interface ViewModel {
-  application: Option<Node>;
+  application: Option<Node<WorkspaceNodeData>>;
   isUpdating: boolean;
   isUpdatingThumbnail: boolean;
   isDeleting: boolean;
@@ -91,14 +92,14 @@ const initialState: ViewModel = {
       >
         <div class="flex gap-4 justify-center items-start">
           <img
-            [src]="application.thumbnailUrl"
+            [src]="application.data.thumbnailUrl"
             pgDefaultImageUrl="assets/generic/application.png"
             class="w-[100px] h-[106px] overflow-hidden rounded-xl"
           />
 
           <div>
             <h2 class="text-xl">Name</h2>
-            <p class="text-base">{{ application?.name }}</p>
+            <p class="text-base">{{ application.data.name }}</p>
           </div>
 
           <div class="ml-10">
@@ -123,7 +124,10 @@ const initialState: ViewModel = {
                   pgThumbnailUrl="assets/generic/application.png"
                   [pgIsActive]="false"
                   pgUpdateApplicationModal
-                  [pgApplication]="application"
+                  [pgApplication]="{
+                    id: application.id,
+                    name: application.data.name
+                  }"
                   (pgOpenModal)="setIsUpdating(true)"
                   (pgCloseModal)="setIsUpdating(false)"
                   (pgUpdateApplication)="
@@ -243,7 +247,7 @@ export class ApplicationDockComponent extends ComponentStore<ViewModel> {
   readonly hotkeys$ = this.select(({ hotkeys }) => hotkeys);
   readonly application$ = this.select(({ application }) => application);
 
-  @Input() set pgApplication(application: Option<Node>) {
+  @Input() set pgApplication(application: Option<Node<WorkspaceNodeData>>) {
     this.patchState({ application });
   }
   @Output() pgApplicationUnselected = new EventEmitter();
@@ -305,7 +309,11 @@ export class ApplicationDockComponent extends ComponentStore<ViewModel> {
     this.pgApplicationUnselected.emit();
   }
 
-  onKeyDown(hotkeys: HotKey[], application: Node, event: KeyboardEvent) {
+  onKeyDown(
+    hotkeys: HotKey[],
+    application: Node<WorkspaceNodeData>,
+    event: KeyboardEvent
+  ) {
     if (event.key === 'Escape') {
       this.pgApplicationUnselected.emit();
     } else {
@@ -317,7 +325,10 @@ export class ApplicationDockComponent extends ComponentStore<ViewModel> {
             this.setIsUpdating(true);
 
             openEditApplicationModal(this._dialog, {
-              application,
+              application: {
+                id: application.id,
+                name: application.data.name,
+              },
             }).closed.subscribe((applicationData) => {
               this.setIsUpdating(false);
 

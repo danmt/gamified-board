@@ -22,7 +22,7 @@ import { ApplicationDto } from '../utils';
 export type CreateApplicationDto = Entity<{
   workspaceId: string;
   name: string;
-  label: string;
+  kind: string;
 }>;
 
 export type UpdateApplicationDto = Partial<{
