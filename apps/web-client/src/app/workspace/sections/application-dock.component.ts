@@ -28,7 +28,6 @@ import {
 import { SlotHotkeyPipe } from '../../shared/pipes';
 import { Option } from '../../shared/utils';
 import { WorkspaceNodeData } from '../utils';
-import { ActiveApplicationComponent } from './active-application.component';
 
 interface HotKey {
   slot: number;
@@ -115,10 +114,7 @@ const initialState: ViewModel = {
                 [pgIsActive]="false"
                 pgUpdateApplicationModal
                 #updateApplicationModal="modal"
-                [pgApplication]="{
-                  id: application.id,
-                  name: application.data.name
-                }"
+                [pgApplication]="application"
                 (pgOpenModal)="setIsUpdating(true)"
                 (pgCloseModal)="setIsUpdating(false)"
                 (pgUpdateApplication)="
@@ -223,7 +219,6 @@ const initialState: ViewModel = {
     UpdateApplicationModalDirective,
     CreateApplicationModalDirective,
     SecondaryDockComponent,
-    ActiveApplicationComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
