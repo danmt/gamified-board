@@ -20,9 +20,8 @@ import {
   tap,
   withLatestFrom,
 } from 'rxjs';
+import { openEditApplicationModal } from '../../application/components';
 import { ClickEvent } from '../../drawer/utils';
-import { openEditInstructionApplicationModal } from '../../instruction-application/components';
-
 import { ActiveComponent } from '../../shared/components';
 import {
   FollowCursorDirective,
@@ -125,18 +124,18 @@ export class ActiveApplicationComponent
 
           this.patchState({ isAdding: true });
 
-          return openEditInstructionApplicationModal(this._dialog, {
-            instructionApplication: null,
+          return openEditApplicationModal(this._dialog, {
+            application: null,
           }).closed.pipe(
-            tap((instructionApplication) => {
+            tap((application) => {
               this.patchState({ isAdding: false });
 
-              if (instructionApplication) {
+              if (application) {
                 this.pgDeactivate.emit();
                 this.pgAddNode.emit({
                   data: {
                     id: generateId(),
-                    name: instructionApplication.name,
+                    name: application.name,
                     kind: 'solana',
                     thumbnailUrl: active.thumbnailUrl,
                   },
