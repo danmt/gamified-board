@@ -79,6 +79,13 @@ bootstrapApplication(AppComponent, {
                 ),
             },
             {
+              path: 'workspaces/:workspaceId/applications/:applicationId',
+              loadComponent: () =>
+                import('./app/application/pages').then(
+                  (m) => m.ApplicationPageComponent
+                ),
+            },
+            {
               path: '**',
               redirectTo: 'lobby',
             },

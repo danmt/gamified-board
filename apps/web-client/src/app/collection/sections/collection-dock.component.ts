@@ -23,9 +23,8 @@ import { SlotHotkeyPipe } from '../../shared/pipes';
 import { generateId, isNotNull, isNull } from '../../shared/utils';
 import {
   EditCollectionAttributesSubmit,
-  EditCollectionSubmit,
+  // EditCollectionSubmit,
   openEditCollectionAttributesModal,
-  openEditCollectionModal,
   UpdateCollectionAttributesModalDirective,
   UpdateCollectionModalDirective,
 } from '../components';
@@ -69,7 +68,7 @@ interface HotKey {
           >
             <h2 class="text-xl">Actions</h2>
             <div class="flex gap-4 justify-center items-start">
-              <div
+              <!-- <div
                 class="bg-gray-800 relative"
                 style="width: 2.89rem; height: 2.89rem"
               >
@@ -90,7 +89,7 @@ interface HotKey {
                   (pgCloseModal)="isUpdating = false"
                   (pgUpdateCollection)="onUpdateCollection(selected.id, $event)"
                 ></pg-square-button>
-              </div>
+              </div> -->
 
               <div
                 class="bg-gray-800 relative"
@@ -240,10 +239,7 @@ export class CollectionDockComponent {
   isUpdatingThumbnail = false;
   isUpdatingAttributes = false;
 
-  onUpdateCollection(
-    collectionId: string,
-    collectionData: EditCollectionSubmit
-  ) {
+  onUpdateCollection(collectionId: string, collectionData: any) {
     this._collectionApiService
       .updateCollection(collectionId, {
         name: collectionData.name,
@@ -286,7 +282,7 @@ export class CollectionDockComponent {
 
     if (isNotNull(hotkey)) {
       switch (hotkey.slot) {
-        case 0: {
+        /* case 0: {
           this.isUpdating = true;
 
           openEditCollectionModal(this._dialog, { collection })
@@ -309,7 +305,7 @@ export class CollectionDockComponent {
             .subscribe();
 
           break;
-        }
+        } */
 
         case 1: {
           this.isDeleting = true;

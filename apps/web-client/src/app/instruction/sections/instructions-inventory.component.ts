@@ -28,7 +28,7 @@ import { InstructionApiService } from '../services';
     >
       <h2 pgInventoryTitle class="bp-font-game-title text-3xl">Instructions</h2>
 
-      <button
+      <!-- <button
         class="bp-button-add-futuristic z-20"
         pgInventoryCreateButton
         pgCreateInstructionModal
@@ -42,7 +42,7 @@ import { InstructionApiService } from '../services';
             $event.name
           )
         "
-      ></button>
+      ></button> -->
 
       <div
         pgInventoryBody

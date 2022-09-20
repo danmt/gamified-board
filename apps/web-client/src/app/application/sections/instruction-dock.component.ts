@@ -9,8 +9,7 @@ import {
 } from '@angular/core';
 import { LetModule, PushModule } from '@ngrx/component';
 import { ComponentStore } from '@ngrx/component-store';
-import { CreateCollectionModalDirective } from '../../collection/components';
-import { Graph } from '../../drawer/utils';
+import { Node } from '../../drawer/utils';
 import {
   ConfirmModalDirective,
   SecondaryDockComponent,
@@ -24,10 +23,11 @@ import {
 import { SlotHotkeyPipe } from '../../shared/pipes';
 import { Option } from '../../shared/utils';
 import {
-  UpdateApplicationModalDirective,
-  UpdateApplicationSubmit,
+  CreateInstructionModalDirective,
+  UpdateInstructionModalDirective,
+  UpdateInstructionSubmit,
 } from '../components';
-import { ApplicationGraphData, ApplicationNodeData } from '../utils';
+import { ApplicationNodeData } from '../utils';
 
 interface HotKey {
   slot: number;
@@ -36,17 +36,15 @@ interface HotKey {
 }
 
 interface ViewModel {
-  application: Option<Graph<ApplicationGraphData, ApplicationNodeData>>;
-  isCreating: boolean;
+  instruction: Option<Node<ApplicationNodeData>>;
   isUpdating: boolean;
   isUpdatingThumbnail: boolean;
   isDeleting: boolean;
-  hotkeys: [HotKey, HotKey, HotKey, HotKey, HotKey];
+  hotkeys: [HotKey, HotKey, HotKey, HotKey];
 }
 
 const initialState: ViewModel = {
-  application: null,
-  isCreating: false,
+  instruction: null,
   isUpdating: false,
   isUpdatingThumbnail: false,
   isDeleting: false,
@@ -71,31 +69,26 @@ const initialState: ViewModel = {
       code: 'KeyR',
       key: 'r',
     },
-    {
-      slot: 4,
-      code: 'KeyT',
-      key: 't',
-    },
   ],
 };
 
 @Component({
-  selector: 'pg-application-dock',
+  selector: 'pg-instruction-dock',
   template: `
     <pg-secondary-dock
-      *ngIf="application$ | ngrxPush as application"
+      *ngIf="instruction$ | ngrxPush as instruction"
       class="text-white block bp-font-game"
     >
       <div class="flex gap-4 justify-center items-start">
         <img
-          [src]="application.data.thumbnailUrl"
-          pgDefaultImageUrl="assets/generic/application.png"
+          [src]="instruction.data.thumbnailUrl"
+          pgDefaultImageUrl="assets/generic/instruction.png"
           class="w-[100px] h-[106px] overflow-hidden rounded-xl"
         />
 
         <div>
           <h2 class="text-xl">Name</h2>
-          <p class="text-base">{{ application.data.name }}</p>
+          <p class="text-base">{{ instruction.data.name }}</p>
         </div>
 
         <div class="ml-10">
@@ -110,22 +103,22 @@ const initialState: ViewModel = {
                   style="font-size: 0.5rem; line-height: 0.5rem"
                   pgKeyDown
                   [pgKey]="hotkeys[0].key"
-                  (pgKeyDown)="updateApplicationModal.open()"
+                  (pgKeyDown)="updateInstructionModal.open()"
                 >
                   {{ hotkey }}
                 </span>
               </ng-container>
 
               <pg-square-button
-                pgThumbnailUrl="assets/generic/application.png"
+                pgThumbnailUrl="assets/generic/instruction.png"
                 [pgIsActive]="false"
-                #updateApplicationModal="modal"
-                pgUpdateApplicationModal
-                [pgApplication]="application"
+                pgUpdateInstructionModal
+                #updateInstructionModal="modal"
+                [pgInstruction]="instruction"
                 (pgOpenModal)="setIsUpdating(true)"
                 (pgCloseModal)="setIsUpdating(false)"
-                (pgUpdateApplication)="
-                  onUpdateApplication(application.id, $event)
+                (pgUpdateInstruction)="
+                  onUpdateInstruction(instruction.id, $event)
                 "
               ></pg-square-button>
             </div>
@@ -138,20 +131,20 @@ const initialState: ViewModel = {
                   style="font-size: 0.5rem; line-height: 0.5rem"
                   pgKeyDown
                   [pgKey]="hotkeys[1].key"
-                  (pgKeyDown)="uploadApplicationThumbnailModal.open()"
+                  (pgKeyDown)="updateInstructionThumbnailModal.open()"
                 >
                   {{ hotkey }}
                 </span>
               </ng-container>
 
               <pg-square-button
-                pgThumbnailUrl="assets/generic/application.png"
+                pgThumbnailUrl="assets/generic/instruction.png"
                 [pgIsActive]="(isUpdatingThumbnail$ | ngrxPush) ?? false"
                 pgUploadFileModal
-                #uploadApplicationThumbnailModal="modal"
+                #updateInstructionThumbnailModal="modal"
                 (pgSubmit)="
                   onUploadThumbnail(
-                    application.id,
+                    instruction.id,
                     $event.fileId,
                     $event.fileUrl
                   )
@@ -169,7 +162,7 @@ const initialState: ViewModel = {
                   style="font-size: 0.5rem; line-height: 0.5rem"
                   pgKeyDown
                   [pgKey]="hotkeys[2].key"
-                  (pgKeyDown)="deleteApplicationModal.open()"
+                  (pgKeyDown)="deleteInstructionModal.open()"
                 >
                   {{ hotkey }}
                 </span>
@@ -177,10 +170,10 @@ const initialState: ViewModel = {
 
               <pg-square-button
                 [pgIsActive]="(isDeleting$ | ngrxPush) ?? false"
-                pgThumbnailUrl="assets/generic/application.png"
-                (pgConfirm)="onDeleteApplication(application.id)"
+                pgThumbnailUrl="assets/generic/instruction.png"
+                (pgConfirm)="onDeleteInstruction(instruction.id)"
                 pgConfirmModal
-                #deleteApplicationModal="modal"
+                #deleteInstructionModal="modal"
                 pgMessage="Are you sure? This action cannot be reverted."
                 (pgOpenModal)="setIsDeleting(true)"
                 (pgCloseModal)="setIsDeleting(false)"
@@ -195,35 +188,15 @@ const initialState: ViewModel = {
                   style="font-size: 0.5rem; line-height: 0.5rem"
                   pgKeyDown
                   [pgKey]="hotkeys[3].key"
-                  (pgKeyDown)="onActivateCollection()"
+                  (pgKeyDown)="onUnselectInstruction()"
                 >
                   {{ hotkey }}
                 </span>
               </ng-container>
 
               <pg-square-button
-                pgThumbnailUrl="assets/generic/collection.png"
-                (click)="onActivateCollection()"
-              ></pg-square-button>
-            </div>
-
-            <div class="bg-gray-800 relative w-[2.89rem] h-[2.89rem]">
-              <ng-container *ngrxLet="hotkeys$; let hotkeys">
-                <span
-                  *ngIf="4 | pgSlotHotkey: hotkeys as hotkey"
-                  class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
-                  style="font-size: 0.5rem; line-height: 0.5rem"
-                  pgKeyDown
-                  [pgKey]="hotkeys[4].key"
-                  (pgKeyDown)="onActivateInstruction()"
-                >
-                  {{ hotkey }}
-                </span>
-              </ng-container>
-
-              <pg-square-button
-                pgThumbnailUrl="assets/generic/collection.png"
-                (click)="onActivateInstruction()"
+                pgThumbnailUrl="assets/generic/instruction.png"
+                (click)="onUnselectInstruction()"
               ></pg-square-button>
             </div>
           </div>
@@ -243,44 +216,35 @@ const initialState: ViewModel = {
     ConfirmModalDirective,
     DefaultImageDirective,
     UploadFileModalDirective,
-    UpdateApplicationModalDirective,
-    CreateCollectionModalDirective,
+    UpdateInstructionModalDirective,
+    CreateInstructionModalDirective,
     SecondaryDockComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ApplicationDockComponent extends ComponentStore<ViewModel> {
-  readonly isCreating$ = this.select(({ isCreating }) => isCreating);
+export class InstructionDockComponent extends ComponentStore<ViewModel> {
   readonly isUpdating$ = this.select(({ isUpdating }) => isUpdating);
   readonly isUpdatingThumbnail$ = this.select(
     ({ isUpdatingThumbnail }) => isUpdatingThumbnail
   );
   readonly isDeleting$ = this.select(({ isDeleting }) => isDeleting);
   readonly hotkeys$ = this.select(({ hotkeys }) => hotkeys);
-  readonly application$ = this.select(({ application }) => application);
+  readonly instruction$ = this.select(({ instruction }) => instruction);
 
-  @Input() set pgApplication(
-    application: Option<Graph<ApplicationGraphData, ApplicationNodeData>>
-  ) {
-    this.patchState({ application });
+  @Input() set pgInstruction(instruction: Option<Node<ApplicationNodeData>>) {
+    this.patchState({ instruction });
   }
-  @Output() pgActivateCollection = new EventEmitter();
-  @Output() pgActivateInstruction = new EventEmitter();
-  @Output() pgUpdateApplication = new EventEmitter<{
+  @Output() pgInstructionUnselected = new EventEmitter();
+  @Output() pgUpdateInstruction = new EventEmitter<{
     id: string;
-    changes: UpdateApplicationSubmit;
+    changes: UpdateInstructionSubmit;
   }>();
-  @Output() pgUpdateApplicationThumbnail = new EventEmitter<{
+  @Output() pgUpdateInstructionThumbnail = new EventEmitter<{
     id: string;
     fileId: string;
     fileUrl: string;
   }>();
-  @Output() pgDeleteApplication = new EventEmitter<string>();
-
-  readonly setIsCreating = this.updater<boolean>((state, isCreating) => ({
-    ...state,
-    isCreating,
-  }));
+  @Output() pgDeleteInstruction = new EventEmitter<string>();
 
   readonly setIsUpdating = this.updater<boolean>((state, isUpdating) => ({
     ...state,
@@ -303,33 +267,29 @@ export class ApplicationDockComponent extends ComponentStore<ViewModel> {
     super(initialState);
   }
 
-  onUpdateApplication(
-    applicationId: string,
-    applicationData: UpdateApplicationSubmit
+  onUpdateInstruction(
+    instructionId: string,
+    instructionData: UpdateInstructionSubmit
   ) {
-    this.pgUpdateApplication.emit({
-      id: applicationId,
-      changes: applicationData,
+    this.pgUpdateInstruction.emit({
+      id: instructionId,
+      changes: instructionData,
     });
   }
 
-  onUploadThumbnail(applicationId: string, fileId: string, fileUrl: string) {
-    this.pgUpdateApplicationThumbnail.emit({
-      id: applicationId,
+  onUploadThumbnail(instructionId: string, fileId: string, fileUrl: string) {
+    this.pgUpdateInstructionThumbnail.emit({
+      id: instructionId,
       fileId,
       fileUrl,
     });
   }
 
-  onDeleteApplication(applicationId: string) {
-    this.pgDeleteApplication.emit(applicationId);
+  onDeleteInstruction(instructionId: string) {
+    this.pgDeleteInstruction.emit(instructionId);
   }
 
-  onActivateCollection() {
-    this.pgActivateCollection.emit();
-  }
-
-  onActivateInstruction() {
-    this.pgActivateInstruction.emit();
+  onUnselectInstruction() {
+    this.pgInstructionUnselected.emit();
   }
 }

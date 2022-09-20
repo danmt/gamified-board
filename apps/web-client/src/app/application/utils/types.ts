@@ -5,3 +5,18 @@ export type ApplicationDto = Entity<{
   workspaceId: string;
   thumbnailUrl: string;
 }>;
+
+export type ApplicationGraphData = {
+  name: string;
+  thumbnailUrl: string;
+  kind: string;
+  workspaceId: string;
+};
+
+export type ApplicationNodeData = {
+  name: string;
+  thumbnailUrl: string;
+  kind: string;
+  workspaceId: string;
+  applicationId: string;
+};

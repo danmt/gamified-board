@@ -23,7 +23,7 @@ import {
 import { Entity, generateId, isNull, Option } from '../../shared/utils';
 
 export type Application = Entity<{
-  name: string;
+  data: { name: string };
 }>;
 
 export interface EditApplicationData {
@@ -180,7 +180,7 @@ export class EditApplicationModalComponent {
 
   readonly application = this._data.application;
   readonly form = this._formBuilder.group({
-    name: this._formBuilder.control<string>(this.application?.name ?? '', {
+    name: this._formBuilder.control<string>(this.application?.data.name ?? '', {
       validators: [Validators.required],
       nonNullable: true,
     }),

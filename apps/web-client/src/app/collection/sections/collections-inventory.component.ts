@@ -28,7 +28,7 @@ import { CollectionApiService } from '../services';
     >
       <h2 class="bp-font-game-title text-3xl" pgInventoryTitle>Collections</h2>
 
-      <button
+      <!-- <button
         pgInventoryCreateButton
         class="bp-button-add-futuristic z-20"
         [pgWorkspaceId]="(workspaceId$ | ngrxPush) ?? null"
@@ -42,7 +42,7 @@ import { CollectionApiService } from '../services';
             $event.name
           )
         "
-      ></button>
+      ></button> -->
 
       <div
         pgInventoryBody

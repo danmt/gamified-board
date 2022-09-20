@@ -23,9 +23,8 @@ import { SlotHotkeyPipe } from '../../shared/pipes';
 import { generateId, isNotNull, isNull } from '../../shared/utils';
 import {
   EditInstructionArgumentsSubmit,
-  EditInstructionSubmit,
+  // EditInstructionSubmit,
   openEditInstructionArgumentsModal,
-  openEditInstructionModal,
   UpdateInstructionArgumentsModalDirective,
   UpdateInstructionModalDirective,
 } from '../components';
@@ -69,7 +68,7 @@ interface HotKey {
           >
             <h2 class="text-xl">Actions</h2>
             <div class="flex gap-4 justify-center items-start">
-              <div
+              <!-- <div
                 class="bg-gray-800 relative"
                 style="width: 2.89rem; height: 2.89rem"
               >
@@ -92,7 +91,7 @@ interface HotKey {
                     onUpdateInstruction(selected.id, $event)
                   "
                 ></pg-square-button>
-              </div>
+              </div> -->
 
               <div
                 class="bg-gray-800 relative"
@@ -247,7 +246,7 @@ export class InstructionDockComponent {
   isUpdatingThumbnail = false;
   isUpdatingArguments = false;
 
-  onUpdateInstruction(
+  /* onUpdateInstruction(
     instructionId: string,
     instructionData: EditInstructionSubmit
   ) {
@@ -256,7 +255,7 @@ export class InstructionDockComponent {
         name: instructionData.name,
       })
       .subscribe();
-  }
+  } */
 
   onUpdateInstructionArguments(
     instructionId: string,
@@ -293,7 +292,7 @@ export class InstructionDockComponent {
 
     if (isNotNull(hotkey)) {
       switch (hotkey.slot) {
-        case 0: {
+        /* case 0: {
           this.isUpdating = true;
 
           openEditInstructionModal(this._dialog, { instruction })
@@ -316,7 +315,7 @@ export class InstructionDockComponent {
             .subscribe();
 
           break;
-        }
+        } */
 
         case 1: {
           this.isDeleting = true;
