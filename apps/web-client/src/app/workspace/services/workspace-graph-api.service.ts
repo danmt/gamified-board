@@ -5,9 +5,8 @@ import { Entity } from '../../shared/utils';
 export type CreateNodeDto = Entity<{
   name: string;
   kind: string;
-  applicationId: string;
-  workspaceId: string;
   thumbnailUrl: string;
+  workspaceId: string;
   isGraph: boolean;
 }>;
 
@@ -27,17 +26,17 @@ export interface UpdateNodeThumbnailDto {
 }
 
 @Injectable({ providedIn: 'root' })
-export class ApplicationGraphApiService {
+export class WorkspaceGraphApiService {
   private readonly _eventApiService = inject(EventApiService);
 
-  createNode(clientId: string, payload: CreateNodeDto) {
+  createNode(clientId: string, graphId: string, payload: CreateNodeDto) {
     return this._eventApiService.emit(clientId, {
       type: 'createNode',
       payload: {
         ...payload,
-        graphId: payload.applicationId,
+        graphId,
       },
-      graphIds: [payload.id, payload.applicationId],
+      graphIds: [payload.id, graphId],
     });
   }
 

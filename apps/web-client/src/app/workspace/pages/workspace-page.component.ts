@@ -24,8 +24,6 @@ import {
   withLatestFrom,
 } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { UpdateApplicationSubmit } from '../../application/components';
-import { ApplicationApiService } from '../../application/services';
 import { EventApiService, GraphApiService } from '../../drawer/services';
 import {
   AddNodeSuccessEvent,
@@ -53,14 +51,14 @@ import {
   BackgroundImageZoomDirective,
 } from '../../shared/directives';
 import { isNotNull, isNull, Option } from '../../shared/utils';
-import { UpdateWorkspaceSubmit } from '../components';
+import { UpdateApplicationSubmit, UpdateWorkspaceSubmit } from '../components';
 import {
   ActiveApplicationComponent,
   AddNodeDto,
   ApplicationDockComponent,
   WorkspaceDockComponent,
 } from '../sections';
-import { WorkspaceApiService } from '../services';
+import { WorkspaceApiService, WorkspaceGraphApiService } from '../services';
 import { WorkspaceDrawerStore } from '../stores';
 import { WorkspaceGraphData, WorkspaceNodeData } from '../utils';
 
@@ -147,7 +145,7 @@ export class WorkspacePageComponent
   private readonly _router = inject(Router);
   private readonly _eventApiService = inject(EventApiService);
   private readonly _workspaceApiService = inject(WorkspaceApiService);
-  private readonly _applicationApiService = inject(ApplicationApiService);
+  private readonly _workspaceGraphApiService = inject(WorkspaceGraphApiService);
   private readonly _graphApiService = inject(GraphApiService);
   private readonly _activatedRoute = inject(ActivatedRoute);
   private readonly _workspaceDrawerStore = inject(WorkspaceDrawerStore);
@@ -271,13 +269,13 @@ export class WorkspacePageComponent
             return EMPTY;
           }
 
-          return this._applicationApiService.createApplication2(
+          return this._workspaceGraphApiService.createNode(
             environment.clientId,
+            workspaceId,
             {
+              ...event.payload.data,
               id: event.payload.id,
-              name: event.payload.data.name,
-              kind: event.payload.data.kind,
-              workspaceId,
+              isGraph: true,
             }
           );
         })
@@ -301,11 +299,14 @@ export class WorkspacePageComponent
             changes: event.payload.changes,
           });
 
-          return this._applicationApiService.updateApplication2(
+          return this._workspaceGraphApiService.updateNode(
             environment.clientId,
             workspaceId,
             event.payload.id,
-            event.payload.changes
+            {
+              changes: event.payload.changes,
+              isGraph: true,
+            }
           );
         })
       )
@@ -329,11 +330,15 @@ export class WorkspacePageComponent
               },
             });
 
-            return this._applicationApiService.updateApplicationThumbnail2(
+            return this._workspaceGraphApiService.updateNodeThumbnail(
               environment.clientId,
               workspaceId,
               event.payload.id,
-              { fileId: event.payload.fileId, fileUrl: event.payload.fileUrl }
+              {
+                fileId: event.payload.fileId,
+                fileUrl: event.payload.fileUrl,
+                isGraph: true,
+              }
             );
           })
         )
@@ -352,10 +357,11 @@ export class WorkspacePageComponent
 
             this.clearSelected(event.payload);
 
-            return this._applicationApiService.deleteApplication2(
+            return this._workspaceGraphApiService.deleteNode(
               environment.clientId,
               workspaceId,
-              event.payload
+              event.payload,
+              { isGraph: true }
             );
           })
         )
@@ -425,20 +431,16 @@ export class WorkspacePageComponent
       }
 
       return this._eventApiService
-        .onServerCreate(workspaceId, ['createApplicationSuccess'])
+        .onServerCreate(workspaceId, ['createNodeSuccess'])
         .pipe(
           filter((event) => event['clientId'] !== environment.clientId),
-          tap((event) =>
+          tap((event) => {
+            const { id, ...payload } = event['payload'];
             this._workspaceDrawerStore.handleNodeAdded({
-              id: event['payload'].id,
-              data: {
-                kind: event['payload'].kind,
-                name: event['payload'].name,
-                thumbnailUrl: event['payload'].thumbnailUrl,
-                workspaceId: event['payload'].workspaceId,
-              },
-            })
-          )
+              id,
+              data: payload,
+            });
+          })
         );
     })
   );
@@ -450,7 +452,10 @@ export class WorkspacePageComponent
       }
 
       return this._eventApiService
-        .onServerCreate(workspaceId, ['updateApplicationSuccess'])
+        .onServerCreate(workspaceId, [
+          'updateNodeSuccess',
+          'updateNodeThumbnailSuccess',
+        ])
         .pipe(
           filter((event) => event['clientId'] !== environment.clientId),
           tap((event) => {
@@ -467,35 +472,6 @@ export class WorkspacePageComponent
     })
   );
 
-  private readonly _handleServerNodeThumbnailUpdate = this.effect<
-    Option<string>
-  >(
-    switchMap((workspaceId) => {
-      if (isNull(workspaceId)) {
-        return EMPTY;
-      }
-
-      return this._eventApiService
-        .onServerCreate(workspaceId, ['updateApplicationThumbnailSuccess'])
-        .pipe(
-          filter((event) => event['clientId'] !== environment.clientId),
-          tap((event) => {
-            this.patchSelected({
-              id: event['payload'].id,
-              changes: {
-                thumbnailUrl: event['payload'].fileUrl,
-              },
-            });
-            this._workspaceDrawerStore.handleNodeThumbnailUpdated(
-              event['payload'].id,
-              event['payload'].fileId,
-              event['payload'].fileUrl
-            );
-          })
-        );
-    })
-  );
-
   private readonly _handleServerNodeDelete = this.effect<Option<string>>(
     switchMap((workspaceId) => {
       if (isNull(workspaceId)) {
@@ -503,7 +479,7 @@ export class WorkspacePageComponent
       }
 
       return this._eventApiService
-        .onServerCreate(workspaceId, ['deleteApplicationSuccess'])
+        .onServerCreate(workspaceId, ['deleteNodeSuccess'])
         .pipe(
           filter((event) => event['clientId'] !== environment.clientId),
           tap((event) => {
@@ -588,7 +564,6 @@ export class WorkspacePageComponent
 
     this._handleServerNodeCreate(this.workspaceId$);
     this._handleServerNodeUpdate(this.workspaceId$);
-    this._handleServerNodeThumbnailUpdate(this.workspaceId$);
     this._handleServerNodeDelete(this.workspaceId$);
     this._handleServerGraphUpdate(this.workspaceId$);
     this._handleServerGraphThumbnailUpdate(this.workspaceId$);

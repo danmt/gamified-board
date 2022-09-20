@@ -20,12 +20,11 @@ import {
   tap,
   withLatestFrom,
 } from 'rxjs';
-import { openEditApplicationModal } from '../../application/components';
 import { ClickEvent } from '../../drawer/utils';
 import { ActiveComponent } from '../../shared/components';
 import {
   FollowCursorDirective,
-  KeyDownDirective,
+  KeyListenerDirective,
 } from '../../shared/directives';
 import {
   Entity,
@@ -35,6 +34,7 @@ import {
   isNull,
   Option,
 } from '../../shared/utils';
+import { openEditApplicationModal } from '../components';
 
 export interface AddNodeDto {
   data: Entity<{
@@ -76,8 +76,7 @@ const initialState: ViewModel = {
       class="fixed z-10 pointer-events-none"
       pgFollowCursor
       [ngClass]="{ hidden: (isAdding$ | ngrxPush) }"
-      pgKeyDown
-      pgKey="Escape"
+      pgKeyListener="Escape"
       (pgKeyDown)="onEscapePressed()"
     ></pg-active>
   `,
@@ -87,7 +86,7 @@ const initialState: ViewModel = {
     PushModule,
     FollowCursorDirective,
     ActiveComponent,
-    KeyDownDirective,
+    KeyListenerDirective,
   ],
 })
 export class ActiveApplicationComponent
@@ -136,7 +135,7 @@ export class ActiveApplicationComponent
                   data: {
                     id: generateId(),
                     name: application.name,
-                    kind: 'solana',
+                    kind: 'application',
                     thumbnailUrl: active.thumbnailUrl,
                   },
                   options: {

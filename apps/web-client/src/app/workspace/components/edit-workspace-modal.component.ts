@@ -17,7 +17,7 @@ import {
 } from '@angular/forms';
 import { ModalComponent } from '../../shared/components';
 import {
-  KeyboardListenerDirective,
+  KeyListenerDirective,
   StopKeydownPropagationDirective,
 } from '../../shared/directives';
 import { Entity, isNull, Option } from '../../shared/utils';
@@ -121,9 +121,9 @@ export class UpdateWorkspaceModalDirective {
     <pg-modal
       class="px-6 pt-8 pb-4 text-white min-w-[400px] min-h-[300px]"
       pgStopKeydownPropagation
-      pgKeyboardListener
-      (keydown)="onKeyDown($event)"
       (pgCloseModal)="onClose()"
+      pgKeyListener="Escape"
+      (pgKeyDown)="onClose()"
     >
       <div class="flex justify-between w-full">
         <h1 class="text-center text-3xl mb-4 bp-font-game uppercase">
@@ -160,7 +160,7 @@ export class UpdateWorkspaceModalDirective {
     CommonModule,
     ReactiveFormsModule,
     StopKeydownPropagationDirective,
-    KeyboardListenerDirective,
+    KeyListenerDirective,
     ModalComponent,
   ],
 })
@@ -199,11 +199,5 @@ export class EditWorkspaceModalComponent {
 
   onClose() {
     this._dialogRef.close();
-  }
-
-  onKeyDown(event: KeyboardEvent) {
-    if (event.code === 'Escape') {
-      this._dialogRef.close();
-    }
   }
 }

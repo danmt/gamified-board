@@ -60,6 +60,7 @@ import {
   AddInstructionNodeDto,
   ApplicationDockComponent,
   CollectionDockComponent,
+  InstructionDockComponent,
 } from '../sections';
 import { ApplicationApiService, ApplicationGraphApiService } from '../services';
 import { ApplicationDrawerStore } from '../stores';
@@ -109,17 +110,31 @@ const initialState: ViewModel = {
       ></pg-application-dock>
     </ng-container>
 
-    <pg-collection-dock
-      *ngIf="selected$ | ngrxPush as selected"
-      class="fixed bottom-0 -translate-x-1/2 left-1/2"
-      [pgCollection]="selected"
-      (pgCollectionUnselected)="onCollectionUnselected()"
-      (pgUpdateCollection)="onUpdateNode($event.id, $event.changes)"
-      (pgUpdateCollectionThumbnail)="
-        onUpdateNodeThumbnail($event.id, $event.fileId, $event.fileUrl)
-      "
-      (pgDeleteCollection)="onRemoveNode($event)"
-    ></pg-collection-dock>
+    <ng-container *ngIf="selected$ | ngrxPush as selected">
+      <pg-collection-dock
+        *ngIf="selected.data.kind === 'collection'"
+        class="fixed bottom-0 -translate-x-1/2 left-1/2"
+        [pgCollection]="selected"
+        (pgCollectionUnselected)="onCollectionUnselected()"
+        (pgUpdateCollection)="onUpdateNode($event.id, $event.changes)"
+        (pgUpdateCollectionThumbnail)="
+          onUpdateNodeThumbnail($event.id, $event.fileId, $event.fileUrl)
+        "
+        (pgDeleteCollection)="onRemoveNode($event)"
+      ></pg-collection-dock>
+
+      <pg-instruction-dock
+        *ngIf="selected.data.kind === 'instruction'"
+        class="fixed bottom-0 -translate-x-1/2 left-1/2"
+        [pgInstruction]="selected"
+        (pgInstructionUnselected)="onInstructionUnselected()"
+        (pgUpdateInstruction)="onUpdateNode($event.id, $event.changes)"
+        (pgUpdateInstructionThumbnail)="
+          onUpdateNodeThumbnail($event.id, $event.fileId, $event.fileUrl)
+        "
+        (pgDeleteInstruction)="onRemoveNode($event)"
+      ></pg-instruction-dock>
+    </ng-container>
 
     <pg-active-collection
       *ngIf="application$ | ngrxPush as application"
@@ -156,6 +171,7 @@ const initialState: ViewModel = {
     PushModule,
     ApplicationDockComponent,
     CollectionDockComponent,
+    InstructionDockComponent,
     ActiveCollectionComponent,
     ActiveInstructionComponent,
     BackgroundImageZoomDirective,
@@ -638,6 +654,10 @@ export class ApplicationPageComponent
   }
 
   onCollectionUnselected() {
+    this.patchState({ selected: null });
+  }
+
+  onInstructionUnselected() {
     this.patchState({ selected: null });
   }
 

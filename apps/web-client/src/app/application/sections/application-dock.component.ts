@@ -19,7 +19,7 @@ import {
 } from '../../shared/components';
 import {
   DefaultImageDirective,
-  KeyDownDirective,
+  KeyListenerDirective,
 } from '../../shared/directives';
 import { SlotHotkeyPipe } from '../../shared/pipes';
 import { Option } from '../../shared/utils';
@@ -108,8 +108,7 @@ const initialState: ViewModel = {
                   *ngIf="0 | pgSlotHotkey: hotkeys as hotkey"
                   class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
                   style="font-size: 0.5rem; line-height: 0.5rem"
-                  pgKeyDown
-                  [pgKey]="hotkeys[0].key"
+                  [pgKeyListener]="hotkeys[0].code"
                   (pgKeyDown)="updateApplicationModal.open()"
                 >
                   {{ hotkey }}
@@ -136,8 +135,7 @@ const initialState: ViewModel = {
                   *ngIf="1 | pgSlotHotkey: hotkeys as hotkey"
                   class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
                   style="font-size: 0.5rem; line-height: 0.5rem"
-                  pgKeyDown
-                  [pgKey]="hotkeys[1].key"
+                  [pgKeyListener]="hotkeys[1].code"
                   (pgKeyDown)="uploadApplicationThumbnailModal.open()"
                 >
                   {{ hotkey }}
@@ -167,8 +165,7 @@ const initialState: ViewModel = {
                   *ngIf="2 | pgSlotHotkey: hotkeys as hotkey"
                   class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
                   style="font-size: 0.5rem; line-height: 0.5rem"
-                  pgKeyDown
-                  [pgKey]="hotkeys[2].key"
+                  [pgKeyListener]="hotkeys[2].code"
                   (pgKeyDown)="deleteApplicationModal.open()"
                 >
                   {{ hotkey }}
@@ -193,8 +190,7 @@ const initialState: ViewModel = {
                   *ngIf="3 | pgSlotHotkey: hotkeys as hotkey"
                   class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
                   style="font-size: 0.5rem; line-height: 0.5rem"
-                  pgKeyDown
-                  [pgKey]="hotkeys[3].key"
+                  [pgKeyListener]="hotkeys[3].code"
                   (pgKeyDown)="onActivateCollection()"
                 >
                   {{ hotkey }}
@@ -213,8 +209,7 @@ const initialState: ViewModel = {
                   *ngIf="4 | pgSlotHotkey: hotkeys as hotkey"
                   class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
                   style="font-size: 0.5rem; line-height: 0.5rem"
-                  pgKeyDown
-                  [pgKey]="hotkeys[4].key"
+                  [pgKeyListener]="hotkeys[4].code"
                   (pgKeyDown)="onActivateInstruction()"
                 >
                   {{ hotkey }}
@@ -222,7 +217,7 @@ const initialState: ViewModel = {
               </ng-container>
 
               <pg-square-button
-                pgThumbnailUrl="assets/generic/collection.png"
+                pgThumbnailUrl="assets/generic/instruction.png"
                 (click)="onActivateInstruction()"
               ></pg-square-button>
             </div>
@@ -239,7 +234,7 @@ const initialState: ViewModel = {
     LetModule,
     SquareButtonComponent,
     SlotHotkeyPipe,
-    KeyDownDirective,
+    KeyListenerDirective,
     ConfirmModalDirective,
     DefaultImageDirective,
     UploadFileModalDirective,

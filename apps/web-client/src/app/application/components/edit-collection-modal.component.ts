@@ -18,7 +18,7 @@ import {
 } from '@angular/forms';
 import { ModalComponent } from '../../shared/components';
 import {
-  KeyDownDirective,
+  KeyListenerDirective,
   StopKeydownPropagationDirective,
 } from '../../shared/directives';
 import { Entity, isNull, Option } from '../../shared/utils';
@@ -125,8 +125,7 @@ export class UpdateCollectionModalDirective {
     <pg-modal
       class=" text-white min-w-[400px] min-h-[300px]"
       pgStopKeydownPropagation
-      pgKeyDown
-      pgKey="Escape"
+      pgKeyListener="Escape"
       (pgKeyDown)="onClose()"
       (pgCloseModal)="onClose()"
     >
@@ -170,7 +169,7 @@ export class UpdateCollectionModalDirective {
     ReactiveFormsModule,
     DragDropModule,
     StopKeydownPropagationDirective,
-    KeyDownDirective,
+    KeyListenerDirective,
     ModalComponent,
   ],
 })

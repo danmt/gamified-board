@@ -18,7 +18,7 @@ import {
 } from '@angular/forms';
 import { ModalComponent } from '../../shared/components';
 import {
-  KeyboardListenerDirective,
+  KeyListenerDirective,
   StopKeydownPropagationDirective,
 } from '../../shared/directives';
 import { Entity, generateId, isNull, Option } from '../../shared/utils';
@@ -125,8 +125,8 @@ export class UpdateInstructionModalDirective {
     <pg-modal
       class="text-white min-w-[400px] min-h-[300px]"
       pgStopKeydownPropagation
-      pgKeyboardListener
-      (keydown)="onKeyDown($event)"
+      pgKeyListener="Escape"
+      (pgKeyDown)="onClose()"
       (pgCloseModal)="onClose()"
     >
       <div class="flex justify-between w-full">
@@ -172,7 +172,7 @@ export class UpdateInstructionModalDirective {
     ReactiveFormsModule,
     DragDropModule,
     StopKeydownPropagationDirective,
-    KeyboardListenerDirective,
+    KeyListenerDirective,
     ModalComponent,
   ],
 })

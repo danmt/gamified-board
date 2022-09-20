@@ -24,7 +24,7 @@ import { ClickEvent } from '../../drawer/utils';
 import { ActiveComponent } from '../../shared/components';
 import {
   FollowCursorDirective,
-  KeyDownDirective,
+  KeyListenerDirective,
 } from '../../shared/directives';
 import {
   Entity,
@@ -76,8 +76,7 @@ const initialState: ViewModel = {
       class="fixed z-10 pointer-events-none"
       pgFollowCursor
       [ngClass]="{ hidden: (isAdding$ | ngrxPush) }"
-      pgKeyDown
-      pgKey="Escape"
+      pgKeyListener="Escape"
       (pgKeyDown)="onEscapePressed()"
     ></pg-active>
   `,
@@ -87,7 +86,7 @@ const initialState: ViewModel = {
     PushModule,
     FollowCursorDirective,
     ActiveComponent,
-    KeyDownDirective,
+    KeyListenerDirective,
   ],
 })
 export class ActiveInstructionComponent
