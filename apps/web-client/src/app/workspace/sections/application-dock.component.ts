@@ -96,10 +96,7 @@ const initialState: ViewModel = {
           <h2 class="text-xl">Actions</h2>
 
           <div class="flex gap-4 justify-center items-start">
-            <div
-              class="bg-gray-800 relative"
-              style="width: 2.89rem; height: 2.89rem"
-            >
+            <div class="bg-gray-800 relative w-[2.89rem] h-[2.89rem]">
               <ng-container *ngrxLet="hotkeys$; let hotkeys">
                 <span
                   *ngIf="0 | pgSlotHotkey: hotkeys as hotkey"
@@ -130,10 +127,7 @@ const initialState: ViewModel = {
               ></pg-square-button>
             </div>
 
-            <div
-              class="bg-gray-800 relative"
-              style="width: 2.89rem; height: 2.89rem"
-            >
+            <div class="bg-gray-800 relative w-[2.89rem] h-[2.89rem]">
               <ng-container *ngrxLet="hotkeys$; let hotkeys">
                 <span
                   *ngIf="1 | pgSlotHotkey: hotkeys as hotkey"
@@ -164,10 +158,7 @@ const initialState: ViewModel = {
               ></pg-square-button>
             </div>
 
-            <div
-              class="bg-gray-800 relative"
-              style="width: 2.89rem; height: 2.89rem"
-            >
+            <div class="bg-gray-800 relative w-[2.89rem] h-[2.89rem]">
               <ng-container *ngrxLet="hotkeys$; let hotkeys">
                 <span
                   *ngIf="2 | pgSlotHotkey: hotkeys as hotkey"
@@ -193,10 +184,7 @@ const initialState: ViewModel = {
               ></pg-square-button>
             </div>
 
-            <div
-              class="bg-gray-800 relative"
-              style="width: 2.89rem; height: 2.89rem"
-            >
+            <div class="bg-gray-800 relative w-[2.89rem] h-[2.89rem]">
               <ng-container *ngrxLet="hotkeys$; let hotkeys">
                 <span
                   *ngIf="3 | pgSlotHotkey: hotkeys as hotkey"

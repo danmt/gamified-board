@@ -48,8 +48,10 @@ import {
   UpdateNodeThumbnailSuccessEvent,
   ViewNodeEvent,
 } from '../../drawer/utils';
-import { BackgroundImageMoveDirective } from '../../shared/directives/background-position.directive';
-import { BackgroundImageZoomDirective } from '../../shared/directives/background-zoom.directive';
+import {
+  BackgroundImageMoveDirective,
+  BackgroundImageZoomDirective,
+} from '../../shared/directives';
 import { isNotNull, isNull, Option } from '../../shared/utils';
 import { UpdateWorkspaceSubmit } from '../components';
 import {
@@ -59,7 +61,7 @@ import {
   WorkspaceDockComponent,
 } from '../sections';
 import { WorkspaceApiService } from '../services';
-import { WorkspaceDrawerStore } from '../stores/workspace-drawer.store';
+import { WorkspaceDrawerStore } from '../stores';
 import { WorkspaceGraphData, WorkspaceNodeData } from '../utils';
 
 interface ViewModel {
