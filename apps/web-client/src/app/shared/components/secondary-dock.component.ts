@@ -1,8 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, HostBinding } from '@angular/core';
 
-export type DockDirection = 'right' | 'left';
-
 @Component({
   selector: 'pg-secondary-dock',
   template: `

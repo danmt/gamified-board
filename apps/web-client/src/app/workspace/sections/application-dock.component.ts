@@ -17,10 +17,10 @@ import {
 import { Node } from '../../drawer/utils';
 import {
   ConfirmModalDirective,
+  SecondaryDockComponent,
   SquareButtonComponent,
   UploadFileModalDirective,
 } from '../../shared/components';
-import { SecondaryDockComponent } from '../../shared/components/secondary-dock.component';
 import {
   DefaultImageDirective,
   KeyDownDirective,

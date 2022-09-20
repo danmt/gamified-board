@@ -13,10 +13,10 @@ import { CreateApplicationModalDirective } from '../../application/components';
 import { Graph } from '../../drawer/utils';
 import {
   ConfirmModalDirective,
+  SecondaryDockComponent,
   SquareButtonComponent,
   UploadFileModalDirective,
 } from '../../shared/components';
-import { SecondaryDockComponent } from '../../shared/components/secondary-dock.component';
 import {
   DefaultImageDirective,
   KeyDownDirective,
