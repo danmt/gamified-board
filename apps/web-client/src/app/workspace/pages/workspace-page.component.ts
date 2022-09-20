@@ -180,7 +180,13 @@ export class WorkspacePageComponent
 
     return {
       ...state,
-      selected: { ...state.selected, ...changes },
+      selected: {
+        id,
+        data: {
+          ...state.selected.data,
+          ...changes,
+        },
+      },
     };
   });
 
