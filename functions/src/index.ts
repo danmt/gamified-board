@@ -527,7 +527,7 @@ export const updateGraphThumbnail = functions.pubsub
             },
           },
           type: 'updateGraphThumbnailSuccess',
-          graphIds: [messageBody.data.payload.id, graphId],
+          graphIds: [messageBody.data.payload.id, parentId],
           clientId: messageBody.data.clientId,
           correlationId: context.eventId,
         },

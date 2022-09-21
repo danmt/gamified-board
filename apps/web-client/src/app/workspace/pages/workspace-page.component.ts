@@ -386,13 +386,22 @@ export class WorkspacePageComponent
         .pipe(
           filter((event) => event['clientId'] !== environment.clientId),
           tap((event) => {
-            this.patchSelected({
-              id: event['payload'].id,
-              changes: event['payload'].changes,
-            });
-            this._workspaceDrawerStore.handleGraphUpdated(
-              event['payload'].changes
-            );
+            console.log(event);
+
+            if (event['payload'].id === workspaceId) {
+              this._workspaceDrawerStore.handleGraphUpdated(
+                event['payload'].changes
+              );
+            } else {
+              this.patchSelected({
+                id: event['payload'].id,
+                changes: event['payload'].changes,
+              });
+              this._workspaceDrawerStore.handleNodeUpdated(
+                event['payload'].id,
+                event['payload'].changes
+              );
+            }
           })
         );
     })
@@ -408,7 +417,14 @@ export class WorkspacePageComponent
         .onServerCreate(workspaceId, ['deleteGraphSuccess'])
         .pipe(
           filter((event) => event['clientId'] !== environment.clientId),
-          tap(() => this._router.navigate(['/lobby']))
+          tap((event) => {
+            if (event['payload'] === workspaceId) {
+              this._router.navigate(['/lobby']);
+            } else {
+              this.clearSelected(event['payload']);
+              this._workspaceDrawerStore.handleNodeRemoved(event['payload']);
+            }
+          })
         );
     })
   );

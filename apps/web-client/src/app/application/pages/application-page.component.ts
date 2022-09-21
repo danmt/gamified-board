@@ -439,10 +439,6 @@ export class ApplicationPageComponent
         .pipe(
           filter((event) => event['clientId'] !== environment.clientId),
           tap((event) => {
-            this.patchSelected({
-              id: event['payload'].id,
-              changes: event['payload'].changes,
-            });
             this._applicationDrawerStore.handleGraphUpdated(
               event['payload'].changes
             );
@@ -501,14 +497,20 @@ export class ApplicationPageComponent
         .pipe(
           filter((event) => event['clientId'] !== environment.clientId),
           tap((event) => {
-            this.patchSelected({
-              id: event['payload'].id,
-              changes: event['payload'].changes,
-            });
-            this._applicationDrawerStore.handleNodeUpdated(
-              event['payload'].id,
-              event['payload'].changes
-            );
+            if (event['payload'].id === applicationId) {
+              this._applicationDrawerStore.handleGraphUpdated(
+                event['payload'].changes
+              );
+            } else {
+              this.patchSelected({
+                id: event['payload'].id,
+                changes: event['payload'].changes,
+              });
+              this._applicationDrawerStore.handleNodeUpdated(
+                event['payload'].id,
+                event['payload'].changes
+              );
+            }
           })
         );
     })
