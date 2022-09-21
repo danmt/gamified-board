@@ -39,9 +39,7 @@ export class WorkspaceApiService {
     return docData(workspaceRef).pipe(
       map((workspace) => ({
         id: workspaceId,
-        kind: workspace['kind'],
-        name: workspace['name'],
-        thumbnailUrl: workspace['thumbnailUrl'],
+        data: workspace['data'],
         nodes: workspace['nodes'],
         edges: workspace['edges'],
       }))
@@ -57,9 +55,7 @@ export class WorkspaceApiService {
 
             return {
               id: snapshot.id,
-              kind: data['kind'],
-              name: data['name'],
-              thumbnailUrl: data['thumbnailUrl'],
+              data: data['data'],
               nodes: data['nodes'],
               edges: data['edges'],
             };

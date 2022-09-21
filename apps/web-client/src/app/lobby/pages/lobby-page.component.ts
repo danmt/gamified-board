@@ -21,7 +21,7 @@ import {
   CreateWorkspaceSubmit,
   UpdateWorkspaceModalDirective,
 } from '../../workspace/components';
-import { WorkspaceApiService } from '../../workspace/services';
+import { WorkspaceGraphApiService } from '../../workspace/services';
 import { LobbyStore } from '../stores';
 
 @Component({
@@ -43,7 +43,7 @@ import { LobbyStore } from '../stores';
 
         <ul>
           <li *ngFor="let userWorkspace of userWorkspaces$ | ngrxPush">
-            {{ userWorkspace.id }} - {{ userWorkspace.name }}
+            {{ userWorkspace.id }} - {{ userWorkspace.data.name }}
             <a
               [routerLink]="['/workspaces', userWorkspace.id]"
               class="text-blue-500 underline"
@@ -73,7 +73,7 @@ import { LobbyStore } from '../stores';
 })
 export class LobbyPageComponent implements OnInit {
   private readonly _lobbyStore = inject(LobbyStore);
-  private readonly _workspaceApiService = inject(WorkspaceApiService);
+  private readonly _workspaceGraphApiService = inject(WorkspaceGraphApiService);
 
   readonly userId = environment.userId;
 
@@ -84,10 +84,14 @@ export class LobbyPageComponent implements OnInit {
   }
 
   onCreateWorkspace(userId: string, data: CreateWorkspaceSubmit) {
-    this._workspaceApiService
-      .createWorkspace(environment.clientId, userId, {
-        ...data,
+    this._workspaceGraphApiService
+      .createGraph(environment.clientId, null, {
         id: generateId(),
+        isNode: false,
+        thumbnailUrl: 'assets/generic/workspace.png',
+        name: data.name,
+        userId,
+        kind: 'workspace',
       })
       .subscribe();
   }

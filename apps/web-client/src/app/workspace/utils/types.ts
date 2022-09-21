@@ -2,8 +2,7 @@ import { Edge, Node } from '../../drawer/utils';
 import { Entity } from '../../shared/utils';
 
 export type WorkspaceDto = Entity<{
-  name: string;
-  thumbnailUrl: string;
+  data: WorkspaceGraphData;
   nodes: Node<WorkspaceNodeData>[];
   edges: Edge[];
 }>;
@@ -17,6 +16,7 @@ export type WorkspaceGraphData = {
   name: string;
   thumbnailUrl: string;
   kind: string;
+  userId: string;
 };
 
 export type WorkspaceNodeData = {

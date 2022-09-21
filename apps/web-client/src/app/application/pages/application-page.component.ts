@@ -26,7 +26,7 @@ import {
 import { environment } from '../../../environments/environment';
 import { UpdateApplicationSubmit } from '../../application/components';
 import { UpdateCollectionSubmit } from '../../collection/components';
-import { EventApiService, GraphApiService } from '../../drawer/services';
+import { EventApiService } from '../../drawer/services';
 import {
   AddNodeSuccessEvent,
   DeleteNodeSuccessEvent,
@@ -62,7 +62,7 @@ import {
   CollectionDockComponent,
   InstructionDockComponent,
 } from '../sections';
-import { ApplicationApiService, ApplicationGraphApiService } from '../services';
+import { ApplicationGraphApiService } from '../services';
 import { ApplicationDrawerStore } from '../stores';
 import { ApplicationGraphData, ApplicationNodeData } from '../utils';
 
@@ -185,11 +185,9 @@ export class ApplicationPageComponent
 {
   private readonly _router = inject(Router);
   private readonly _eventApiService = inject(EventApiService);
-  private readonly _applicationApiService = inject(ApplicationApiService);
   private readonly _applicationGraphApiService = inject(
     ApplicationGraphApiService
   );
-  private readonly _graphApiService = inject(GraphApiService);
   private readonly _activatedRoute = inject(ActivatedRoute);
   private readonly _applicationDrawerStore = inject(ApplicationDrawerStore);
 
@@ -284,11 +282,11 @@ export class ApplicationPageComponent
             return EMPTY;
           }
 
-          return this._applicationApiService.updateApplication2(
+          return this._applicationGraphApiService.updateGraph(
             environment.clientId,
             workspaceId,
             applicationId,
-            event.payload
+            { changes: event.payload, isNode: true }
           );
         })
       )
@@ -305,11 +303,15 @@ export class ApplicationPageComponent
               return EMPTY;
             }
 
-            return this._applicationApiService.updateApplicationThumbnail2(
+            return this._applicationGraphApiService.updateGraphThumbnail(
               environment.clientId,
               workspaceId,
               applicationId,
-              { fileId: event.payload.fileId, fileUrl: event.payload.fileUrl }
+              {
+                fileId: event.payload.fileId,
+                fileUrl: event.payload.fileUrl,
+                isNode: true,
+              }
             );
           })
         )
@@ -329,6 +331,7 @@ export class ApplicationPageComponent
 
           return this._applicationGraphApiService.createNode(
             environment.clientId,
+            applicationId,
             {
               ...event.payload.data,
               id: event.payload.id,
@@ -429,36 +432,21 @@ export class ApplicationPageComponent
       }
 
       return this._eventApiService
-        .onServerCreate(applicationId, ['updateApplicationSuccess'])
+        .onServerCreate(applicationId, [
+          'updateGraphSuccess',
+          'updateGraphThumbnailSuccess',
+        ])
         .pipe(
           filter((event) => event['clientId'] !== environment.clientId),
-          tap((event) =>
+          tap((event) => {
+            this.patchSelected({
+              id: event['payload'].id,
+              changes: event['payload'].changes,
+            });
             this._applicationDrawerStore.handleGraphUpdated(
               event['payload'].changes
-            )
-          )
-        );
-    })
-  );
-
-  private readonly _handleServerGraphThumbnailUpdate = this.effect<
-    Option<string>
-  >(
-    switchMap((applicationId) => {
-      if (isNull(applicationId)) {
-        return EMPTY;
-      }
-
-      return this._eventApiService
-        .onServerCreate(applicationId, ['updateApplicationThumbnailSuccess'])
-        .pipe(
-          filter((event) => event['clientId'] !== environment.clientId),
-          tap((event) =>
-            this._applicationDrawerStore.handleGraphThumbnailUpdated(
-              event['payload'].fileId,
-              event['payload'].fileUrl
-            )
-          )
+            );
+          })
         );
     })
   );
@@ -554,12 +542,7 @@ export class ApplicationPageComponent
       }
 
       return defer(() =>
-        from(
-          this._graphApiService.getGraph<
-            ApplicationGraphData,
-            ApplicationNodeData
-          >(applicationId)
-        ).pipe(
+        from(this._applicationGraphApiService.getGraph(applicationId)).pipe(
           tap((graph) => {
             if (graph) {
               const drawer = new Drawer(graph, [], drawerElement);
@@ -609,9 +592,7 @@ export class ApplicationPageComponent
         filter(isOneTapNodeEvent<ApplicationGraphData, ApplicationNodeData>)
       )
     );
-
     this._handleServerGraphUpdate(this.applicationId$);
-    this._handleServerGraphThumbnailUpdate(this.applicationId$);
     this._handleServerGraphDelete(this.applicationId$);
     this._handleServerNodeCreate(this.applicationId$);
     this._handleServerNodeUpdate(this.applicationId$);
@@ -680,8 +661,8 @@ export class ApplicationPageComponent
   }
 
   onDeleteGraph(workspaceId: string, graphId: string) {
-    this._applicationApiService
-      .deleteApplication2(workspaceId, environment.clientId, graphId)
+    this._applicationGraphApiService
+      .deleteGraph(environment.clientId, workspaceId, graphId, { isNode: true })
       .subscribe(() => this._router.navigate(['/lobby']));
   }
 

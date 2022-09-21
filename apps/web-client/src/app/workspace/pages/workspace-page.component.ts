@@ -24,7 +24,7 @@ import {
   withLatestFrom,
 } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { EventApiService, GraphApiService } from '../../drawer/services';
+import { EventApiService } from '../../drawer/services';
 import {
   AddNodeSuccessEvent,
   DeleteNodeSuccessEvent,
@@ -58,7 +58,7 @@ import {
   ApplicationDockComponent,
   WorkspaceDockComponent,
 } from '../sections';
-import { WorkspaceApiService, WorkspaceGraphApiService } from '../services';
+import { WorkspaceGraphApiService } from '../services';
 import { WorkspaceDrawerStore } from '../stores';
 import { WorkspaceGraphData, WorkspaceNodeData } from '../utils';
 
@@ -144,9 +144,7 @@ export class WorkspacePageComponent
 {
   private readonly _router = inject(Router);
   private readonly _eventApiService = inject(EventApiService);
-  private readonly _workspaceApiService = inject(WorkspaceApiService);
   private readonly _workspaceGraphApiService = inject(WorkspaceGraphApiService);
-  private readonly _graphApiService = inject(GraphApiService);
   private readonly _activatedRoute = inject(ActivatedRoute);
   private readonly _workspaceDrawerStore = inject(WorkspaceDrawerStore);
 
@@ -228,10 +226,11 @@ export class WorkspacePageComponent
             return EMPTY;
           }
 
-          return this._workspaceApiService.updateWorkspace(
+          return this._workspaceGraphApiService.updateGraph(
             environment.clientId,
+            null,
             workspaceId,
-            event.payload
+            { changes: event.payload, isNode: false }
           );
         })
       )
@@ -248,10 +247,15 @@ export class WorkspacePageComponent
               return EMPTY;
             }
 
-            return this._workspaceApiService.updateWorkspaceThumbnail(
+            return this._workspaceGraphApiService.updateGraphThumbnail(
               environment.clientId,
+              null,
               workspaceId,
-              { fileId: event.payload.fileId, fileUrl: event.payload.fileUrl }
+              {
+                fileId: event.payload.fileId,
+                fileUrl: event.payload.fileUrl,
+                isNode: false,
+              }
             );
           })
         )
@@ -375,36 +379,21 @@ export class WorkspacePageComponent
       }
 
       return this._eventApiService
-        .onServerCreate(workspaceId, ['updateWorkspaceSuccess'])
+        .onServerCreate(workspaceId, [
+          'updateGraphSuccess',
+          'updateGraphThumbnailSuccess',
+        ])
         .pipe(
           filter((event) => event['clientId'] !== environment.clientId),
-          tap((event) =>
+          tap((event) => {
+            this.patchSelected({
+              id: event['payload'].id,
+              changes: event['payload'].changes,
+            });
             this._workspaceDrawerStore.handleGraphUpdated(
               event['payload'].changes
-            )
-          )
-        );
-    })
-  );
-
-  private readonly _handleServerGraphThumbnailUpdate = this.effect<
-    Option<string>
-  >(
-    switchMap((workspaceId) => {
-      if (isNull(workspaceId)) {
-        return EMPTY;
-      }
-
-      return this._eventApiService
-        .onServerCreate(workspaceId, ['updateWorkspaceThumbnailSuccess'])
-        .pipe(
-          filter((event) => event['clientId'] !== environment.clientId),
-          tap((event) =>
-            this._workspaceDrawerStore.handleGraphThumbnailUpdated(
-              event['payload'].fileId,
-              event['payload'].fileUrl
-            )
-          )
+            );
+          })
         );
     })
   );
@@ -416,7 +405,7 @@ export class WorkspacePageComponent
       }
 
       return this._eventApiService
-        .onServerCreate(workspaceId, ['deleteWorkspaceSuccess'])
+        .onServerCreate(workspaceId, ['deleteGraphSuccess'])
         .pipe(
           filter((event) => event['clientId'] !== environment.clientId),
           tap(() => this._router.navigate(['/lobby']))
@@ -500,11 +489,7 @@ export class WorkspacePageComponent
       }
 
       return defer(() =>
-        from(
-          this._graphApiService.getGraph<WorkspaceGraphData, WorkspaceNodeData>(
-            workspaceId
-          )
-        ).pipe(
+        from(this._workspaceGraphApiService.getGraph(workspaceId)).pipe(
           tap((graph) => {
             if (graph) {
               const drawer = new Drawer(graph, [], drawerElement);
@@ -559,14 +544,10 @@ export class WorkspacePageComponent
         filter(isOneTapNodeEvent<WorkspaceGraphData, WorkspaceNodeData>)
       )
     );
-
-    // when there's an active and a click on the drawer occurs, add the node
-
     this._handleServerNodeCreate(this.workspaceId$);
     this._handleServerNodeUpdate(this.workspaceId$);
     this._handleServerNodeDelete(this.workspaceId$);
     this._handleServerGraphUpdate(this.workspaceId$);
-    this._handleServerGraphThumbnailUpdate(this.workspaceId$);
     this._handleServerGraphDelete(this.workspaceId$);
   }
 
@@ -607,8 +588,8 @@ export class WorkspacePageComponent
   }
 
   onDeleteGraph(graphId: string) {
-    this._workspaceApiService
-      .deleteWorkspace(environment.clientId, graphId)
+    this._workspaceGraphApiService
+      .deleteGraph(environment.clientId, null, graphId, { isNode: false })
       .subscribe(() => this._router.navigate(['/lobby']));
   }
 

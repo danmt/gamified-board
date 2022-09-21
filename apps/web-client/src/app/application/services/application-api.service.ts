@@ -94,51 +94,6 @@ export class ApplicationApiService {
     );
   }
 
-  createApplication2(clientId: string, payload: CreateApplicationDto) {
-    return this._eventApiService.emit(clientId, {
-      type: 'createApplication',
-      payload,
-      graphIds: [payload.id, payload.workspaceId],
-    });
-  }
-
-  updateApplication2(
-    clientId: string,
-    workspaceId: string,
-    id: string,
-    changes: UpdateApplicationDto
-  ) {
-    return this._eventApiService.emit(clientId, {
-      type: 'updateApplication',
-      payload: {
-        id,
-        changes,
-      },
-      graphIds: [id, workspaceId],
-    });
-  }
-
-  deleteApplication2(clientId: string, workspaceId: string, id: string) {
-    return this._eventApiService.emit(clientId, {
-      type: 'deleteApplication',
-      payload: { id },
-      graphIds: [id, workspaceId],
-    });
-  }
-
-  updateApplicationThumbnail2(
-    clientId: string,
-    workspaceId: string,
-    id: string,
-    { fileId, fileUrl }: UpdateApplicationThumbnailDto
-  ) {
-    return this._eventApiService.emit(clientId, {
-      type: 'updateApplicationThumbnail',
-      payload: { id, fileId, fileUrl },
-      graphIds: [id, workspaceId],
-    });
-  }
-
   updateApplication(applicationId: string, changes: UpdateApplicationDto) {
     const applicationRef = doc(
       this._firestore,

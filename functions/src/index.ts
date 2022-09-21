@@ -250,51 +250,74 @@ export const mutateGraphState = functions.pubsub
     });
   }); */
 
-export const createWorkspace = functions.pubsub
+export const createGraph = functions.pubsub
   .topic('events')
   .onPublish(async (message, context) => {
     if (
       process.env.FUNCTIONS_EMULATOR &&
-      message.attributes.type !== 'createWorkspace'
+      message.attributes.type !== 'createGraph'
     ) {
-      functions.logger.warn('createWorkspace', 'Event ignored');
+      functions.logger.warn('createGraph', 'Event ignored');
       return false;
     }
 
     const messageBody = message.data
       ? JSON.parse(Buffer.from(message.data, 'base64').toString())
       : null;
-    const workspaceRef = firestore.doc(`graphs/${messageBody.data.payload.id}`);
-    const workspace = {
-      ...messageBody.data.payload,
-      thumbnailUrl: 'assets/generic/workspace.png',
-    };
 
-    await workspaceRef.set({
-      data: {
-        kind: 'workspace',
-        name: workspace.name,
-        thumbnailUrl: workspace.thumbnailUrl,
-        userId: workspace.userId,
-      },
-      nodes: [],
-      edges: [],
-      lastEventId: messageBody.id,
-      createdAt: context.timestamp,
+    const {
+      id: graphId,
+      parentId,
+      isNode,
+      ...payload
+    } = messageBody.data.payload;
+
+    await firestore.runTransaction(async (transaction) => {
+      const graphRef = firestore.doc(`graphs/${graphId}`);
+      const parentRef = firestore.doc(`graphs/${parentId}`);
+
+      if (isNode) {
+        const parent = await transaction.get(parentRef);
+        const parentData = parent.data();
+        const nodes = parentData?.['nodes'] ?? [];
+        transaction.update(graphRef, {
+          nodes: [
+            ...nodes,
+            {
+              id: graphId,
+              data: payload,
+              createdAt: context.timestamp,
+            },
+          ],
+          lastEventId: messageBody.id,
+          updatedAt: context.timestamp,
+        });
+      }
+
+      transaction.set(graphRef, {
+        data: payload,
+        nodes: [],
+        edges: [],
+        lastEventId: messageBody.id,
+        createdAt: context.timestamp,
+      });
     });
 
     pubsub.topic('events').publishJSON(
       {
         id: context.eventId,
         data: {
-          payload: workspace,
-          type: 'createWorkspaceSuccess',
-          graphIds: [messageBody.data.payload.id],
+          payload: messageBody.data.payload,
+          type: 'createGraphSuccess',
+          graphIds: [
+            messageBody.data.payload.id,
+            messageBody.data.payload.parentId,
+          ],
           clientId: messageBody.data.clientId,
           correlationId: messageBody.id,
         },
       },
-      { type: 'createWorkspaceSuccess' },
+      { type: 'createGraphSuccess' },
       (error) => {
         functions.logger.error(error);
       }
@@ -303,14 +326,14 @@ export const createWorkspace = functions.pubsub
     return true;
   });
 
-export const createWorkspaceSuccess = functions.pubsub
+export const createGraphSuccess = functions.pubsub
   .topic('events')
   .onPublish(async (message, context) => {
     if (
       process.env.FUNCTIONS_EMULATOR &&
-      message.attributes.type !== 'createWorkspaceSuccess'
+      message.attributes.type !== 'createGraphSuccess'
     ) {
-      functions.logger.warn('createWorkspaceSuccess', 'Event ignored');
+      functions.logger.warn('createGraphSuccess', 'Event ignored');
       return false;
     }
 
@@ -318,39 +341,80 @@ export const createWorkspaceSuccess = functions.pubsub
       ? JSON.parse(Buffer.from(message.data, 'base64').toString())
       : null;
 
-    const workspaceRef = firestore.doc(`graphs/${messageBody.data.payload.id}`);
+    const graphRef = firestore.doc(`graphs/${messageBody.data.payload.id}`);
 
-    await workspaceRef.update({
+    await graphRef.update({
       lastEventId: messageBody.id,
       updatedAt: context.timestamp,
     });
 
+    if (messageBody.data.payload.isNode) {
+      const parentRef = firestore.doc(
+        `graphs/${messageBody.data.payload.parentId}`
+      );
+      await parentRef.update({
+        lastEventId: messageBody.id,
+        updatedAt: context.timestamp,
+      });
+    }
+
     return true;
   });
 
-export const updateWorkspace = functions.pubsub
+export const updateGraph = functions.pubsub
   .topic('events')
   .onPublish(async (message, context) => {
     if (
       process.env.FUNCTIONS_EMULATOR &&
-      message.attributes.type !== 'updateWorkspace'
+      message.attributes.type !== 'updateGraph'
     ) {
-      functions.logger.warn('updateWorkspace', 'Event ignored');
+      functions.logger.warn('updateGraph', 'Event ignored');
       return false;
     }
 
     const messageBody = message.data
       ? JSON.parse(Buffer.from(message.data, 'base64').toString())
       : null;
-    const workspaceRef = firestore.doc(`graphs/${messageBody.data.payload.id}`);
 
-    firestore.runTransaction(async (transaction) => {
-      const workspace = await transaction.get(workspaceRef);
-      const workspaceData = workspace.data();
+    const {
+      id: graphId,
+      parentId,
+      isNode,
+      ...payload
+    } = messageBody.data.payload;
 
-      transaction.update(workspaceRef, {
+    await firestore.runTransaction(async (transaction) => {
+      const graphRef = firestore.doc(`graphs/${graphId}`);
+      const graph = await transaction.get(graphRef);
+      const graphData = graph.data();
+      const parentRef = firestore.doc(`graphs/${parentId}`);
+
+      if (isNode) {
+        const parent = await transaction.get(parentRef);
+        const parentData = parent.data();
+        const nodes: { id: string; data: any }[] = parentData?.['nodes'] ?? [];
+        const nodeIndex = nodes.findIndex((node) => node.id === graphId);
+
+        transaction.update(parentRef, {
+          nodes: [
+            ...nodes.slice(0, nodeIndex),
+            {
+              ...nodes[nodeIndex],
+              data: {
+                ...nodes[nodeIndex].data,
+                ...payload.changes,
+              },
+            },
+            ...nodes.slice(nodeIndex + 1),
+          ],
+          lastEventId: messageBody.id,
+          updatedAt: context.timestamp,
+        });
+      }
+
+      transaction.update(graphRef, {
         data: {
-          ...workspaceData?.['data'],
+          ...graphData?.['data'],
           ...messageBody.data.payload.changes,
         },
         lastEventId: messageBody.id,
@@ -362,17 +426,17 @@ export const updateWorkspace = functions.pubsub
       {
         id: context.eventId,
         data: {
-          payload: {
-            id: messageBody.data.payload.id,
-            changes: messageBody.data.payload.changes,
-          },
-          type: 'updateWorkspaceSuccess',
-          graphIds: [messageBody.data.payload.id],
+          payload: messageBody.data.payload,
+          type: 'updateGraphSuccess',
+          graphIds: [
+            messageBody.data.payload.id,
+            messageBody.data.payload.parentId,
+          ],
           clientId: messageBody.data.clientId,
           correlationId: messageBody.id,
         },
       },
-      { type: 'updateWorkspaceSuccess' },
+      { type: 'updateGraphSuccess' },
       (error) => {
         functions.logger.error(error);
       }
@@ -381,14 +445,14 @@ export const updateWorkspace = functions.pubsub
     return true;
   });
 
-export const updateWorkspaceSuccess = functions.pubsub
+export const updateGraphThumbnail = functions.pubsub
   .topic('events')
   .onPublish(async (message, context) => {
     if (
       process.env.FUNCTIONS_EMULATOR &&
-      message.attributes.type !== 'updateWorkspaceSuccess'
+      message.attributes.type !== 'updateGraphThumbnail'
     ) {
-      functions.logger.warn('updateWorkspaceSuccess', 'Event ignored');
+      functions.logger.warn('updateGraphThumbnail', 'Event ignored');
       return false;
     }
 
@@ -396,70 +460,79 @@ export const updateWorkspaceSuccess = functions.pubsub
       ? JSON.parse(Buffer.from(message.data, 'base64').toString())
       : null;
 
-    const workspaceRef = firestore.doc(`graphs/${messageBody.data.payload.id}`);
-
-    await workspaceRef.update({
-      lastEventId: messageBody.id,
-      updatedAt: context.timestamp,
-    });
-
-    return true;
-  });
-
-export const updateWorkspaceThumbnail = functions.pubsub
-  .topic('events')
-  .onPublish(async (message, context) => {
-    if (
-      process.env.FUNCTIONS_EMULATOR &&
-      message.attributes.type !== 'updateWorkspaceThumbnail'
-    ) {
-      functions.logger.warn('updateWorkspaceThumbnail', 'Event ignored');
-      return false;
-    }
-
-    const messageBody = message.data
-      ? JSON.parse(Buffer.from(message.data, 'base64').toString())
-      : null;
-    const graphRef = firestore.doc(`graphs/${messageBody.data.payload.id}`);
-    const uploadRef = firestore.doc(
-      `uploads/${messageBody.data.payload.fileId}`
-    );
+    const {
+      id: graphId,
+      parentId,
+      isNode,
+      ...payload
+    } = messageBody.data.payload;
 
     await firestore.runTransaction(async (transaction) => {
-      const workspace = await transaction.get(graphRef);
-      const workspaceData = workspace.data();
+      const uploadRef = firestore.doc(`uploads/${payload.fileId}`);
+      const graphRef = firestore.doc(`graphs/${graphId}`);
+      const graph = await transaction.get(graphRef);
+      const graphData = graph.data();
+      const parentRef = firestore.doc(`graphs/${parentId}`);
 
+      if (isNode) {
+        const parent = await transaction.get(parentRef);
+        const parentData = parent.data();
+        const nodes: { id: string; data: any }[] = parentData?.['nodes'] ?? [];
+        const nodeIndex = nodes.findIndex((node) => node.id === graphId);
+        const node = nodes[nodeIndex];
+
+        transaction.update(parentRef, {
+          nodes: [
+            ...nodes.slice(0, nodeIndex),
+            {
+              ...node,
+              data: {
+                ...node.data,
+                thumbnailUrl: payload.fileUrl,
+              },
+            },
+            ...nodes.slice(nodeIndex + 1),
+          ],
+          lastEventId: context.eventId,
+          updatedAt: context.timestamp,
+        });
+      }
+
+      // Save the upload for tracking purposes
       transaction.set(uploadRef, {
-        kind: 'workspace',
-        ref: messageBody.data.payload.id,
+        ref: graphId,
         createdAt: context.timestamp,
       });
+
       transaction.update(graphRef, {
         data: {
-          ...workspaceData?.['data'],
-          thumbnailUrl: messageBody.data.payload.fileUrl,
+          ...graphData?.['data'],
+          thumbnailUrl: payload.fileUrl,
         },
-        lastEventId: messageBody.id,
+        lastEventId: context.eventId,
         updatedAt: context.timestamp,
       });
     });
 
     pubsub.topic('events').publishJSON(
       {
-        id: context.eventId,
+        id: messageBody.id,
         data: {
           payload: {
-            id: messageBody.data.payload.id,
-            fileId: messageBody.data.payload.fileId,
-            fileUrl: messageBody.data.payload.fileUrl,
+            id: graphId,
+            parentId,
+            isNode,
+            changes: {
+              thumbnailUrl: payload.fileUrl,
+            },
           },
-          type: 'updateWorkspaceThumbnailSuccess',
-          graphIds: [messageBody.data.payload.id],
+          type: 'updateGraphThumbnailSuccess',
+          graphIds: [messageBody.data.payload.id, graphId],
           clientId: messageBody.data.clientId,
-          correlationId: messageBody.id,
+          correlationId: context.eventId,
         },
       },
-      { type: 'updateWorkspaceThumbnailSuccess' },
+      { type: 'updateGraphThumbnailSuccess' },
       (error) => {
         functions.logger.error(error);
       }
@@ -468,38 +541,50 @@ export const updateWorkspaceThumbnail = functions.pubsub
     return true;
   });
 
-export const updateWorkspaceThumbnailSuccess = functions.pubsub
+export const updateGraphSuccess = functions.pubsub
   .topic('events')
   .onPublish(async (message, context) => {
     if (
       process.env.FUNCTIONS_EMULATOR &&
-      message.attributes.type !== 'updateWorkspaceThumbnailSuccess'
+      message.attributes.type !== 'updateGraphSuccess' &&
+      message.attributes.type !== 'updateGraphThumbnailSuccess'
     ) {
-      functions.logger.warn('updateWorkspaceThumbnailSuccess', 'Event ignored');
+      functions.logger.warn('updateGraphSuccess', 'Event ignored');
       return false;
     }
 
     const messageBody = message.data
       ? JSON.parse(Buffer.from(message.data, 'base64').toString())
       : null;
-    const workspaceRef = firestore.doc(`graphs/${messageBody.data.payload.id}`);
 
-    await workspaceRef.update({
+    const graphRef = firestore.doc(`graphs/${messageBody.data.payload.id}`);
+
+    await graphRef.update({
       lastEventId: messageBody.id,
       updatedAt: context.timestamp,
     });
 
+    if (messageBody.data.payload.isNode) {
+      const parentRef = firestore.doc(
+        `graphs/${messageBody.data.payload.parentId}`
+      );
+      await parentRef.update({
+        lastEventId: messageBody.id,
+        updatedAt: context.timestamp,
+      });
+    }
+
     return true;
   });
 
-export const deleteWorkspace = functions.pubsub
+export const deleteGraph = functions.pubsub
   .topic('events')
   .onPublish(async (message, context) => {
     if (
       process.env.FUNCTIONS_EMULATOR &&
-      message.attributes.type !== 'deleteWorkspace'
+      message.attributes.type !== 'deleteGraph'
     ) {
-      functions.logger.warn('deleteWorkspace', 'Event ignored');
+      functions.logger.warn('deleteGraph', 'Event ignored');
       return false;
     }
 
@@ -507,26 +592,76 @@ export const deleteWorkspace = functions.pubsub
       ? JSON.parse(Buffer.from(message.data, 'base64').toString())
       : null;
 
-    const workspaceRef = firestore.doc(`graphs/${messageBody.data.payload.id}`);
+    await firestore.runTransaction(async (transaction) => {
+      const graphRef = firestore.doc(`graphs/${messageBody.data.payload.id}`);
+      transaction.delete(graphRef);
 
-    await workspaceRef.delete();
+      if (messageBody.data.payload.isNode) {
+        const parentRef = firestore.doc(
+          `graphs/${messageBody.data.payload.parentId}`
+        );
+        const parent = await transaction.get(parentRef);
+        const parentData = parent.data();
+        const nodes: { id: string }[] = parentData?.['nodes'] ?? [];
+
+        transaction.update(parentRef, {
+          nodes: nodes.filter(
+            (node) => node.id !== messageBody.data.payload.id
+          ),
+          lastEventId: messageBody.id,
+          updatedAt: context.timestamp,
+        });
+      }
+    });
 
     pubsub.topic('events').publishJSON(
       {
         id: context.eventId,
         data: {
-          payload: null,
-          type: 'deleteWorkspaceSuccess',
-          graphIds: [messageBody.data.payload.id],
+          payload: messageBody.data.payload,
+          type: 'deleteGraphSuccess',
+          graphIds: [
+            messageBody.data.payload.id,
+            messageBody.data.payload.parentId,
+          ],
           clientId: messageBody.data.clientId,
           correlationId: messageBody.id,
         },
       },
-      { type: 'deleteWorkspaceSuccess' },
+      { type: 'deleteGraphSuccess' },
       (error) => {
         functions.logger.error(error);
       }
     );
+
+    return true;
+  });
+
+export const deleteGraphSuccess = functions.pubsub
+  .topic('events')
+  .onPublish(async (message, context) => {
+    if (
+      process.env.FUNCTIONS_EMULATOR &&
+      message.attributes.type !== 'deleteGraphSuccess'
+    ) {
+      functions.logger.warn('deleteGraphSuccess', 'Event ignored');
+      return false;
+    }
+
+    const messageBody = message.data
+      ? JSON.parse(Buffer.from(message.data, 'base64').toString())
+      : null;
+
+    if (messageBody.data.payload.isNode) {
+      const parentRef = firestore.doc(
+        `graphs/${messageBody.data.payload.parentId}`
+      );
+
+      await parentRef.update({
+        lastEventId: messageBody.id,
+        updatedAt: context.timestamp,
+      });
+    }
 
     return true;
   });
@@ -673,7 +808,9 @@ export const updateNode = functions.pubsub
       const nodes: { id: string; data: any }[] = graphData?.['nodes'] ?? [];
       const nodeIndex = nodes.findIndex((node) => node.id === nodeId);
       const nodeGraphRef = firestore.doc(`graphs/${nodeId}`);
-      const nodeGraph = isGraph ? await transaction.get(nodeGraphRef) : null;
+      const nodeGraph = isGraph
+        ? (await transaction.get(nodeGraphRef)).data()
+        : null;
 
       transaction.update(graphRef, {
         nodes: [
@@ -758,11 +895,12 @@ export const updateNodeThumbnail = functions.pubsub
       const nodeIndex = nodes.findIndex((node) => node.id === nodeId);
       const node = nodes[nodeIndex];
       const nodeGraphRef = firestore.doc(`graphs/${nodeId}`);
-      const nodeGraph = isGraph ? await transaction.get(nodeGraphRef) : null;
+      const nodeGraph = isGraph
+        ? (await transaction.get(nodeGraphRef)).data()
+        : null;
 
       // Save the upload for tracking purposes
       transaction.set(uploadRef, {
-        kind: node.data.kind,
         ref: nodeId,
         createdAt: context.timestamp,
       });
