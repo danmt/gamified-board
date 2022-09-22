@@ -347,6 +347,27 @@ export const isDeleteEdgeSuccessEvent = <
   return event.type === 'DeleteEdgeSuccess';
 };
 
+export const defaultNodeLabelFunction = <
+  NodeKinds extends string,
+  NodeDataType extends DefaultNodeDataType,
+  NodesDataMap extends { [key in NodeKinds]: NodeDataType }
+>(
+  node: Node<NodeKinds, NodeDataType, NodesDataMap>
+) => {
+  return `
+    <div class="w-[280px] h-[85px] flex gap-2 items-center px-8 bg-[length:280px_85px] bg-[url('assets/images/node.png')] z-50">
+      <div 
+          class="w-[56px] h-[52px] shrink-0 rounded-lg border-gray-700 border-2 bg-cover bg-center"
+          style="background-image: url(${node.data.thumbnailUrl});">
+      </div>
+      <div style="font-family: 'Courier New', Courier, monospace">
+        <h2 class="text-xl mt-2 text-white">${node.data.name}</h2>
+        <p class="italic text-gray-400">${node.kind}</p>
+      </div>
+    </div>
+  `;
+};
+
 export const createGraph = <
   NodeKinds extends string,
   NodeDataType extends DefaultNodeDataType,
@@ -355,7 +376,8 @@ export const createGraph = <
   container: HTMLElement,
   nodes: cytoscape.NodeDefinition[],
   edges: cytoscape.EdgeDefinition[],
-  groups: cytoscape.ElementDefinition[]
+  groups: cytoscape.ElementDefinition[],
+  labelFn: (node: Node<NodeKinds, NodeDataType, NodesDataMap>) => string
 ): cytoscape.Core => {
   return cytoscape({
     container,
@@ -458,20 +480,7 @@ export const createGraph = <
   }).nodeHtmlLabel([
     {
       query: '.bp-bd-node',
-      tpl: (node: Node<NodeKinds, NodeDataType, NodesDataMap>) => {
-        return `
-          <div class="w-[280px] h-[85px] flex gap-2 items-center px-8 bg-[length:280px_85px] bg-[url('assets/images/node.png')] z-50">
-            <div 
-                class="w-[56px] h-[52px] shrink-0 rounded-lg border-gray-700 border-2 bg-cover bg-center"
-                style="background-image: url(${node.data.thumbnailUrl});">
-            </div>
-            <div style="font-family: 'Courier New', Courier, monospace">
-              <h2 class="text-xl mt-2 text-white">${node.data.name}</h2>
-              <p class="italic text-gray-400">${node.kind}</p>
-            </div>
-          </div>
-        `;
-      },
+      tpl: labelFn,
     },
   ]);
 };

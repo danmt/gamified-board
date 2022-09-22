@@ -4,7 +4,7 @@ import { DagreLayoutOptions } from 'cytoscape-dagre';
 import { EdgeHandlesInstance } from 'cytoscape-edgehandles';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { Option } from '../../shared/utils';
-import { createGraph, createNode } from './methods';
+import { createGraph, createNode, defaultNodeLabelFunction } from './methods';
 import {
   DefaultGraphDataType,
   DefaultNodeDataType,
@@ -54,7 +54,10 @@ export class Drawer<
     >,
     _nodes: Node<NodeKinds, NodeDataType, NodesDataMap>[], // this field is only to help the type inference
     groups: string[],
-    element: HTMLElement
+    element: HTMLElement,
+    labelFn: (
+      node: Node<NodeKinds, NodeDataType, NodesDataMap>
+    ) => string = defaultNodeLabelFunction
   ) {
     this._cy = createGraph<NodeKinds, NodeDataType, NodesDataMap>(
       element,
@@ -67,7 +70,8 @@ export class Drawer<
       groups.map((group) => ({
         data: { id: group, kind: 'group' },
         group: 'nodes',
-      }))
+      })),
+      labelFn
     );
     this._graph = new BehaviorSubject(graph);
     this.graph$ = this._graph.asObservable();

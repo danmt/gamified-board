@@ -77,6 +77,7 @@ import {
   InstructionNodeData,
 } from '../utils';
 import {
+  applicationNodeLabelFunction,
   isOneTapCollectionNodeEvent,
   isOneTapFieldNodeEvent,
   isOneTapInstructionNodeEvent,
@@ -757,7 +758,13 @@ export class ApplicationPageComponent
         ).pipe(
           tap((graph) => {
             if (graph) {
-              const drawer = new Drawer(graph, graph.nodes, [], drawerElement);
+              const drawer = new Drawer(
+                graph,
+                graph.nodes,
+                [],
+                drawerElement,
+                applicationNodeLabelFunction
+              );
               drawer.initialize();
               this._applicationDrawerStore.setDrawer(drawer);
 
