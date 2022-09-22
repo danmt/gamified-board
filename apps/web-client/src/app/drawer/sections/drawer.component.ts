@@ -1,21 +1,13 @@
 import { CommonModule } from '@angular/common';
-import {
-  AfterViewInit,
-  Component,
-  ElementRef,
-  inject,
-  Input,
-  ViewChild,
-} from '@angular/core';
+import { Component, ElementRef, inject, Input, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { PushModule } from '@ngrx/component';
 import { environment } from '../../../environments/environment';
 import { BackgroundImageMoveDirective } from '../../shared/directives/background-position.directive';
 import { BackgroundImageZoomDirective } from '../../shared/directives/background-zoom.directive';
-import { isNotNull, Option } from '../../shared/utils';
-import { GraphApiService } from '../services';
+import { Option } from '../../shared/utils';
 import { DrawerStore } from '../stores';
-import { Direction, Drawer } from '../utils';
+import { Direction } from '../utils';
 
 @Component({
   selector: 'pg-drawer',
@@ -97,9 +89,8 @@ import { Direction, Drawer } from '../utils';
     BackgroundImageMoveDirective,
   ],
 })
-export class DrawerComponent implements AfterViewInit {
+export class DrawerComponent {
   private readonly _drawerStore = inject(DrawerStore);
-  private readonly _graphApiService = inject(GraphApiService);
 
   readonly drawMode$ = this._drawerStore.drawMode$;
   readonly direction$ = this._drawerStore.direction$;
@@ -112,22 +103,6 @@ export class DrawerComponent implements AfterViewInit {
 
   readonly zoomSize$ = this._drawerStore.zoomSize$;
   readonly panDrag$ = this._drawerStore.panDrag$;
-
-  async ngAfterViewInit() {
-    if (isNotNull(this.pgDrawerElementRef) && isNotNull(this.pgGraphId)) {
-      const graph = await this._graphApiService.getGraph(this.pgGraphId);
-
-      if (isNotNull(graph)) {
-        const drawer = new Drawer(
-          graph,
-          this.pgGroups,
-          this.pgDrawerElementRef.nativeElement
-        );
-        drawer.initialize();
-        this._drawerStore.setDrawer(drawer);
-      }
-    }
-  }
 
   onDrawModeChange(drawMode: boolean) {
     this._drawerStore.setDrawMode(drawMode);

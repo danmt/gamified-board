@@ -1,86 +1,75 @@
 import { inject } from '@angular/core';
-import { doc, Firestore, getDoc } from '@angular/fire/firestore';
-import { Entity, isNull, Option } from '../../shared/utils';
-import { Graph, GraphDataType, NodeDataType } from '../utils';
+import { Entity } from '../../shared/utils';
+import { GraphDataType, NodeDataType } from '../utils';
 import { EventApiService } from './event-api.service';
 
 export type CreateGraphDto<T> = T &
   Entity<{
-    isNode: boolean;
+    kind: string;
   }>;
 
 export type UpdateGraphDto<T> = {
   changes: Partial<T>;
-  isNode: boolean;
+  kind: string;
+  referenceIds: string[];
+};
+
+export type DeleteGraphDto = {
+  kind: string;
+  referenceIds: string[];
 };
 
 export interface UpdateGraphThumbnailDto {
   fileId: string;
   fileUrl: string;
-  isNode: boolean;
+  kind: string;
+  referenceIds: string[];
 }
 
 export type CreateNodeDto<T> = T &
   Entity<{
-    isGraph: boolean;
+    parentIds: string[];
+    kind: string;
+    graphId: string;
+    referenceIds: string[];
   }>;
 
 export type UpdateNodeDto<T> = {
   changes: Partial<T>;
-  isGraph: boolean;
+  parentIds: string[];
+  kind: string;
+  graphId: string;
+  referenceIds: string[];
 };
 
-export type DeleteNodeDto = Entity<{
-  isGraph: boolean;
-}>;
+export interface DeleteNodeDto {
+  parentIds: string[];
+  kind: string;
+  graphId: string;
+  referenceIds: string[];
+}
 
 export interface UpdateNodeThumbnailDto {
   fileId: string;
   fileUrl: string;
-  isGraph: boolean;
+  parentIds: string[];
+  kind: string;
+  graphId: string;
+  referenceIds: string[];
 }
 
-export class GraphApiService<T extends GraphDataType, U extends NodeDataType> {
-  private readonly _firestore = inject(Firestore);
+export class GraphApiService<T extends GraphDataType> {
   private readonly _eventApiService = inject(EventApiService);
 
-  async getGraph(graphId: string): Promise<Graph<T, U> | null> {
-    const graphRef = doc(this._firestore, `graphs/${graphId}`);
-
-    const graph = await getDoc(graphRef);
-    const graphData = graph.data();
-
-    if (graphData === undefined) {
-      return null;
-    }
-
-    return {
-      id: graph.id,
-      nodes: graphData['nodes'],
-      edges: graphData['edges'],
-      lastEventId: graphData['lastEventId'],
-      data: graphData['data'],
-    };
-  }
-
-  createGraph(
-    clientId: string,
-    parentId: Option<string>,
-    payload: T & { id: string; isNode: boolean }
-  ) {
+  createGraph(clientId: string, payload: CreateGraphDto<T>) {
     return this._eventApiService.emit(clientId, {
       type: 'createGraph',
-      payload: {
-        ...payload,
-        parentId,
-      },
-      graphIds: isNull(parentId) ? [payload.id] : [payload.id, parentId],
+      payload,
     });
   }
 
   updateGraph(
     clientId: string,
-    parentId: Option<string>,
     id: string,
     payload: UpdateGraphDto<GraphDataType>
   ) {
@@ -88,57 +77,38 @@ export class GraphApiService<T extends GraphDataType, U extends NodeDataType> {
       type: 'updateGraph',
       payload: {
         ...payload,
-        parentId,
         id,
       },
-      graphIds: isNull(parentId) ? [id] : [id, parentId],
     });
   }
 
-  deleteGraph(
-    clientId: string,
-    parentId: Option<string>,
-    id: string,
-    payload: { isNode: boolean }
-  ) {
+  deleteGraph(clientId: string, id: string, payload: DeleteGraphDto) {
     return this._eventApiService.emit(clientId, {
       type: 'deleteGraph',
-      payload: { ...payload, id, parentId },
-      graphIds: isNull(parentId) ? [id] : [id, parentId],
+      payload: { ...payload, id },
     });
   }
 
   updateGraphThumbnail(
     clientId: string,
-    parentId: Option<string>,
     id: string,
     payload: UpdateGraphThumbnailDto
   ) {
     return this._eventApiService.emit(clientId, {
       type: 'updateGraphThumbnail',
-      payload: { ...payload, id, parentId },
-      graphIds: isNull(parentId) ? [id] : [id, parentId],
+      payload: { ...payload, id },
     });
   }
 
-  createNode(
-    clientId: string,
-    graphId: string,
-    payload: CreateNodeDto<NodeDataType>
-  ) {
+  createNode(clientId: string, payload: CreateNodeDto<NodeDataType>) {
     return this._eventApiService.emit(clientId, {
       type: 'createNode',
-      payload: {
-        ...payload,
-        graphId,
-      },
-      graphIds: [payload.id, graphId],
+      payload: payload,
     });
   }
 
   updateNode(
     clientId: string,
-    graphId: string,
     id: string,
     payload: UpdateNodeDto<NodeDataType>
   ) {
@@ -147,35 +117,25 @@ export class GraphApiService<T extends GraphDataType, U extends NodeDataType> {
       payload: {
         ...payload,
         id,
-        graphId,
       },
-      graphIds: [id, graphId],
     });
   }
 
   updateNodeThumbnail(
     clientId: string,
-    graphId: string,
     id: string,
     payload: UpdateNodeThumbnailDto
   ) {
     return this._eventApiService.emit(clientId, {
       type: 'updateNodeThumbnail',
-      payload: { ...payload, id, graphId },
-      graphIds: [id, graphId],
+      payload: { ...payload, id },
     });
   }
 
-  deleteNode(
-    clientId: string,
-    graphId: string,
-    id: string,
-    payload: { isGraph: boolean }
-  ) {
+  deleteNode(clientId: string, id: string, payload: DeleteNodeDto) {
     return this._eventApiService.emit(clientId, {
       type: 'deleteNode',
-      payload: { ...payload, id, graphId },
-      graphIds: [id, graphId],
+      payload: { ...payload, id },
     });
   }
 }

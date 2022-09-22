@@ -63,7 +63,7 @@ export class WorkspaceApiService {
           toFirestore: (it) => it,
         }),
         where('data.userId', '==', ownerId),
-        where('data.kind', '==', 'workspace'),
+        where('kind', '==', 'workspace'),
         orderBy(documentId())
       )
     );
@@ -81,7 +81,6 @@ export class WorkspaceApiService {
         name,
         userId,
       },
-      graphIds: [id],
     });
   }
 
@@ -92,7 +91,6 @@ export class WorkspaceApiService {
         id,
         changes,
       },
-      graphIds: [id],
     });
   }
 
@@ -100,7 +98,6 @@ export class WorkspaceApiService {
     return this._eventApiService.emit(clientId, {
       type: 'deleteWorkspace',
       payload: { id },
-      graphIds: [id],
     });
   }
 
@@ -112,7 +109,6 @@ export class WorkspaceApiService {
     return this._eventApiService.emit(clientId, {
       type: 'updateWorkspaceThumbnail',
       payload: { id, fileId, fileUrl },
-      graphIds: [id],
     });
   }
 }

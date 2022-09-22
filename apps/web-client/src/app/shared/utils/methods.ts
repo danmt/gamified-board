@@ -1,3 +1,10 @@
+import {
+  DocumentData,
+  onSnapshot,
+  Query,
+  QuerySnapshot,
+} from '@angular/fire/firestore';
+import { Observable } from 'rxjs';
 import { v4 as uuid } from 'uuid';
 import { Option } from './types';
 
@@ -42,3 +49,14 @@ export function getFirstParentId(
 export function generateId() {
   return uuid();
 }
+
+export const fromSnapshot = (query: Query<DocumentData>) => {
+  return new Observable<QuerySnapshot<DocumentData>>((subscriber) => {
+    return onSnapshot(
+      query,
+      (querySnapshot) => subscriber.next(querySnapshot),
+      (error) => subscriber.error(error),
+      () => subscriber.complete()
+    );
+  });
+};

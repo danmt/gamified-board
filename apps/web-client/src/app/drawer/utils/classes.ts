@@ -78,11 +78,15 @@ export class Drawer<T extends GraphDataType, U extends NodeDataType> {
     });
 
     this._cy.on('local.graph-updated', (ev, ...extraParams) => {
-      const changes = extraParams[0] as Partial<T>;
+      const kind = [...(extraParams as unknown[])][0] as string;
+      const changes = [...(extraParams as unknown[])][1] as Partial<T>;
 
       this._event.next({
         type: 'UpdateGraphSuccess',
-        payload: changes,
+        payload: {
+          changes,
+          kind,
+        },
       });
     });
 
@@ -102,12 +106,14 @@ export class Drawer<T extends GraphDataType, U extends NodeDataType> {
     this._cy.on('local.graph-thumbnail-updated', (ev, ...extraParams) => {
       const fileId = [...(extraParams as unknown[])][0] as string;
       const fileUrl = [...(extraParams as unknown[])][1] as string;
+      const kind = [...(extraParams as unknown[])][2] as string;
 
       this._event.next({
         type: 'UpdateGraphThumbnailSuccess',
         payload: {
           fileId,
           fileUrl,
+          kind,
         },
       });
     });
@@ -142,13 +148,17 @@ export class Drawer<T extends GraphDataType, U extends NodeDataType> {
 
     this._cy.on('local.node-updated', (ev, ...extraParams) => {
       const nodeId = extraParams[0] as string;
-      const changes = [...(extraParams as unknown[])][1] as Partial<U>;
+      const payload = [...(extraParams as unknown[])][1] as {
+        kind: string;
+        changes: Partial<U>;
+      };
 
       this._event.next({
         type: 'UpdateNodeSuccess',
         payload: {
           id: nodeId,
-          changes,
+          changes: payload.changes,
+          kind: payload.kind,
         },
       });
     });
@@ -166,6 +176,7 @@ export class Drawer<T extends GraphDataType, U extends NodeDataType> {
       const nodeId = extraParams[0] as string;
       const fileId = [...(extraParams as unknown[])][1] as string;
       const fileUrl = [...(extraParams as unknown[])][2] as string;
+      const kind = [...(extraParams as unknown[])][3] as string;
 
       this._event.next({
         type: 'UpdateNodeThumbnailSuccess',
@@ -173,6 +184,7 @@ export class Drawer<T extends GraphDataType, U extends NodeDataType> {
           id: nodeId,
           fileId,
           fileUrl,
+          kind,
         },
       });
     });
@@ -191,10 +203,14 @@ export class Drawer<T extends GraphDataType, U extends NodeDataType> {
 
     this._cy.on('local.node-deleted', (_, ...extraParams) => {
       const nodeId = extraParams[0] as string;
+      const kind = [...(extraParams as unknown[])][1] as string;
 
       this._event.next({
         type: 'DeleteNodeSuccess',
-        payload: nodeId,
+        payload: {
+          id: nodeId,
+          kind,
+        },
       });
     });
 
@@ -243,60 +259,6 @@ export class Drawer<T extends GraphDataType, U extends NodeDataType> {
       const edgeId = extraParams[0] as string;
 
       this._cy.remove(`edge[id = '${edgeId}']`);
-    });
-
-    this._cy.on('local.node-added-to-edge', (_, ...extraParams) => {
-      const node = [
-        ...(extraParams as unknown[]),
-      ][0] as cytoscape.NodeDataDefinition;
-      const source = [...(extraParams as unknown[])][1] as string;
-      const target = [...(extraParams as unknown[])][2] as string;
-      const edgeId = [...(extraParams as unknown[])][3] as string;
-
-      this._event.next({
-        type: 'AddNodeToEdgeSuccess',
-        payload: {
-          source,
-          target,
-          edgeId,
-          node: {
-            id: node.id ?? '',
-            data: node as U,
-          },
-        },
-      });
-    });
-
-    this._cy.on('server.node-added-to-edge', (ev, ...extraParams) => {
-      const node = [
-        ...(extraParams as unknown[]),
-      ][0] as cytoscape.NodeDataDefinition;
-      const source = [...(extraParams as unknown[])][1] as string;
-      const target = [...(extraParams as unknown[])][2] as string;
-      const edgeId = [...(extraParams as unknown[])][3] as string;
-
-      this._cy.remove(`edge[id = '${edgeId}']`);
-      this._cy.add([
-        {
-          data: node,
-          group: 'nodes',
-          classes: 'bp-bd-node',
-        },
-        {
-          group: 'edges',
-          data: {
-            source: source,
-            target: node.id,
-          },
-        },
-        {
-          group: 'edges',
-          data: {
-            source: node.id,
-            target: target,
-          },
-        },
-      ]);
     });
 
     this._cy.on('click', (ev) => {
@@ -424,7 +386,7 @@ export class Drawer<T extends GraphDataType, U extends NodeDataType> {
         ...changes,
       },
     });
-    this._cy.emit('local.graph-updated', [changes]);
+    this._cy.emit('local.graph-updated', [graph.kind, changes]);
   }
 
   updateGraphThumbnail(fileId: string, fileUrl: string) {
@@ -436,7 +398,11 @@ export class Drawer<T extends GraphDataType, U extends NodeDataType> {
         thumbnailUrl: fileUrl,
       },
     });
-    this._cy.emit('local.graph-thumbnail-updated', [fileId, fileUrl]);
+    this._cy.emit('local.graph-thumbnail-updated', [
+      fileId,
+      fileUrl,
+      graph.kind,
+    ]);
   }
 
   addNode(node: Node<U>, position?: { x: number; y: number }) {
@@ -444,37 +410,16 @@ export class Drawer<T extends GraphDataType, U extends NodeDataType> {
     this._cy.emit('local.node-added', [node]);
   }
 
-  addNodeToEdge(node: Node<U>, source: string, target: string, edgeId: string) {
-    this._cy.remove(`edge[id = '${edgeId}']`);
-    this._cy.add([
-      {
-        data: node,
-        group: 'nodes',
-        classes: 'bp-bd-node',
-      },
-      {
-        group: 'edges',
-        data: {
-          source: source,
-          target: node.id,
-        },
-      },
-      {
-        group: 'edges',
-        data: {
-          source: node.id,
-          target: target,
-        },
-      },
-    ]);
-    this._cy.emit('local.node-added-to-edge', [node, source, target, edgeId]);
-  }
-
-  updateNode(nodeId: string, changes: Partial<U>) {
+  updateNode(nodeId: string, payload: { changes: Partial<U>; kind: string }) {
     const node = this._cy.getElementById(nodeId);
+
     const nodeData = node.data();
-    node.data({ ...nodeData, data: { ...nodeData.data, ...changes } });
-    this._cy.emit('local.node-updated', [nodeId, changes]);
+    node.data({
+      ...nodeData,
+      data: { ...nodeData.data, ...payload.changes },
+    });
+
+    this._cy.emit('local.node-updated', [nodeId, payload]);
   }
 
   updateNodeThumbnail(nodeId: string, fileId: string, fileUrl: string) {
@@ -484,12 +429,20 @@ export class Drawer<T extends GraphDataType, U extends NodeDataType> {
       ...nodeData,
       data: { ...nodeData.data, thumbnailUrl: fileUrl },
     });
-    this._cy.emit('local.node-thumbnail-updated', [nodeId, fileId, fileUrl]);
+    this._cy.emit('local.node-thumbnail-updated', [
+      nodeId,
+      fileId,
+      fileUrl,
+      nodeData.kind,
+    ]);
   }
 
   removeNode(nodeId: string) {
+    const node = this._cy.getElementById(nodeId);
+    const nodeData = node.data();
+    const nodeKind = nodeData.kind;
     this._cy.remove(`node[id = '${nodeId}']`);
-    this._cy.emit('local.node-deleted', [nodeId]);
+    this._cy.emit('local.node-deleted', [nodeId, nodeKind]);
   }
 
   handleGraphUpdated(changes: Partial<T>) {
@@ -510,15 +463,6 @@ export class Drawer<T extends GraphDataType, U extends NodeDataType> {
 
   handleNodeThumbnailUpdated(nodeId: string, fileId: string, fileUrl: string) {
     this._cy.emit('server.node-thumbnail-updated', [nodeId, fileId, fileUrl]);
-  }
-
-  handleNodeAddedToEdge(
-    node: U,
-    source: string,
-    target: string,
-    edgeId: string
-  ) {
-    this._cy.emit('server.node-added-to-edge', [node, source, target, edgeId]);
   }
 
   handleNodeRemoved(nodeId: string) {

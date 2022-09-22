@@ -1,12 +1,12 @@
 export interface NodeDataType {
   name: string;
-  kind: string;
   thumbnailUrl: string;
 }
 
 export interface Node<T = NodeDataType> {
   id: string;
   data: T;
+  kind: string;
 }
 
 export interface Edge {
@@ -17,7 +17,6 @@ export interface Edge {
 
 export interface GraphDataType {
   name: string;
-  kind: string;
   thumbnailUrl: string;
 }
 
@@ -26,6 +25,7 @@ export type Graph<T extends GraphDataType, U extends NodeDataType> = {
   nodes: Node<U>[];
   edges: Edge[];
   lastEventId: string;
+  kind: string;
   data: T;
 };
 
@@ -34,7 +34,6 @@ export type Direction = 'vertical' | 'horizontal';
 export type EventDto = {
   type: string;
   payload: unknown;
-  graphIds: string[];
 };
 
 export type DrawerEventName =
@@ -74,7 +73,10 @@ export interface OneTapEdgeEvent {
 
 export interface UpdateGraphSuccessEvent<T extends GraphDataType> {
   type: 'UpdateGraphSuccess';
-  payload: Partial<T>;
+  payload: {
+    changes: Partial<T>;
+    kind: string;
+  };
 }
 
 export interface UpdateGraphThumbnailSuccessEvent {
@@ -82,6 +84,7 @@ export interface UpdateGraphThumbnailSuccessEvent {
   payload: {
     fileId: string;
     fileUrl: string;
+    kind: string;
   };
 }
 
@@ -119,6 +122,7 @@ export interface UpdateNodeSuccessEvent<T extends NodeDataType> {
   payload: {
     id: string;
     changes: Partial<T>;
+    kind: string;
   };
 }
 
@@ -128,6 +132,7 @@ export interface UpdateNodeThumbnailSuccessEvent {
     id: string;
     fileId: string;
     fileUrl: string;
+    kind: string;
   };
 }
 
@@ -138,7 +143,10 @@ export interface DeleteNodeEvent {
 
 export interface DeleteNodeSuccessEvent {
   type: 'DeleteNodeSuccess';
-  payload: string;
+  payload: {
+    id: string;
+    kind: string;
+  };
 }
 
 export interface ViewNodeEvent {

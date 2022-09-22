@@ -150,11 +150,14 @@ export class DrawerStore<T extends GraphDataType, U extends NodeDataType>
     }
   }
 
-  async updateNode(nodeId: string, changes: Partial<U>) {
+  async updateNode(
+    nodeId: string,
+    payload: { changes: Partial<U>; kind: string }
+  ) {
     const drawer = await firstValueFrom(this.drawer$);
 
     if (drawer !== null) {
-      drawer.updateNode(nodeId, changes);
+      drawer.updateNode(nodeId, payload);
     }
   }
 
@@ -195,24 +198,6 @@ export class DrawerStore<T extends GraphDataType, U extends NodeDataType>
 
     if (drawer !== null) {
       drawer.handleNodeAdded(node);
-    }
-  }
-
-  async handleNodeAddedToEdge({
-    node,
-    source,
-    target,
-    edgeId,
-  }: {
-    node: U;
-    source: string;
-    target: string;
-    edgeId: string;
-  }) {
-    const drawer = await firstValueFrom(this.drawer$);
-
-    if (drawer !== null) {
-      drawer.handleNodeAddedToEdge(node, source, target, edgeId);
     }
   }
 

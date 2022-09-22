@@ -15,13 +15,11 @@ export type EventDto = {
 export type WorkspaceGraphData = {
   name: string;
   thumbnailUrl: string;
-  kind: string;
   userId: string;
 };
 
 export type WorkspaceNodeData = {
   name: string;
   thumbnailUrl: string;
-  kind: string;
   workspaceId: string;
 };

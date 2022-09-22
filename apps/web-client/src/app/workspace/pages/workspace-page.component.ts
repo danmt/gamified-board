@@ -24,7 +24,6 @@ import {
   withLatestFrom,
 } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { EventApiService } from '../../drawer/services';
 import {
   AddNodeSuccessEvent,
   DeleteNodeSuccessEvent,
@@ -143,7 +142,6 @@ export class WorkspacePageComponent
   implements OnInit, AfterViewInit
 {
   private readonly _router = inject(Router);
-  private readonly _eventApiService = inject(EventApiService);
   private readonly _workspaceGraphApiService = inject(WorkspaceGraphApiService);
   private readonly _activatedRoute = inject(ActivatedRoute);
   private readonly _workspaceDrawerStore = inject(WorkspaceDrawerStore);
@@ -168,7 +166,7 @@ export class WorkspacePageComponent
 
   private patchSelected = this.updater<{
     id: string;
-    changes: Partial<WorkspaceGraphData>;
+    changes: Partial<WorkspaceNodeData>;
   }>((state, { id, changes }) => {
     if (isNull(state.selected) || state.selected.id !== id) {
       return state;
@@ -177,7 +175,7 @@ export class WorkspacePageComponent
     return {
       ...state,
       selected: {
-        id,
+        ...state.selected,
         data: {
           ...state.selected.data,
           ...changes,
@@ -228,9 +226,12 @@ export class WorkspacePageComponent
 
           return this._workspaceGraphApiService.updateGraph(
             environment.clientId,
-            null,
             workspaceId,
-            { changes: event.payload, isNode: false }
+            {
+              changes: event.payload.changes,
+              referenceIds: [workspaceId],
+              kind: event.payload.kind,
+            }
           );
         })
       )
@@ -249,12 +250,12 @@ export class WorkspacePageComponent
 
             return this._workspaceGraphApiService.updateGraphThumbnail(
               environment.clientId,
-              null,
               workspaceId,
               {
                 fileId: event.payload.fileId,
                 fileUrl: event.payload.fileUrl,
-                isNode: false,
+                kind: event.payload.kind,
+                referenceIds: [workspaceId],
               }
             );
           })
@@ -275,11 +276,13 @@ export class WorkspacePageComponent
 
           return this._workspaceGraphApiService.createNode(
             environment.clientId,
-            workspaceId,
             {
               ...event.payload.data,
               id: event.payload.id,
-              isGraph: true,
+              parentIds: [workspaceId],
+              kind: event.payload.kind,
+              graphId: workspaceId,
+              referenceIds: [workspaceId, event.payload.id],
             }
           );
         })
@@ -305,11 +308,13 @@ export class WorkspacePageComponent
 
           return this._workspaceGraphApiService.updateNode(
             environment.clientId,
-            workspaceId,
             event.payload.id,
             {
               changes: event.payload.changes,
-              isGraph: true,
+              graphId: workspaceId,
+              parentIds: [workspaceId],
+              referenceIds: [workspaceId, event.payload.id],
+              kind: event.payload.kind,
             }
           );
         })
@@ -336,12 +341,14 @@ export class WorkspacePageComponent
 
             return this._workspaceGraphApiService.updateNodeThumbnail(
               environment.clientId,
-              workspaceId,
               event.payload.id,
               {
                 fileId: event.payload.fileId,
                 fileUrl: event.payload.fileUrl,
-                isGraph: true,
+                graphId: workspaceId,
+                parentIds: [workspaceId],
+                referenceIds: [workspaceId, event.payload.id],
+                kind: event.payload.kind,
               }
             );
           })
@@ -359,13 +366,17 @@ export class WorkspacePageComponent
               return EMPTY;
             }
 
-            this.clearSelected(event.payload);
+            this.clearSelected(event.payload.id);
 
             return this._workspaceGraphApiService.deleteNode(
               environment.clientId,
-              workspaceId,
-              event.payload,
-              { isGraph: true }
+              event.payload.id,
+              {
+                graphId: workspaceId,
+                kind: event.payload.kind,
+                parentIds: [workspaceId],
+                referenceIds: [workspaceId, event.payload.id],
+              }
             );
           })
         )
@@ -378,27 +389,20 @@ export class WorkspacePageComponent
         return EMPTY;
       }
 
-      return this._eventApiService
-        .onServerCreate(workspaceId, [
+      return this._workspaceGraphApiService
+        .listen(workspaceId, [
           'updateGraphSuccess',
           'updateGraphThumbnailSuccess',
         ])
         .pipe(
-          filter((event) => event['clientId'] !== environment.clientId),
           tap((event) => {
-            console.log(event);
+            this.patchSelected({
+              id: event['payload'].id,
+              changes: event['payload'].changes,
+            });
 
-            if (event['payload'].id === workspaceId) {
+            if (event['clientId'] !== environment.clientId) {
               this._workspaceDrawerStore.handleGraphUpdated(
-                event['payload'].changes
-              );
-            } else {
-              this.patchSelected({
-                id: event['payload'].id,
-                changes: event['payload'].changes,
-              });
-              this._workspaceDrawerStore.handleNodeUpdated(
-                event['payload'].id,
                 event['payload'].changes
               );
             }
@@ -413,16 +417,15 @@ export class WorkspacePageComponent
         return EMPTY;
       }
 
-      return this._eventApiService
-        .onServerCreate(workspaceId, ['deleteGraphSuccess'])
+      return this._workspaceGraphApiService
+        .listen(workspaceId, ['deleteGraphSuccess'])
         .pipe(
-          filter((event) => event['clientId'] !== environment.clientId),
           tap((event) => {
-            if (event['payload'] === workspaceId) {
-              this._router.navigate(['/lobby']);
-            } else {
-              this.clearSelected(event['payload']);
+            this.clearSelected(event['payload']);
+
+            if (event['clientId'] !== environment.clientId) {
               this._workspaceDrawerStore.handleNodeRemoved(event['payload']);
+              this._router.navigate(['/lobby']);
             }
           })
         );
@@ -435,15 +438,16 @@ export class WorkspacePageComponent
         return EMPTY;
       }
 
-      return this._eventApiService
-        .onServerCreate(workspaceId, ['createNodeSuccess'])
+      return this._workspaceGraphApiService
+        .listen(workspaceId, ['createNodeSuccess'])
         .pipe(
           filter((event) => event['clientId'] !== environment.clientId),
           tap((event) => {
-            const { id, ...payload } = event['payload'];
+            const { id, kind, ...payload } = event['payload'];
             this._workspaceDrawerStore.handleNodeAdded({
               id,
               data: payload,
+              kind,
             });
           })
         );
@@ -456,22 +460,24 @@ export class WorkspacePageComponent
         return EMPTY;
       }
 
-      return this._eventApiService
-        .onServerCreate(workspaceId, [
+      return this._workspaceGraphApiService
+        .listen(workspaceId, [
           'updateNodeSuccess',
           'updateNodeThumbnailSuccess',
         ])
         .pipe(
-          filter((event) => event['clientId'] !== environment.clientId),
           tap((event) => {
             this.patchSelected({
               id: event['payload'].id,
               changes: event['payload'].changes,
             });
-            this._workspaceDrawerStore.handleNodeUpdated(
-              event['payload'].id,
-              event['payload'].changes
-            );
+
+            if (event['clientId'] !== environment.clientId) {
+              this._workspaceDrawerStore.handleNodeUpdated(
+                event['payload'].id,
+                event['payload'].changes
+              );
+            }
           })
         );
     })
@@ -483,13 +489,15 @@ export class WorkspacePageComponent
         return EMPTY;
       }
 
-      return this._eventApiService
-        .onServerCreate(workspaceId, ['deleteNodeSuccess'])
+      return this._workspaceGraphApiService
+        .listen(workspaceId, ['deleteNodeSuccess'])
         .pipe(
-          filter((event) => event['clientId'] !== environment.clientId),
           tap((event) => {
             this.clearSelected(event['payload'].id);
-            this._workspaceDrawerStore.handleNodeRemoved(event['payload'].id);
+
+            if (event['clientId'] !== environment.clientId) {
+              this._workspaceDrawerStore.handleNodeRemoved(event['payload'].id);
+            }
           })
         );
     })
@@ -511,6 +519,12 @@ export class WorkspacePageComponent
               const drawer = new Drawer(graph, [], drawerElement);
               drawer.initialize();
               this._workspaceDrawerStore.setDrawer(drawer);
+
+              this._handleServerNodeCreate(workspaceId);
+              this._handleServerNodeUpdate(workspaceId);
+              this._handleServerNodeDelete(workspaceId);
+              this._handleServerGraphUpdate(workspaceId);
+              this._handleServerGraphDelete(workspaceId);
             }
           })
         )
@@ -560,11 +574,6 @@ export class WorkspacePageComponent
         filter(isOneTapNodeEvent<WorkspaceGraphData, WorkspaceNodeData>)
       )
     );
-    this._handleServerNodeCreate(this.workspaceId$);
-    this._handleServerNodeUpdate(this.workspaceId$);
-    this._handleServerNodeDelete(this.workspaceId$);
-    this._handleServerGraphUpdate(this.workspaceId$);
-    this._handleServerGraphDelete(this.workspaceId$);
   }
 
   async ngAfterViewInit() {
@@ -593,8 +602,9 @@ export class WorkspacePageComponent
   }
 
   onAddNode(workspaceId: string, event: AddNodeDto) {
+    const { id, kind, ...payload } = event.data;
     this._workspaceDrawerStore.addNode(
-      { id: event.data.id, data: { ...event.data, workspaceId } },
+      { id, data: { ...payload, workspaceId }, kind },
       event.options.position
     );
   }
@@ -605,7 +615,10 @@ export class WorkspacePageComponent
 
   onDeleteGraph(graphId: string) {
     this._workspaceGraphApiService
-      .deleteGraph(environment.clientId, null, graphId, { isNode: false })
+      .deleteGraph(environment.clientId, graphId, {
+        kind: 'workspace',
+        referenceIds: [graphId],
+      })
       .subscribe(() => this._router.navigate(['/lobby']));
   }
 
@@ -614,7 +627,10 @@ export class WorkspacePageComponent
   }
 
   onUpdateNode(nodeId: string, changes: UpdateApplicationSubmit) {
-    this._workspaceDrawerStore.updateNode(nodeId, changes);
+    this._workspaceDrawerStore.updateNode(nodeId, {
+      kind: 'application',
+      changes,
+    });
   }
 
   onUpdateNodeThumbnail(nodeId: string, fileId: string, fileUrl: string) {

@@ -7,6 +7,34 @@ const pubsub = new PubSub();
 admin.initializeApp();
 const firestore = admin.firestore();
 
+const getNodePath = (parentIds: string[], nodeId: string) => {
+  if (parentIds.length === 1) {
+    return `graphs/${parentIds[0]}/nodes/${nodeId}`;
+  } else {
+    const parentsPath = parentIds.reduce(
+      (path: string, parentId: string) => `${path}/${parentId}/nodes`,
+      `graphs`
+    );
+    return `${parentsPath}/${nodeId}`;
+  }
+};
+
+const getParentPath = (parentIds: string[]) => {
+  if (parentIds.length === 1) {
+    return `graphs/${parentIds[0]}`;
+  } else {
+    const parentsPath = parentIds
+      .slice(0, -1)
+      .reduce(
+        (path: string, parentId: string) => `${path}/${parentId}/nodes`,
+        `graphs`
+      );
+    const parentId = parentIds.at(-1);
+
+    return `${parentsPath}/${parentId}`;
+  }
+};
+
 export const publishEvent = functions.https.onCall(async (data, context) => {
   functions.logger.info('data', data);
 
@@ -34,13 +62,15 @@ export const persistEvent = functions.pubsub
       : null;
 
     const eventRef = firestore.doc(`events/${messageBody.id}`);
+    const { referenceIds, ...payload } = messageBody.data.payload;
+
     const event = {
-      payload: messageBody.data.payload,
+      payload,
       type: messageBody.data.type,
       clientId: messageBody.data.clientId,
-      graphIds: messageBody.data.graphIds ?? [],
       correlationId: messageBody.data.correlationId ?? null,
       createdAt: context.timestamp,
+      referenceIds: referenceIds ?? [],
     };
     await eventRef.set(event);
 
@@ -265,39 +295,15 @@ export const createGraph = functions.pubsub
       ? JSON.parse(Buffer.from(message.data, 'base64').toString())
       : null;
 
-    const {
-      id: graphId,
-      parentId,
-      isNode,
-      ...payload
-    } = messageBody.data.payload;
+    const { id: graphId, ...payload } = messageBody.data.payload;
+    const { kind, ...data } = payload;
 
     await firestore.runTransaction(async (transaction) => {
       const graphRef = firestore.doc(`graphs/${graphId}`);
-      const parentRef = firestore.doc(`graphs/${parentId}`);
-
-      if (isNode) {
-        const parent = await transaction.get(parentRef);
-        const parentData = parent.data();
-        const nodes = parentData?.['nodes'] ?? [];
-        transaction.update(graphRef, {
-          nodes: [
-            ...nodes,
-            {
-              id: graphId,
-              data: payload,
-              createdAt: context.timestamp,
-            },
-          ],
-          lastEventId: messageBody.id,
-          updatedAt: context.timestamp,
-        });
-      }
 
       transaction.set(graphRef, {
-        data: payload,
-        nodes: [],
-        edges: [],
+        data,
+        kind,
         lastEventId: messageBody.id,
         createdAt: context.timestamp,
       });
@@ -309,10 +315,6 @@ export const createGraph = functions.pubsub
         data: {
           payload: messageBody.data.payload,
           type: 'createGraphSuccess',
-          graphIds: [
-            messageBody.data.payload.id,
-            messageBody.data.payload.parentId,
-          ],
           clientId: messageBody.data.clientId,
           correlationId: messageBody.id,
         },
@@ -348,16 +350,6 @@ export const createGraphSuccess = functions.pubsub
       updatedAt: context.timestamp,
     });
 
-    if (messageBody.data.payload.isNode) {
-      const parentRef = firestore.doc(
-        `graphs/${messageBody.data.payload.parentId}`
-      );
-      await parentRef.update({
-        lastEventId: messageBody.id,
-        updatedAt: context.timestamp,
-      });
-    }
-
     return true;
   });
 
@@ -376,46 +368,17 @@ export const updateGraph = functions.pubsub
       ? JSON.parse(Buffer.from(message.data, 'base64').toString())
       : null;
 
-    const {
-      id: graphId,
-      parentId,
-      isNode,
-      ...payload
-    } = messageBody.data.payload;
+    const { id: graphId, ...payload } = messageBody.data.payload;
 
     await firestore.runTransaction(async (transaction) => {
       const graphRef = firestore.doc(`graphs/${graphId}`);
       const graph = await transaction.get(graphRef);
       const graphData = graph.data();
-      const parentRef = firestore.doc(`graphs/${parentId}`);
-
-      if (isNode) {
-        const parent = await transaction.get(parentRef);
-        const parentData = parent.data();
-        const nodes: { id: string; data: any }[] = parentData?.['nodes'] ?? [];
-        const nodeIndex = nodes.findIndex((node) => node.id === graphId);
-
-        transaction.update(parentRef, {
-          nodes: [
-            ...nodes.slice(0, nodeIndex),
-            {
-              ...nodes[nodeIndex],
-              data: {
-                ...nodes[nodeIndex].data,
-                ...payload.changes,
-              },
-            },
-            ...nodes.slice(nodeIndex + 1),
-          ],
-          lastEventId: messageBody.id,
-          updatedAt: context.timestamp,
-        });
-      }
 
       transaction.update(graphRef, {
         data: {
           ...graphData?.['data'],
-          ...messageBody.data.payload.changes,
+          ...payload.changes,
         },
         lastEventId: messageBody.id,
         updatedAt: context.timestamp,
@@ -428,10 +391,6 @@ export const updateGraph = functions.pubsub
         data: {
           payload: messageBody.data.payload,
           type: 'updateGraphSuccess',
-          graphIds: [
-            messageBody.data.payload.id,
-            messageBody.data.payload.parentId,
-          ],
           clientId: messageBody.data.clientId,
           correlationId: messageBody.id,
         },
@@ -460,45 +419,14 @@ export const updateGraphThumbnail = functions.pubsub
       ? JSON.parse(Buffer.from(message.data, 'base64').toString())
       : null;
 
-    const {
-      id: graphId,
-      parentId,
-      isNode,
-      ...payload
-    } = messageBody.data.payload;
+    const { id: graphId, ...payload } = messageBody.data.payload;
 
     await firestore.runTransaction(async (transaction) => {
       const uploadRef = firestore.doc(`uploads/${payload.fileId}`);
       const graphRef = firestore.doc(`graphs/${graphId}`);
       const graph = await transaction.get(graphRef);
       const graphData = graph.data();
-      const parentRef = firestore.doc(`graphs/${parentId}`);
 
-      if (isNode) {
-        const parent = await transaction.get(parentRef);
-        const parentData = parent.data();
-        const nodes: { id: string; data: any }[] = parentData?.['nodes'] ?? [];
-        const nodeIndex = nodes.findIndex((node) => node.id === graphId);
-        const node = nodes[nodeIndex];
-
-        transaction.update(parentRef, {
-          nodes: [
-            ...nodes.slice(0, nodeIndex),
-            {
-              ...node,
-              data: {
-                ...node.data,
-                thumbnailUrl: payload.fileUrl,
-              },
-            },
-            ...nodes.slice(nodeIndex + 1),
-          ],
-          lastEventId: context.eventId,
-          updatedAt: context.timestamp,
-        });
-      }
-
-      // Save the upload for tracking purposes
       transaction.set(uploadRef, {
         ref: graphId,
         createdAt: context.timestamp,
@@ -520,14 +448,12 @@ export const updateGraphThumbnail = functions.pubsub
         data: {
           payload: {
             id: graphId,
-            parentId,
-            isNode,
             changes: {
               thumbnailUrl: payload.fileUrl,
             },
+            referenceIds: payload.referenceIds,
           },
           type: 'updateGraphThumbnailSuccess',
-          graphIds: [messageBody.data.payload.id, parentId],
           clientId: messageBody.data.clientId,
           correlationId: context.eventId,
         },
@@ -564,16 +490,6 @@ export const updateGraphSuccess = functions.pubsub
       updatedAt: context.timestamp,
     });
 
-    if (messageBody.data.payload.isNode) {
-      const parentRef = firestore.doc(
-        `graphs/${messageBody.data.payload.parentId}`
-      );
-      await parentRef.update({
-        lastEventId: messageBody.id,
-        updatedAt: context.timestamp,
-      });
-    }
-
     return true;
   });
 
@@ -595,23 +511,6 @@ export const deleteGraph = functions.pubsub
     await firestore.runTransaction(async (transaction) => {
       const graphRef = firestore.doc(`graphs/${messageBody.data.payload.id}`);
       transaction.delete(graphRef);
-
-      if (messageBody.data.payload.isNode) {
-        const parentRef = firestore.doc(
-          `graphs/${messageBody.data.payload.parentId}`
-        );
-        const parent = await transaction.get(parentRef);
-        const parentData = parent.data();
-        const nodes: { id: string }[] = parentData?.['nodes'] ?? [];
-
-        transaction.update(parentRef, {
-          nodes: nodes.filter(
-            (node) => node.id !== messageBody.data.payload.id
-          ),
-          lastEventId: messageBody.id,
-          updatedAt: context.timestamp,
-        });
-      }
     });
 
     pubsub.topic('events').publishJSON(
@@ -620,10 +519,6 @@ export const deleteGraph = functions.pubsub
         data: {
           payload: messageBody.data.payload,
           type: 'deleteGraphSuccess',
-          graphIds: [
-            messageBody.data.payload.id,
-            messageBody.data.payload.parentId,
-          ],
           clientId: messageBody.data.clientId,
           correlationId: messageBody.id,
         },
@@ -633,35 +528,6 @@ export const deleteGraph = functions.pubsub
         functions.logger.error(error);
       }
     );
-
-    return true;
-  });
-
-export const deleteGraphSuccess = functions.pubsub
-  .topic('events')
-  .onPublish(async (message, context) => {
-    if (
-      process.env.FUNCTIONS_EMULATOR &&
-      message.attributes.type !== 'deleteGraphSuccess'
-    ) {
-      functions.logger.warn('deleteGraphSuccess', 'Event ignored');
-      return false;
-    }
-
-    const messageBody = message.data
-      ? JSON.parse(Buffer.from(message.data, 'base64').toString())
-      : null;
-
-    if (messageBody.data.payload.isNode) {
-      const parentRef = firestore.doc(
-        `graphs/${messageBody.data.payload.parentId}`
-      );
-
-      await parentRef.update({
-        lastEventId: messageBody.id,
-        updatedAt: context.timestamp,
-      });
-    }
 
     return true;
   });
@@ -683,42 +549,23 @@ export const createNode = functions.pubsub
 
     const {
       id: nodeId,
+      parentIds,
       graphId,
-      isGraph,
+      referenceIds,
       ...payload
     } = messageBody.data.payload;
-
-    const graphRef = firestore.doc(`graphs/${graphId}`);
+    const { kind, ...data } = payload;
 
     await firestore.runTransaction(async (transaction) => {
-      const graph = await transaction.get(graphRef);
-      const graphData = graph.data();
-      const nodes = graphData?.['nodes'] ?? [];
+      const nodeRef = firestore.doc(getNodePath(parentIds, nodeId));
 
-      transaction.update(graphRef, {
-        nodes: [
-          ...nodes,
-          {
-            id: nodeId,
-            data: payload,
-            createdAt: context.timestamp,
-          },
-        ],
+      transaction.set(nodeRef, {
+        id: nodeId,
+        data,
+        kind,
+        createdAt: context.timestamp,
         lastEventId: messageBody.id,
-        updatedAt: context.timestamp,
       });
-
-      if (isGraph) {
-        const nodeGraphRef = firestore.doc(`graphs/${nodeId}`);
-
-        transaction.set(nodeGraphRef, {
-          data: payload,
-          nodes: [],
-          edges: [],
-          lastEventId: messageBody.id,
-          createdAt: context.timestamp,
-        });
-      }
     });
 
     pubsub.topic('events').publishJSON(
@@ -727,7 +574,6 @@ export const createNode = functions.pubsub
         data: {
           payload: messageBody.data.payload,
           type: 'createNodeSuccess',
-          graphIds: [nodeId, graphId],
           clientId: messageBody.data.clientId,
           correlationId: messageBody.id,
         },
@@ -756,24 +602,21 @@ export const createNodeSuccess = functions.pubsub
       ? JSON.parse(Buffer.from(message.data, 'base64').toString())
       : null;
 
-    const graphRef = firestore.doc(
-      `graphs/${messageBody.data.payload.graphId}`
-    );
+    const { id: nodeId, parentIds } = messageBody.data.payload;
 
-    await graphRef.update({
+    const parentRef = firestore.doc(getParentPath(parentIds));
+
+    await parentRef.update({
       lastEventId: messageBody.id,
       updatedAt: context.timestamp,
     });
 
-    if (messageBody.data.payload.isGraph) {
-      const nodeGraphRef = firestore.doc(
-        `graphs/${messageBody.data.payload.id}`
-      );
-      await nodeGraphRef.update({
-        lastEventId: messageBody.id,
-        updatedAt: context.timestamp,
-      });
-    }
+    const nodeRef = firestore.doc(getNodePath(parentIds, nodeId));
+
+    await nodeRef.update({
+      lastEventId: messageBody.id,
+      updatedAt: context.timestamp,
+    });
 
     return true;
   });
@@ -793,51 +636,21 @@ export const updateNode = functions.pubsub
       ? JSON.parse(Buffer.from(message.data, 'base64').toString())
       : null;
 
-    const {
-      id: nodeId,
-      graphId,
-      isGraph,
-      ...payload
-    } = messageBody.data.payload;
-
-    const graphRef = firestore.doc(`graphs/${graphId}`);
+    const { id: nodeId, parentIds, ...payload } = messageBody.data.payload;
 
     await firestore.runTransaction(async (transaction) => {
-      const graph = await transaction.get(graphRef);
-      const graphData = graph.data();
-      const nodes: { id: string; data: any }[] = graphData?.['nodes'] ?? [];
-      const nodeIndex = nodes.findIndex((node) => node.id === nodeId);
-      const nodeGraphRef = firestore.doc(`graphs/${nodeId}`);
-      const nodeGraph = isGraph
-        ? (await transaction.get(nodeGraphRef)).data()
-        : null;
+      const nodeRef = firestore.doc(getNodePath(parentIds, nodeId));
+      const node = await transaction.get(nodeRef);
+      const nodeData = node.data();
 
-      transaction.update(graphRef, {
-        nodes: [
-          ...nodes.slice(0, nodeIndex),
-          {
-            ...nodes[nodeIndex],
-            data: {
-              ...nodes[nodeIndex].data,
-              ...payload.changes,
-            },
-          },
-          ...nodes.slice(nodeIndex + 1),
-        ],
+      transaction.update(nodeRef, {
+        data: {
+          ...nodeData?.['data'],
+          ...payload.changes,
+        },
         lastEventId: messageBody.id,
         updatedAt: context.timestamp,
       });
-
-      if (nodeGraph) {
-        transaction.update(nodeGraphRef, {
-          data: {
-            ...nodeGraph?.['data'],
-            ...messageBody.data.payload.changes,
-          },
-          lastEventId: messageBody.id,
-          updatedAt: context.timestamp,
-        });
-      }
     });
 
     pubsub.topic('events').publishJSON(
@@ -846,10 +659,6 @@ export const updateNode = functions.pubsub
         data: {
           payload: messageBody.data.payload,
           type: 'updateNodeSuccess',
-          graphIds: [
-            messageBody.data.payload.id,
-            messageBody.data.payload.graphId,
-          ],
           clientId: messageBody.data.clientId,
           correlationId: messageBody.id,
         },
@@ -878,26 +687,13 @@ export const updateNodeThumbnail = functions.pubsub
       ? JSON.parse(Buffer.from(message.data, 'base64').toString())
       : null;
 
-    const {
-      id: nodeId,
-      graphId,
-      isGraph,
-      ...payload
-    } = messageBody.data.payload;
-
-    const graphRef = firestore.doc(`graphs/${graphId}`);
-    const uploadRef = firestore.doc(`uploads/${payload.fileId}`);
+    const { id: nodeId, parentIds, ...payload } = messageBody.data.payload;
 
     await firestore.runTransaction(async (transaction) => {
-      const graph = await transaction.get(graphRef);
-      const graphData = graph.data();
-      const nodes: { id: string; data: any }[] = graphData?.['nodes'] ?? [];
-      const nodeIndex = nodes.findIndex((node) => node.id === nodeId);
-      const node = nodes[nodeIndex];
-      const nodeGraphRef = firestore.doc(`graphs/${nodeId}`);
-      const nodeGraph = isGraph
-        ? (await transaction.get(nodeGraphRef)).data()
-        : null;
+      const uploadRef = firestore.doc(`uploads/${payload.fileId}`);
+      const nodeRef = firestore.doc(getNodePath(parentIds, nodeId));
+      const node = await transaction.get(nodeRef);
+      const nodeData = node.data();
 
       // Save the upload for tracking purposes
       transaction.set(uploadRef, {
@@ -905,33 +701,14 @@ export const updateNodeThumbnail = functions.pubsub
         createdAt: context.timestamp,
       });
 
-      // Update parent graph
-      transaction.update(graphRef, {
-        nodes: [
-          ...nodes.slice(0, nodeIndex),
-          {
-            ...node,
-            data: {
-              ...node.data,
-              thumbnailUrl: payload.fileUrl,
-            },
-          },
-          ...nodes.slice(nodeIndex + 1),
-        ],
+      transaction.update(nodeRef, {
+        data: {
+          ...nodeData?.['data'],
+          thumbnailUrl: payload.fileUrl,
+        },
         lastEventId: context.eventId,
         updatedAt: context.timestamp,
       });
-
-      if (nodeGraph) {
-        transaction.update(nodeGraphRef, {
-          data: {
-            ...nodeGraph['data'],
-            thumbnailUrl: payload.fileUrl,
-          },
-          lastEventId: context.eventId,
-          updatedAt: context.timestamp,
-        });
-      }
     });
 
     pubsub.topic('events').publishJSON(
@@ -939,15 +716,16 @@ export const updateNodeThumbnail = functions.pubsub
         id: messageBody.id,
         data: {
           payload: {
-            id: nodeId,
-            graphId,
-            isGraph,
+            id: messageBody.data.payload.id,
             changes: {
-              thumbnailUrl: payload.fileUrl,
+              thumbnailUrl: messageBody.data.payload.fileUrl,
             },
+            kind: messageBody.data.kind,
+            parentIds,
+            referenceIds: messageBody.data.payload.referenceIds,
+            graphId: messageBody.data.payload.graphId,
           },
           type: 'updateNodeThumbnailSuccess',
-          graphIds: [messageBody.data.payload.id, graphId],
           clientId: messageBody.data.clientId,
           correlationId: context.eventId,
         },
@@ -977,24 +755,21 @@ export const updateNodeSuccess = functions.pubsub
       ? JSON.parse(Buffer.from(message.data, 'base64').toString())
       : null;
 
-    const graphRef = firestore.doc(
-      `graphs/${messageBody.data.payload.graphId}`
-    );
+    const { id: nodeId, parentIds } = messageBody.data.payload;
 
-    await graphRef.update({
+    const parentRef = firestore.doc(getParentPath(parentIds));
+
+    await parentRef.update({
       lastEventId: messageBody.id,
       updatedAt: context.timestamp,
     });
 
-    if (messageBody.data.payload.isGraph) {
-      const nodeGraphRef = firestore.doc(
-        `graphs/${messageBody.data.payload.id}`
-      );
-      await nodeGraphRef.update({
-        lastEventId: messageBody.id,
-        updatedAt: context.timestamp,
-      });
-    }
+    const nodeRef = firestore.doc(getNodePath(parentIds, nodeId));
+
+    await nodeRef.update({
+      lastEventId: messageBody.id,
+      updatedAt: context.timestamp,
+    });
 
     return true;
   });
@@ -1014,26 +789,12 @@ export const deleteNode = functions.pubsub
       ? JSON.parse(Buffer.from(message.data, 'base64').toString())
       : null;
 
+    const { id: nodeId, parentIds } = messageBody.data.payload;
+
     await firestore.runTransaction(async (transaction) => {
-      const graphRef = firestore.doc(
-        `graphs/${messageBody.data.payload.graphId}`
-      );
-      const graph = await transaction.get(graphRef);
-      const graphData = graph.data();
-      const nodes: { id: string }[] = graphData?.['nodes'] ?? [];
+      const nodeRef = firestore.doc(getNodePath(parentIds, nodeId));
 
-      transaction.update(graphRef, {
-        nodes: nodes.filter((node) => node.id !== messageBody.data.payload.id),
-        lastEventId: messageBody.id,
-        updatedAt: context.timestamp,
-      });
-
-      if (messageBody.data.payload.isGraph) {
-        const nodeGraphRef = firestore.doc(
-          `graphs/${messageBody.data.payload.id}`
-        );
-        transaction.delete(nodeGraphRef);
-      }
+      transaction.delete(nodeRef);
     });
 
     pubsub.topic('events').publishJSON(
@@ -1042,10 +803,6 @@ export const deleteNode = functions.pubsub
         data: {
           payload: messageBody.data.payload,
           type: 'deleteNodeSuccess',
-          graphIds: [
-            messageBody.data.payload.id,
-            messageBody.data.payload.graphId,
-          ],
           clientId: messageBody.data.clientId,
           correlationId: messageBody.id,
         },
@@ -1074,11 +831,11 @@ export const deleteNodeSuccess = functions.pubsub
       ? JSON.parse(Buffer.from(message.data, 'base64').toString())
       : null;
 
-    const graphRef = firestore.doc(
-      `graphs/${messageBody.data.payload.graphId}`
-    );
+    const { parentIds } = messageBody.data.payload;
 
-    await graphRef.update({
+    const parentRef = firestore.doc(getParentPath(parentIds));
+
+    await parentRef.update({
       lastEventId: messageBody.id,
       updatedAt: context.timestamp,
     });

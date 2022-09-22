@@ -85,9 +85,8 @@ export class LobbyPageComponent implements OnInit {
 
   onCreateWorkspace(userId: string, data: CreateWorkspaceSubmit) {
     this._workspaceGraphApiService
-      .createGraph(environment.clientId, null, {
+      .createGraph(environment.clientId, {
         id: generateId(),
-        isNode: false,
         thumbnailUrl: 'assets/generic/workspace.png',
         name: data.name,
         userId,

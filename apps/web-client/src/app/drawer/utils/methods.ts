@@ -30,10 +30,12 @@ export const createNode = (
   position?: { x: number; y: number }
 ) => {
   graph.add({
-    data: {
-      ...nodeData,
-      parent: nodeData['kind'] ?? null,
-    },
+    data: nodeData['kind']
+      ? {
+          ...nodeData,
+          parent: nodeData['kind'],
+        }
+      : nodeData,
     group: 'nodes',
     classes: 'bp-bd-node',
     position,
@@ -197,7 +199,7 @@ export const isDeleteEdgeSuccessEvent = <
 };
 
 export const createGraph = <
-  NodeDataType extends { name: string; thumbnailUrl: string; kind: string }
+  NodeDataType extends { name: string; thumbnailUrl: string }
 >(
   container: HTMLElement,
   nodes: cytoscape.NodeDefinition[],
@@ -285,10 +287,12 @@ export const createGraph = <
     elements: groups
       .concat(
         nodes.map((node) => ({
-          data: {
-            ...node.data,
-            parent: node.data['kind'] ?? null,
-          },
+          data: node.data['kind']
+            ? {
+                ...node.data,
+                parent: node.data['kind'],
+              }
+            : node.data,
           group: 'nodes' as const,
           classes: 'bp-bd-node',
           selectable: true,
@@ -312,7 +316,7 @@ export const createGraph = <
             </div>
             <div style="font-family: 'Courier New', Courier, monospace">
               <h2 class="text-xl mt-2 text-white">${node.data.name}</h2>
-              <p class="italic text-gray-400">${node.data.kind}</p>
+              <p class="italic text-gray-400">${node.kind}</p>
             </div>
           </div>
         `;

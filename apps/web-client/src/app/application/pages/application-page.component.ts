@@ -26,7 +26,6 @@ import {
 import { environment } from '../../../environments/environment';
 import { UpdateApplicationSubmit } from '../../application/components';
 import { UpdateCollectionSubmit } from '../../collection/components';
-import { EventApiService } from '../../drawer/services';
 import {
   AddNodeSuccessEvent,
   DeleteNodeSuccessEvent,
@@ -106,18 +105,20 @@ const initialState: ViewModel = {
           onUpdateGraphThumbnail($event.fileId, $event.fileUrl)
         "
         (pgDeleteApplication)="
-          onDeleteGraph(application.data.workspaceId, $event)
+          onDeleteGraph(application.data.workspaceId, $event, 'application')
         "
       ></pg-application-dock>
     </ng-container>
 
     <ng-container *ngIf="selected$ | ngrxPush as selected">
       <pg-collection-dock
-        *ngIf="selected.data.kind === 'collection'"
+        *ngIf="selected.kind === 'collection'"
         class="fixed bottom-0 -translate-x-1/2 left-1/2"
         [pgCollection]="selected"
         (pgCollectionUnselected)="onCollectionUnselected()"
-        (pgUpdateCollection)="onUpdateNode($event.id, $event.changes)"
+        (pgUpdateCollection)="
+          onUpdateNode($event.id, 'collection', $event.changes)
+        "
         (pgUpdateCollectionThumbnail)="
           onUpdateNodeThumbnail($event.id, $event.fileId, $event.fileUrl)
         "
@@ -125,11 +126,13 @@ const initialState: ViewModel = {
       ></pg-collection-dock>
 
       <pg-instruction-dock
-        *ngIf="selected.data.kind === 'instruction'"
+        *ngIf="selected.kind === 'instruction'"
         class="fixed bottom-0 -translate-x-1/2 left-1/2"
         [pgInstruction]="selected"
         (pgInstructionUnselected)="onInstructionUnselected()"
-        (pgUpdateInstruction)="onUpdateNode($event.id, $event.changes)"
+        (pgUpdateInstruction)="
+          onUpdateNode($event.id, 'instruction', $event.changes)
+        "
         (pgUpdateInstructionThumbnail)="
           onUpdateNodeThumbnail($event.id, $event.fileId, $event.fileUrl)
         "
@@ -188,7 +191,6 @@ export class ApplicationPageComponent
   implements OnInit, AfterViewInit
 {
   private readonly _router = inject(Router);
-  private readonly _eventApiService = inject(EventApiService);
   private readonly _applicationGraphApiService = inject(
     ApplicationGraphApiService
   );
@@ -230,7 +232,7 @@ export class ApplicationPageComponent
     return {
       ...state,
       selected: {
-        id,
+        ...state.selected,
         data: {
           ...state.selected.data,
           ...changes,
@@ -286,11 +288,16 @@ export class ApplicationPageComponent
             return EMPTY;
           }
 
-          return this._applicationGraphApiService.updateGraph(
+          return this._applicationGraphApiService.updateNode(
             environment.clientId,
-            workspaceId,
             applicationId,
-            { changes: event.payload, isNode: true }
+            {
+              changes: event.payload.changes,
+              referenceIds: [workspaceId, applicationId],
+              kind: event.payload.kind,
+              graphId: workspaceId,
+              parentIds: [workspaceId],
+            }
           );
         })
       )
@@ -307,14 +314,16 @@ export class ApplicationPageComponent
               return EMPTY;
             }
 
-            return this._applicationGraphApiService.updateGraphThumbnail(
+            return this._applicationGraphApiService.updateNodeThumbnail(
               environment.clientId,
-              workspaceId,
               applicationId,
               {
                 fileId: event.payload.fileId,
                 fileUrl: event.payload.fileUrl,
-                isNode: true,
+                kind: event.payload.kind,
+                referenceIds: [workspaceId, applicationId],
+                graphId: workspaceId,
+                parentIds: [workspaceId],
               }
             );
           })
@@ -335,11 +344,13 @@ export class ApplicationPageComponent
 
           return this._applicationGraphApiService.createNode(
             environment.clientId,
-            applicationId,
             {
               ...event.payload.data,
               id: event.payload.id,
-              isGraph: false,
+              parentIds: [workspaceId, applicationId],
+              kind: event.payload.kind,
+              graphId: applicationId,
+              referenceIds: [applicationId, event.payload.id],
             }
           );
         })
@@ -352,9 +363,9 @@ export class ApplicationPageComponent
   >(
     concatMap((event) =>
       of(null).pipe(
-        withLatestFrom(this.applicationId$),
-        concatMap(([, applicationId]) => {
-          if (isNull(applicationId)) {
+        withLatestFrom(this.workspaceId$, this.applicationId$),
+        concatMap(([, workspaceId, applicationId]) => {
+          if (isNull(workspaceId) || isNull(applicationId)) {
             return EMPTY;
           }
 
@@ -365,9 +376,14 @@ export class ApplicationPageComponent
 
           return this._applicationGraphApiService.updateNode(
             environment.clientId,
-            applicationId,
             event.payload.id,
-            { changes: event.payload.changes, isGraph: false }
+            {
+              changes: event.payload.changes,
+              graphId: applicationId,
+              parentIds: [workspaceId, applicationId],
+              referenceIds: [applicationId, event.payload.id],
+              kind: event.payload.kind,
+            }
           );
         })
       )
@@ -378,9 +394,9 @@ export class ApplicationPageComponent
     this.effect<UpdateNodeThumbnailSuccessEvent>(
       concatMap((event) =>
         of(null).pipe(
-          withLatestFrom(this.applicationId$),
-          concatMap(([, applicationId]) => {
-            if (isNull(applicationId)) {
+          withLatestFrom(this.workspaceId$, this.applicationId$),
+          concatMap(([, workspaceId, applicationId]) => {
+            if (isNull(workspaceId) || isNull(applicationId)) {
               return EMPTY;
             }
 
@@ -393,12 +409,14 @@ export class ApplicationPageComponent
 
             return this._applicationGraphApiService.updateNodeThumbnail(
               environment.clientId,
-              applicationId,
               event.payload.id,
               {
                 fileId: event.payload.fileId,
                 fileUrl: event.payload.fileUrl,
-                isGraph: false,
+                graphId: applicationId,
+                parentIds: [workspaceId, applicationId],
+                referenceIds: [applicationId, event.payload.id],
+                kind: event.payload.kind,
               }
             );
           })
@@ -410,33 +428,40 @@ export class ApplicationPageComponent
     this.effect<DeleteNodeSuccessEvent>(
       concatMap((event) =>
         of(null).pipe(
-          withLatestFrom(this.applicationId$),
-          concatMap(([, applicationId]) => {
-            if (isNull(applicationId)) {
+          withLatestFrom(this.workspaceId$, this.applicationId$),
+          concatMap(([, workspaceId, applicationId]) => {
+            if (isNull(workspaceId) || isNull(applicationId)) {
               return EMPTY;
             }
 
-            this.clearSelected(event.payload);
+            this.clearSelected(event.payload.id);
 
             return this._applicationGraphApiService.deleteNode(
               environment.clientId,
-              applicationId,
-              event.payload,
-              { isGraph: false }
+              event.payload.id,
+              {
+                graphId: applicationId,
+                kind: event.payload.kind,
+                parentIds: [workspaceId, applicationId],
+                referenceIds: [applicationId, event.payload.id],
+              }
             );
           })
         )
       )
     );
 
-  private readonly _handleServerGraphUpdate = this.effect<Option<string>>(
-    switchMap((applicationId) => {
-      if (isNull(applicationId)) {
+  private readonly _handleServerGraphUpdate = this.effect<{
+    workspaceId: Option<string>;
+    applicationId: Option<string>;
+  }>(
+    switchMap(({ workspaceId, applicationId }) => {
+      if (isNull(workspaceId) || isNull(applicationId)) {
         return EMPTY;
       }
 
-      return this._eventApiService
-        .onServerCreate(applicationId, [
+      return this._applicationGraphApiService
+        .listen(workspaceId, applicationId, [
           'updateGraphSuccess',
           'updateGraphThumbnailSuccess',
         ])
@@ -451,68 +476,113 @@ export class ApplicationPageComponent
     })
   );
 
-  private readonly _handleServerGraphDelete = this.effect<Option<string>>(
-    switchMap((applicationId) => {
-      if (isNull(applicationId)) {
+  private readonly _handleServerGraphDelete = this.effect<{
+    workspaceId: Option<string>;
+    applicationId: Option<string>;
+  }>(
+    switchMap(({ workspaceId, applicationId }) => {
+      if (isNull(workspaceId) || isNull(applicationId)) {
         return EMPTY;
       }
 
-      return this._eventApiService
-        .onServerCreate(applicationId, ['deleteApplicationSuccess'])
+      return this._applicationGraphApiService
+        .listen(workspaceId, applicationId, ['deleteNodeSuccess'])
         .pipe(
           filter((event) => event['clientId'] !== environment.clientId),
-          tap(() => this._router.navigate(['/lobby']))
+          tap((event) => {
+            if (event['payload'].id === applicationId) {
+              this._router.navigate(['/workspaces', workspaceId]);
+            }
+          })
         );
     })
   );
 
-  private readonly _handleServerNodeCreate = this.effect<Option<string>>(
-    switchMap((applicationId) => {
-      if (isNull(applicationId)) {
+  private readonly _handleServerNodeCreate = this.effect<{
+    workspaceId: Option<string>;
+    applicationId: Option<string>;
+  }>(
+    switchMap(({ workspaceId, applicationId }) => {
+      if (isNull(workspaceId) || isNull(applicationId)) {
         return EMPTY;
       }
 
-      return this._eventApiService
-        .onServerCreate(applicationId, ['createNodeSuccess'])
+      return this._applicationGraphApiService
+        .listen(workspaceId, applicationId, ['createNodeSuccess'])
         .pipe(
           filter((event) => event['clientId'] !== environment.clientId),
           tap((event) => {
-            const { id, ...payload } = event['payload'];
+            const { id, kind, ...payload } = event['payload'];
             this._applicationDrawerStore.handleNodeAdded({
               id,
               data: payload,
+              kind,
             });
           })
         );
     })
   );
 
-  private readonly _handleServerNodeUpdate = this.effect<Option<string>>(
-    switchMap((applicationId) => {
-      if (isNull(applicationId)) {
+  private readonly _handleServerNodeUpdate = this.effect<{
+    workspaceId: Option<string>;
+    applicationId: Option<string>;
+  }>(
+    switchMap(({ workspaceId, applicationId }) => {
+      if (isNull(workspaceId) || isNull(applicationId)) {
         return EMPTY;
       }
 
-      return this._eventApiService
-        .onServerCreate(applicationId, [
+      return this._applicationGraphApiService
+        .listen(workspaceId, applicationId, [
           'updateNodeSuccess',
           'updateNodeThumbnailSuccess',
         ])
         .pipe(
-          filter((event) => event['clientId'] !== environment.clientId),
+          tap((event) => {
+            this.patchSelected({
+              id: event['payload'].id,
+              changes: event['payload'].changes,
+            });
+
+            if (event['clientId'] !== environment.clientId) {
+              if (event['payload'].id === applicationId) {
+                this._applicationDrawerStore.handleGraphUpdated(
+                  event['payload'].changes
+                );
+              } else {
+                this._applicationDrawerStore.handleNodeUpdated(
+                  event['payload'].id,
+                  event['payload'].changes
+                );
+              }
+            }
+          })
+        );
+    })
+  );
+
+  private readonly _handleServerNodeDelete = this.effect<{
+    workspaceId: Option<string>;
+    applicationId: Option<string>;
+  }>(
+    switchMap(({ workspaceId, applicationId }) => {
+      if (isNull(workspaceId) || isNull(applicationId)) {
+        return EMPTY;
+      }
+
+      return this._applicationGraphApiService
+        .listen(workspaceId, applicationId, ['deleteNodeSuccess'])
+        .pipe(
           tap((event) => {
             if (event['payload'].id === applicationId) {
-              this._applicationDrawerStore.handleGraphUpdated(
-                event['payload'].changes
-              );
-            } else {
-              this.patchSelected({
-                id: event['payload'].id,
-                changes: event['payload'].changes,
-              });
-              this._applicationDrawerStore.handleNodeUpdated(
-                event['payload'].id,
-                event['payload'].changes
+              this._router.navigate(['/workspaces', workspaceId]);
+            }
+
+            this.clearSelected(event['payload'].id);
+
+            if (event['clientId'] !== environment.clientId) {
+              this._applicationDrawerStore.handleNodeRemoved(
+                event['payload'].id
               );
             }
           })
@@ -520,40 +590,31 @@ export class ApplicationPageComponent
     })
   );
 
-  private readonly _handleServerNodeDelete = this.effect<Option<string>>(
-    switchMap((applicationId) => {
-      if (isNull(applicationId)) {
-        return EMPTY;
-      }
-
-      return this._eventApiService
-        .onServerCreate(applicationId, ['deleteNodeSuccess'])
-        .pipe(
-          filter((event) => event['clientId'] !== environment.clientId),
-          tap((event) => {
-            this.clearSelected(event['payload'].id);
-            this._applicationDrawerStore.handleNodeRemoved(event['payload'].id);
-          })
-        );
-    })
-  );
-
   private readonly _loadDrawer = this.effect<{
+    workspaceId: Option<string>;
     applicationId: Option<string>;
     drawerElement: HTMLElement;
   }>(
-    concatMap(({ applicationId, drawerElement }) => {
-      if (isNull(applicationId)) {
+    concatMap(({ workspaceId, applicationId, drawerElement }) => {
+      if (isNull(workspaceId) || isNull(applicationId)) {
         return EMPTY;
       }
 
       return defer(() =>
-        from(this._applicationGraphApiService.getGraph(applicationId)).pipe(
+        from(
+          this._applicationGraphApiService.getGraph(workspaceId, applicationId)
+        ).pipe(
           tap((graph) => {
             if (graph) {
               const drawer = new Drawer(graph, [], drawerElement);
               drawer.initialize();
               this._applicationDrawerStore.setDrawer(drawer);
+
+              this._handleServerGraphUpdate({ workspaceId, applicationId });
+              this._handleServerGraphDelete({ workspaceId, applicationId });
+              this._handleServerNodeCreate({ workspaceId, applicationId });
+              this._handleServerNodeUpdate({ workspaceId, applicationId });
+              this._handleServerNodeDelete({ workspaceId, applicationId });
             }
           })
         )
@@ -598,11 +659,6 @@ export class ApplicationPageComponent
         filter(isOneTapNodeEvent<ApplicationGraphData, ApplicationNodeData>)
       )
     );
-    this._handleServerGraphUpdate(this.applicationId$);
-    this._handleServerGraphDelete(this.applicationId$);
-    this._handleServerNodeCreate(this.applicationId$);
-    this._handleServerNodeUpdate(this.applicationId$);
-    this._handleServerNodeDelete(this.applicationId$);
   }
 
   async ngAfterViewInit() {
@@ -610,10 +666,15 @@ export class ApplicationPageComponent
       const drawerElement = this.pgDrawerElementRef.nativeElement;
 
       this._loadDrawer(
-        this.select(this.applicationId$, (applicationId) => ({
-          applicationId,
-          drawerElement,
-        }))
+        this.select(
+          this.workspaceId$,
+          this.applicationId$,
+          (workspaceId, applicationId) => ({
+            workspaceId,
+            applicationId,
+            drawerElement,
+          })
+        )
       );
     }
   }
@@ -653,10 +714,12 @@ export class ApplicationPageComponent
     applicationId: string,
     event: AddInstructionNodeDto | AddCollectionNodeDto
   ) {
+    const { id, kind, ...payload } = event.data;
     this._applicationDrawerStore.addNode(
       {
-        id: event.data.id,
-        data: { ...event.data, workspaceId, applicationId },
+        id,
+        data: { ...payload, workspaceId, applicationId },
+        kind,
       },
       event.options.position
     );
@@ -666,18 +729,26 @@ export class ApplicationPageComponent
     this._applicationDrawerStore.updateGraph(changes);
   }
 
-  onDeleteGraph(workspaceId: string, graphId: string) {
+  onDeleteGraph(workspaceId: string, graphId: string, kind: string) {
     this._applicationGraphApiService
-      .deleteGraph(environment.clientId, workspaceId, graphId, { isNode: true })
-      .subscribe(() => this._router.navigate(['/lobby']));
+      .deleteNode(environment.clientId, graphId, {
+        graphId,
+        kind,
+        parentIds: [workspaceId],
+        referenceIds: [workspaceId, graphId],
+      })
+      .subscribe();
   }
 
   onUpdateGraphThumbnail(fileId: string, fileUrl: string) {
     this._applicationDrawerStore.updateGraphThumbnail(fileId, fileUrl);
   }
 
-  onUpdateNode(nodeId: string, changes: UpdateCollectionSubmit) {
-    this._applicationDrawerStore.updateNode(nodeId, changes);
+  onUpdateNode(nodeId: string, kind: string, changes: UpdateCollectionSubmit) {
+    this._applicationDrawerStore.updateNode(nodeId, {
+      changes,
+      kind,
+    });
   }
 
   onUpdateNodeThumbnail(nodeId: string, fileId: string, fileUrl: string) {
