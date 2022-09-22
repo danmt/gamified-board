@@ -23,11 +23,10 @@ import {
 import { SlotHotkeyPipe } from '../../shared/pipes';
 import { Option } from '../../shared/utils';
 import {
-  CreateApplicationModalDirective,
   UpdateApplicationModalDirective,
   UpdateApplicationSubmit,
 } from '../components';
-import { WorkspaceNodeData } from '../utils';
+import { ApplicationNodeData } from '../utils';
 
 interface HotKey {
   slot: number;
@@ -36,7 +35,7 @@ interface HotKey {
 }
 
 interface ViewModel {
-  application: Option<Node<WorkspaceNodeData>>;
+  application: Option<Node<'application', ApplicationNodeData>>;
   isUpdating: boolean;
   isUpdatingThumbnail: boolean;
   isDeleting: boolean;
@@ -215,7 +214,6 @@ const initialState: ViewModel = {
     DefaultImageDirective,
     UploadFileModalDirective,
     UpdateApplicationModalDirective,
-    CreateApplicationModalDirective,
     SecondaryDockComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -229,7 +227,9 @@ export class ApplicationDockComponent extends ComponentStore<ViewModel> {
   readonly hotkeys$ = this.select(({ hotkeys }) => hotkeys);
   readonly application$ = this.select(({ application }) => application);
 
-  @Input() set pgApplication(application: Option<Node<WorkspaceNodeData>>) {
+  @Input() set pgApplication(
+    application: Option<Node<'application', ApplicationNodeData>>
+  ) {
     this.patchState({ application });
   }
   @Output() pgApplicationUnselected = new EventEmitter();

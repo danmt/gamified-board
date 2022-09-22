@@ -9,7 +9,6 @@ import {
 } from '@angular/core';
 import { LetModule, PushModule } from '@ngrx/component';
 import { ComponentStore } from '@ngrx/component-store';
-import { Graph } from '../../drawer/utils';
 import {
   ConfirmModalDirective,
   SecondaryDockComponent,
@@ -27,7 +26,7 @@ import {
   UpdateWorkspaceModalDirective,
   UpdateWorkspaceSubmit,
 } from '../components';
-import { WorkspaceGraphData, WorkspaceNodeData } from '../utils';
+import { WorkspaceGraph } from '../utils';
 
 interface HotKey {
   slot: number;
@@ -36,7 +35,7 @@ interface HotKey {
 }
 
 interface ViewModel {
-  workspace: Option<Graph<WorkspaceGraphData, WorkspaceNodeData>>;
+  workspace: Option<WorkspaceGraph>;
   isCreating: boolean;
   isUpdating: boolean;
   isUpdatingThumbnail: boolean;
@@ -224,9 +223,7 @@ export class WorkspaceDockComponent extends ComponentStore<ViewModel> {
   readonly hotkeys$ = this.select(({ hotkeys }) => hotkeys);
   readonly workspace$ = this.select(({ workspace }) => workspace);
 
-  @Input() set pgWorkspace(
-    workspace: Option<Graph<WorkspaceGraphData, WorkspaceNodeData>>
-  ) {
+  @Input() set pgWorkspace(workspace: Option<WorkspaceGraph>) {
     this.patchState({ workspace });
   }
   @Output() pgApplicationActivate = new EventEmitter();

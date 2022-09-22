@@ -37,10 +37,12 @@ import {
 import { openEditInstructionModal } from '../components';
 
 export interface AddInstructionNodeDto {
-  data: Entity<{
+  payload: Entity<{
     kind: 'instruction';
-    name: string;
-    thumbnailUrl: string;
+    data: {
+      name: string;
+      thumbnailUrl: string;
+    };
   }>;
   options: {
     position: {
@@ -132,11 +134,13 @@ export class ActiveInstructionComponent
               if (instruction) {
                 this.pgDeactivate.emit();
                 this.pgAddNode.emit({
-                  data: {
+                  payload: {
                     id: generateId(),
-                    name: instruction.name,
                     kind: 'instruction',
-                    thumbnailUrl: active.thumbnailUrl,
+                    data: {
+                      name: instruction.name,
+                      thumbnailUrl: active.thumbnailUrl,
+                    },
                   },
                   options: {
                     position: event.payload,

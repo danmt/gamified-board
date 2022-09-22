@@ -36,7 +36,7 @@ interface HotKey {
 }
 
 interface ViewModel {
-  instruction: Option<Node<InstructionNodeData>>;
+  instruction: Option<Node<'instruction', InstructionNodeData>>;
   isUpdating: boolean;
   isUpdatingThumbnail: boolean;
   isDeleting: boolean;
@@ -229,7 +229,9 @@ export class InstructionDockComponent extends ComponentStore<ViewModel> {
   readonly hotkeys$ = this.select(({ hotkeys }) => hotkeys);
   readonly instruction$ = this.select(({ instruction }) => instruction);
 
-  @Input() set pgInstruction(instruction: Option<Node<InstructionNodeData>>) {
+  @Input() set pgInstruction(
+    instruction: Option<Node<'instruction', InstructionNodeData>>
+  ) {
     this.patchState({ instruction });
   }
   @Output() pgInstructionUnselected = new EventEmitter();

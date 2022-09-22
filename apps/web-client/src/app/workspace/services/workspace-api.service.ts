@@ -39,9 +39,9 @@ export class WorkspaceApiService {
     return docData(workspaceRef).pipe(
       map((workspace) => ({
         id: workspaceId,
-        data: workspace['data'],
-        nodes: workspace['nodes'],
-        edges: workspace['edges'],
+        name: workspace['name'],
+        userId: workspace['userId'],
+        thumbnailUrl: workspace['thumbnailUrl'],
       }))
     );
   }
@@ -55,9 +55,9 @@ export class WorkspaceApiService {
 
             return {
               id: snapshot.id,
-              data: data['data'],
-              nodes: data['nodes'],
-              edges: data['edges'],
+              name: data['name'],
+              userId: data['userId'],
+              thumbnailUrl: data['thumbnailUrl'],
             };
           },
           toFirestore: (it) => it,

@@ -13,9 +13,8 @@ import {
 } from '@angular/fire/firestore';
 import { concatMap, defer, filter, from, map } from 'rxjs';
 import { GraphApiService } from '../../drawer/services';
-import { Graph } from '../../drawer/utils';
 import { fromSnapshot } from '../../shared/utils';
-import { WorkspaceGraphData, WorkspaceNodeData } from '../utils';
+import { WorkspaceGraph, WorkspaceGraphData } from '../utils';
 
 @Injectable({ providedIn: 'root' })
 export class WorkspaceGraphApiService extends GraphApiService<WorkspaceGraphData> {
@@ -25,9 +24,7 @@ export class WorkspaceGraphApiService extends GraphApiService<WorkspaceGraphData
     super();
   }
 
-  async getGraph(
-    workspaceId: string
-  ): Promise<Graph<WorkspaceGraphData, WorkspaceNodeData> | null> {
+  async getGraph(workspaceId: string): Promise<WorkspaceGraph | null> {
     const graphRef = doc(this._firestore, `graphs/${workspaceId}`);
 
     const graph = await getDoc(graphRef);

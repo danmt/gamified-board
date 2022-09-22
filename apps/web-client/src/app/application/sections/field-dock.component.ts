@@ -32,7 +32,7 @@ interface HotKey {
 }
 
 interface ViewModel {
-  field: Option<Node<FieldNodeData>>;
+  field: Option<Node<'field', FieldNodeData>>;
   isUpdating: boolean;
   isUpdatingThumbnail: boolean;
   isDeleting: boolean;
@@ -218,7 +218,7 @@ export class FieldDockComponent extends ComponentStore<ViewModel> {
   readonly hotkeys$ = this.select(({ hotkeys }) => hotkeys);
   readonly field$ = this.select(({ field }) => field);
 
-  @Input() set pgField(field: Option<Node<FieldNodeData>>) {
+  @Input() set pgField(field: Option<Node<'field', FieldNodeData>>) {
     this.patchState({ field });
   }
   @Output() pgFieldUnselected = new EventEmitter();

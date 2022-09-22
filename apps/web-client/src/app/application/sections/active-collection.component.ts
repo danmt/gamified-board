@@ -37,10 +37,12 @@ import {
 import { openEditCollectionModal } from '../components';
 
 export interface AddCollectionNodeDto {
-  data: Entity<{
+  payload: Entity<{
     kind: 'collection';
-    name: string;
-    thumbnailUrl: string;
+    data: {
+      name: string;
+      thumbnailUrl: string;
+    };
   }>;
   options: {
     position: {
@@ -132,11 +134,13 @@ export class ActiveCollectionComponent
               if (collection) {
                 this.pgDeactivate.emit();
                 this.pgAddNode.emit({
-                  data: {
+                  payload: {
                     id: generateId(),
-                    name: collection.name,
                     kind: 'collection',
-                    thumbnailUrl: active.thumbnailUrl,
+                    data: {
+                      name: collection.name,
+                      thumbnailUrl: active.thumbnailUrl,
+                    },
                   },
                   options: {
                     position: event.payload,

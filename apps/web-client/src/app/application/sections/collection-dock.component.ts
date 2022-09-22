@@ -35,7 +35,7 @@ interface HotKey {
 }
 
 interface ViewModel {
-  collection: Option<Node<CollectionNodeData>>;
+  collection: Option<Node<'collection', CollectionNodeData>>;
   isUpdating: boolean;
   isUpdatingThumbnail: boolean;
   isDeleting: boolean;
@@ -225,7 +225,9 @@ export class CollectionDockComponent extends ComponentStore<ViewModel> {
   readonly hotkeys$ = this.select(({ hotkeys }) => hotkeys);
   readonly collection$ = this.select(({ collection }) => collection);
 
-  @Input() set pgCollection(collection: Option<Node<CollectionNodeData>>) {
+  @Input() set pgCollection(
+    collection: Option<Node<'collection', CollectionNodeData>>
+  ) {
     this.patchState({ collection });
   }
   @Output() pgCollectionUnselected = new EventEmitter();

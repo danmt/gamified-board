@@ -1,3 +1,4 @@
+import { Graph, Node } from '../../drawer/utils';
 import { Entity } from '../../shared/utils';
 
 export type ApplicationDto = Entity<{
@@ -47,3 +48,19 @@ export type ApplicationNodeData =
   | CollectionNodeData
   | InstructionNodeData
   | FieldNodeData;
+
+export type ApplicationNode =
+  | Node<'collection', CollectionNodeData>
+  | Node<'field', FieldNodeData>
+  | Node<'instruction', InstructionNodeData>;
+
+export type ApplicationNodeKinds = 'collection' | 'field' | 'instruction';
+
+export type ApplicationGraphKind = 'application';
+
+export type ApplicationGraph = Graph<
+  ApplicationNodeKinds,
+  ApplicationNodeData,
+  ApplicationGraphKind,
+  ApplicationGraphData
+>;

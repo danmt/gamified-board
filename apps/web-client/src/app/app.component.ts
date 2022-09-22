@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterModule } from '@angular/router';
+import { environment } from '../environments/environment';
 
 @Component({
   selector: 'pg-root',
@@ -8,4 +9,8 @@ import { RouterModule } from '@angular/router';
   imports: [RouterModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AppComponent {}
+export class AppComponent {
+  constructor() {
+    console.log({ clientId: environment.clientId });
+  }
+}

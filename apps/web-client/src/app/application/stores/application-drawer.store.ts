@@ -1,11 +1,18 @@
 import { Injectable } from '@angular/core';
 import { DrawerStore } from '../../drawer/stores';
-import { ApplicationGraphData, ApplicationNodeData } from '../utils';
+import {
+  ApplicationGraphData,
+  ApplicationGraphKind,
+  ApplicationNodeData,
+  ApplicationNodeKinds,
+} from '../utils';
 
 @Injectable()
 export class ApplicationDrawerStore extends DrawerStore<
-  ApplicationGraphData,
-  ApplicationNodeData
+  ApplicationNodeKinds,
+  ApplicationNodeData,
+  ApplicationGraphKind,
+  ApplicationGraphData
 > {
   constructor() {
     super();

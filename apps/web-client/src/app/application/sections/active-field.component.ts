@@ -35,13 +35,16 @@ import {
   Option,
 } from '../../shared/utils';
 import { openEditFieldModal } from '../components';
+import { FieldType } from '../utils';
 
 export interface AddFieldNodeDto {
-  data: Entity<{
+  payload: Entity<{
     kind: 'field';
-    name: string;
-    thumbnailUrl: string;
-    type: string;
+    data: {
+      name: string;
+      thumbnailUrl: string;
+      type: FieldType;
+    };
   }>;
   options: {
     position: {
@@ -133,12 +136,14 @@ export class ActiveFieldComponent
               if (field) {
                 this.pgDeactivate.emit();
                 this.pgAddNode.emit({
-                  data: {
+                  payload: {
                     id: generateId(),
-                    name: field.name,
-                    type: field.type,
                     kind: 'field',
-                    thumbnailUrl: active.thumbnailUrl,
+                    data: {
+                      name: field.name,
+                      type: field.type,
+                      thumbnailUrl: active.thumbnailUrl,
+                    },
                   },
                   options: {
                     position: event.payload,

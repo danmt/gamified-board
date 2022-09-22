@@ -36,11 +36,13 @@ import {
 } from '../../shared/utils';
 import { openEditApplicationModal } from '../components';
 
-export interface AddNodeDto {
-  data: Entity<{
-    kind: string;
-    name: string;
-    thumbnailUrl: string;
+export interface AddApplicationNodeDto {
+  payload: Entity<{
+    kind: 'application';
+    data: {
+      name: string;
+      thumbnailUrl: string;
+    };
   }>;
   options: {
     position: {
@@ -109,7 +111,7 @@ export class ActiveApplicationComponent
       this._handleDrawerClick(event);
     }
   }
-  @Output() pgAddNode = new EventEmitter<AddNodeDto>();
+  @Output() pgAddNode = new EventEmitter<AddApplicationNodeDto>();
   @Output() pgDeactivate = new EventEmitter();
 
   private readonly _handleDrawerClick = this.effect<ClickEvent>(
@@ -132,11 +134,13 @@ export class ActiveApplicationComponent
               if (application) {
                 this.pgDeactivate.emit();
                 this.pgAddNode.emit({
-                  data: {
-                    id: generateId(),
-                    name: application.name,
+                  payload: {
                     kind: 'application',
-                    thumbnailUrl: active.thumbnailUrl,
+                    data: {
+                      name: application.name,
+                      thumbnailUrl: active.thumbnailUrl,
+                    },
+                    id: generateId(),
                   },
                   options: {
                     position: event.payload,

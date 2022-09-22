@@ -13,9 +13,8 @@ import {
 } from '@angular/fire/firestore';
 import { concatMap, defer, filter, from, map } from 'rxjs';
 import { GraphApiService } from '../../drawer/services';
-import { Graph } from '../../drawer/utils';
-import { fromSnapshot } from '../../shared/utils';
-import { ApplicationGraphData, ApplicationNodeData } from '../utils';
+import { fromSnapshot, Option } from '../../shared/utils';
+import { ApplicationGraph, ApplicationGraphData } from '../utils';
 
 @Injectable({ providedIn: 'root' })
 export class ApplicationGraphApiService extends GraphApiService<ApplicationGraphData> {
@@ -28,7 +27,7 @@ export class ApplicationGraphApiService extends GraphApiService<ApplicationGraph
   async getGraph(
     workspaceId: string,
     applicationId: string
-  ): Promise<Graph<ApplicationGraphData, ApplicationNodeData> | null> {
+  ): Promise<Option<ApplicationGraph>> {
     const graphRef = doc(
       this._firestore,
       `graphs/${workspaceId}/nodes/${applicationId}`

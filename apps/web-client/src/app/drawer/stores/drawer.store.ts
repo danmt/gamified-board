@@ -3,23 +3,35 @@ import { EdgeDataDefinition } from 'cytoscape';
 import { EMPTY, filter, firstValueFrom, of, switchMap, tap } from 'rxjs';
 import { isNull, Option } from '../../shared/utils';
 import {
+  DefaultGraphDataType,
+  DefaultNodeDataType,
   Direction,
   Drawer,
-  GraphDataType,
   isGraphScrolledEvent,
   isPanDraggedEvent,
   Node,
-  NodeDataType,
 } from '../utils';
 
-interface ViewModel<T extends GraphDataType, U extends NodeDataType> {
-  drawer: Option<Drawer<T, U>>;
+interface ViewModel<
+  NodeKinds extends string,
+  NodeDataType extends DefaultNodeDataType,
+  GraphKind extends string,
+  GraphDataType extends DefaultGraphDataType
+> {
+  drawer: Option<Drawer<NodeKinds, NodeDataType, GraphKind, GraphDataType>>;
   direction: Direction;
   drawMode: boolean;
 }
 
-export class DrawerStore<T extends GraphDataType, U extends NodeDataType>
-  extends ComponentStore<ViewModel<T, U>>
+export class DrawerStore<
+    NodeKinds extends string,
+    NodeDataType extends DefaultNodeDataType,
+    GraphKind extends string,
+    GraphDataType extends DefaultGraphDataType
+  >
+  extends ComponentStore<
+    ViewModel<NodeKinds, NodeDataType, GraphKind, GraphDataType>
+  >
   implements OnStoreInit
 {
   readonly direction$ = this.select(({ direction }) => direction);
@@ -58,7 +70,9 @@ export class DrawerStore<T extends GraphDataType, U extends NodeDataType>
     (event) => ({ x: event.payload.x, y: event.payload.y })
   );
 
-  readonly setDrawer = this.updater<Option<Drawer<T, U>>>((state, drawer) => ({
+  readonly setDrawer = this.updater<
+    Option<Drawer<NodeKinds, NodeDataType, GraphKind, GraphDataType>>
+  >((state, drawer) => ({
     ...state,
     drawer,
   }));
@@ -74,7 +88,7 @@ export class DrawerStore<T extends GraphDataType, U extends NodeDataType>
   }));
 
   private readonly _handleDrawModeChange = this.effect<{
-    drawer: Option<Drawer<T, U>>;
+    drawer: Option<Drawer<NodeKinds, NodeDataType, GraphKind, GraphDataType>>;
     drawMode: boolean;
   }>(
     tap(({ drawer, drawMode }) => {
@@ -85,7 +99,7 @@ export class DrawerStore<T extends GraphDataType, U extends NodeDataType>
   );
 
   private readonly _handleDirectionChange = this.effect<{
-    drawer: Option<Drawer<T, U>>;
+    drawer: Option<Drawer<NodeKinds, NodeDataType, GraphKind, GraphDataType>>;
     direction: Direction;
   }>(
     tap(({ drawer, direction }) => {
@@ -126,7 +140,7 @@ export class DrawerStore<T extends GraphDataType, U extends NodeDataType>
     }
   }
 
-  async updateGraph(changes: Partial<T>) {
+  async updateGraph(changes: Partial<GraphDataType>) {
     const drawer = await firstValueFrom(this.drawer$);
 
     if (drawer !== null) {
@@ -142,7 +156,10 @@ export class DrawerStore<T extends GraphDataType, U extends NodeDataType>
     }
   }
 
-  async addNode(nodeData: Node<U>, position?: { x: number; y: number }) {
+  async addNode(
+    nodeData: Node<NodeKinds, NodeDataType>,
+    position?: { x: number; y: number }
+  ) {
     const drawer = await firstValueFrom(this.drawer$);
 
     if (drawer !== null) {
@@ -152,7 +169,7 @@ export class DrawerStore<T extends GraphDataType, U extends NodeDataType>
 
   async updateNode(
     nodeId: string,
-    payload: { changes: Partial<U>; kind: string }
+    payload: { changes: Partial<NodeDataType>; kind: string }
   ) {
     const drawer = await firstValueFrom(this.drawer$);
 
@@ -177,7 +194,7 @@ export class DrawerStore<T extends GraphDataType, U extends NodeDataType>
     }
   }
 
-  async handleGraphUpdated(changes: Partial<T>) {
+  async handleGraphUpdated(changes: Partial<GraphDataType>) {
     const drawer = await firstValueFrom(this.drawer$);
 
     if (drawer !== null) {
@@ -193,7 +210,7 @@ export class DrawerStore<T extends GraphDataType, U extends NodeDataType>
     }
   }
 
-  async handleNodeAdded(node: Node<U>) {
+  async handleNodeAdded(node: Node<NodeKinds, NodeDataType>) {
     const drawer = await firstValueFrom(this.drawer$);
 
     if (drawer !== null) {
@@ -201,7 +218,7 @@ export class DrawerStore<T extends GraphDataType, U extends NodeDataType>
     }
   }
 
-  async handleNodeUpdated(nodeId: string, changes: Partial<U>) {
+  async handleNodeUpdated(nodeId: string, changes: Partial<NodeDataType>) {
     const drawer = await firstValueFrom(this.drawer$);
 
     if (drawer !== null) {

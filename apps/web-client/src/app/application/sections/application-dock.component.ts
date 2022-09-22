@@ -10,7 +10,6 @@ import {
 import { LetModule, PushModule } from '@ngrx/component';
 import { ComponentStore } from '@ngrx/component-store';
 import { CreateCollectionModalDirective } from '../../collection/components';
-import { Graph } from '../../drawer/utils';
 import {
   ConfirmModalDirective,
   SecondaryDockComponent,
@@ -27,7 +26,7 @@ import {
   UpdateApplicationModalDirective,
   UpdateApplicationSubmit,
 } from '../components';
-import { ApplicationGraphData, ApplicationNodeData } from '../utils';
+import { ApplicationGraph } from '../utils';
 
 interface HotKey {
   slot: number;
@@ -36,7 +35,7 @@ interface HotKey {
 }
 
 interface ViewModel {
-  application: Option<Graph<ApplicationGraphData, ApplicationNodeData>>;
+  application: Option<ApplicationGraph>;
   isCreating: boolean;
   isUpdating: boolean;
   isUpdatingThumbnail: boolean;
@@ -254,9 +253,7 @@ export class ApplicationDockComponent extends ComponentStore<ViewModel> {
   readonly hotkeys$ = this.select(({ hotkeys }) => hotkeys);
   readonly application$ = this.select(({ application }) => application);
 
-  @Input() set pgApplication(
-    application: Option<Graph<ApplicationGraphData, ApplicationNodeData>>
-  ) {
+  @Input() set pgApplication(application: Option<ApplicationGraph>) {
     this.patchState({ application });
   }
   @Output() pgActivateCollection = new EventEmitter();

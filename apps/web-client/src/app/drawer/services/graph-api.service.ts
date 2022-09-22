@@ -1,6 +1,6 @@
 import { inject } from '@angular/core';
 import { Entity } from '../../shared/utils';
-import { GraphDataType, NodeDataType } from '../utils';
+import { DefaultGraphDataType, DefaultNodeDataType } from '../utils';
 import { EventApiService } from './event-api.service';
 
 export type CreateGraphDto<T> = T &
@@ -58,7 +58,7 @@ export interface UpdateNodeThumbnailDto {
   referenceIds: string[];
 }
 
-export class GraphApiService<T extends GraphDataType> {
+export class GraphApiService<T extends DefaultGraphDataType> {
   private readonly _eventApiService = inject(EventApiService);
 
   createGraph(clientId: string, payload: CreateGraphDto<T>) {
@@ -71,7 +71,7 @@ export class GraphApiService<T extends GraphDataType> {
   updateGraph(
     clientId: string,
     id: string,
-    payload: UpdateGraphDto<GraphDataType>
+    payload: UpdateGraphDto<DefaultGraphDataType>
   ) {
     return this._eventApiService.emit(clientId, {
       type: 'updateGraph',
@@ -100,7 +100,7 @@ export class GraphApiService<T extends GraphDataType> {
     });
   }
 
-  createNode(clientId: string, payload: CreateNodeDto<NodeDataType>) {
+  createNode(clientId: string, payload: CreateNodeDto<DefaultNodeDataType>) {
     return this._eventApiService.emit(clientId, {
       type: 'createNode',
       payload: payload,
@@ -110,7 +110,7 @@ export class GraphApiService<T extends GraphDataType> {
   updateNode(
     clientId: string,
     id: string,
-    payload: UpdateNodeDto<NodeDataType>
+    payload: UpdateNodeDto<DefaultNodeDataType>
   ) {
     return this._eventApiService.emit(clientId, {
       type: 'updateNode',
