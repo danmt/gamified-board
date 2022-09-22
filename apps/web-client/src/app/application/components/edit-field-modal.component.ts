@@ -23,43 +23,51 @@ import {
 } from '../../shared/directives';
 import { Entity, isNull, Option } from '../../shared/utils';
 
-export type Instruction = Entity<{
-  data: { name: string };
+export type FieldType =
+  | 'u8'
+  | 'u16'
+  | 'u32'
+  | 'u64'
+  | 'string'
+  | 'pubkey'
+  | 'struct';
+
+export type Field = Entity<{
+  data: { name: string; type: FieldType };
 }>;
 
-export interface EditInstructionData {
-  instruction: Option<Instruction>;
+export interface EditFieldData {
+  field: Option<Field>;
 }
 
-export type CreateInstructionSubmit = {
+export type CreateFieldSubmit = {
   name: string;
+  type: FieldType;
 };
 
-export type UpdateInstructionSubmit = {
+export type UpdateFieldSubmit = {
   name: string;
+  type: FieldType;
 };
 
-export const openEditInstructionModal = (
-  dialog: Dialog,
-  data: EditInstructionData
-) =>
+export const openEditFieldModal = (dialog: Dialog, data: EditFieldData) =>
   dialog.open<
-    CreateInstructionSubmit | UpdateInstructionSubmit,
-    EditInstructionData,
-    EditInstructionModalComponent
-  >(EditInstructionModalComponent, {
+    CreateFieldSubmit | UpdateFieldSubmit,
+    EditFieldData,
+    EditFieldModalComponent
+  >(EditFieldModalComponent, {
     data,
   });
 
 @Directive({
-  selector: '[pgCreateInstructionModal]',
+  selector: '[pgCreateFieldModal]',
   standalone: true,
   exportAs: 'modal',
 })
-export class CreateInstructionModalDirective {
+export class CreateFieldModalDirective {
   private readonly _dialog = inject(Dialog);
 
-  @Output() pgCreateInstruction = new EventEmitter<CreateInstructionSubmit>();
+  @Output() pgCreateField = new EventEmitter<CreateFieldSubmit>();
   @Output() pgOpenModal = new EventEmitter();
   @Output() pgCloseModal = new EventEmitter();
 
@@ -70,29 +78,29 @@ export class CreateInstructionModalDirective {
   open() {
     this.pgOpenModal.emit();
 
-    openEditInstructionModal(this._dialog, {
-      instruction: null,
-    }).closed.subscribe((instructionData) => {
+    openEditFieldModal(this._dialog, {
+      field: null,
+    }).closed.subscribe((fieldData) => {
       this.pgCloseModal.emit();
 
-      if (instructionData !== undefined) {
-        this.pgCreateInstruction.emit(instructionData);
+      if (fieldData !== undefined) {
+        this.pgCreateField.emit(fieldData);
       }
     });
   }
 }
 
 @Directive({
-  selector: '[pgUpdateInstructionModal]',
+  selector: '[pgUpdateFieldModal]',
   standalone: true,
   exportAs: 'modal',
 })
-export class UpdateInstructionModalDirective {
+export class UpdateFieldModalDirective {
   private readonly _dialog = inject(Dialog);
 
-  @Input() pgInstruction: Option<Instruction> = null;
+  @Input() pgField: Option<Field> = null;
 
-  @Output() pgUpdateInstruction = new EventEmitter<UpdateInstructionSubmit>();
+  @Output() pgUpdateField = new EventEmitter<UpdateFieldSubmit>();
   @Output() pgOpenModal = new EventEmitter();
   @Output() pgCloseModal = new EventEmitter();
 
@@ -101,26 +109,26 @@ export class UpdateInstructionModalDirective {
   }
 
   open() {
-    if (isNull(this.pgInstruction)) {
-      throw new Error('pgInstruction is missing');
+    if (isNull(this.pgField)) {
+      throw new Error('pgField is missing');
     }
 
     this.pgOpenModal.emit();
 
-    openEditInstructionModal(this._dialog, {
-      instruction: this.pgInstruction,
-    }).closed.subscribe((instructionData) => {
+    openEditFieldModal(this._dialog, {
+      field: this.pgField,
+    }).closed.subscribe((fieldData) => {
       this.pgCloseModal.emit();
 
-      if (instructionData !== undefined) {
-        this.pgUpdateInstruction.emit(instructionData);
+      if (fieldData !== undefined) {
+        this.pgUpdateField.emit(fieldData);
       }
     });
   }
 }
 
 @Component({
-  selector: 'pg-edit-instruction-modal',
+  selector: 'pg-edit-field-modal',
   template: `
     <pg-modal
       class="text-white min-w-[400px] min-h-[300px]"
@@ -131,7 +139,7 @@ export class UpdateInstructionModalDirective {
     >
       <div class="flex justify-between w-full">
         <h1 class="text-center text-3xl mb-4 bp-font-game-title uppercase">
-          {{ instruction === null ? 'Create' : 'Update' }} instruction
+          {{ field === null ? 'Create' : 'Update' }} field
         </h1>
       </div>
 
@@ -141,18 +149,38 @@ export class UpdateInstructionModalDirective {
         class="overflow-y-auto max-h-[515px]"
       >
         <div class="mb-4">
-          <label
-            class="block bp-font-game text-xl"
-            for="instruction-name-input"
-          >
-            Instruction name
+          <label class="block bp-font-game text-xl" for="field-name-input">
+            Field name
           </label>
           <input
             class="bp-input-futuristic p-4 outline-0"
-            id="instruction-name-input"
+            id="field-name-input"
             type="text"
             formControlName="name"
           />
+        </div>
+
+        <div class="mb-4">
+          <label class="block bp-font-game text-xl" for="field-type-input">
+            Field type
+          </label>
+
+          <select
+            class="block bg-transparent"
+            formControlName="type"
+            id="field-type-input"
+          >
+            <option class="text-black" value="" selected="selected" disabled>
+              Field type
+            </option>
+            <option class="text-black" value="u8">u8</option>
+            <option class="text-black" value="u16">u16</option>
+            <option class="text-black" value="u32">u32</option>
+            <option class="text-black" value="u64">u64</option>
+            <option class="text-black" value="string">String</option>
+            <option class="text-black" value="pubkey">Pubkey</option>
+            <option class="text-black" value="struct">Struct</option>
+          </select>
         </div>
 
         <div class="flex justify-center items-center mt-10 mb-14">
@@ -160,7 +188,7 @@ export class UpdateInstructionModalDirective {
             type="submit"
             class="bp-button-futuristic text-black bp-font-game uppercase"
           >
-            {{ instruction === null ? 'Send' : 'Save' }}
+            {{ field === null ? 'Send' : 'Save' }}
           </button>
         </div>
       </form>
@@ -176,20 +204,21 @@ export class UpdateInstructionModalDirective {
     ModalComponent,
   ],
 })
-export class EditInstructionModalComponent {
+export class EditFieldModalComponent {
   private readonly _dialogRef =
     inject<
-      DialogRef<
-        CreateInstructionSubmit | UpdateInstructionSubmit,
-        EditInstructionModalComponent
-      >
+      DialogRef<CreateFieldSubmit | UpdateFieldSubmit, EditFieldModalComponent>
     >(DialogRef);
   private readonly _formBuilder = inject(FormBuilder);
-  private readonly _data = inject<EditInstructionData>(DIALOG_DATA);
+  private readonly _data = inject<EditFieldData>(DIALOG_DATA);
 
-  readonly instruction = this._data.instruction;
+  readonly field = this._data.field;
   readonly form = this._formBuilder.group({
-    name: this._formBuilder.control<string>(this.instruction?.data.name ?? '', {
+    name: this._formBuilder.control<string>(this.field?.data.name ?? '', {
+      validators: [Validators.required],
+      nonNullable: true,
+    }),
+    type: this._formBuilder.control<FieldType>(this.field?.data.type ?? 'u8', {
       validators: [Validators.required],
       nonNullable: true,
     }),
@@ -199,12 +228,18 @@ export class EditInstructionModalComponent {
     return this.form.get('name') as FormControl<string>;
   }
 
+  get typeControl() {
+    return this.form.get('type') as FormControl<FieldType>;
+  }
+
   onSubmit() {
     if (this.form.valid) {
       const name = this.nameControl.value;
+      const type = this.typeControl.value;
 
       this._dialogRef.close({
         name,
+        type,
       });
     }
   }

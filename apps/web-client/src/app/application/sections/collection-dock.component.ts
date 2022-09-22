@@ -26,7 +26,7 @@ import {
   UpdateCollectionModalDirective,
   UpdateCollectionSubmit,
 } from '../components';
-import { ApplicationNodeData } from '../utils';
+import { CollectionNodeData } from '../utils';
 
 interface HotKey {
   slot: number;
@@ -35,7 +35,7 @@ interface HotKey {
 }
 
 interface ViewModel {
-  collection: Option<Node<ApplicationNodeData>>;
+  collection: Option<Node<CollectionNodeData>>;
   isUpdating: boolean;
   isUpdatingThumbnail: boolean;
   isDeleting: boolean;
@@ -225,7 +225,7 @@ export class CollectionDockComponent extends ComponentStore<ViewModel> {
   readonly hotkeys$ = this.select(({ hotkeys }) => hotkeys);
   readonly collection$ = this.select(({ collection }) => collection);
 
-  @Input() set pgCollection(collection: Option<Node<ApplicationNodeData>>) {
+  @Input() set pgCollection(collection: Option<Node<CollectionNodeData>>) {
     this.patchState({ collection });
   }
   @Output() pgCollectionUnselected = new EventEmitter();

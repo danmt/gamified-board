@@ -54,11 +54,14 @@ import {
 import { isNotNull, isNull, Option } from '../../shared/utils';
 import {
   ActiveCollectionComponent,
+  ActiveFieldComponent,
   ActiveInstructionComponent,
   AddCollectionNodeDto,
+  AddFieldNodeDto,
   AddInstructionNodeDto,
   ApplicationDockComponent,
   CollectionDockComponent,
+  FieldDockComponent,
   InstructionDockComponent,
   RightDockComponent,
 } from '../sections';
@@ -67,6 +70,7 @@ import { ApplicationDrawerStore } from '../stores';
 import { ApplicationGraphData, ApplicationNodeData } from '../utils';
 
 interface ViewModel {
+  isCreatingField: boolean;
   isCreatingCollection: boolean;
   isCreatingInstruction: boolean;
   applicationId: Option<string>;
@@ -74,6 +78,7 @@ interface ViewModel {
 }
 
 const initialState: ViewModel = {
+  isCreatingField: false,
   isCreatingCollection: false,
   isCreatingInstruction: false,
   applicationId: null,
@@ -115,7 +120,7 @@ const initialState: ViewModel = {
         *ngIf="selected.kind === 'collection'"
         class="fixed bottom-0 -translate-x-1/2 left-1/2"
         [pgCollection]="selected"
-        (pgCollectionUnselected)="onCollectionUnselected()"
+        (pgCollectionUnselected)="onUnselect()"
         (pgUpdateCollection)="
           onUpdateNode($event.id, 'collection', $event.changes)
         "
@@ -129,7 +134,7 @@ const initialState: ViewModel = {
         *ngIf="selected.kind === 'instruction'"
         class="fixed bottom-0 -translate-x-1/2 left-1/2"
         [pgInstruction]="selected"
-        (pgInstructionUnselected)="onInstructionUnselected()"
+        (pgInstructionUnselected)="onUnselect()"
         (pgUpdateInstruction)="
           onUpdateNode($event.id, 'instruction', $event.changes)
         "
@@ -138,9 +143,24 @@ const initialState: ViewModel = {
         "
         (pgDeleteInstruction)="onRemoveNode($event)"
       ></pg-instruction-dock>
+
+      <!-- <pg-field-dock
+        *ngIf="selected.kind === 'field'"
+        class="fixed bottom-0 -translate-x-1/2 left-1/2"
+        [pgField]="selected"
+        (pgFieldUnselected)="onUnselect()"
+        (pgUpdateField)="onUpdateNode($event.id, 'field', $event.changes)"
+        (pgUpdateFieldThumbnail)="
+          onUpdateNodeThumbnail($event.id, $event.fileId, $event.fileUrl)
+        "
+        (pgDeleteField)="onRemoveNode($event)"
+      ></pg-field-dock> -->
     </ng-container>
 
-    <pg-right-dock class="fixed bottom-0 right-0"></pg-right-dock>
+    <pg-right-dock
+      class="fixed bottom-0 right-0"
+      (pgActivateField)="onActivateField()"
+    ></pg-right-dock>
 
     <pg-active-collection
       *ngIf="application$ | ngrxPush as application"
@@ -169,6 +189,20 @@ const initialState: ViewModel = {
       "
       (pgDeactivate)="onDeactivateInstruction()"
     ></pg-active-instruction>
+
+    <pg-active-field
+      *ngIf="application$ | ngrxPush as application"
+      [pgActive]="
+        (isCreatingField$ | ngrxPush)
+          ? { thumbnailUrl: 'assets/generic/field.png' }
+          : null
+      "
+      [pgClickEvent]="(drawerClick$ | ngrxPush) ?? null"
+      (pgAddNode)="
+        onAddNode(application.data.workspaceId, application.id, $event)
+      "
+      (pgDeactivate)="onDeactivateField()"
+    ></pg-active-field>
   `,
   standalone: true,
   imports: [
@@ -178,9 +212,11 @@ const initialState: ViewModel = {
     ApplicationDockComponent,
     CollectionDockComponent,
     InstructionDockComponent,
+    FieldDockComponent,
     RightDockComponent,
     ActiveCollectionComponent,
     ActiveInstructionComponent,
+    ActiveFieldComponent,
     BackgroundImageZoomDirective,
     BackgroundImageMoveDirective,
   ],
@@ -197,6 +233,9 @@ export class ApplicationPageComponent
   private readonly _activatedRoute = inject(ActivatedRoute);
   private readonly _applicationDrawerStore = inject(ApplicationDrawerStore);
 
+  readonly isCreatingField$ = this.select(
+    ({ isCreatingField }) => isCreatingField
+  );
   readonly isCreatingCollection$ = this.select(
     ({ isCreatingCollection }) => isCreatingCollection
   );
@@ -679,10 +718,23 @@ export class ApplicationPageComponent
     }
   }
 
+  onActivateField() {
+    this.patchState({
+      isCreatingField: true,
+      isCreatingCollection: false,
+      isCreatingInstruction: false,
+    });
+  }
+
+  onDeactivateField() {
+    this.patchState({ isCreatingField: false });
+  }
+
   onActivateCollection() {
     this.patchState({
       isCreatingCollection: true,
       isCreatingInstruction: false,
+      isCreatingField: false,
     });
   }
 
@@ -694,6 +746,7 @@ export class ApplicationPageComponent
     this.patchState({
       isCreatingInstruction: true,
       isCreatingCollection: false,
+      isCreatingField: false,
     });
   }
 
@@ -701,18 +754,14 @@ export class ApplicationPageComponent
     this.patchState({ isCreatingInstruction: false });
   }
 
-  onCollectionUnselected() {
-    this.patchState({ selected: null });
-  }
-
-  onInstructionUnselected() {
+  onUnselect() {
     this.patchState({ selected: null });
   }
 
   onAddNode(
     workspaceId: string,
     applicationId: string,
-    event: AddInstructionNodeDto | AddCollectionNodeDto
+    event: AddInstructionNodeDto | AddCollectionNodeDto | AddFieldNodeDto
   ) {
     const { id, kind, ...payload } = event.data;
     this._applicationDrawerStore.addNode(

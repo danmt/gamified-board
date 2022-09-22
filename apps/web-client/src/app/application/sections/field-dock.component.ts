@@ -22,12 +22,8 @@ import {
 } from '../../shared/directives';
 import { SlotHotkeyPipe } from '../../shared/pipes';
 import { Option } from '../../shared/utils';
-import {
-  CreateInstructionModalDirective,
-  UpdateInstructionModalDirective,
-  UpdateInstructionSubmit,
-} from '../components';
-import { InstructionNodeData } from '../utils';
+import { UpdateFieldModalDirective, UpdateFieldSubmit } from '../components';
+import { FieldNodeData } from '../utils';
 
 interface HotKey {
   slot: number;
@@ -36,7 +32,7 @@ interface HotKey {
 }
 
 interface ViewModel {
-  instruction: Option<Node<InstructionNodeData>>;
+  field: Option<Node<FieldNodeData>>;
   isUpdating: boolean;
   isUpdatingThumbnail: boolean;
   isDeleting: boolean;
@@ -44,7 +40,7 @@ interface ViewModel {
 }
 
 const initialState: ViewModel = {
-  instruction: null,
+  field: null,
   isUpdating: false,
   isUpdatingThumbnail: false,
   isDeleting: false,
@@ -73,24 +69,24 @@ const initialState: ViewModel = {
 };
 
 @Component({
-  selector: 'pg-instruction-dock',
+  selector: 'pg-field-dock',
   template: `
     <pg-secondary-dock
-      *ngIf="instruction$ | ngrxPush as instruction"
+      *ngIf="field$ | ngrxPush as field"
       class="text-white block bp-font-game"
       pgKeyListener="Escape"
-      (pgKeyDown)="onUnselectInstruction()"
+      (pgKeyDown)="onUnselectField()"
     >
       <div class="flex gap-4 justify-center items-start">
         <img
-          [src]="instruction.data.thumbnailUrl"
-          pgDefaultImageUrl="assets/generic/instruction.png"
+          [src]="field.data.thumbnailUrl"
+          pgDefaultImageUrl="assets/generic/field.png"
           class="w-[100px] h-[106px] overflow-hidden rounded-xl"
         />
 
         <div>
           <h2 class="text-xl">Name</h2>
-          <p class="text-base">{{ instruction.data.name }}</p>
+          <p class="text-base">{{ field.data.name }}</p>
         </div>
 
         <div class="ml-10">
@@ -104,23 +100,21 @@ const initialState: ViewModel = {
                   class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
                   style="font-size: 0.5rem; line-height: 0.5rem"
                   [pgKeyListener]="hotkeys[0].code"
-                  (pgKeyDown)="updateInstructionModal.open()"
+                  (pgKeyDown)="updateFieldModal.open()"
                 >
                   {{ hotkey }}
                 </span>
               </ng-container>
 
               <pg-square-button
-                pgThumbnailUrl="assets/generic/instruction.png"
+                pgThumbnailUrl="assets/generic/field.png"
                 [pgIsActive]="false"
-                pgUpdateInstructionModal
-                #updateInstructionModal="modal"
-                [pgInstruction]="instruction"
+                pgUpdateFieldModal
+                #updateFieldModal="modal"
+                [pgField]="field"
                 (pgOpenModal)="setIsUpdating(true)"
                 (pgCloseModal)="setIsUpdating(false)"
-                (pgUpdateInstruction)="
-                  onUpdateInstruction(instruction.id, $event)
-                "
+                (pgUpdateField)="onUpdateField(field.id, $event)"
               ></pg-square-button>
             </div>
 
@@ -131,23 +125,19 @@ const initialState: ViewModel = {
                   class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
                   style="font-size: 0.5rem; line-height: 0.5rem"
                   [pgKeyListener]="hotkeys[1].code"
-                  (pgKeyDown)="updateInstructionThumbnailModal.open()"
+                  (pgKeyDown)="updateFieldThumbnailModal.open()"
                 >
                   {{ hotkey }}
                 </span>
               </ng-container>
 
               <pg-square-button
-                pgThumbnailUrl="assets/generic/instruction.png"
+                pgThumbnailUrl="assets/generic/field.png"
                 [pgIsActive]="(isUpdatingThumbnail$ | ngrxPush) ?? false"
                 pgUploadFileModal
-                #updateInstructionThumbnailModal="modal"
+                #updateFieldThumbnailModal="modal"
                 (pgSubmit)="
-                  onUploadThumbnail(
-                    instruction.id,
-                    $event.fileId,
-                    $event.fileUrl
-                  )
+                  onUploadThumbnail(field.id, $event.fileId, $event.fileUrl)
                 "
                 (pgOpenModal)="setIsUpdatingThumbnail(true)"
                 (pgCloseModal)="setIsUpdatingThumbnail(false)"
@@ -161,7 +151,7 @@ const initialState: ViewModel = {
                   class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
                   style="font-size: 0.5rem; line-height: 0.5rem"
                   [pgKeyListener]="hotkeys[2].code"
-                  (pgKeyDown)="deleteInstructionModal.open()"
+                  (pgKeyDown)="deleteFieldModal.open()"
                 >
                   {{ hotkey }}
                 </span>
@@ -169,10 +159,10 @@ const initialState: ViewModel = {
 
               <pg-square-button
                 [pgIsActive]="(isDeleting$ | ngrxPush) ?? false"
-                pgThumbnailUrl="assets/generic/instruction.png"
-                (pgConfirm)="onDeleteInstruction(instruction.id)"
+                pgThumbnailUrl="assets/generic/field.png"
+                (pgConfirm)="onDeleteField(field.id)"
                 pgConfirmModal
-                #deleteInstructionModal="modal"
+                #deleteFieldModal="modal"
                 pgMessage="Are you sure? This action cannot be reverted."
                 (pgOpenModal)="setIsDeleting(true)"
                 (pgCloseModal)="setIsDeleting(false)"
@@ -186,15 +176,15 @@ const initialState: ViewModel = {
                   class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
                   style="font-size: 0.5rem; line-height: 0.5rem"
                   [pgKeyListener]="hotkeys[3].code"
-                  (pgKeyDown)="onUnselectInstruction()"
+                  (pgKeyDown)="onUnselectField()"
                 >
                   {{ hotkey }}
                 </span>
               </ng-container>
 
               <pg-square-button
-                pgThumbnailUrl="assets/generic/instruction.png"
-                (click)="onUnselectInstruction()"
+                pgThumbnailUrl="assets/generic/field.png"
+                (click)="onUnselectField()"
               ></pg-square-button>
             </div>
           </div>
@@ -214,35 +204,34 @@ const initialState: ViewModel = {
     ConfirmModalDirective,
     DefaultImageDirective,
     UploadFileModalDirective,
-    UpdateInstructionModalDirective,
-    CreateInstructionModalDirective,
+    UpdateFieldModalDirective,
     SecondaryDockComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class InstructionDockComponent extends ComponentStore<ViewModel> {
+export class FieldDockComponent extends ComponentStore<ViewModel> {
   readonly isUpdating$ = this.select(({ isUpdating }) => isUpdating);
   readonly isUpdatingThumbnail$ = this.select(
     ({ isUpdatingThumbnail }) => isUpdatingThumbnail
   );
   readonly isDeleting$ = this.select(({ isDeleting }) => isDeleting);
   readonly hotkeys$ = this.select(({ hotkeys }) => hotkeys);
-  readonly instruction$ = this.select(({ instruction }) => instruction);
+  readonly field$ = this.select(({ field }) => field);
 
-  @Input() set pgInstruction(instruction: Option<Node<InstructionNodeData>>) {
-    this.patchState({ instruction });
+  @Input() set pgField(field: Option<Node<FieldNodeData>>) {
+    this.patchState({ field });
   }
-  @Output() pgInstructionUnselected = new EventEmitter();
-  @Output() pgUpdateInstruction = new EventEmitter<{
+  @Output() pgFieldUnselected = new EventEmitter();
+  @Output() pgUpdateField = new EventEmitter<{
     id: string;
-    changes: UpdateInstructionSubmit;
+    changes: UpdateFieldSubmit;
   }>();
-  @Output() pgUpdateInstructionThumbnail = new EventEmitter<{
+  @Output() pgUpdateFieldThumbnail = new EventEmitter<{
     id: string;
     fileId: string;
     fileUrl: string;
   }>();
-  @Output() pgDeleteInstruction = new EventEmitter<string>();
+  @Output() pgDeleteField = new EventEmitter<string>();
 
   readonly setIsUpdating = this.updater<boolean>((state, isUpdating) => ({
     ...state,
@@ -265,29 +254,26 @@ export class InstructionDockComponent extends ComponentStore<ViewModel> {
     super(initialState);
   }
 
-  onUpdateInstruction(
-    instructionId: string,
-    instructionData: UpdateInstructionSubmit
-  ) {
-    this.pgUpdateInstruction.emit({
-      id: instructionId,
-      changes: instructionData,
+  onUpdateField(fieldId: string, fieldData: UpdateFieldSubmit) {
+    this.pgUpdateField.emit({
+      id: fieldId,
+      changes: fieldData,
     });
   }
 
-  onUploadThumbnail(instructionId: string, fileId: string, fileUrl: string) {
-    this.pgUpdateInstructionThumbnail.emit({
-      id: instructionId,
+  onUploadThumbnail(fieldId: string, fileId: string, fileUrl: string) {
+    this.pgUpdateFieldThumbnail.emit({
+      id: fieldId,
       fileId,
       fileUrl,
     });
   }
 
-  onDeleteInstruction(instructionId: string) {
-    this.pgDeleteInstruction.emit(instructionId);
+  onDeleteField(fieldId: string) {
+    this.pgDeleteField.emit(fieldId);
   }
 
-  onUnselectInstruction() {
-    this.pgInstructionUnselected.emit();
+  onUnselectField() {
+    this.pgFieldUnselected.emit();
   }
 }
