@@ -61,6 +61,7 @@ import {
   ApplicationDockComponent,
   CollectionDockComponent,
   InstructionDockComponent,
+  RightDockComponent,
 } from '../sections';
 import { ApplicationGraphApiService } from '../services';
 import { ApplicationDrawerStore } from '../stores';
@@ -136,6 +137,8 @@ const initialState: ViewModel = {
       ></pg-instruction-dock>
     </ng-container>
 
+    <pg-right-dock class="fixed bottom-0 right-0"></pg-right-dock>
+
     <pg-active-collection
       *ngIf="application$ | ngrxPush as application"
       [pgActive]="
@@ -172,6 +175,7 @@ const initialState: ViewModel = {
     ApplicationDockComponent,
     CollectionDockComponent,
     InstructionDockComponent,
+    RightDockComponent,
     ActiveCollectionComponent,
     ActiveInstructionComponent,
     BackgroundImageZoomDirective,

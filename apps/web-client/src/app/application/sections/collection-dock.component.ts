@@ -23,7 +23,6 @@ import {
 import { SlotHotkeyPipe } from '../../shared/pipes';
 import { Option } from '../../shared/utils';
 import {
-  CreateCollectionModalDirective,
   UpdateCollectionModalDirective,
   UpdateCollectionSubmit,
 } from '../components';
@@ -213,7 +212,6 @@ const initialState: ViewModel = {
     DefaultImageDirective,
     UploadFileModalDirective,
     UpdateCollectionModalDirective,
-    CreateCollectionModalDirective,
     SecondaryDockComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,

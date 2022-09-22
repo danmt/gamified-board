@@ -1,5 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component, HostBinding, Input } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  HostBinding,
+  inject,
+  Input,
+  Renderer2,
+} from '@angular/core';
 import { isNotNull, Option } from '../utils';
 
 export type DockDirection = 'right' | 'left';
@@ -26,8 +33,10 @@ export type DockDirection = 'right' | 'left';
   imports: [CommonModule],
 })
 export class CornerDockComponent {
-  @HostBinding('class') class =
-    'block bp-bg-yellow-texture relative rounded-tr-[35px]';
+  private readonly _elementRef = inject(ElementRef);
+  private readonly _renderer2 = inject(Renderer2);
+
+  @HostBinding('class') class = 'block bp-bg-yellow-texture relative';
 
   direction: DockDirection = 'right';
   oppositeDirection: DockDirection = 'left';
@@ -41,5 +50,25 @@ export class CornerDockComponent {
   private _setDirection(direction: DockDirection) {
     this.direction = direction;
     this.oppositeDirection = direction === 'left' ? 'right' : 'left';
+
+    if (direction === 'left') {
+      this._renderer2.removeClass(
+        this._elementRef.nativeElement,
+        'rounded-tl-[35px]'
+      );
+      this._renderer2.addClass(
+        this._elementRef.nativeElement,
+        'rounded-tr-[35px]'
+      );
+    } else {
+      this._renderer2.removeClass(
+        this._elementRef.nativeElement,
+        'rounded-tr-[35px]'
+      );
+      this._renderer2.addClass(
+        this._elementRef.nativeElement,
+        'rounded-tl-[35px]'
+      );
+    }
   }
 }
