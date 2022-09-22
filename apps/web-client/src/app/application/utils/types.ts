@@ -49,10 +49,28 @@ export type ApplicationNodeData =
   | InstructionNodeData
   | FieldNodeData;
 
-export type ApplicationNode =
-  | Node<'collection', CollectionNodeData>
-  | Node<'field', FieldNodeData>
-  | Node<'instruction', InstructionNodeData>;
+export type ApplicationNodesData = {
+  collection: CollectionNodeData;
+  field: FieldNodeData;
+  instruction: InstructionNodeData;
+};
+
+export type CollectionNode = Node<
+  'collection',
+  ApplicationNodeData,
+  ApplicationNodesData
+>;
+export type InstructionNode = Node<
+  'instruction',
+  ApplicationNodeData,
+  ApplicationNodesData
+>;
+export type FieldNode = Node<
+  'field',
+  ApplicationNodeData,
+  ApplicationNodesData
+>;
+export type ApplicationNode = CollectionNode | InstructionNode | FieldNode;
 
 export type ApplicationNodeKinds = 'collection' | 'field' | 'instruction';
 
@@ -61,6 +79,7 @@ export type ApplicationGraphKind = 'application';
 export type ApplicationGraph = Graph<
   ApplicationNodeKinds,
   ApplicationNodeData,
+  ApplicationNodesData,
   ApplicationGraphKind,
   ApplicationGraphData
 >;

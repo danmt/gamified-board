@@ -9,7 +9,6 @@ import {
 } from '@angular/core';
 import { LetModule, PushModule } from '@ngrx/component';
 import { ComponentStore } from '@ngrx/component-store';
-import { Node } from '../../drawer/utils';
 import {
   ConfirmModalDirective,
   SecondaryDockComponent,
@@ -23,7 +22,7 @@ import {
 import { SlotHotkeyPipe } from '../../shared/pipes';
 import { Option } from '../../shared/utils';
 import { UpdateFieldModalDirective, UpdateFieldSubmit } from '../components';
-import { FieldNodeData } from '../utils';
+import { FieldNode } from '../utils';
 
 interface HotKey {
   slot: number;
@@ -32,7 +31,7 @@ interface HotKey {
 }
 
 interface ViewModel {
-  field: Option<Node<'field', FieldNodeData>>;
+  field: Option<FieldNode>;
   isUpdating: boolean;
   isUpdatingThumbnail: boolean;
   isDeleting: boolean;
@@ -218,7 +217,7 @@ export class FieldDockComponent extends ComponentStore<ViewModel> {
   readonly hotkeys$ = this.select(({ hotkeys }) => hotkeys);
   readonly field$ = this.select(({ field }) => field);
 
-  @Input() set pgField(field: Option<Node<'field', FieldNodeData>>) {
+  @Input() set pgField(field: Option<FieldNode>) {
     this.patchState({ field });
   }
   @Output() pgFieldUnselected = new EventEmitter();

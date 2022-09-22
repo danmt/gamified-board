@@ -9,7 +9,6 @@ import {
 } from '@angular/core';
 import { LetModule, PushModule } from '@ngrx/component';
 import { ComponentStore } from '@ngrx/component-store';
-import { Node } from '../../drawer/utils';
 import {
   ConfirmModalDirective,
   SecondaryDockComponent,
@@ -26,7 +25,7 @@ import {
   UpdateApplicationModalDirective,
   UpdateApplicationSubmit,
 } from '../components';
-import { ApplicationNodeData } from '../utils';
+import { ApplicationNode } from '../utils';
 
 interface HotKey {
   slot: number;
@@ -35,7 +34,7 @@ interface HotKey {
 }
 
 interface ViewModel {
-  application: Option<Node<'application', ApplicationNodeData>>;
+  application: Option<ApplicationNode>;
   isUpdating: boolean;
   isUpdatingThumbnail: boolean;
   isDeleting: boolean;
@@ -227,9 +226,7 @@ export class ApplicationDockComponent extends ComponentStore<ViewModel> {
   readonly hotkeys$ = this.select(({ hotkeys }) => hotkeys);
   readonly application$ = this.select(({ application }) => application);
 
-  @Input() set pgApplication(
-    application: Option<Node<'application', ApplicationNodeData>>
-  ) {
+  @Input() set pgApplication(application: Option<ApplicationNode>) {
     this.patchState({ application });
   }
   @Output() pgApplicationUnselected = new EventEmitter();

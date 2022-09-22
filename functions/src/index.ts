@@ -452,6 +452,8 @@ export const updateGraphThumbnail = functions.pubsub
               thumbnailUrl: payload.fileUrl,
             },
             referenceIds: payload.referenceIds,
+            parentIds: payload.parentIds,
+            kind: payload.kind,
           },
           type: 'updateGraphThumbnailSuccess',
           clientId: messageBody.data.clientId,
@@ -720,7 +722,7 @@ export const updateNodeThumbnail = functions.pubsub
             changes: {
               thumbnailUrl: messageBody.data.payload.fileUrl,
             },
-            kind: messageBody.data.kind,
+            kind: messageBody.data.payload.kind,
             parentIds,
             referenceIds: messageBody.data.payload.referenceIds,
             graphId: messageBody.data.payload.graphId,

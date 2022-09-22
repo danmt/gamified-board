@@ -16,6 +16,7 @@ import {
 export class Drawer<
   NodeKinds extends string,
   NodeDataType extends DefaultNodeDataType,
+  NodesDataMap extends { [key in NodeKinds]: NodeDataType },
   GraphKind extends string,
   GraphDataType extends DefaultGraphDataType
 > {
@@ -26,30 +27,36 @@ export class Drawer<
   private _rankDir: 'TB' | 'LR' = 'TB';
 
   private readonly _event = new BehaviorSubject<
-    DrawerEvent<NodeKinds, NodeDataType, GraphKind, GraphDataType>
+    DrawerEvent<NodeKinds, NodeDataType, NodesDataMap, GraphKind, GraphDataType>
   >({
     type: 'Init',
   });
   private readonly _graph: BehaviorSubject<
-    Graph<NodeKinds, NodeDataType, GraphKind, GraphDataType>
+    Graph<NodeKinds, NodeDataType, NodesDataMap, GraphKind, GraphDataType>
   >;
   private readonly _selected = new BehaviorSubject<
-    Option<Node<NodeKinds, NodeDataType>>
+    Option<Node<NodeKinds, NodeDataType, NodesDataMap>>
   >(null);
   private readonly _cy: cytoscape.Core;
   readonly event$ = this._event.asObservable();
   readonly graph$: Observable<
-    Graph<NodeKinds, NodeDataType, GraphKind, GraphDataType>
+    Graph<NodeKinds, NodeDataType, NodesDataMap, GraphKind, GraphDataType>
   >;
   readonly selected$ = this._selected.asObservable();
 
   constructor(
-    graph: Graph<NodeKinds, NodeDataType, GraphKind, GraphDataType>,
-    _nodes: Node<NodeKinds, NodeDataType>[], // this field is only to help the type inference
+    graph: Graph<
+      NodeKinds,
+      NodeDataType,
+      NodesDataMap,
+      GraphKind,
+      GraphDataType
+    >,
+    _nodes: Node<NodeKinds, NodeDataType, NodesDataMap>[], // this field is only to help the type inference
     groups: string[],
     element: HTMLElement
   ) {
-    this._cy = createGraph<NodeKinds, NodeDataType>(
+    this._cy = createGraph<NodeKinds, NodeDataType, NodesDataMap>(
       element,
       graph.nodes.map((node) => ({
         data: node,
@@ -162,12 +169,16 @@ export class Drawer<
 
       this._event.next({
         type: 'AddNodeSuccess',
-        payload: node as Node<NodeKinds, NodeDataType>,
+        payload: node as Node<NodeKinds, NodeDataType, NodesDataMap>,
       });
     });
 
     this._cy.on('server.node-added', (ev, ...extraParams) => {
-      const node = extraParams[0] as Node<NodeKinds, NodeDataType>;
+      const node = extraParams[0] as Node<
+        NodeKinds,
+        NodeDataType,
+        NodesDataMap
+      >;
 
       createNode(this._cy, node);
     });
@@ -434,7 +445,7 @@ export class Drawer<
   }
 
   addNode(
-    node: Node<NodeKinds, NodeDataType>,
+    node: Node<NodeKinds, NodeDataType, NodesDataMap>,
     position?: { x: number; y: number }
   ) {
     createNode(this._cy, node, position);
@@ -487,7 +498,7 @@ export class Drawer<
     this._cy.emit('server.graph-thumbnail-updated', [fileId, fileUrl]);
   }
 
-  handleNodeAdded(node: Node<NodeKinds, NodeDataType>) {
+  handleNodeAdded(node: Node<NodeKinds, NodeDataType, NodesDataMap>) {
     this._cy.emit('server.node-added', [node]);
   }
 

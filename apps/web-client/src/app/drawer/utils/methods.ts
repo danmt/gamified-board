@@ -42,195 +42,315 @@ export const createNode = (
 };
 
 export const isInitEvent = <
-  GraphKind extends string,
   NodeKinds extends string,
-  GraphDataType extends DefaultGraphDataType,
-  NodeDataType extends DefaultNodeDataType
+  NodeDataType extends DefaultNodeDataType,
+  NodesDataMap extends { [key in NodeKinds]: NodeDataType },
+  GraphKind extends string,
+  GraphDataType extends DefaultGraphDataType
 >(
-  event: DrawerEvent<NodeKinds, NodeDataType, GraphKind, GraphDataType>
+  event: DrawerEvent<
+    NodeKinds,
+    NodeDataType,
+    NodesDataMap,
+    GraphKind,
+    GraphDataType
+  >
 ): event is InitEvent => {
   return event.type === 'Init';
 };
 
 export const isClickEvent = <
-  GraphKind extends string,
   NodeKinds extends string,
-  GraphDataType extends DefaultGraphDataType,
-  NodeDataType extends DefaultNodeDataType
+  NodeDataType extends DefaultNodeDataType,
+  NodesDataMap extends { [key in NodeKinds]: NodeDataType },
+  GraphKind extends string,
+  GraphDataType extends DefaultGraphDataType
 >(
-  event: DrawerEvent<NodeKinds, NodeDataType, GraphKind, GraphDataType>
+  event: DrawerEvent<
+    NodeKinds,
+    NodeDataType,
+    NodesDataMap,
+    GraphKind,
+    GraphDataType
+  >
 ): event is ClickEvent => {
   return event.type === 'Click';
 };
 
 export const isGraphScrolledEvent = <
-  GraphKind extends string,
   NodeKinds extends string,
-  GraphDataType extends DefaultGraphDataType,
-  NodeDataType extends DefaultNodeDataType
+  NodeDataType extends DefaultNodeDataType,
+  NodesDataMap extends { [key in NodeKinds]: NodeDataType },
+  GraphKind extends string,
+  GraphDataType extends DefaultGraphDataType
 >(
-  event: DrawerEvent<NodeKinds, NodeDataType, GraphKind, GraphDataType>
+  event: DrawerEvent<
+    NodeKinds,
+    NodeDataType,
+    NodesDataMap,
+    GraphKind,
+    GraphDataType
+  >
 ): event is GraphScrolledEvent => {
   return event.type === 'GraphScrolled';
 };
 
 export const isPanDraggedEvent = <
-  GraphKind extends string,
   NodeKinds extends string,
-  GraphDataType extends DefaultGraphDataType,
-  NodeDataType extends DefaultNodeDataType
+  NodeDataType extends DefaultNodeDataType,
+  NodesDataMap extends { [key in NodeKinds]: NodeDataType },
+  GraphKind extends string,
+  GraphDataType extends DefaultGraphDataType
 >(
-  event: DrawerEvent<NodeKinds, NodeDataType, GraphKind, GraphDataType>
+  event: DrawerEvent<
+    NodeKinds,
+    NodeDataType,
+    NodesDataMap,
+    GraphKind,
+    GraphDataType
+  >
 ): event is PanDraggedEvent => {
   return event.type === 'PanDragged';
 };
 
 export const isOneTapNodeEvent = <
-  GraphKind extends string,
   NodeKinds extends string,
-  GraphDataType extends DefaultGraphDataType,
-  NodeDataType extends DefaultNodeDataType
+  NodeDataType extends DefaultNodeDataType,
+  NodesDataMap extends { [key in NodeKinds]: NodeDataType },
+  GraphKind extends string,
+  GraphDataType extends DefaultGraphDataType
 >(
-  event: DrawerEvent<NodeKinds, NodeDataType, GraphKind, GraphDataType>
-): event is OneTapNodeEvent<NodeKinds, NodeDataType> => {
+  event: DrawerEvent<
+    NodeKinds,
+    NodeDataType,
+    NodesDataMap,
+    GraphKind,
+    GraphDataType
+  >
+): event is OneTapNodeEvent<NodeKinds, NodeDataType, NodesDataMap> => {
   return event.type === 'OneTapNode';
 };
 
 export const isOneTapEdgeEvent = <
-  GraphKind extends string,
   NodeKinds extends string,
-  GraphDataType extends DefaultGraphDataType,
-  NodeDataType extends DefaultNodeDataType
+  NodeDataType extends DefaultNodeDataType,
+  NodesDataMap extends { [key in NodeKinds]: NodeDataType },
+  GraphKind extends string,
+  GraphDataType extends DefaultGraphDataType
 >(
-  event: DrawerEvent<NodeKinds, NodeDataType, GraphKind, GraphDataType>
+  event: DrawerEvent<
+    NodeKinds,
+    NodeDataType,
+    NodesDataMap,
+    GraphKind,
+    GraphDataType
+  >
 ): event is OneTapEdgeEvent => {
   return event.type === 'OneTapEdge';
 };
 
 export const isUpdateGraphSuccessEvent = <
-  GraphKind extends string,
   NodeKinds extends string,
-  GraphDataType extends DefaultGraphDataType,
-  NodeDataType extends DefaultNodeDataType
+  NodeDataType extends DefaultNodeDataType,
+  NodesDataMap extends { [key in NodeKinds]: NodeDataType },
+  GraphKind extends string,
+  GraphDataType extends DefaultGraphDataType
 >(
-  event: DrawerEvent<NodeKinds, NodeDataType, GraphKind, GraphDataType>
+  event: DrawerEvent<
+    NodeKinds,
+    NodeDataType,
+    NodesDataMap,
+    GraphKind,
+    GraphDataType
+  >
 ): event is UpdateGraphSuccessEvent<GraphKind, GraphDataType> => {
   return event.type === 'UpdateGraphSuccess';
 };
 
 export const isUpdateGraphThumbnailSuccessEvent = <
-  GraphKind extends string,
   NodeKinds extends string,
-  GraphDataType extends DefaultGraphDataType,
-  NodeDataType extends DefaultNodeDataType
+  NodeDataType extends DefaultNodeDataType,
+  NodesDataMap extends { [key in NodeKinds]: NodeDataType },
+  GraphKind extends string,
+  GraphDataType extends DefaultGraphDataType
 >(
-  event: DrawerEvent<NodeKinds, NodeDataType, GraphKind, GraphDataType>
+  event: DrawerEvent<
+    NodeKinds,
+    NodeDataType,
+    NodesDataMap,
+    GraphKind,
+    GraphDataType
+  >
 ): event is UpdateGraphThumbnailSuccessEvent<GraphKind> => {
   return event.type === 'UpdateGraphThumbnailSuccess';
 };
 
 export const isAddNodeSuccessEvent = <
-  GraphKind extends string,
   NodeKinds extends string,
-  GraphDataType extends DefaultGraphDataType,
-  NodeDataType extends DefaultNodeDataType
+  NodeDataType extends DefaultNodeDataType,
+  NodesDataMap extends { [key in NodeKinds]: NodeDataType },
+  GraphKind extends string,
+  GraphDataType extends DefaultGraphDataType
 >(
-  event: DrawerEvent<NodeKinds, NodeDataType, GraphKind, GraphDataType>
-): event is AddNodeSuccessEvent<NodeKinds, NodeDataType> => {
+  event: DrawerEvent<
+    NodeKinds,
+    NodeDataType,
+    NodesDataMap,
+    GraphKind,
+    GraphDataType
+  >
+): event is AddNodeSuccessEvent<NodeKinds, NodeDataType, NodesDataMap> => {
   return event.type === 'AddNodeSuccess';
 };
 
 export const isUpdateNodeEvent = <
-  GraphKind extends string,
   NodeKinds extends string,
-  GraphDataType extends DefaultGraphDataType,
-  NodeDataType extends DefaultNodeDataType
+  NodeDataType extends DefaultNodeDataType,
+  NodesDataMap extends { [key in NodeKinds]: NodeDataType },
+  GraphKind extends string,
+  GraphDataType extends DefaultGraphDataType
 >(
-  event: DrawerEvent<NodeKinds, NodeDataType, GraphKind, GraphDataType>
+  event: DrawerEvent<
+    NodeKinds,
+    NodeDataType,
+    NodesDataMap,
+    GraphKind,
+    GraphDataType
+  >
 ): event is UpdateNodeEvent => {
   return event.type === 'UpdateNode';
 };
 
 export const isUpdateNodeSuccessEvent = <
-  GraphKind extends string,
   NodeKinds extends string,
-  GraphDataType extends DefaultGraphDataType,
-  NodeDataType extends DefaultNodeDataType
+  NodeDataType extends DefaultNodeDataType,
+  NodesDataMap extends { [key in NodeKinds]: NodeDataType },
+  GraphKind extends string,
+  GraphDataType extends DefaultGraphDataType
 >(
-  event: DrawerEvent<NodeKinds, NodeDataType, GraphKind, GraphDataType>
+  event: DrawerEvent<
+    NodeKinds,
+    NodeDataType,
+    NodesDataMap,
+    GraphKind,
+    GraphDataType
+  >
 ): event is UpdateNodeSuccessEvent<NodeKinds, NodeDataType> => {
   return event.type === 'UpdateNodeSuccess';
 };
 
 export const isUpdateNodeThumbnailSuccessEvent = <
-  GraphKind extends string,
   NodeKinds extends string,
-  GraphDataType extends DefaultGraphDataType,
-  NodeDataType extends DefaultNodeDataType
+  NodeDataType extends DefaultNodeDataType,
+  NodesDataMap extends { [key in NodeKinds]: NodeDataType },
+  GraphKind extends string,
+  GraphDataType extends DefaultGraphDataType
 >(
-  event: DrawerEvent<NodeKinds, NodeDataType, GraphKind, GraphDataType>
+  event: DrawerEvent<
+    NodeKinds,
+    NodeDataType,
+    NodesDataMap,
+    GraphKind,
+    GraphDataType
+  >
 ): event is UpdateNodeThumbnailSuccessEvent<NodeKinds> => {
   return event.type === 'UpdateNodeThumbnailSuccess';
 };
 
 export const isDeleteNodeEvent = <
-  GraphKind extends string,
   NodeKinds extends string,
-  GraphDataType extends DefaultGraphDataType,
-  NodeDataType extends DefaultNodeDataType
+  NodeDataType extends DefaultNodeDataType,
+  NodesDataMap extends { [key in NodeKinds]: NodeDataType },
+  GraphKind extends string,
+  GraphDataType extends DefaultGraphDataType
 >(
-  event: DrawerEvent<NodeKinds, NodeDataType, GraphKind, GraphDataType>
+  event: DrawerEvent<
+    NodeKinds,
+    NodeDataType,
+    NodesDataMap,
+    GraphKind,
+    GraphDataType
+  >
 ): event is DeleteNodeEvent => {
   return event.type === 'DeleteNode';
 };
 
 export const isDeleteNodeSuccessEvent = <
-  GraphKind extends string,
   NodeKinds extends string,
-  GraphDataType extends DefaultGraphDataType,
-  NodeDataType extends DefaultNodeDataType
+  NodeDataType extends DefaultNodeDataType,
+  NodesDataMap extends { [key in NodeKinds]: NodeDataType },
+  GraphKind extends string,
+  GraphDataType extends DefaultGraphDataType
 >(
-  event: DrawerEvent<NodeKinds, NodeDataType, GraphKind, GraphDataType>
+  event: DrawerEvent<
+    NodeKinds,
+    NodeDataType,
+    NodesDataMap,
+    GraphKind,
+    GraphDataType
+  >
 ): event is DeleteNodeSuccessEvent => {
   return event.type === 'DeleteNodeSuccess';
 };
 
 export const isViewNodeEvent = <
-  GraphKind extends string,
   NodeKinds extends string,
-  GraphDataType extends DefaultGraphDataType,
-  NodeDataType extends DefaultNodeDataType
+  NodeDataType extends DefaultNodeDataType,
+  NodesDataMap extends { [key in NodeKinds]: NodeDataType },
+  GraphKind extends string,
+  GraphDataType extends DefaultGraphDataType
 >(
-  event: DrawerEvent<NodeKinds, NodeDataType, GraphKind, GraphDataType>
+  event: DrawerEvent<
+    NodeKinds,
+    NodeDataType,
+    NodesDataMap,
+    GraphKind,
+    GraphDataType
+  >
 ): event is ViewNodeEvent => {
   return event.type === 'ViewNode';
 };
 
 export const isDeleteEdgeEvent = <
-  GraphKind extends string,
   NodeKinds extends string,
-  GraphDataType extends DefaultGraphDataType,
-  NodeDataType extends DefaultNodeDataType
+  NodeDataType extends DefaultNodeDataType,
+  NodesDataMap extends { [key in NodeKinds]: NodeDataType },
+  GraphKind extends string,
+  GraphDataType extends DefaultGraphDataType
 >(
-  event: DrawerEvent<NodeKinds, NodeDataType, GraphKind, GraphDataType>
+  event: DrawerEvent<
+    NodeKinds,
+    NodeDataType,
+    NodesDataMap,
+    GraphKind,
+    GraphDataType
+  >
 ): event is DeleteEdgeEvent => {
   return event.type === 'DeleteEdge';
 };
 
 export const isDeleteEdgeSuccessEvent = <
-  GraphKind extends string,
   NodeKinds extends string,
-  GraphDataType extends DefaultGraphDataType,
-  NodeDataType extends DefaultNodeDataType
+  NodeDataType extends DefaultNodeDataType,
+  NodesDataMap extends { [key in NodeKinds]: NodeDataType },
+  GraphKind extends string,
+  GraphDataType extends DefaultGraphDataType
 >(
-  event: DrawerEvent<NodeKinds, NodeDataType, GraphKind, GraphDataType>
+  event: DrawerEvent<
+    NodeKinds,
+    NodeDataType,
+    NodesDataMap,
+    GraphKind,
+    GraphDataType
+  >
 ): event is DeleteEdgeSuccessEvent => {
   return event.type === 'DeleteEdgeSuccess';
 };
 
 export const createGraph = <
   NodeKinds extends string,
-  DefaultNodeDataType extends { name: string; thumbnailUrl: string }
+  NodeDataType extends DefaultNodeDataType,
+  NodesDataMap extends { [key in NodeKinds]: NodeDataType }
 >(
   container: HTMLElement,
   nodes: cytoscape.NodeDefinition[],
@@ -338,7 +458,7 @@ export const createGraph = <
   }).nodeHtmlLabel([
     {
       query: '.bp-bd-node',
-      tpl: (node: Node<NodeKinds, DefaultNodeDataType>) => {
+      tpl: (node: Node<NodeKinds, NodeDataType, NodesDataMap>) => {
         return `
           <div class="w-[280px] h-[85px] flex gap-2 items-center px-8 bg-[length:280px_85px] bg-[url('assets/images/node.png')] z-50">
             <div 

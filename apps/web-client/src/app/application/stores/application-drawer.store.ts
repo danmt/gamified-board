@@ -5,12 +5,14 @@ import {
   ApplicationGraphKind,
   ApplicationNodeData,
   ApplicationNodeKinds,
+  ApplicationNodesData,
 } from '../utils';
 
 @Injectable()
 export class ApplicationDrawerStore extends DrawerStore<
   ApplicationNodeKinds,
   ApplicationNodeData,
+  ApplicationNodesData,
   ApplicationGraphKind,
   ApplicationGraphData
 > {

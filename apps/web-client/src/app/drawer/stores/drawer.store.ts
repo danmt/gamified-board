@@ -15,10 +15,13 @@ import {
 interface ViewModel<
   NodeKinds extends string,
   NodeDataType extends DefaultNodeDataType,
+  NodesDataMap extends { [key in NodeKinds]: NodeDataType },
   GraphKind extends string,
   GraphDataType extends DefaultGraphDataType
 > {
-  drawer: Option<Drawer<NodeKinds, NodeDataType, GraphKind, GraphDataType>>;
+  drawer: Option<
+    Drawer<NodeKinds, NodeDataType, NodesDataMap, GraphKind, GraphDataType>
+  >;
   direction: Direction;
   drawMode: boolean;
 }
@@ -26,11 +29,12 @@ interface ViewModel<
 export class DrawerStore<
     NodeKinds extends string,
     NodeDataType extends DefaultNodeDataType,
+    NodesDataMap extends { [key in NodeKinds]: NodeDataType },
     GraphKind extends string,
     GraphDataType extends DefaultGraphDataType
   >
   extends ComponentStore<
-    ViewModel<NodeKinds, NodeDataType, GraphKind, GraphDataType>
+    ViewModel<NodeKinds, NodeDataType, NodesDataMap, GraphKind, GraphDataType>
   >
   implements OnStoreInit
 {
@@ -71,7 +75,9 @@ export class DrawerStore<
   );
 
   readonly setDrawer = this.updater<
-    Option<Drawer<NodeKinds, NodeDataType, GraphKind, GraphDataType>>
+    Option<
+      Drawer<NodeKinds, NodeDataType, NodesDataMap, GraphKind, GraphDataType>
+    >
   >((state, drawer) => ({
     ...state,
     drawer,
@@ -88,7 +94,9 @@ export class DrawerStore<
   }));
 
   private readonly _handleDrawModeChange = this.effect<{
-    drawer: Option<Drawer<NodeKinds, NodeDataType, GraphKind, GraphDataType>>;
+    drawer: Option<
+      Drawer<NodeKinds, NodeDataType, NodesDataMap, GraphKind, GraphDataType>
+    >;
     drawMode: boolean;
   }>(
     tap(({ drawer, drawMode }) => {
@@ -99,7 +107,9 @@ export class DrawerStore<
   );
 
   private readonly _handleDirectionChange = this.effect<{
-    drawer: Option<Drawer<NodeKinds, NodeDataType, GraphKind, GraphDataType>>;
+    drawer: Option<
+      Drawer<NodeKinds, NodeDataType, NodesDataMap, GraphKind, GraphDataType>
+    >;
     direction: Direction;
   }>(
     tap(({ drawer, direction }) => {
@@ -157,7 +167,7 @@ export class DrawerStore<
   }
 
   async addNode(
-    nodeData: Node<NodeKinds, NodeDataType>,
+    nodeData: Node<NodeKinds, NodeDataType, NodesDataMap>,
     position?: { x: number; y: number }
   ) {
     const drawer = await firstValueFrom(this.drawer$);
@@ -210,7 +220,7 @@ export class DrawerStore<
     }
   }
 
-  async handleNodeAdded(node: Node<NodeKinds, NodeDataType>) {
+  async handleNodeAdded(node: Node<NodeKinds, NodeDataType, NodesDataMap>) {
     const drawer = await firstValueFrom(this.drawer$);
 
     if (drawer !== null) {

@@ -71,10 +71,16 @@ import {
   ApplicationNode,
   ApplicationNodeData,
   ApplicationNodeKinds,
+  ApplicationNodesData,
   CollectionNodeData,
   FieldNodeData,
   InstructionNodeData,
 } from '../utils';
+import {
+  isOneTapCollectionNodeEvent,
+  isOneTapFieldNodeEvent,
+  isOneTapInstructionNodeEvent,
+} from '../utils/methods';
 
 interface ViewModel {
   isCreatingField: boolean;
@@ -151,7 +157,7 @@ const initialState: ViewModel = {
         (pgDeleteInstruction)="onRemoveNode($event)"
       ></pg-instruction-dock>
 
-      <!-- <pg-field-dock
+      <pg-field-dock
         *ngIf="selected.kind === 'field'"
         class="fixed bottom-0 -translate-x-1/2 left-1/2"
         [pgField]="selected"
@@ -161,7 +167,7 @@ const initialState: ViewModel = {
           onUpdateNodeThumbnail($event.id, $event.fileId, $event.fileUrl)
         "
         (pgDeleteField)="onRemoveNode($event)"
-      ></pg-field-dock> -->
+      ></pg-field-dock>
     </ng-container>
 
     <pg-right-dock
@@ -368,10 +374,22 @@ export class ApplicationPageComponent
     };
   });
 
-  readonly setSelected = this.updater<
-    | OneTapNodeEvent<'collection', CollectionNodeData>
-    | OneTapNodeEvent<'instruction', InstructionNodeData>
-    | OneTapNodeEvent<'field', FieldNodeData>
+  readonly setCollectionSelected = this.updater<
+    OneTapNodeEvent<'collection', CollectionNodeData, ApplicationNodesData>
+  >((state, event) => ({
+    ...state,
+    selected: event.payload,
+  }));
+
+  readonly setInstructionSelected = this.updater<
+    OneTapNodeEvent<'instruction', InstructionNodeData, ApplicationNodesData>
+  >((state, event) => ({
+    ...state,
+    selected: event.payload,
+  }));
+
+  readonly setFieldSelected = this.updater<
+    OneTapNodeEvent<'field', FieldNodeData, ApplicationNodesData>
   >((state, event) => ({
     ...state,
     selected: event.payload,
@@ -451,7 +469,11 @@ export class ApplicationPageComponent
   );
 
   private readonly _handleAddNodeSuccess = this.effect<
-    AddNodeSuccessEvent<ApplicationNodeKinds, ApplicationNodeData>
+    AddNodeSuccessEvent<
+      ApplicationNodeKinds,
+      ApplicationNodeData,
+      ApplicationNodesData
+    >
   >(
     concatMap((event) =>
       of(null).pipe(
@@ -783,9 +805,19 @@ export class ApplicationPageComponent
     this._handleDeleteNodeSuccess(
       this._applicationDrawerStore.event$.pipe(filter(isDeleteNodeSuccessEvent))
     );
-    /* this.setSelected(
-      this._applicationDrawerStore.event$.pipe(filter(isOneTapNodeEvent))
-    ); */
+    this.setCollectionSelected(
+      this._applicationDrawerStore.event$.pipe(
+        filter(isOneTapCollectionNodeEvent)
+      )
+    );
+    this.setInstructionSelected(
+      this._applicationDrawerStore.event$.pipe(
+        filter(isOneTapInstructionNodeEvent)
+      )
+    );
+    this.setFieldSelected(
+      this._applicationDrawerStore.event$.pipe(filter(isOneTapFieldNodeEvent))
+    );
   }
 
   async ngAfterViewInit() {
@@ -904,7 +936,11 @@ export class ApplicationPageComponent
     this._applicationDrawerStore.updateGraph(changes);
   }
 
-  onDeleteGraph(workspaceId: string, graphId: string, kind: string) {
+  onDeleteGraph(
+    workspaceId: string,
+    graphId: string,
+    kind: ApplicationGraphKind
+  ) {
     this._applicationGraphApiService
       .deleteNode(environment.clientId, graphId, {
         graphId,
@@ -919,7 +955,11 @@ export class ApplicationPageComponent
     this._applicationDrawerStore.updateGraphThumbnail(fileId, fileUrl);
   }
 
-  onUpdateNode(nodeId: string, kind: string, changes: UpdateCollectionSubmit) {
+  onUpdateNode(
+    nodeId: string,
+    kind: ApplicationNodeKinds,
+    changes: UpdateCollectionSubmit
+  ) {
     this._applicationDrawerStore.updateNode(nodeId, {
       changes,
       kind,

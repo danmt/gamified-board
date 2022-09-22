@@ -64,6 +64,7 @@ import {
   WorkspaceNode,
   WorkspaceNodeData,
   WorkspaceNodeKinds,
+  WorkspaceNodesData,
 } from '../utils';
 
 interface ViewModel {
@@ -270,7 +271,11 @@ export class WorkspacePageComponent
   );
 
   private readonly _handleAddNodeSuccess = this.effect<
-    AddNodeSuccessEvent<WorkspaceNodeKinds, WorkspaceNodeData>
+    AddNodeSuccessEvent<
+      WorkspaceNodeKinds,
+      WorkspaceNodeData,
+      WorkspaceNodesData
+    >
   >(
     concatMap((event) =>
       of(null).pipe(
@@ -541,7 +546,7 @@ export class WorkspacePageComponent
   );
 
   readonly setSelected = this.updater<
-    OneTapNodeEvent<WorkspaceNodeKinds, WorkspaceNodeData>
+    OneTapNodeEvent<WorkspaceNodeKinds, WorkspaceNodeData, WorkspaceNodesData>
   >((state, event) => ({
     ...state,
     selected: event.payload,

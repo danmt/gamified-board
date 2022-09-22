@@ -3,23 +3,6 @@ export interface DefaultNodeDataType {
   thumbnailUrl: string;
 }
 
-export interface Node<K extends string, T = DefaultNodeDataType> {
-  id: string;
-  data: T;
-  kind: K;
-}
-
-/* 
-
-export interface Node<NodeTypes> {
-  id: string;
-  data: T;
-  kind: string;
-}
-
-
-*/
-
 export interface Edge {
   id: string;
   source: string;
@@ -31,14 +14,25 @@ export interface DefaultGraphDataType {
   thumbnailUrl: string;
 }
 
+export interface Node<
+  NodeKinds extends string,
+  NodeDataType extends DefaultNodeDataType,
+  NodesDataMap extends { [key in NodeKinds]: NodeDataType }
+> {
+  id: string;
+  data: NodesDataMap[NodeKinds];
+  kind: NodeKinds;
+}
+
 export type Graph<
   NodeKinds extends string,
   NodeDataType extends DefaultNodeDataType,
+  NodesDataMap extends { [key in NodeKinds]: NodeDataType },
   GraphKind extends string,
   GraphDataType extends DefaultGraphDataType
 > = {
   id: string;
-  nodes: Node<NodeKinds, NodeDataType>[];
+  nodes: Node<NodeKinds, NodeDataType, NodesDataMap>[];
   edges: Edge[];
   lastEventId: string;
   kind: GraphKind;
@@ -79,10 +73,11 @@ export interface ClickEvent {
 
 export interface OneTapNodeEvent<
   NodeKinds extends string,
-  NodeDataType extends DefaultNodeDataType
+  NodeDataType extends DefaultNodeDataType,
+  NodesDataMap extends { [key in NodeKinds]: NodeDataType }
 > {
   type: 'OneTapNode';
-  payload: Node<NodeKinds, NodeDataType>;
+  payload: Node<NodeKinds, NodesDataMap[NodeKinds], NodesDataMap>;
 }
 
 export interface OneTapEdgeEvent {
@@ -112,10 +107,11 @@ export interface UpdateGraphThumbnailSuccessEvent<GraphKind extends string> {
 
 export interface AddNodeSuccessEvent<
   NodeKinds extends string,
-  NodeDataType extends DefaultNodeDataType
+  NodeDataType extends DefaultNodeDataType,
+  NodesDataMap extends { [key in NodeKinds]: NodeDataType }
 > {
   type: 'AddNodeSuccess';
-  payload: Node<NodeKinds, NodeDataType>;
+  payload: Node<NodeKinds, NodeDataType, NodesDataMap>;
 }
 
 export interface AddEdgeSuccessEvent {
@@ -200,6 +196,7 @@ export interface PanDraggedEvent {
 export type DrawerEvent<
   NodeKinds extends string,
   NodeDataType extends DefaultNodeDataType,
+  NodesDataMap extends { [key in NodeKinds]: NodeDataType },
   GraphKind extends string,
   GraphDataType extends DefaultGraphDataType
 > =
@@ -207,7 +204,7 @@ export type DrawerEvent<
   | ClickEvent
   | UpdateGraphSuccessEvent<GraphKind, GraphDataType>
   | UpdateGraphThumbnailSuccessEvent<GraphKind>
-  | AddNodeSuccessEvent<NodeKinds, NodeDataType>
+  | AddNodeSuccessEvent<NodeKinds, NodeDataType, NodesDataMap>
   | AddEdgeSuccessEvent
   | UpdateNodeEvent
   | UpdateNodeSuccessEvent<NodeKinds, NodeDataType>
@@ -219,5 +216,5 @@ export type DrawerEvent<
   | DeleteEdgeSuccessEvent
   | GraphScrolledEvent
   | PanDraggedEvent
-  | OneTapNodeEvent<NodeKinds, NodeDataType>
+  | OneTapNodeEvent<NodeKinds, NodeDataType, NodesDataMap>
   | OneTapEdgeEvent;

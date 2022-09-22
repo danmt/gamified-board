@@ -9,7 +9,6 @@ import {
 } from '@angular/core';
 import { LetModule, PushModule } from '@ngrx/component';
 import { ComponentStore } from '@ngrx/component-store';
-import { Node } from '../../drawer/utils';
 import {
   ConfirmModalDirective,
   SecondaryDockComponent,
@@ -26,7 +25,7 @@ import {
   UpdateCollectionModalDirective,
   UpdateCollectionSubmit,
 } from '../components';
-import { CollectionNodeData } from '../utils';
+import { CollectionNode } from '../utils';
 
 interface HotKey {
   slot: number;
@@ -35,7 +34,7 @@ interface HotKey {
 }
 
 interface ViewModel {
-  collection: Option<Node<'collection', CollectionNodeData>>;
+  collection: Option<CollectionNode>;
   isUpdating: boolean;
   isUpdatingThumbnail: boolean;
   isDeleting: boolean;
@@ -225,9 +224,7 @@ export class CollectionDockComponent extends ComponentStore<ViewModel> {
   readonly hotkeys$ = this.select(({ hotkeys }) => hotkeys);
   readonly collection$ = this.select(({ collection }) => collection);
 
-  @Input() set pgCollection(
-    collection: Option<Node<'collection', CollectionNodeData>>
-  ) {
+  @Input() set pgCollection(collection: Option<CollectionNode>) {
     this.patchState({ collection });
   }
   @Output() pgCollectionUnselected = new EventEmitter();

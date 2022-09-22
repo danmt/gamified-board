@@ -2,9 +2,7 @@ import { Graph, Node } from '../../drawer/utils';
 import { Entity } from '../../shared/utils';
 
 export type WorkspaceDto = Entity<{
-  name: string;
-  userId: string;
-  thumbnailUrl: string;
+  data: WorkspaceGraphData;
 }>;
 
 export interface EventDto {
@@ -26,15 +24,26 @@ export interface ApplicationNodeData {
 
 export type WorkspaceNodeData = ApplicationNodeData;
 
-export type WorkspaceNode = Node<'application', ApplicationNodeData>;
-
 export type WorkspaceNodeKinds = 'application';
+
+export type WorkspaceNodesData = {
+  application: ApplicationNodeData;
+};
+
+export type ApplicationNode = Node<
+  'application',
+  WorkspaceNodeData,
+  WorkspaceNodesData
+>;
+
+export type WorkspaceNode = ApplicationNode;
 
 export type WorkspaceGraphKind = 'workspace';
 
 export type WorkspaceGraph = Graph<
   WorkspaceNodeKinds,
   WorkspaceNodeData,
+  WorkspaceNodesData,
   WorkspaceGraphKind,
   WorkspaceGraphData
 >;
