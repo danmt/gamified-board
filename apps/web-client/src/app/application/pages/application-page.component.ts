@@ -81,7 +81,10 @@ import {
   ApplicationNodesData,
   PartialApplicationNode,
 } from '../utils';
-import { applicationNodeLabelFunction } from '../utils/methods';
+import {
+  applicationCanConnectFunction,
+  applicationNodeLabelFunction,
+} from '../utils/methods';
 
 interface ViewModel {
   isCreatingField: boolean;
@@ -796,6 +799,7 @@ export class ApplicationPageComponent
                 graph.nodes,
                 [],
                 drawerElement,
+                applicationCanConnectFunction,
                 applicationNodeLabelFunction
               );
               drawer.initialize();

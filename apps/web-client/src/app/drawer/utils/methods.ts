@@ -383,6 +383,10 @@ export const patchNode = <
   };
 };
 
+export const defaultCanConnectFunction = () => {
+  return true;
+};
+
 export const defaultNodeLabelFunction = <
   NodeKinds extends string,
   NodeDataType extends DefaultNodeDataType,

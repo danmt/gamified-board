@@ -57,6 +57,10 @@ export class Drawer<
     _nodes: GetNodeTypes<NodeKinds, NodeDataType, NodesDataMap>[], // this field is only to help the type inference
     groups: string[],
     element: HTMLElement,
+    private canConnectFn: (
+      source: cytoscape.NodeSingular,
+      target: cytoscape.NodeSingular
+    ) => boolean = () => true,
     labelFn: (
       node: GetNodeTypes<NodeKinds, NodeDataType, NodesDataMap>
     ) => string = defaultNodeLabelFunction
@@ -375,28 +379,7 @@ export class Drawer<
   setupEdgeHandles() {
     this._edgeHandles = this._cy.edgehandles({
       snap: true,
-      canConnect: (source, target) => {
-        if (
-          !target.isNode() ||
-          source.id() === target.id() ||
-          target.data().kind === 'group'
-        ) {
-          return false;
-        }
-
-        const element = this._cy.getElementById(
-          `${source.id()}-${target.id()}`
-        );
-
-        return element.id() === undefined;
-      },
-      edgeParams: (source, target) => {
-        return {
-          data: {
-            id: `${source.id()}-${target.id()}`,
-          },
-        };
-      },
+      canConnect: (source, target) => this.canConnectFn(source, target),
     });
   }
 

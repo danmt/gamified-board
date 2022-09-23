@@ -1,3 +1,4 @@
+import { NodeSingular } from 'cytoscape';
 import { ApplicationNode } from './types';
 
 export const applicationNodeLabelFunction = (node: ApplicationNode) => {
@@ -35,4 +36,45 @@ export const applicationNodeLabelFunction = (node: ApplicationNode) => {
       `;
     }
   }
+};
+
+/* 
+  
+  for application graphs here's the conditions where the connection
+  should be disabled:
+  
+    1.  between collection <-> instruction
+    2.  source field that's not of type struct
+    3.  target field that's already connected
+  
+  */
+export const applicationCanConnectFunction = (
+  source: NodeSingular,
+  target: NodeSingular
+) => {
+  const sourceData = source.data();
+  const targetData = target.data();
+
+  if (!targetData) {
+    return false;
+  }
+
+  if (
+    (sourceData.kind === 'collection' || sourceData.kind === 'instruction') &&
+    targetData.kind === 'field' &&
+    target.indegree(false) === 0
+  ) {
+    return true;
+  }
+
+  if (
+    sourceData.kind === 'field' &&
+    targetData.kind === 'field' &&
+    sourceData.data.type === 'struct' &&
+    target.indegree(false) === 0
+  ) {
+    return true;
+  }
+
+  return false;
 };
