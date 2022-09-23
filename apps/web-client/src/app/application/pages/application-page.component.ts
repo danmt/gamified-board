@@ -28,11 +28,15 @@ import { UpdateApplicationSubmit } from '../../application/components';
 import { UpdateCollectionSubmit } from '../../collection/components';
 import { DrawerStore } from '../../drawer/stores';
 import {
+  AddEdgeSuccessEvent,
   AddNodeSuccessEvent,
+  DeleteEdgeSuccessEvent,
   DeleteNodeSuccessEvent,
   Drawer,
+  isAddEdgeSuccessEvent,
   isAddNodeSuccessEvent,
   isClickEvent,
+  isDeleteEdgeSuccessEvent,
   isDeleteNodeSuccessEvent,
   isOneTapNodeEvent,
   isUpdateGraphSuccessEvent,
@@ -452,8 +456,6 @@ export class ApplicationPageComponent
             return EMPTY;
           }
 
-          console.log(event);
-
           this.patchSelected(event.payload);
 
           return this._applicationGraphApiService.updateNode(
@@ -528,6 +530,55 @@ export class ApplicationPageComponent
                 kind: event.payload.kind,
                 parentIds: [workspaceId, applicationId],
                 referenceIds: [applicationId, event.payload.id],
+              }
+            );
+          })
+        )
+      )
+    );
+
+  private readonly _handleAddEdgeSuccess = this.effect<AddEdgeSuccessEvent>(
+    concatMap((event) =>
+      of(null).pipe(
+        withLatestFrom(this.workspaceId$, this.applicationId$),
+        concatMap(([, workspaceId, applicationId]) => {
+          if (isNull(applicationId) || isNull(workspaceId)) {
+            return EMPTY;
+          }
+
+          return this._applicationGraphApiService.createEdge(
+            environment.clientId,
+            {
+              id: event.payload.id,
+              source: event.payload.source,
+              target: event.payload.target,
+              parentIds: [workspaceId, applicationId],
+              graphId: applicationId,
+              referenceIds: [applicationId, event.payload.id],
+            }
+          );
+        })
+      )
+    )
+  );
+
+  private readonly _handleDeleteEdgeSuccess =
+    this.effect<DeleteEdgeSuccessEvent>(
+      concatMap((event) =>
+        of(null).pipe(
+          withLatestFrom(this.workspaceId$, this.applicationId$),
+          concatMap(([, workspaceId, applicationId]) => {
+            if (isNull(applicationId) || isNull(workspaceId)) {
+              return EMPTY;
+            }
+
+            return this._applicationGraphApiService.deleteEdge(
+              environment.clientId,
+              event.payload,
+              {
+                parentIds: [workspaceId, applicationId],
+                graphId: applicationId,
+                referenceIds: [applicationId, event.payload],
               }
             );
           })
@@ -675,6 +726,55 @@ export class ApplicationPageComponent
     })
   );
 
+  private readonly _handleServerEdgeCreate = this.effect<{
+    workspaceId: Option<string>;
+    applicationId: Option<string>;
+  }>(
+    switchMap(({ workspaceId, applicationId }) => {
+      if (isNull(workspaceId) || isNull(applicationId)) {
+        return EMPTY;
+      }
+
+      return this._applicationGraphApiService
+        .listen(workspaceId, applicationId, ['createEdgeSuccess'])
+        .pipe(
+          filter((event) => event['clientId'] !== environment.clientId),
+          tap((event) =>
+            this._applicationDrawerStore.handleEdgeAdded(event['payload'])
+          )
+        );
+    })
+  );
+
+  private readonly _handleServerEdgeDelete = this.effect<{
+    workspaceId: Option<string>;
+    applicationId: Option<string>;
+  }>(
+    switchMap(({ workspaceId, applicationId }) => {
+      if (isNull(workspaceId) || isNull(applicationId)) {
+        return EMPTY;
+      }
+
+      return this._applicationGraphApiService
+        .listen(workspaceId, applicationId, ['deleteEdgeSuccess'])
+        .pipe(
+          tap((event) => {
+            if (event['payload'].id === applicationId) {
+              this._router.navigate(['/workspaces', workspaceId]);
+            }
+
+            this.clearSelected(event['payload'].id);
+
+            if (event['clientId'] !== environment.clientId) {
+              this._applicationDrawerStore.handleEdgeRemoved(
+                event['payload'].id
+              );
+            }
+          })
+        );
+    })
+  );
+
   private readonly _loadDrawer = this.effect<{
     workspaceId: Option<string>;
     applicationId: Option<string>;
@@ -706,6 +806,8 @@ export class ApplicationPageComponent
               this._handleServerNodeCreate({ workspaceId, applicationId });
               this._handleServerNodeUpdate({ workspaceId, applicationId });
               this._handleServerNodeDelete({ workspaceId, applicationId });
+              this._handleServerEdgeCreate({ workspaceId, applicationId });
+              this._handleServerEdgeDelete({ workspaceId, applicationId });
             }
           })
         )
@@ -747,6 +849,12 @@ export class ApplicationPageComponent
     );
     this.setSelected(
       this._applicationDrawerStore.event$.pipe(filter(isOneTapNodeEvent))
+    );
+    this._handleAddEdgeSuccess(
+      this._applicationDrawerStore.event$.pipe(filter(isAddEdgeSuccessEvent))
+    );
+    this._handleDeleteEdgeSuccess(
+      this._applicationDrawerStore.event$.pipe(filter(isDeleteEdgeSuccessEvent))
     );
   }
 

@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { ComponentStore, OnStoreInit } from '@ngrx/component-store';
-import { EdgeDataDefinition } from 'cytoscape';
 import { EMPTY, filter, firstValueFrom, of, switchMap, tap } from 'rxjs';
 import { isNull, Option } from '../../shared/utils';
 import {
@@ -8,6 +7,7 @@ import {
   DefaultNodeDataType,
   Direction,
   Drawer,
+  Edge,
   GetNodeTypes,
   isGraphScrolledEvent,
   isPanDraggedEvent,
@@ -260,7 +260,7 @@ export class DrawerStore<
     }
   }
 
-  async handleEdgeAdded(edgeData: EdgeDataDefinition) {
+  async handleEdgeAdded(edgeData: Edge) {
     const drawer = await firstValueFrom(this.drawer$);
 
     if (drawer !== null) {

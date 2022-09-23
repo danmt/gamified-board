@@ -1,5 +1,6 @@
 import * as cytoscape from 'cytoscape';
 import {
+  AddEdgeSuccessEvent,
   AddNodeSuccessEvent,
   ClickEvent,
   DefaultGraphDataType,
@@ -309,6 +310,24 @@ export const isViewNodeEvent = <
   >
 ): event is ViewNodeEvent => {
   return event.type === 'ViewNode';
+};
+
+export const isAddEdgeSuccessEvent = <
+  NodeKinds extends string,
+  NodeDataType extends DefaultNodeDataType,
+  NodesDataMap extends { [key in NodeKinds]: NodeDataType },
+  GraphKind extends string,
+  GraphDataType extends DefaultGraphDataType
+>(
+  event: DrawerEvent<
+    NodeKinds,
+    NodeDataType,
+    NodesDataMap,
+    GraphKind,
+    GraphDataType
+  >
+): event is AddEdgeSuccessEvent => {
+  return event.type === 'AddEdgeSuccess';
 };
 
 export const isDeleteEdgeEvent = <

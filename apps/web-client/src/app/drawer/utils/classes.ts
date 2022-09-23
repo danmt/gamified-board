@@ -9,6 +9,7 @@ import {
   DefaultGraphDataType,
   DefaultNodeDataType,
   DrawerEvent,
+  Edge,
   GetNodeTypes,
   GetPartialNodeDataTypes,
   Graph,
@@ -281,7 +282,7 @@ export class Drawer<
     });
 
     this._cy.on('server.edge-added', (ev, ...extraParams) => {
-      const edge = extraParams[0] as cytoscape.EdgeDataDefinition;
+      const edge = extraParams[0] as Edge;
 
       this._cy.add({ data: edge, group: 'edges' });
     });
@@ -384,7 +385,7 @@ export class Drawer<
         }
 
         const element = this._cy.getElementById(
-          `${source.id()}/${target.id()}`
+          `${source.id()}-${target.id()}`
         );
 
         return element.id() === undefined;
@@ -392,7 +393,7 @@ export class Drawer<
       edgeParams: (source, target) => {
         return {
           data: {
-            id: `${source.id()}/${target.id()}`,
+            id: `${source.id()}-${target.id()}`,
           },
         };
       },
@@ -536,7 +537,7 @@ export class Drawer<
     this._cy.emit('local.edge-deleted', [edgeId]);
   }
 
-  handleEdgeAdded(edge: cytoscape.EdgeDataDefinition) {
+  handleEdgeAdded(edge: Edge) {
     this._cy.emit('server.edge-added', [edge]);
   }
 

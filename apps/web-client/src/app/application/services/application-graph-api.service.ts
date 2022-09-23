@@ -47,6 +47,13 @@ export class ApplicationGraphApiService extends GraphApiService<ApplicationGraph
       )
     );
 
+    const edgesSnapshot = await getDocs(
+      collection(
+        this._firestore,
+        `graphs/${workspaceId}/nodes/${applicationId}/edges`
+      )
+    );
+
     return {
       id: graph.id,
       nodes: nodesSnapshot.docs.map((node) => {
@@ -57,7 +64,15 @@ export class ApplicationGraphApiService extends GraphApiService<ApplicationGraph
           kind: nodeData['kind'],
         };
       }),
-      edges: [],
+      edges: edgesSnapshot.docs.map((edge) => {
+        const edgeData = edge.data();
+
+        return {
+          id: edge.id,
+          source: edgeData['data']['source'],
+          target: edgeData['data']['target'],
+        };
+      }),
       lastEventId: graphData['lastEventId'],
       data: graphData['data'],
       kind: graphData['kind'],

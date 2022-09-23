@@ -19,6 +19,21 @@ const getNodePath = (parentIds: string[], nodeId: string) => {
   }
 };
 
+const getEdgePath = (parentIds: string[], edgeId: string) => {
+  if (parentIds.length === 1) {
+    return `graphs/${parentIds[0]}/edges/${edgeId}`;
+  } else {
+    const parentsPath = parentIds.reduce(
+      (path: string, parentId: string, currentIndex) =>
+        `${path}/${parentId}/${
+          currentIndex + 1 < parentIds.length ? 'nodes' : 'edges'
+        }`,
+      `graphs`
+    );
+    return `${parentsPath}/${edgeId}`;
+  }
+};
+
 const getParentPath = (parentIds: string[]) => {
   if (parentIds.length === 1) {
     return `graphs/${parentIds[0]}`;
@@ -77,209 +92,6 @@ export const persistEvent = functions.pubsub
     return true;
   });
 
-/* 
-export const mutateGraphState = functions.pubsub
-  .topic('events')
-  .onPublish(async (message) => {
-    const messageBody = message.data
-      ? JSON.parse(Buffer.from(message.data, 'base64').toString())
-      : null;
-    const graphRef = firestore.doc(`graphs/${messageBody.graphId}`);
-
-    return firestore.runTransaction(async (transaction) => {
-      const graph = await transaction.get(graphRef);
-      const graphData = graph.data();
-
-      const nodes = graphData?.['nodes'] ?? [];
-      const edges = graphData?.['edges'] ?? [];
-
-      switch (messageBody.type) {
-        case 'CreateWorkspace': {
-          const workspaceRef = firestore.doc(
-            `graphs/${messageBody.payload.id}`
-          );
-
-          transaction.set(workspaceRef, {
-            ...messageBody.payload,
-            thumbnailUrl: 'assets/generic/workspace.png',
-            kind: 'workspace',
-            nodes: [],
-            edges: [],
-            lastEventId: messageBody.id,
-          });
-
-          break;
-        }
-
-        case 'UpdateWorkspace': {
-          const workspaceRef = firestore.doc(
-            `graphs/${messageBody.payload.id}`
-          );
-
-          transaction.update(workspaceRef, {
-            ...messageBody.payload.changes,
-            lastEventId: messageBody.id,
-          });
-          break;
-        }
-
-        case 'CreateApplication': {
-          const workspaceRef = firestore.doc(
-            `graphs/${messageBody.payload.workspaceId}`
-          );
-          const applicationRef = firestore.doc(
-            `graphs/${messageBody.payload.id}`
-          );
-          const workspace = await transaction.get(workspaceRef);
-          const workspaceData = workspace.data();
-          const nodes = workspaceData?.['nodes'] ?? [];
-
-          transaction.update(workspaceRef, {
-            nodes: [
-              ...nodes,
-              {
-                ...messageBody.payload,
-                thumbnailUrl: 'assets/generic/application.png',
-              },
-            ],
-            lastEventId: messageBody.id,
-          });
-
-          transaction.set(applicationRef, {
-            ...messageBody.payload,
-            kind: 'application',
-            thumbnailUrl: 'assets/generic/application.png',
-            nodes: [],
-            edges: [],
-            lastEventId: messageBody.id,
-          });
-
-          break;
-        }
-
-        case 'UpdateApplication': {
-          const applicationRef = firestore.doc(
-            `graphs/${messageBody.payload.id}`
-          );
-          const application = await transaction.get(applicationRef);
-          const applicationData = application.data();
-          const workspaceId = applicationData?.['workspaceId'];
-          const workspaceRef = firestore.doc(`graphs/${workspaceId}`);
-          const workspace = await transaction.get(workspaceRef);
-          const workspaceData = workspace.data();
-
-          transaction.update(applicationRef, {
-            ...messageBody.payload.changes,
-            lastEventId: messageBody.id,
-          });
-
-          break;
-        }
-
-        case 'UpdateGraph': {
-          const graphRef = firestore.doc(`graphs/${messageBody.payload.id}`);
-
-          transaction.update(graphRef, {
-            ...messageBody.payload.changes,
-            lastEventId: messageBody.id,
-          });
-          break;
-        }
-
-        case 'DeleteGraph': {
-          const graphRef = firestore.doc(`graphs/${messageBody.payload.id}`);
-
-          transaction.delete(graphRef);
-          break;
-        }
-
-        case 'UploadThumbnail': {
-          const graphRef = firestore.doc(`graphs/${messageBody.payload.id}`);
-          const uploadRef = firestore.doc(
-            `uploads/${messageBody.payload.fileId}`
-          );
-
-          transaction.set(uploadRef, {
-            kind: 'workspace',
-            ref: messageBody.graphId,
-          });
-          transaction.update(graphRef, {
-            thumbnailUrl: messageBody.payload.fileUrl,
-            lastEventId: messageBody.id,
-          });
-
-          break;
-        }
-
-        case 'AddNodeSuccess': {
-          transaction.update(graphRef, {
-            nodes: [...nodes, messageBody.payload],
-            lastEventId: messageBody.id,
-          });
-          break;
-        }
-        case 'AddNodeToEdgeSuccess': {
-          transaction.update(graphRef, {
-            edges: edges
-              .filter((edge: { id: string }) => {console.log(message);
-                return edge.id !== messageBody.payload.edgeId;
-              })
-              .concat([
-                {
-                  id: `${messageBody.payload.source}/${messageBody.payload.node.id}`,
-                  source: messageBody.payload.source,
-                  target: messageBody.payload.node.id,
-                },
-                {
-                  id: `${messageBody.payload.node.id}/${messageBody.payload.target}`,
-                  source: messageBody.payload.node.id,
-                  target: messageBody.payload.target,
-                },
-              ]),
-            nodes: [...nodes, messageBody.payload.node],
-            lastEventId: messageBody.id,
-          });
-          break;
-        }
-        case 'DeleteNodeSuccess': {
-          transaction.update(graphRef, {
-            nodes: nodes.filter((node: { id: string }) => {
-              return node.id !== messageBody.payload;
-            }),
-            edges: edges.filter((edge: { source: string; target: string }) => {
-              return (
-                edge.source !== messageBody.payload &&
-                edge.target !== messageBody.payload
-              );
-            }),
-            lastEventId: messageBody.id,
-          });
-          break;
-        }
-        case 'AddEdgeSuccess': {
-          transaction.update(graphRef, {
-            edges: [...edges, messageBody.payload],
-            lastEventId: messageBody.id,
-          });
-          break;
-        }
-        case 'DeleteEdgeSuccess': {
-          transaction.update(graphRef, {
-            edges: edges.filter((edge: { id: string }) => {
-              return edge.id !== messageBody.payload;
-            }),
-            lastEventId: messageBody.id,
-          });
-          break;
-        }
-        default:
-          return false;
-      }
-
-      return true;
-    });
-  }); */
-
 export const createGraph = functions.pubsub
   .topic('events')
   .onPublish(async (message, context) => {
@@ -295,11 +107,11 @@ export const createGraph = functions.pubsub
       ? JSON.parse(Buffer.from(message.data, 'base64').toString())
       : null;
 
-    const { id: graphId, ...payload } = messageBody.data.payload;
+    const { id, ...payload } = messageBody.data.payload;
     const { kind, ...data } = payload;
 
     await firestore.runTransaction(async (transaction) => {
-      const graphRef = firestore.doc(`graphs/${graphId}`);
+      const graphRef = firestore.doc(`graphs/${id}`);
 
       transaction.set(graphRef, {
         data,
@@ -368,10 +180,10 @@ export const updateGraph = functions.pubsub
       ? JSON.parse(Buffer.from(message.data, 'base64').toString())
       : null;
 
-    const { id: graphId, ...payload } = messageBody.data.payload;
+    const { id, ...payload } = messageBody.data.payload;
 
     await firestore.runTransaction(async (transaction) => {
-      const graphRef = firestore.doc(`graphs/${graphId}`);
+      const graphRef = firestore.doc(`graphs/${id}`);
       const graph = await transaction.get(graphRef);
       const graphData = graph.data();
 
@@ -419,16 +231,16 @@ export const updateGraphThumbnail = functions.pubsub
       ? JSON.parse(Buffer.from(message.data, 'base64').toString())
       : null;
 
-    const { id: graphId, ...payload } = messageBody.data.payload;
+    const { id, ...payload } = messageBody.data.payload;
 
     await firestore.runTransaction(async (transaction) => {
       const uploadRef = firestore.doc(`uploads/${payload.fileId}`);
-      const graphRef = firestore.doc(`graphs/${graphId}`);
+      const graphRef = firestore.doc(`graphs/${id}`);
       const graph = await transaction.get(graphRef);
       const graphData = graph.data();
 
       transaction.set(uploadRef, {
-        ref: graphId,
+        ref: id,
         createdAt: context.timestamp,
       });
 
@@ -447,7 +259,7 @@ export const updateGraphThumbnail = functions.pubsub
         id: messageBody.id,
         data: {
           payload: {
-            id: graphId,
+            id,
             changes: {
               thumbnailUrl: payload.fileUrl,
             },
@@ -549,20 +361,15 @@ export const createNode = functions.pubsub
       ? JSON.parse(Buffer.from(message.data, 'base64').toString())
       : null;
 
-    const {
-      id: nodeId,
-      parentIds,
-      graphId,
-      referenceIds,
-      ...payload
-    } = messageBody.data.payload;
+    const { id, parentIds, graphId, referenceIds, ...payload } =
+      messageBody.data.payload;
     const { kind, ...data } = payload;
 
     await firestore.runTransaction(async (transaction) => {
-      const nodeRef = firestore.doc(getNodePath(parentIds, nodeId));
+      const nodeRef = firestore.doc(getNodePath(parentIds, id));
 
       transaction.set(nodeRef, {
-        id: nodeId,
+        id,
         data,
         kind,
         createdAt: context.timestamp,
@@ -604,7 +411,7 @@ export const createNodeSuccess = functions.pubsub
       ? JSON.parse(Buffer.from(message.data, 'base64').toString())
       : null;
 
-    const { id: nodeId, parentIds } = messageBody.data.payload;
+    const { id, parentIds } = messageBody.data.payload;
 
     const parentRef = firestore.doc(getParentPath(parentIds));
 
@@ -613,7 +420,7 @@ export const createNodeSuccess = functions.pubsub
       updatedAt: context.timestamp,
     });
 
-    const nodeRef = firestore.doc(getNodePath(parentIds, nodeId));
+    const nodeRef = firestore.doc(getNodePath(parentIds, id));
 
     await nodeRef.update({
       lastEventId: messageBody.id,
@@ -638,10 +445,10 @@ export const updateNode = functions.pubsub
       ? JSON.parse(Buffer.from(message.data, 'base64').toString())
       : null;
 
-    const { id: nodeId, parentIds, ...payload } = messageBody.data.payload;
+    const { id, parentIds, ...payload } = messageBody.data.payload;
 
     await firestore.runTransaction(async (transaction) => {
-      const nodeRef = firestore.doc(getNodePath(parentIds, nodeId));
+      const nodeRef = firestore.doc(getNodePath(parentIds, id));
       const node = await transaction.get(nodeRef);
       const nodeData = node.data();
 
@@ -689,17 +496,17 @@ export const updateNodeThumbnail = functions.pubsub
       ? JSON.parse(Buffer.from(message.data, 'base64').toString())
       : null;
 
-    const { id: nodeId, parentIds, ...payload } = messageBody.data.payload;
+    const { id, parentIds, ...payload } = messageBody.data.payload;
 
     await firestore.runTransaction(async (transaction) => {
       const uploadRef = firestore.doc(`uploads/${payload.fileId}`);
-      const nodeRef = firestore.doc(getNodePath(parentIds, nodeId));
+      const nodeRef = firestore.doc(getNodePath(parentIds, id));
       const node = await transaction.get(nodeRef);
       const nodeData = node.data();
 
       // Save the upload for tracking purposes
       transaction.set(uploadRef, {
-        ref: nodeId,
+        ref: id,
         createdAt: context.timestamp,
       });
 
@@ -757,7 +564,7 @@ export const updateNodeSuccess = functions.pubsub
       ? JSON.parse(Buffer.from(message.data, 'base64').toString())
       : null;
 
-    const { id: nodeId, parentIds } = messageBody.data.payload;
+    const { id, parentIds } = messageBody.data.payload;
 
     const parentRef = firestore.doc(getParentPath(parentIds));
 
@@ -766,7 +573,7 @@ export const updateNodeSuccess = functions.pubsub
       updatedAt: context.timestamp,
     });
 
-    const nodeRef = firestore.doc(getNodePath(parentIds, nodeId));
+    const nodeRef = firestore.doc(getNodePath(parentIds, id));
 
     await nodeRef.update({
       lastEventId: messageBody.id,
@@ -791,10 +598,10 @@ export const deleteNode = functions.pubsub
       ? JSON.parse(Buffer.from(message.data, 'base64').toString())
       : null;
 
-    const { id: nodeId, parentIds } = messageBody.data.payload;
+    const { id, parentIds } = messageBody.data.payload;
 
     await firestore.runTransaction(async (transaction) => {
-      const nodeRef = firestore.doc(getNodePath(parentIds, nodeId));
+      const nodeRef = firestore.doc(getNodePath(parentIds, id));
 
       transaction.delete(nodeRef);
     });
@@ -826,6 +633,157 @@ export const deleteNodeSuccess = functions.pubsub
       message.attributes.type !== 'deleteNodeSuccess'
     ) {
       functions.logger.warn('deleteNodeSuccess', 'Event ignored');
+      return false;
+    }
+
+    const messageBody = message.data
+      ? JSON.parse(Buffer.from(message.data, 'base64').toString())
+      : null;
+
+    const { parentIds } = messageBody.data.payload;
+
+    const parentRef = firestore.doc(getParentPath(parentIds));
+
+    await parentRef.update({
+      lastEventId: messageBody.id,
+      updatedAt: context.timestamp,
+    });
+
+    return true;
+  });
+
+export const createEdge = functions.pubsub
+  .topic('events')
+  .onPublish(async (message, context) => {
+    if (
+      process.env.FUNCTIONS_EMULATOR &&
+      message.attributes.type !== 'createEdge'
+    ) {
+      functions.logger.warn('createEdge', 'Event ignored');
+      return false;
+    }
+
+    const messageBody = message.data
+      ? JSON.parse(Buffer.from(message.data, 'base64').toString())
+      : null;
+
+    const { id, parentIds, graphId, referenceIds, ...payload } =
+      messageBody.data.payload;
+
+    await firestore.runTransaction(async (transaction) => {
+      const edgeRef = firestore.doc(getEdgePath(parentIds, id));
+
+      transaction.set(edgeRef, {
+        id,
+        data: payload,
+        createdAt: context.timestamp,
+        lastEventId: messageBody.id,
+      });
+    });
+
+    pubsub.topic('events').publishJSON(
+      {
+        id: context.eventId,
+        data: {
+          payload: messageBody.data.payload,
+          type: 'createEdgeSuccess',
+          clientId: messageBody.data.clientId,
+          correlationId: messageBody.id,
+        },
+      },
+      { type: 'createEdgeSuccess' },
+      (error) => {
+        functions.logger.error(error);
+      }
+    );
+
+    return true;
+  });
+
+export const createEdgeSuccess = functions.pubsub
+  .topic('events')
+  .onPublish(async (message, context) => {
+    if (
+      process.env.FUNCTIONS_EMULATOR &&
+      message.attributes.type !== 'createEdgeSuccess'
+    ) {
+      functions.logger.warn('createEdgeSuccess', 'Event ignored');
+      return false;
+    }
+
+    const messageBody = message.data
+      ? JSON.parse(Buffer.from(message.data, 'base64').toString())
+      : null;
+
+    const { id, parentIds } = messageBody.data.payload;
+
+    const parentRef = firestore.doc(getParentPath(parentIds));
+
+    await parentRef.update({
+      lastEventId: messageBody.id,
+      updatedAt: context.timestamp,
+    });
+
+    const edgeRef = firestore.doc(getEdgePath(parentIds, id));
+
+    await edgeRef.update({
+      lastEventId: messageBody.id,
+      updatedAt: context.timestamp,
+    });
+
+    return true;
+  });
+
+export const deleteEdge = functions.pubsub
+  .topic('events')
+  .onPublish(async (message, context) => {
+    if (
+      process.env.FUNCTIONS_EMULATOR &&
+      message.attributes.type !== 'deleteEdge'
+    ) {
+      functions.logger.warn('deleteEdge', 'Event ignored');
+      return false;
+    }
+
+    const messageBody = message.data
+      ? JSON.parse(Buffer.from(message.data, 'base64').toString())
+      : null;
+
+    const { id, parentIds } = messageBody.data.payload;
+
+    await firestore.runTransaction(async (transaction) => {
+      const nodeRef = firestore.doc(getEdgePath(parentIds, id));
+
+      transaction.delete(nodeRef);
+    });
+
+    pubsub.topic('events').publishJSON(
+      {
+        id: context.eventId,
+        data: {
+          payload: messageBody.data.payload,
+          type: 'deleteEdgeSuccess',
+          clientId: messageBody.data.clientId,
+          correlationId: messageBody.id,
+        },
+      },
+      { type: 'deleteEdgeSuccess' },
+      (error) => {
+        functions.logger.error(error);
+      }
+    );
+
+    return true;
+  });
+
+export const deleteEdgeSuccess = functions.pubsub
+  .topic('events')
+  .onPublish(async (message, context) => {
+    if (
+      process.env.FUNCTIONS_EMULATOR &&
+      message.attributes.type !== 'deleteEdgeSuccess'
+    ) {
+      functions.logger.warn('deleteEdgeSuccess', 'Event ignored');
       return false;
     }
 

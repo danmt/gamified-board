@@ -58,6 +58,20 @@ export interface UpdateNodeThumbnailDto {
   referenceIds: string[];
 }
 
+export type CreateEdgeDto = Entity<{
+  source: string;
+  target: string;
+  parentIds: string[];
+  graphId: string;
+  referenceIds: string[];
+}>;
+
+export interface DeleteEdgeDto {
+  parentIds: string[];
+  graphId: string;
+  referenceIds: string[];
+}
+
 export class GraphApiService<T extends DefaultGraphDataType> {
   private readonly _eventApiService = inject(EventApiService);
 
@@ -135,6 +149,20 @@ export class GraphApiService<T extends DefaultGraphDataType> {
   deleteNode(clientId: string, id: string, payload: DeleteNodeDto) {
     return this._eventApiService.emit(clientId, {
       type: 'deleteNode',
+      payload: { ...payload, id },
+    });
+  }
+
+  createEdge(clientId: string, payload: CreateEdgeDto) {
+    return this._eventApiService.emit(clientId, {
+      type: 'createEdge',
+      payload: payload,
+    });
+  }
+
+  deleteEdge(clientId: string, id: string, payload: DeleteEdgeDto) {
+    return this._eventApiService.emit(clientId, {
+      type: 'deleteEdge',
       payload: { ...payload, id },
     });
   }
