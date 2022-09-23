@@ -9,9 +9,9 @@ import {
   DeleteNodeEvent,
   DeleteNodeSuccessEvent,
   DrawerEvent,
+  GetNodeTypes,
   GraphScrolledEvent,
   InitEvent,
-  Node,
   OneTapEdgeEvent,
   OneTapNodeEvent,
   PanDraggedEvent,
@@ -235,7 +235,7 @@ export const isUpdateNodeSuccessEvent = <
     GraphKind,
     GraphDataType
   >
-): event is UpdateNodeSuccessEvent<NodeKinds, NodeDataType> => {
+): event is UpdateNodeSuccessEvent<NodeKinds, NodeDataType, NodesDataMap> => {
   return event.type === 'UpdateNodeSuccess';
 };
 
@@ -347,12 +347,29 @@ export const isDeleteEdgeSuccessEvent = <
   return event.type === 'DeleteEdgeSuccess';
 };
 
+export const patchNode = <
+  NodeKinds extends string,
+  NodeDataType extends DefaultNodeDataType,
+  NodesDataMap extends { [key in NodeKinds]: NodeDataType }
+>(
+  node: GetNodeTypes<NodeKinds, NodeDataType, NodesDataMap>,
+  payload: Partial<NodesDataMap[NodeKinds]>
+): GetNodeTypes<NodeKinds, NodeDataType, NodesDataMap> => {
+  return {
+    ...node,
+    data: {
+      ...node.data,
+      ...payload,
+    },
+  };
+};
+
 export const defaultNodeLabelFunction = <
   NodeKinds extends string,
   NodeDataType extends DefaultNodeDataType,
   NodesDataMap extends { [key in NodeKinds]: NodeDataType }
 >(
-  node: Node<NodeKinds, NodeDataType, NodesDataMap>
+  node: GetNodeTypes<NodeKinds, NodeDataType, NodesDataMap>
 ) => {
   return `
     <div class="w-[280px] h-[85px] flex gap-2 items-center px-8 bg-[length:280px_85px] bg-[url('assets/images/node.png')] z-50">
@@ -377,7 +394,7 @@ export const createGraph = <
   nodes: cytoscape.NodeDefinition[],
   edges: cytoscape.EdgeDefinition[],
   groups: cytoscape.ElementDefinition[],
-  labelFn: (node: Node<NodeKinds, NodeDataType, NodesDataMap>) => string
+  labelFn: (node: GetNodeTypes<NodeKinds, NodeDataType, NodesDataMap>) => string
 ): cytoscape.Core => {
   return cytoscape({
     container,

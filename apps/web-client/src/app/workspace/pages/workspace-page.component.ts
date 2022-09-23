@@ -302,7 +302,11 @@ export class WorkspacePageComponent
   );
 
   private readonly _handleUpdateNodeSuccess = this.effect<
-    UpdateNodeSuccessEvent<WorkspaceNodeKinds, WorkspaceNodeData>
+    UpdateNodeSuccessEvent<
+      WorkspaceNodeKinds,
+      WorkspaceNodeData,
+      WorkspaceNodesData
+    >
   >(
     concatMap((event) =>
       of(null).pipe(
@@ -314,14 +318,14 @@ export class WorkspacePageComponent
 
           this.patchSelected({
             id: event.payload.id,
-            changes: event.payload.changes,
+            changes: event.payload.data,
           });
 
           return this._workspaceGraphApiService.updateNode(
             environment.clientId,
             event.payload.id,
             {
-              changes: event.payload.changes,
+              changes: event.payload.data,
               graphId: workspaceId,
               parentIds: [workspaceId],
               referenceIds: [workspaceId, event.payload.id],

@@ -9,8 +9,9 @@ import {
   DefaultGraphDataType,
   DefaultNodeDataType,
   DrawerEvent,
+  GetNodeTypes,
+  GetPartialNodeDataTypes,
   Graph,
-  Node,
 } from './types';
 
 export class Drawer<
@@ -35,7 +36,7 @@ export class Drawer<
     Graph<NodeKinds, NodeDataType, NodesDataMap, GraphKind, GraphDataType>
   >;
   private readonly _selected = new BehaviorSubject<
-    Option<Node<NodeKinds, NodeDataType, NodesDataMap>>
+    Option<GetNodeTypes<NodeKinds, NodeDataType, NodesDataMap>>
   >(null);
   private readonly _cy: cytoscape.Core;
   readonly event$ = this._event.asObservable();
@@ -52,11 +53,11 @@ export class Drawer<
       GraphKind,
       GraphDataType
     >,
-    _nodes: Node<NodeKinds, NodeDataType, NodesDataMap>[], // this field is only to help the type inference
+    _nodes: GetNodeTypes<NodeKinds, NodeDataType, NodesDataMap>[], // this field is only to help the type inference
     groups: string[],
     element: HTMLElement,
     labelFn: (
-      node: Node<NodeKinds, NodeDataType, NodesDataMap>
+      node: GetNodeTypes<NodeKinds, NodeDataType, NodesDataMap>
     ) => string = defaultNodeLabelFunction
   ) {
     this._cy = createGraph<NodeKinds, NodeDataType, NodesDataMap>(
@@ -173,12 +174,12 @@ export class Drawer<
 
       this._event.next({
         type: 'AddNodeSuccess',
-        payload: node as Node<NodeKinds, NodeDataType, NodesDataMap>,
+        payload: node as GetNodeTypes<NodeKinds, NodeDataType, NodesDataMap>,
       });
     });
 
     this._cy.on('server.node-added', (ev, ...extraParams) => {
-      const node = extraParams[0] as Node<
+      const node = extraParams[0] as GetNodeTypes<
         NodeKinds,
         NodeDataType,
         NodesDataMap
@@ -188,19 +189,15 @@ export class Drawer<
     });
 
     this._cy.on('local.node-updated', (ev, ...extraParams) => {
-      const nodeId = extraParams[0] as string;
-      const payload = [...(extraParams as unknown[])][1] as {
-        kind: NodeKinds;
-        changes: Partial<NodeDataType>;
-      };
+      const payload = extraParams[0] as GetPartialNodeDataTypes<
+        NodeKinds,
+        NodeDataType,
+        NodesDataMap
+      >;
 
       this._event.next({
         type: 'UpdateNodeSuccess',
-        payload: {
-          id: nodeId,
-          changes: payload.changes,
-          kind: payload.kind,
-        },
+        payload,
       });
     });
 
@@ -449,7 +446,11 @@ export class Drawer<
   }
 
   addNode(
-    node: Node<NodeKinds, NodeDataType, NodesDataMap>,
+    node: GetNodeTypes<
+      NodeKinds,
+      NodeDataType,
+      { [key in NodeKinds]: NodeDataType }
+    >,
     position?: { x: number; y: number }
   ) {
     createNode(this._cy, node, position);
@@ -458,7 +459,7 @@ export class Drawer<
 
   updateNode(
     nodeId: string,
-    payload: { changes: Partial<NodeDataType>; kind: string }
+    payload: { changes: Partial<NodeDataType>; kind: NodeKinds }
   ) {
     const node = this._cy.getElementById(nodeId);
 
@@ -468,7 +469,13 @@ export class Drawer<
       data: { ...nodeData.data, ...payload.changes },
     });
 
-    this._cy.emit('local.node-updated', [nodeId, payload]);
+    this._cy.emit('local.node-updated', [
+      {
+        id: nodeId,
+        data: payload.changes,
+        kind: payload.kind,
+      },
+    ]);
   }
 
   updateNodeThumbnail(nodeId: string, fileId: string, fileUrl: string) {
@@ -502,7 +509,13 @@ export class Drawer<
     this._cy.emit('server.graph-thumbnail-updated', [fileId, fileUrl]);
   }
 
-  handleNodeAdded(node: Node<NodeKinds, NodeDataType, NodesDataMap>) {
+  handleNodeAdded(
+    node: GetNodeTypes<
+      NodeKinds,
+      NodeDataType,
+      { [key in NodeKinds]: NodeDataType }
+    >
+  ) {
     this._cy.emit('server.node-added', [node]);
   }
 

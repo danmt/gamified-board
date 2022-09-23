@@ -33,12 +33,14 @@ import {
   isAddNodeSuccessEvent,
   isClickEvent,
   isDeleteNodeSuccessEvent,
+  isOneTapNodeEvent,
   isUpdateGraphSuccessEvent,
   isUpdateGraphThumbnailSuccessEvent,
   isUpdateNodeSuccessEvent,
   isUpdateNodeThumbnailSuccessEvent,
   isViewNodeEvent,
   OneTapNodeEvent,
+  patchNode,
   UpdateGraphSuccessEvent,
   UpdateGraphThumbnailSuccessEvent,
   UpdateNodeSuccessEvent,
@@ -72,16 +74,9 @@ import {
   ApplicationNodeData,
   ApplicationNodeKinds,
   ApplicationNodesData,
-  CollectionNodeData,
-  FieldNodeData,
-  InstructionNodeData,
+  PartialApplicationNode,
 } from '../utils';
-import {
-  applicationNodeLabelFunction,
-  isOneTapCollectionNodeEvent,
-  isOneTapFieldNodeEvent,
-  isOneTapInstructionNodeEvent,
-} from '../utils/methods';
+import { applicationNodeLabelFunction } from '../utils/methods';
 
 interface ViewModel {
   isCreatingField: boolean;
@@ -282,87 +277,22 @@ export class ApplicationPageComponent
   @ViewChild('drawerElement')
   pgDrawerElementRef: ElementRef<HTMLElement> | null = null;
 
-  private patchSelected = this.updater<{
-    id: string;
-    payload:
-      | {
-          kind: 'collection';
-          changes: Partial<CollectionNodeData>;
-        }
-      | {
-          kind: 'field';
-          changes: Partial<FieldNodeData>;
-        }
-      | {
-          kind: 'instruction';
-          changes: Partial<InstructionNodeData>;
-        };
-  }>((state, { id, payload }) => {
-    switch (payload.kind) {
-      case 'collection': {
-        if (
-          isNull(state.selected) ||
-          state.selected.id !== id ||
-          payload.kind !== state.selected.kind
-        ) {
-          return state;
-        }
-
-        return {
-          ...state,
-          selected: {
-            ...state.selected,
-            data: {
-              ...state.selected.data,
-              ...payload.changes,
-            },
-          },
-        };
+  private patchSelected = this.updater<PartialApplicationNode>(
+    (state, payload) => {
+      if (
+        isNull(state.selected) ||
+        state.selected.id !== payload.id ||
+        state.selected.kind === payload.kind
+      ) {
+        return state;
       }
 
-      case 'instruction': {
-        if (
-          isNull(state.selected) ||
-          state.selected.id !== id ||
-          payload.kind !== state.selected.kind
-        ) {
-          return state;
-        }
-
-        return {
-          ...state,
-          selected: {
-            ...state.selected,
-            data: {
-              ...state.selected.data,
-              ...payload.changes,
-            },
-          },
-        };
-      }
-
-      case 'field': {
-        if (
-          isNull(state.selected) ||
-          state.selected.id !== id ||
-          payload.kind !== state.selected.kind
-        ) {
-          return state;
-        }
-
-        return {
-          ...state,
-          selected: {
-            ...state.selected,
-            data: {
-              ...state.selected.data,
-              ...payload.changes,
-            },
-          },
-        };
-      }
+      return {
+        ...state,
+        selected: patchNode(state.selected, payload.data),
+      };
     }
-  });
+  );
 
   private clearSelected = this.updater<string>((state, id) => {
     if (isNull(state.selected) || state.selected.id !== id) {
@@ -375,22 +305,12 @@ export class ApplicationPageComponent
     };
   });
 
-  readonly setCollectionSelected = this.updater<
-    OneTapNodeEvent<'collection', CollectionNodeData, ApplicationNodesData>
-  >((state, event) => ({
-    ...state,
-    selected: event.payload,
-  }));
-
-  readonly setInstructionSelected = this.updater<
-    OneTapNodeEvent<'instruction', InstructionNodeData, ApplicationNodesData>
-  >((state, event) => ({
-    ...state,
-    selected: event.payload,
-  }));
-
-  readonly setFieldSelected = this.updater<
-    OneTapNodeEvent<'field', FieldNodeData, ApplicationNodesData>
+  readonly setSelected = this.updater<
+    OneTapNodeEvent<
+      ApplicationNodeKinds,
+      ApplicationNodeData,
+      ApplicationNodesData
+    >
   >((state, event) => ({
     ...state,
     selected: event.payload,
@@ -501,7 +421,11 @@ export class ApplicationPageComponent
   );
 
   private readonly _handleUpdateNodeSuccess = this.effect<
-    UpdateNodeSuccessEvent<ApplicationNodeKinds, ApplicationNodeData>
+    UpdateNodeSuccessEvent<
+      ApplicationNodeKinds,
+      ApplicationNodeData,
+      ApplicationNodesData
+    >
   >(
     concatMap((event) =>
       of(null).pipe(
@@ -511,19 +435,15 @@ export class ApplicationPageComponent
             return EMPTY;
           }
 
-          this.patchSelected({
-            id: event.payload.id,
-            payload: {
-              kind: event.payload.kind,
-              changes: event.payload.changes,
-            },
-          });
+          console.log(event);
+
+          this.patchSelected(event.payload);
 
           return this._applicationGraphApiService.updateNode(
             environment.clientId,
             event.payload.id,
             {
-              changes: event.payload.changes,
+              changes: event.payload.data,
               graphId: applicationId,
               parentIds: [workspaceId, applicationId],
               referenceIds: [applicationId, event.payload.id],
@@ -548,11 +468,9 @@ export class ApplicationPageComponent
 
           this.patchSelected({
             id: event.payload.id,
-            payload: {
-              kind: event.payload.kind,
-              changes: {
-                thumbnailUrl: event.payload.fileUrl,
-              },
+            kind: event.payload.kind,
+            data: {
+              thumbnailUrl: event.payload.fileUrl,
             },
           });
 
@@ -690,10 +608,8 @@ export class ApplicationPageComponent
           tap((event) => {
             this.patchSelected({
               id: event['payload'].id,
-              payload: {
-                changes: event['payload'].changes,
-                kind: event['payload'].kind,
-              },
+              data: event['payload'].changes,
+              kind: event['payload'].kind,
             });
 
             if (event['clientId'] !== environment.clientId) {
@@ -812,18 +728,8 @@ export class ApplicationPageComponent
     this._handleDeleteNodeSuccess(
       this._applicationDrawerStore.event$.pipe(filter(isDeleteNodeSuccessEvent))
     );
-    this.setCollectionSelected(
-      this._applicationDrawerStore.event$.pipe(
-        filter(isOneTapCollectionNodeEvent)
-      )
-    );
-    this.setInstructionSelected(
-      this._applicationDrawerStore.event$.pipe(
-        filter(isOneTapInstructionNodeEvent)
-      )
-    );
-    this.setFieldSelected(
-      this._applicationDrawerStore.event$.pipe(filter(isOneTapFieldNodeEvent))
+    this.setSelected(
+      this._applicationDrawerStore.event$.pipe(filter(isOneTapNodeEvent))
     );
   }
 

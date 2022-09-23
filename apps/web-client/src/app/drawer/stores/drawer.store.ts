@@ -7,9 +7,9 @@ import {
   DefaultNodeDataType,
   Direction,
   Drawer,
+  GetNodeTypes,
   isGraphScrolledEvent,
   isPanDraggedEvent,
-  Node,
 } from '../utils';
 
 interface ViewModel<
@@ -167,7 +167,7 @@ export class DrawerStore<
   }
 
   async addNode(
-    nodeData: Node<NodeKinds, NodeDataType, NodesDataMap>,
+    nodeData: GetNodeTypes<NodeKinds, NodeDataType, NodesDataMap>,
     position?: { x: number; y: number }
   ) {
     const drawer = await firstValueFrom(this.drawer$);
@@ -179,7 +179,7 @@ export class DrawerStore<
 
   async updateNode(
     nodeId: string,
-    payload: { changes: Partial<NodeDataType>; kind: string }
+    payload: { changes: Partial<NodeDataType>; kind: NodeKinds }
   ) {
     const drawer = await firstValueFrom(this.drawer$);
 
@@ -220,7 +220,9 @@ export class DrawerStore<
     }
   }
 
-  async handleNodeAdded(node: Node<NodeKinds, NodeDataType, NodesDataMap>) {
+  async handleNodeAdded(
+    node: GetNodeTypes<NodeKinds, NodeDataType, NodesDataMap>
+  ) {
     const drawer = await firstValueFrom(this.drawer$);
 
     if (drawer !== null) {

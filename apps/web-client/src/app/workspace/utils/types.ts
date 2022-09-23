@@ -30,11 +30,7 @@ export type WorkspaceNodesData = {
   application: ApplicationNodeData;
 };
 
-export type ApplicationNode = Node<
-  'application',
-  WorkspaceNodeData,
-  WorkspaceNodesData
->;
+export type ApplicationNode = Node<'application', WorkspaceNodeData>;
 
 export type WorkspaceNode = ApplicationNode;
 

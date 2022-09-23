@@ -1,4 +1,9 @@
-import { Graph, Node } from '../../drawer/utils';
+import {
+  GetNodeTypes,
+  GetPartialNodeDataTypes,
+  Graph,
+  Node,
+} from '../../drawer/utils';
 import { Entity } from '../../shared/utils';
 
 export type ApplicationDto = Entity<{
@@ -45,8 +50,8 @@ export interface FieldNodeData {
 }
 
 export type ApplicationNodeData =
-  | CollectionNodeData
   | InstructionNodeData
+  | CollectionNodeData
   | FieldNodeData;
 
 export type ApplicationNodesData = {
@@ -55,25 +60,20 @@ export type ApplicationNodesData = {
   instruction: InstructionNodeData;
 };
 
-export type CollectionNode = Node<
-  'collection',
+export type CollectionNode = Node<'collection', CollectionNodeData>;
+export type InstructionNode = Node<'instruction', InstructionNodeData>;
+export type FieldNode = Node<'field', FieldNodeData>;
+export type ApplicationNode = GetNodeTypes<
+  ApplicationNodeKinds,
   ApplicationNodeData,
   ApplicationNodesData
 >;
-export type InstructionNode = Node<
-  'instruction',
+export type PartialApplicationNode = GetPartialNodeDataTypes<
+  ApplicationNodeKinds,
   ApplicationNodeData,
   ApplicationNodesData
 >;
-export type FieldNode = Node<
-  'field',
-  ApplicationNodeData,
-  ApplicationNodesData
->;
-export type ApplicationNode = CollectionNode | InstructionNode | FieldNode;
-
 export type ApplicationNodeKinds = 'collection' | 'field' | 'instruction';
-
 export type ApplicationGraphKind = 'application';
 
 export type ApplicationGraph = Graph<
