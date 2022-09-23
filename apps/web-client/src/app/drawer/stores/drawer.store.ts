@@ -1,3 +1,4 @@
+import { Injectable } from '@angular/core';
 import { ComponentStore, OnStoreInit } from '@ngrx/component-store';
 import { EdgeDataDefinition } from 'cytoscape';
 import { EMPTY, filter, firstValueFrom, of, switchMap, tap } from 'rxjs';
@@ -26,6 +27,7 @@ interface ViewModel<
   drawMode: boolean;
 }
 
+@Injectable()
 export class DrawerStore<
     NodeKinds extends string,
     NodeDataType extends DefaultNodeDataType,
