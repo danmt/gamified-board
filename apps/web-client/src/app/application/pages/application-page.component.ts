@@ -26,6 +26,7 @@ import {
 import { environment } from '../../../environments/environment';
 import { UpdateApplicationSubmit } from '../../application/components';
 import { UpdateCollectionSubmit } from '../../collection/components';
+import { DrawerStore } from '../../drawer/stores';
 import {
   AddNodeSuccessEvent,
   DeleteNodeSuccessEvent,
@@ -66,7 +67,6 @@ import {
   RightDockComponent,
 } from '../sections';
 import { ApplicationGraphApiService } from '../services';
-import { ApplicationDrawerStore } from '../stores';
 import {
   ApplicationGraphData,
   ApplicationGraphKind,
@@ -237,7 +237,7 @@ const initialState: ViewModel = {
     BackgroundImageZoomDirective,
     BackgroundImageMoveDirective,
   ],
-  providers: [provideComponentStore(ApplicationDrawerStore)],
+  providers: [provideComponentStore(DrawerStore)],
 })
 export class ApplicationPageComponent
   extends ComponentStore<ViewModel>
@@ -248,7 +248,15 @@ export class ApplicationPageComponent
     ApplicationGraphApiService
   );
   private readonly _activatedRoute = inject(ActivatedRoute);
-  private readonly _applicationDrawerStore = inject(ApplicationDrawerStore);
+  private readonly _applicationDrawerStore = inject(
+    DrawerStore<
+      ApplicationNodeKinds,
+      ApplicationNodeData,
+      ApplicationNodesData,
+      ApplicationGraphKind,
+      ApplicationGraphData
+    >
+  );
 
   readonly isCreatingField$ = this.select(
     ({ isCreatingField }) => isCreatingField

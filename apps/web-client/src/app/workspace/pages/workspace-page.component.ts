@@ -24,6 +24,7 @@ import {
   withLatestFrom,
 } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { DrawerStore } from '../../drawer/stores';
 import {
   AddNodeSuccessEvent,
   DeleteNodeSuccessEvent,
@@ -57,7 +58,6 @@ import {
   WorkspaceDockComponent,
 } from '../sections';
 import { WorkspaceGraphApiService } from '../services';
-import { WorkspaceDrawerStore } from '../stores';
 import {
   WorkspaceGraphData,
   WorkspaceGraphKind,
@@ -141,7 +141,7 @@ const initialState: ViewModel = {
     BackgroundImageZoomDirective,
     BackgroundImageMoveDirective,
   ],
-  providers: [provideComponentStore(WorkspaceDrawerStore)],
+  providers: [provideComponentStore(DrawerStore)],
 })
 export class WorkspacePageComponent
   extends ComponentStore<ViewModel>
@@ -150,7 +150,15 @@ export class WorkspacePageComponent
   private readonly _router = inject(Router);
   private readonly _workspaceGraphApiService = inject(WorkspaceGraphApiService);
   private readonly _activatedRoute = inject(ActivatedRoute);
-  private readonly _workspaceDrawerStore = inject(WorkspaceDrawerStore);
+  private readonly _workspaceDrawerStore = inject(
+    DrawerStore<
+      WorkspaceNodeKinds,
+      WorkspaceNodeData,
+      WorkspaceNodesData,
+      WorkspaceGraphKind,
+      WorkspaceGraphData
+    >
+  );
 
   readonly isCreatingApplication$ = this.select(
     ({ isCreatingApplication }) => isCreatingApplication
