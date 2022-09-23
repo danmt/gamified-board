@@ -7,4 +7,5 @@ export * from './applications-inventory.component';
 export * from './collection-dock.component';
 export * from './field-dock.component';
 export * from './instruction-dock.component';
+export * from './left-dock.component';
 export * from './right-dock.component';

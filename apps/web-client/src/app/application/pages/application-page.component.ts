@@ -64,6 +64,7 @@ import {
   CollectionDockComponent,
   FieldDockComponent,
   InstructionDockComponent,
+  LeftDockComponent,
   RightDockComponent,
 } from '../sections';
 import { ApplicationGraphApiService } from '../services';
@@ -171,6 +172,12 @@ const initialState: ViewModel = {
       (pgActivateField)="onActivateField()"
     ></pg-right-dock>
 
+    <pg-left-dock
+      *ngrxLet="drawMode$; let drawMode"
+      class="fixed bottom-0 left-0"
+      (pgToggleDrawMode)="onSetDrawMode(!drawMode)"
+    ></pg-left-dock>
+
     <pg-active-collection
       *ngIf="application$ | ngrxPush as application"
       [pgActive]="
@@ -230,6 +237,7 @@ const initialState: ViewModel = {
     CollectionDockComponent,
     InstructionDockComponent,
     FieldDockComponent,
+    LeftDockComponent,
     RightDockComponent,
     ActiveCollectionComponent,
     ActiveInstructionComponent,
@@ -280,6 +288,7 @@ export class ApplicationPageComponent
   );
   readonly zoomSize$ = this._applicationDrawerStore.zoomSize$;
   readonly panDrag$ = this._applicationDrawerStore.panDrag$;
+  readonly drawMode$ = this._applicationDrawerStore.drawMode$;
 
   @HostBinding('class') class = 'block relative min-h-screen min-w-screen';
   @ViewChild('drawerElement')
@@ -797,6 +806,10 @@ export class ApplicationPageComponent
 
   onUnselect() {
     this.patchState({ selected: null });
+  }
+
+  onSetDrawMode(drawMode: boolean) {
+    this._applicationDrawerStore.setDrawMode(drawMode);
   }
 
   onAddInstructionNode(
