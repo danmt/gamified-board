@@ -49,7 +49,7 @@ import {
   BackgroundImageMoveDirective,
   BackgroundImageZoomDirective,
 } from '../../shared/directives';
-import { isNotNull, isNull, Option } from '../../shared/utils';
+import { generateId, isNotNull, isNull, Option } from '../../shared/utils';
 import { UpdateApplicationSubmit, UpdateWorkspaceSubmit } from '../components';
 import {
   ActiveApplicationComponent,
@@ -57,7 +57,7 @@ import {
   ApplicationDockComponent,
   WorkspaceDockComponent,
 } from '../sections';
-import { WorkspaceGraphApiService } from '../services';
+import { WorkspaceApiService, WorkspaceGraphApiService } from '../services';
 import {
   WorkspaceGraphData,
   WorkspaceGraphKind,
@@ -115,6 +115,13 @@ const initialState: ViewModel = {
           onUpdateNodeThumbnail($event.id, $event.fileId, $event.fileUrl)
         "
         (pgDeleteApplication)="onRemoveNode($event)"
+        (pgSaveCheckpoint)="
+          onSaveCheckpoint(
+            selected.data.workspaceId,
+            $event.id,
+            $event.checkpoint.name
+          )
+        "
       ></pg-application-dock>
     </ng-container>
 
@@ -148,6 +155,7 @@ export class WorkspacePageComponent
   implements OnInit, AfterViewInit
 {
   private readonly _router = inject(Router);
+  private readonly _workspaceApiService = inject(WorkspaceApiService);
   private readonly _workspaceGraphApiService = inject(WorkspaceGraphApiService);
   private readonly _activatedRoute = inject(ActivatedRoute);
   private readonly _workspaceDrawerStore = inject(
@@ -670,5 +678,21 @@ export class WorkspacePageComponent
 
   onRemoveNode(nodeId: string) {
     this._workspaceDrawerStore.removeNode(nodeId);
+  }
+
+  onSaveCheckpoint(
+    workspaceId: string,
+    applicationId: string,
+    checkpointName: string
+  ) {
+    this._workspaceApiService
+      .saveCheckpoint(
+        environment.clientId,
+        generateId(),
+        workspaceId,
+        applicationId,
+        checkpointName
+      )
+      .subscribe();
   }
 }

@@ -802,3 +802,53 @@ export const deleteEdgeSuccess = functions.pubsub
 
     return true;
   });
+
+export const saveCheckpoint = functions.pubsub
+  .topic('events')
+  .onPublish(async (message) => {
+    if (
+      process.env.FUNCTIONS_EMULATOR &&
+      message.attributes.type !== 'saveCheckpoint'
+    ) {
+      functions.logger.warn('saveCheckpoint', 'Event ignored');
+      return false;
+    }
+
+    const messageBody = message.data
+      ? JSON.parse(Buffer.from(message.data, 'base64').toString())
+      : null;
+
+    const { id, name, applicationId, workspaceId } = messageBody.data.payload;
+
+    const [application, applicationNodes, applicationEdges] = await Promise.all(
+      [
+        firestore.doc(`graphs/${workspaceId}/nodes/${applicationId}`).get(),
+        firestore
+          .collection(`graphs/${workspaceId}/nodes/${applicationId}/nodes`)
+          .get(),
+        firestore
+          .collection(`graphs/${workspaceId}/nodes/${applicationId}/edges`)
+          .get(),
+      ]
+    );
+
+    const applicationCheckpointRef = firestore.doc(
+      `graphs/${workspaceId}/nodes/${applicationId}/checkpoints/${id}`
+    );
+    await applicationCheckpointRef.set({
+      applicationId,
+      workspaceId,
+      name,
+      graph: application.data(),
+      nodes: applicationNodes.docs.map((node) => ({
+        id: node.id,
+        ...node.data(),
+      })),
+      edges: applicationEdges.docs.map((edge) => ({
+        id: edge.id,
+        ...edge.data(),
+      })),
+    });
+
+    return true;
+  });

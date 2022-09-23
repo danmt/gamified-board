@@ -22,6 +22,8 @@ import {
 import { SlotHotkeyPipe } from '../../shared/pipes';
 import { Option } from '../../shared/utils';
 import {
+  SaveCheckpointModalDirective,
+  SaveCheckpointSubmit,
   UpdateApplicationModalDirective,
   UpdateApplicationSubmit,
 } from '../components';
@@ -38,7 +40,7 @@ interface ViewModel {
   isUpdating: boolean;
   isUpdatingThumbnail: boolean;
   isDeleting: boolean;
-  hotkeys: [HotKey, HotKey, HotKey, HotKey];
+  hotkeys: [HotKey, HotKey, HotKey, HotKey, HotKey];
 }
 
 const initialState: ViewModel = {
@@ -66,6 +68,11 @@ const initialState: ViewModel = {
       slot: 3,
       code: 'KeyR',
       key: 'r',
+    },
+    {
+      slot: 4,
+      code: 'KeyT',
+      key: 't',
     },
   ],
 };
@@ -195,6 +202,30 @@ const initialState: ViewModel = {
                 (click)="onUnselectApplication()"
               ></pg-square-button>
             </div>
+
+            <div class="bg-gray-800 relative w-[2.89rem] h-[2.89rem]">
+              <ng-container *ngrxLet="hotkeys$; let hotkeys">
+                <span
+                  *ngIf="4 | pgSlotHotkey: hotkeys as hotkey"
+                  class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
+                  style="font-size: 0.5rem; line-height: 0.5rem"
+                  [pgKeyListener]="hotkeys[4].code"
+                  (pgKeyDown)="saveCheckpointModal.open()"
+                >
+                  {{ hotkey }}
+                </span>
+              </ng-container>
+
+              <pg-square-button
+                pgThumbnailUrl="assets/generic/application.png"
+                [pgIsActive]="false"
+                pgSaveCheckpointModal
+                #saveCheckpointModal="modal"
+                (pgOpenModal)="setIsUpdating(true)"
+                (pgCloseModal)="setIsUpdating(false)"
+                (pgSaveCheckpoint)="onSaveCheckpoint(application.id, $event)"
+              ></pg-square-button>
+            </div>
           </div>
         </div>
       </div>
@@ -213,6 +244,7 @@ const initialState: ViewModel = {
     DefaultImageDirective,
     UploadFileModalDirective,
     UpdateApplicationModalDirective,
+    SaveCheckpointModalDirective,
     SecondaryDockComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -240,6 +272,10 @@ export class ApplicationDockComponent extends ComponentStore<ViewModel> {
     fileUrl: string;
   }>();
   @Output() pgDeleteApplication = new EventEmitter<string>();
+  @Output() pgSaveCheckpoint = new EventEmitter<{
+    id: string;
+    checkpoint: SaveCheckpointSubmit;
+  }>();
 
   readonly setIsUpdating = this.updater<boolean>((state, isUpdating) => ({
     ...state,
@@ -286,5 +322,9 @@ export class ApplicationDockComponent extends ComponentStore<ViewModel> {
 
   onUnselectApplication() {
     this.pgApplicationUnselected.emit();
+  }
+
+  onSaveCheckpoint(id: string, checkpoint: SaveCheckpointSubmit) {
+    this.pgSaveCheckpoint.emit({ id, checkpoint });
   }
 }

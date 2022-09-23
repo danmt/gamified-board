@@ -65,46 +65,21 @@ export class WorkspaceApiService {
     );
   }
 
-  createWorkspace(
+  saveCheckpoint(
     clientId: string,
-    userId: string,
-    { id, name }: CreateWorkspaceDto
+    checkPointId: string,
+    workspaceId: string,
+    applicationId: string,
+    checkpointName: string
   ) {
     return this._eventApiService.emit(clientId, {
-      type: 'createWorkspace',
+      type: 'saveCheckpoint',
       payload: {
-        id,
-        name,
-        userId,
+        id: checkPointId,
+        name: checkpointName,
+        applicationId,
+        workspaceId,
       },
-    });
-  }
-
-  updateWorkspace(clientId: string, id: string, changes: UpdateWorkspaceDto) {
-    return this._eventApiService.emit(clientId, {
-      type: 'updateWorkspace',
-      payload: {
-        id,
-        changes,
-      },
-    });
-  }
-
-  deleteWorkspace(clientId: string, id: string) {
-    return this._eventApiService.emit(clientId, {
-      type: 'deleteWorkspace',
-      payload: { id },
-    });
-  }
-
-  updateWorkspaceThumbnail(
-    clientId: string,
-    id: string,
-    { fileId, fileUrl }: UpdateWorkspaceThumbnailDto
-  ) {
-    return this._eventApiService.emit(clientId, {
-      type: 'updateWorkspaceThumbnail',
-      payload: { id, fileId, fileUrl },
     });
   }
 }
