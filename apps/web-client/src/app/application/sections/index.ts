@@ -1,4 +1,3 @@
-export * from './active-application.component';
 export * from './active-collection.component';
 export * from './active-field.component';
 export * from './active-instruction.component';
