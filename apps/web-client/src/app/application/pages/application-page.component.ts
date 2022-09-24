@@ -370,17 +370,25 @@ export class ApplicationPageComponent
     selected: event.payload,
   }));
 
-  private readonly _handleViewNode = this.effect<ViewNodeEvent>(
+  private readonly _handleViewNode = this.effect<
+    ViewNodeEvent<ApplicationNodeKinds>
+  >(
     concatMap((event) =>
       of(null).pipe(
-        withLatestFrom(this.applicationId$),
-        tap(([, applicationId]) => {
-          if (isNotNull(applicationId)) {
+        withLatestFrom(this.workspaceId$, this.applicationId$),
+        tap(([, workspaceId, applicationId]) => {
+          if (
+            isNotNull(workspaceId) &&
+            isNotNull(applicationId) &&
+            event.payload.kind === 'instruction'
+          ) {
             this._router.navigate([
-              '/applications',
-              applicationId,
+              '/workspaces',
+              workspaceId,
               'applications',
-              event.payload,
+              applicationId,
+              'instructions',
+              event.payload.id,
             ]);
           }
         })
@@ -543,32 +551,33 @@ export class ApplicationPageComponent
     )
   );
 
-  private readonly _handleDeleteNodeSuccess =
-    this.effect<DeleteNodeSuccessEvent>(
-      concatMap((event) =>
-        of(null).pipe(
-          withLatestFrom(this.workspaceId$, this.applicationId$),
-          concatMap(([, workspaceId, applicationId]) => {
-            if (isNull(workspaceId) || isNull(applicationId)) {
-              return EMPTY;
+  private readonly _handleDeleteNodeSuccess = this.effect<
+    DeleteNodeSuccessEvent<ApplicationNodeKinds>
+  >(
+    concatMap((event) =>
+      of(null).pipe(
+        withLatestFrom(this.workspaceId$, this.applicationId$),
+        concatMap(([, workspaceId, applicationId]) => {
+          if (isNull(workspaceId) || isNull(applicationId)) {
+            return EMPTY;
+          }
+
+          this.clearSelected(event.payload.id);
+
+          return this._applicationGraphApiService.deleteNode(
+            environment.clientId,
+            event.payload.id,
+            {
+              graphId: applicationId,
+              kind: event.payload.kind,
+              parentIds: [workspaceId, applicationId],
+              referenceIds: [applicationId, event.payload.id],
             }
-
-            this.clearSelected(event.payload.id);
-
-            return this._applicationGraphApiService.deleteNode(
-              environment.clientId,
-              event.payload.id,
-              {
-                graphId: applicationId,
-                kind: event.payload.kind,
-                parentIds: [workspaceId, applicationId],
-                referenceIds: [applicationId, event.payload.id],
-              }
-            );
-          })
-        )
+          );
+        })
       )
-    );
+    )
+  );
 
   private readonly _handleAddEdgeSuccess = this.effect<AddEdgeSuccessEvent>(
     concatMap((event) =>
@@ -925,7 +934,6 @@ export class ApplicationPageComponent
         })
       )
     );
-    this.installations$.subscribe((a) => console.log(a));
   }
 
   async ngAfterViewInit() {

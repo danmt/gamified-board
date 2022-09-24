@@ -248,7 +248,7 @@ export class Drawer<
 
     this._cy.on('local.node-deleted', (_, ...extraParams) => {
       const nodeId = extraParams[0] as string;
-      const kind = [...(extraParams as unknown[])][1] as string;
+      const kind = [...(extraParams as unknown[])][1] as NodeKinds;
 
       this._event.next({
         type: 'DeleteNodeSuccess',
@@ -336,7 +336,10 @@ export class Drawer<
           content: 'info',
           select: (node) => {
             if (node.isNode()) {
-              this._event.next({ type: 'ViewNode', payload: node.id() });
+              this._event.next({
+                type: 'ViewNode',
+                payload: { id: node.id(), kind: node.data().kind },
+              });
             }
           },
         },

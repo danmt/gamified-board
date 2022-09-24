@@ -217,7 +217,9 @@ export class WorkspacePageComponent
     };
   });
 
-  private readonly _handleViewNode = this.effect<ViewNodeEvent>(
+  private readonly _handleViewNode = this.effect<
+    ViewNodeEvent<WorkspaceNodeKinds>
+  >(
     concatMap((event) =>
       of(null).pipe(
         withLatestFrom(this.workspaceId$),
@@ -227,7 +229,7 @@ export class WorkspacePageComponent
               '/workspaces',
               workspaceId,
               'applications',
-              event.payload,
+              event.payload.id,
             ]);
           }
         })
@@ -388,32 +390,33 @@ export class WorkspacePageComponent
     )
   );
 
-  private readonly _handleDeleteNodeSuccess =
-    this.effect<DeleteNodeSuccessEvent>(
-      concatMap((event) =>
-        of(null).pipe(
-          withLatestFrom(this.workspaceId$),
-          concatMap(([, workspaceId]) => {
-            if (isNull(workspaceId)) {
-              return EMPTY;
+  private readonly _handleDeleteNodeSuccess = this.effect<
+    DeleteNodeSuccessEvent<WorkspaceNodeKinds>
+  >(
+    concatMap((event) =>
+      of(null).pipe(
+        withLatestFrom(this.workspaceId$),
+        concatMap(([, workspaceId]) => {
+          if (isNull(workspaceId)) {
+            return EMPTY;
+          }
+
+          this.clearSelected(event.payload.id);
+
+          return this._workspaceGraphApiService.deleteNode(
+            environment.clientId,
+            event.payload.id,
+            {
+              graphId: workspaceId,
+              kind: event.payload.kind,
+              parentIds: [workspaceId],
+              referenceIds: [workspaceId, event.payload.id],
             }
-
-            this.clearSelected(event.payload.id);
-
-            return this._workspaceGraphApiService.deleteNode(
-              environment.clientId,
-              event.payload.id,
-              {
-                graphId: workspaceId,
-                kind: event.payload.kind,
-                parentIds: [workspaceId],
-                referenceIds: [workspaceId, event.payload.id],
-              }
-            );
-          })
-        )
+          );
+        })
       )
-    );
+    )
+  );
 
   private readonly _handleServerGraphUpdate = this.effect<Option<string>>(
     switchMap((workspaceId) => {

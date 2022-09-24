@@ -290,7 +290,7 @@ export const isDeleteNodeSuccessEvent = <
     GraphKind,
     GraphDataType
   >
-): event is DeleteNodeSuccessEvent => {
+): event is DeleteNodeSuccessEvent<NodeKinds> => {
   return event.type === 'DeleteNodeSuccess';
 };
 
@@ -308,7 +308,7 @@ export const isViewNodeEvent = <
     GraphKind,
     GraphDataType
   >
-): event is ViewNodeEvent => {
+): event is ViewNodeEvent<NodeKinds> => {
   return event.type === 'ViewNode';
 };
 

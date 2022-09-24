@@ -175,17 +175,17 @@ export interface DeleteNodeEvent {
   payload: string;
 }
 
-export interface DeleteNodeSuccessEvent {
+export interface DeleteNodeSuccessEvent<NodeKinds extends string> {
   type: 'DeleteNodeSuccess';
   payload: {
     id: string;
-    kind: string;
+    kind: NodeKinds;
   };
 }
 
-export interface ViewNodeEvent {
+export interface ViewNodeEvent<NodeKinds extends string> {
   type: 'ViewNode';
-  payload: string;
+  payload: { id: string; kind: NodeKinds };
 }
 
 export interface DeleteEdgeEvent {
@@ -230,8 +230,8 @@ export type DrawerEvent<
   | UpdateNodeSuccessEvent<NodeKinds, NodeDataType, NodesDataMap>
   | UpdateNodeThumbnailSuccessEvent<NodeKinds>
   | DeleteNodeEvent
-  | DeleteNodeSuccessEvent
-  | ViewNodeEvent
+  | DeleteNodeSuccessEvent<NodeKinds>
+  | ViewNodeEvent<NodeKinds>
   | DeleteEdgeEvent
   | DeleteEdgeSuccessEvent
   | GraphScrolledEvent
