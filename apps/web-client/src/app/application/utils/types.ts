@@ -37,6 +37,7 @@ export type FieldType =
   | 'u16'
   | 'u32'
   | 'u64'
+  | 'bool'
   | 'string'
   | 'pubkey'
   | 'struct';

@@ -22,15 +22,7 @@ import {
   StopKeydownPropagationDirective,
 } from '../../shared/directives';
 import { Entity, isNull, Option } from '../../shared/utils';
-
-export type FieldType =
-  | 'u8'
-  | 'u16'
-  | 'u32'
-  | 'u64'
-  | 'string'
-  | 'pubkey'
-  | 'struct';
+import { FieldType } from '../utils';
 
 export type Field = Entity<{
   data: { name: string; type: FieldType };
@@ -177,6 +169,7 @@ export class UpdateFieldModalDirective {
             <option class="text-black" value="u16">u16</option>
             <option class="text-black" value="u32">u32</option>
             <option class="text-black" value="u64">u64</option>
+            <option class="text-black" value="bool">Boolean</option>
             <option class="text-black" value="string">String</option>
             <option class="text-black" value="pubkey">Pubkey</option>
             <option class="text-black" value="struct">Struct</option>
