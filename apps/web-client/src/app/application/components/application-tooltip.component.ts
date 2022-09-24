@@ -48,8 +48,8 @@ export const openApplicationTooltip = (
   });
   const portal = new ComponentPortal(ApplicationTooltipComponent);
   const componentRef = overlayRef.attach(portal);
-  componentRef.instance.pgApplication = application;
-  componentRef.instance.pgPosition = position;
+  componentRef.setInput('pgApplication', application);
+  componentRef.setInput('pgPosition', position);
 
   return overlayRef;
 };

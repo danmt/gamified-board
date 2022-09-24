@@ -1,18 +1,18 @@
 import { inject, Injectable } from '@angular/core';
 import {
+  collection,
   collectionData,
-  collectionGroup,
   deleteDoc,
   doc,
   docData,
-  documentId,
   Firestore,
+  getDocs,
+  limit,
   orderBy,
   query,
   runTransaction,
   setDoc,
   updateDoc,
-  where,
 } from '@angular/fire/firestore';
 import { defer, from, map, Observable } from 'rxjs';
 import { EventApiService } from '../../drawer/services';
@@ -55,28 +55,56 @@ export class ApplicationApiService {
     );
   }
 
-  getWorkspaceApplications(workspaceId: string): Observable<ApplicationDto[]> {
-    const workspaceRef = doc(this._firestore, `workspaces/${workspaceId}`);
+  getWorkspaceApplications(workspaceId: string) {
+    const applicationsRef = collection(
+      this._firestore,
+      `graphs/${workspaceId}/nodes`
+    );
 
     return collectionData(
+      query(applicationsRef).withConverter({
+        fromFirestore: (snapshot) => {
+          const application = snapshot.data();
+
+          return {
+            id: snapshot.id,
+            data: application['data'],
+          };
+        },
+        toFirestore: (it) => it,
+      })
+    );
+  }
+
+  async getApplicationLastCheckpoint(
+    workspaceId: string,
+    applicationId: string
+  ) {
+    const querySnapshot = await getDocs(
       query(
-        collectionGroup(this._firestore, 'applications').withConverter({
+        collection(
+          this._firestore,
+          `graphs/${workspaceId}/nodes/${applicationId}/checkpoints`
+        ).withConverter({
           fromFirestore: (snapshot) => {
             const data = snapshot.data();
 
             return {
               id: snapshot.id,
               name: data['name'],
-              thumbnailUrl: data['thumbnailUrl'],
-              workspaceId,
+              graph: data['graph'],
+              nodes: data['nodes'],
+              edges: data['edges'],
             };
           },
           toFirestore: (it) => it,
         }),
-        where('workspaceRef', '==', workspaceRef),
-        orderBy(documentId())
+        orderBy('createdAt', 'desc'),
+        limit(3)
       )
     );
+
+    return querySnapshot.docs.map((doc) => doc.data());
   }
 
   createApplication({ id, workspaceId, name }: CreateApplicationDto) {

@@ -1,12 +1,7 @@
 import { inject, Injectable } from '@angular/core';
-import {
-  ComponentStore,
-  OnStoreInit,
-  tapResponse,
-} from '@ngrx/component-store';
-import { EMPTY, switchMap } from 'rxjs';
+import { ComponentStore, OnStoreInit } from '@ngrx/component-store';
 import { PluginsService } from '../../plugins';
-import { isNull, Option } from '../../shared/utils';
+import { Option } from '../../shared/utils';
 import { ApplicationApiService } from '../services';
 import { ApplicationDto } from '../utils';
 
@@ -38,7 +33,7 @@ export class ApplicationsStore
     })
   );
 
-  private readonly _loadApplications$ = this.effect<Option<string>>(
+  /* private readonly _loadApplications$ = this.effect<Option<string>>(
     switchMap((workspaceId) => {
       if (isNull(workspaceId)) {
         return EMPTY;
@@ -63,14 +58,14 @@ export class ApplicationsStore
           )
         );
     })
-  );
+  ); */
 
   constructor() {
     super(initialState);
   }
 
   ngrxOnStoreInit() {
-    this._loadApplications$(this.workspaceId$);
+    // this._loadApplications$(this.workspaceId$);
   }
 
   private _handleError(error: unknown) {

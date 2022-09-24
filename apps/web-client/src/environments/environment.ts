@@ -18,6 +18,7 @@ export const environment = {
   useEmulators: true,
   clientId: uuid(),
   userId: 'p7xARjRPxv8cvbBOR59C',
+  installableAppsWorkspace: '43d5f561-ef28-4236-a69d-d4c7d8ae76dd',
 };
 
 /*

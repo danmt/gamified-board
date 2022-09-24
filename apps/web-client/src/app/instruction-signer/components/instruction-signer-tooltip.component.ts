@@ -41,8 +41,8 @@ export const openInstructionSignerTooltip = (
   });
   const portal = new ComponentPortal(InstructionSignerTooltipComponent);
   const componentRef = overlayRef.attach(portal);
-  componentRef.instance.pgInstructionSigner = instructionSigner;
-  componentRef.instance.pgPosition = position;
+  componentRef.setInput('pgInstructionSigner', instructionSigner);
+  componentRef.setInput('pgPosition', position);
 
   return overlayRef;
 };

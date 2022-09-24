@@ -805,7 +805,7 @@ export const deleteEdgeSuccess = functions.pubsub
 
 export const saveCheckpoint = functions.pubsub
   .topic('events')
-  .onPublish(async (message) => {
+  .onPublish(async (message, context) => {
     if (
       process.env.FUNCTIONS_EMULATOR &&
       message.attributes.type !== 'saveCheckpoint'
@@ -836,8 +836,6 @@ export const saveCheckpoint = functions.pubsub
       `graphs/${workspaceId}/nodes/${applicationId}/checkpoints/${id}`
     );
     await applicationCheckpointRef.set({
-      applicationId,
-      workspaceId,
       name,
       graph: application.data(),
       nodes: applicationNodes.docs.map((node) => ({
@@ -848,6 +846,7 @@ export const saveCheckpoint = functions.pubsub
         id: edge.id,
         ...edge.data(),
       })),
+      createdAt: context.timestamp,
     });
 
     return true;

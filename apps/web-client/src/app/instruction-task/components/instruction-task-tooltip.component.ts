@@ -45,8 +45,8 @@ export const openInstructionTaskTooltip = (
   });
   const portal = new ComponentPortal(InstructionTaskTooltipComponent);
   const componentRef = overlayRef.attach(portal);
-  componentRef.instance.pgInstructionTask = instructionTask;
-  componentRef.instance.pgPosition = position;
+  componentRef.setInput('pgInstructionTask', instructionTask);
+  componentRef.setInput('pgPosition', position);
 
   return overlayRef;
 };

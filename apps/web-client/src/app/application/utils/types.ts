@@ -84,3 +84,27 @@ export type ApplicationGraph = Graph<
   ApplicationGraphKind,
   ApplicationGraphData
 >;
+
+export interface ApplicationCheckpoint {
+  id: string;
+  name: string;
+  graph: {
+    id: string;
+    data: ApplicationGraphData;
+  };
+  nodes: {
+    id: string;
+    data: ApplicationNodeData;
+    kind: ApplicationNodeKinds;
+  };
+  edges: {
+    id: string;
+    data: { source: string; target: string };
+  };
+}
+
+export interface InstallableApplication {
+  id: string;
+  data: ApplicationNodeData;
+  checkpoints: ApplicationCheckpoint[];
+}

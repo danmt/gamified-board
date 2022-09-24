@@ -67,12 +67,14 @@ import {
   ApplicationDockComponent,
   CollectionDockComponent,
   FieldDockComponent,
+  InstallableApplicationsInventoryDirective,
   InstructionDockComponent,
   LeftDockComponent,
   RightDockComponent,
 } from '../sections';
 import { ApplicationGraphApiService } from '../services';
 import {
+  ApplicationCheckpoint,
   ApplicationGraphData,
   ApplicationGraphKind,
   ApplicationNode,
@@ -177,7 +179,16 @@ const initialState: ViewModel = {
     <pg-right-dock
       class="fixed bottom-0 right-0"
       (pgActivateField)="onActivateField()"
+      (pgOpenInstallableApplicationsModal)="
+        installableApplicationsInventory.toggle()
+      "
     ></pg-right-dock>
+
+    <ng-container
+      pgInstallableApplicationsInventory
+      #installableApplicationsInventory="modal"
+      (pgInstallApplication)="onInstallApplication($event)"
+    ></ng-container>
 
     <pg-left-dock
       *ngrxLet="drawMode$; let drawMode"
@@ -249,6 +260,7 @@ const initialState: ViewModel = {
     ActiveCollectionComponent,
     ActiveInstructionComponent,
     ActiveFieldComponent,
+    InstallableApplicationsInventoryDirective,
     BackgroundImageZoomDirective,
     BackgroundImageMoveDirective,
   ],
@@ -914,6 +926,10 @@ export class ApplicationPageComponent
 
   onDeactivateInstruction() {
     this.patchState({ isCreatingInstruction: false });
+  }
+
+  onInstallApplication(applicationCheckpoint: ApplicationCheckpoint) {
+    console.log(applicationCheckpoint);
   }
 
   onUnselect() {

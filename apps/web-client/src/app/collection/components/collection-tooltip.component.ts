@@ -49,8 +49,8 @@ export const openCollectionTooltip = (
   });
   const portal = new ComponentPortal(CollectionTooltipComponent);
   const componentRef = overlayRef.attach(portal);
-  componentRef.instance.pgCollection = collection;
-  componentRef.instance.pgPosition = position;
+  componentRef.setInput('pgCollection', collection);
+  componentRef.setInput('pgPosition', position);
 
   return overlayRef;
 };

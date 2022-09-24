@@ -42,8 +42,8 @@ export const openSysvarTooltip = (
   });
   const portal = new ComponentPortal(SysvarTooltipComponent);
   const componentRef = overlayRef.attach(portal);
-  componentRef.instance.pgSysvar = sysvar;
-  componentRef.instance.pgPosition = position;
+  componentRef.setInput('pgSysvar', sysvar);
+  componentRef.setInput('pgPosition', position);
 
   return overlayRef;
 };
