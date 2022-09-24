@@ -140,7 +140,7 @@ export class ActiveSignerComponent
                     kind: 'signer',
                     data: {
                       name: signer.name,
-                      isMutable: false, // signer.isMutable,
+                      isMutable: signer.isMutable,
                       thumbnailUrl: active.thumbnailUrl,
                     },
                   },

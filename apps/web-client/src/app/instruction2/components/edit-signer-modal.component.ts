@@ -24,7 +24,7 @@ import {
 import { Entity, isNull, Option } from '../../shared/utils';
 
 export type Signer = Entity<{
-  data: { name: string };
+  data: { name: string; isMutable: boolean };
 }>;
 
 export interface EditSignerData {
@@ -33,10 +33,12 @@ export interface EditSignerData {
 
 export type CreateSignerSubmit = {
   name: string;
+  isMutable: boolean;
 };
 
 export type UpdateSignerSubmit = {
   name: string;
+  isMutable: boolean;
 };
 
 export const openEditSignerModal = (dialog: Dialog, data: EditSignerData) =>
@@ -149,6 +151,13 @@ export class UpdateSignerModalDirective {
           />
         </div>
 
+        <div class="mb-4">
+          <label class="block bp-font-game text-xl">
+            Is Mutable
+            <input type="checkbox" formControlName="isMutable" />
+          </label>
+        </div>
+
         <div class="flex justify-center items-center mt-10 mb-14">
           <button
             type="submit"
@@ -187,18 +196,31 @@ export class EditSignerModalComponent {
       validators: [Validators.required],
       nonNullable: true,
     }),
+    isMutable: this._formBuilder.control<boolean>(
+      this.signer?.data.isMutable ?? false,
+      {
+        validators: [Validators.required],
+        nonNullable: true,
+      }
+    ),
   });
 
   get nameControl() {
     return this.form.get('name') as FormControl<string>;
   }
 
+  get isMutableControl() {
+    return this.form.get('isMutable') as FormControl<boolean>;
+  }
+
   onSubmit() {
     if (this.form.valid) {
       const name = this.nameControl.value;
+      const isMutable = this.isMutableControl.value;
 
       this._dialogRef.close({
         name,
+        isMutable,
       });
     }
   }
