@@ -17,7 +17,7 @@ import {
 import { defer, from, map, Observable } from 'rxjs';
 import { EventApiService } from '../../drawer/services';
 import { Entity } from '../../shared/utils';
-import { ApplicationDto } from '../utils';
+import { ApplicationCheckpoint, ApplicationDto } from '../utils';
 
 export type CreateApplicationDto = Entity<{
   workspaceId: string;
@@ -32,6 +32,11 @@ export type UpdateApplicationDto = Partial<{
 export interface UpdateApplicationThumbnailDto {
   fileId: string;
   fileUrl: string;
+}
+
+export interface InstallApplicationDto {
+  id: string;
+  data: ApplicationCheckpoint;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -107,6 +112,32 @@ export class ApplicationApiService {
     return querySnapshot.docs.map((doc) => doc.data());
   }
 
+  async getApplicationInstallations(
+    workspaceId: string,
+    applicationId: string
+  ) {
+    const querySnapshot = await getDocs(
+      query(
+        collection(
+          this._firestore,
+          `graphs/${workspaceId}/nodes/${applicationId}/installations`
+        ).withConverter({
+          fromFirestore: (snapshot) => {
+            const installationData = snapshot.data();
+
+            return {
+              id: snapshot.id,
+              data: installationData['data'],
+            };
+          },
+          toFirestore: (it) => it,
+        })
+      )
+    );
+
+    return querySnapshot.docs.map((doc) => doc.data());
+  }
+
   createApplication({ id, workspaceId, name }: CreateApplicationDto) {
     const workspaceRef = doc(this._firestore, `workspaces/${workspaceId}`);
     const newApplicationRef = doc(this._firestore, `applications/${id}`);
@@ -163,5 +194,21 @@ export class ApplicationApiService {
     );
 
     return defer(() => from(deleteDoc(applicationRef)));
+  }
+
+  installApplication(
+    clientId: string,
+    workspaceId: string,
+    applicationId: string,
+    payload: InstallApplicationDto
+  ) {
+    return this._eventApiService.emit(clientId, {
+      type: 'installApplication',
+      payload: {
+        ...payload,
+        workspaceId,
+        applicationId,
+      },
+    });
   }
 }

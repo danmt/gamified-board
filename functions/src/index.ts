@@ -851,3 +851,31 @@ export const saveCheckpoint = functions.pubsub
 
     return true;
   });
+
+export const installApplication = functions.pubsub
+  .topic('events')
+  .onPublish(async (message, context) => {
+    if (
+      process.env.FUNCTIONS_EMULATOR &&
+      message.attributes.type !== 'installApplication'
+    ) {
+      functions.logger.warn('installApplication', 'Event ignored');
+      return false;
+    }
+
+    const messageBody = message.data
+      ? JSON.parse(Buffer.from(message.data, 'base64').toString())
+      : null;
+
+    const { id, data, applicationId, workspaceId } = messageBody.data.payload;
+
+    const installationRef = firestore.doc(
+      `graphs/${workspaceId}/nodes/${applicationId}/installations/${id}`
+    );
+    await installationRef.set({
+      data,
+      createdAt: context.timestamp,
+    });
+
+    return true;
+  });

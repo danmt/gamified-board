@@ -10,7 +10,11 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { LetModule, PushModule } from '@ngrx/component';
-import { ComponentStore, provideComponentStore } from '@ngrx/component-store';
+import {
+  ComponentStore,
+  provideComponentStore,
+  tapResponse,
+} from '@ngrx/component-store';
 import {
   concatMap,
   defer,
@@ -65,14 +69,18 @@ import {
   AddFieldNodeDto,
   AddInstructionNodeDto,
   ApplicationDockComponent,
+  ApplicationsInventoryDirective,
   CollectionDockComponent,
   FieldDockComponent,
-  InstallableApplicationsInventoryDirective,
   InstructionDockComponent,
   LeftDockComponent,
   RightDockComponent,
 } from '../sections';
-import { ApplicationGraphApiService } from '../services';
+import {
+  ApplicationApiService,
+  ApplicationGraphApiService,
+  InstallApplicationDto,
+} from '../services';
 import {
   ApplicationCheckpoint,
   ApplicationGraphData,
@@ -94,6 +102,7 @@ interface ViewModel {
   isCreatingInstruction: boolean;
   applicationId: Option<string>;
   selected: Option<ApplicationNode>;
+  installations: { id: string; data: ApplicationCheckpoint }[];
 }
 
 const initialState: ViewModel = {
@@ -102,6 +111,7 @@ const initialState: ViewModel = {
   isCreatingInstruction: false,
   applicationId: null,
   selected: null,
+  installations: [],
 };
 
 @Component({
@@ -178,17 +188,23 @@ const initialState: ViewModel = {
 
     <pg-right-dock
       class="fixed bottom-0 right-0"
+      *ngIf="application$ | ngrxPush as application"
       (pgActivateField)="onActivateField()"
-      (pgOpenInstallableApplicationsModal)="
-        installableApplicationsInventory.toggle()
-      "
-    ></pg-right-dock>
-
-    <ng-container
-      pgInstallableApplicationsInventory
-      #installableApplicationsInventory="modal"
-      (pgInstallApplication)="onInstallApplication($event)"
-    ></ng-container>
+      (pgToggleApplicationsInventoryModal)="applicationsInventory.toggle()"
+    >
+      <ng-container
+        pgApplicationsInventory
+        #applicationsInventory="modal"
+        [pgInstallations]="(installations$ | ngrxPush) ?? []"
+        (pgInstallApplication)="
+          onInstallApplication(
+            application.data.workspaceId,
+            application.id,
+            $event
+          )
+        "
+      ></ng-container>
+    </pg-right-dock>
 
     <pg-left-dock
       *ngrxLet="drawMode$; let drawMode"
@@ -260,7 +276,7 @@ const initialState: ViewModel = {
     ActiveCollectionComponent,
     ActiveInstructionComponent,
     ActiveFieldComponent,
-    InstallableApplicationsInventoryDirective,
+    ApplicationsInventoryDirective,
     BackgroundImageZoomDirective,
     BackgroundImageMoveDirective,
   ],
@@ -271,6 +287,7 @@ export class ApplicationPageComponent
   implements OnInit, AfterViewInit
 {
   private readonly _router = inject(Router);
+  private readonly _applicationApiService = inject(ApplicationApiService);
   private readonly _applicationGraphApiService = inject(
     ApplicationGraphApiService
   );
@@ -295,6 +312,7 @@ export class ApplicationPageComponent
     ({ isCreatingInstruction }) => isCreatingInstruction
   );
   readonly selected$ = this.select(({ selected }) => selected);
+  readonly installations$ = this.select(({ installations }) => installations);
   readonly workspaceId$ = this._activatedRoute.paramMap.pipe(
     map((paramMap) => paramMap.get('workspaceId'))
   );
@@ -831,6 +849,31 @@ export class ApplicationPageComponent
     })
   );
 
+  private readonly _loadInstallations = this.effect<{
+    workspaceId: Option<string>;
+    applicationId: Option<string>;
+  }>(
+    concatMap(({ workspaceId, applicationId }) => {
+      if (isNull(workspaceId) || isNull(applicationId)) {
+        return EMPTY;
+      }
+
+      return defer(() =>
+        from(
+          this._applicationApiService.getApplicationInstallations(
+            workspaceId,
+            applicationId
+          )
+        ).pipe(
+          tapResponse(
+            (installations) => this.patchState({ installations }),
+            (error) => console.error(error)
+          )
+        )
+      );
+    })
+  );
+
   constructor() {
     super(initialState);
   }
@@ -872,6 +915,17 @@ export class ApplicationPageComponent
     this._handleDeleteEdgeSuccess(
       this._applicationDrawerStore.event$.pipe(filter(isDeleteEdgeSuccessEvent))
     );
+    this._loadInstallations(
+      this.select(
+        this.workspaceId$,
+        this.applicationId$,
+        (workspaceId, applicationId) => ({
+          workspaceId,
+          applicationId,
+        })
+      )
+    );
+    this.installations$.subscribe((a) => console.log(a));
   }
 
   async ngAfterViewInit() {
@@ -928,8 +982,19 @@ export class ApplicationPageComponent
     this.patchState({ isCreatingInstruction: false });
   }
 
-  onInstallApplication(applicationCheckpoint: ApplicationCheckpoint) {
-    console.log(applicationCheckpoint);
+  onInstallApplication(
+    workspaceId: string,
+    applicationId: string,
+    payload: InstallApplicationDto
+  ) {
+    this._applicationApiService
+      .installApplication(
+        environment.clientId,
+        workspaceId,
+        applicationId,
+        payload
+      )
+      .subscribe();
   }
 
   onUnselect() {

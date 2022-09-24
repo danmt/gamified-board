@@ -35,14 +35,14 @@ import { KeyListenerDirective } from '../../shared/directives';
           class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
           style="font-size: 0.5rem; line-height: 0.5rem"
           pgKeyListener="Period"
-          (pgKeyDown)="onOpenInstallableApplicationsModal()"
+          (pgKeyDown)="onToggleApplicationsInventoryModal()"
         >
           .
         </span>
 
         <pg-square-button
           pgThumbnailUrl="assets/generic/instruction.png"
-          (click)="onOpenInstallableApplicationsModal()"
+          (click)="onToggleApplicationsInventoryModal()"
         ></pg-square-button>
       </div>
     </pg-corner-dock>
@@ -57,13 +57,13 @@ import { KeyListenerDirective } from '../../shared/directives';
 })
 export class RightDockComponent {
   @Output() pgActivateField = new EventEmitter();
-  @Output() pgOpenInstallableApplicationsModal = new EventEmitter();
+  @Output() pgToggleApplicationsInventoryModal = new EventEmitter();
 
   onActivateField() {
     this.pgActivateField.emit();
   }
 
-  onOpenInstallableApplicationsModal() {
-    this.pgOpenInstallableApplicationsModal.emit();
+  onToggleApplicationsInventoryModal() {
+    this.pgToggleApplicationsInventoryModal.emit();
   }
 }

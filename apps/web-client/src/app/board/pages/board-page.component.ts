@@ -14,7 +14,6 @@ import { map } from 'rxjs';
 import {
   ActiveApplicationComponent,
   ApplicationDockComponent,
-  ApplicationsInventoryComponent,
 } from '../../application/sections';
 import { ApplicationsStore } from '../../application/stores';
 import {
@@ -120,10 +119,10 @@ import { ActiveStore, BoardStore } from '../stores';
       class="fixed -left-4 top-24"
     ></pg-instructions-inventory>
 
-    <pg-applications-inventory
+    <!-- <pg-applications-inventory
       *ngIf="isApplicationsSectionOpen$ | ngrxPush"
       class="fixed -left-4 top-24"
-    ></pg-applications-inventory>
+    ></pg-applications-inventory> -->
 
     <pg-active-application></pg-active-application>
     <pg-active-collection></pg-active-collection>
@@ -145,7 +144,7 @@ import { ActiveStore, BoardStore } from '../stores';
     CollectionDockComponent,
     InstructionsInventoryComponent,
     InstructionDockComponent,
-    ApplicationsInventoryComponent,
+    // ApplicationsInventoryComponent,
     ApplicationDockComponent,
     InstructionDocumentDockComponent,
     InstructionTaskDockComponent,

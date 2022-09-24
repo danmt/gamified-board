@@ -1,163 +1,297 @@
-import { CdkDragStart, DragDropModule } from '@angular/cdk/drag-drop';
-import { OverlayModule } from '@angular/cdk/overlay';
+import { Overlay, OverlayRef } from '@angular/cdk/overlay';
+import { ComponentPortal } from '@angular/cdk/portal';
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import {
+  Component,
+  Directive,
+  HostListener,
+  inject,
+  Input,
+  OnDestroy,
+  OnInit,
+  Output,
+} from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { LetModule, PushModule } from '@ngrx/component';
-import { BehaviorSubject, combineLatest, map } from 'rxjs';
-import { BoardStore } from '../../board/stores';
+import { ComponentStore, tapResponse } from '@ngrx/component-store';
+import { defer, from, Subject, Subscription, switchMap } from 'rxjs';
+import { environment } from '../../../environments/environment';
 import { InventoryComponent } from '../../shared/components';
 import { DefaultImageDirective } from '../../shared/directives';
-import { isNull, Option } from '../../shared/utils';
-import { ApplicationTooltipDirective } from '../components';
+import { generateId, isNotNull, isNull, Option } from '../../shared/utils';
+import { InstallApplicationModalDirective } from '../components';
+import { ApplicationApiService } from '../services';
+import { ApplicationCheckpoint, InstallableApplication } from '../utils';
+
+export interface InstallApplicationPayload {
+  id: string;
+  data: ApplicationCheckpoint;
+}
+
+export const openApplicationsInventory = (
+  overlay: Overlay,
+  installations: {
+    id: string;
+    data: ApplicationCheckpoint;
+  }[]
+) => {
+  const overlayRef = overlay.create({
+    positionStrategy: overlay
+      .position()
+      .global()
+      .centerVertically()
+      .right('0px'),
+    scrollStrategy: overlay.scrollStrategies.close(),
+  });
+  const componentRef = overlayRef.attach(
+    new ComponentPortal(ApplicationsInventoryComponent)
+  );
+  componentRef.setInput('installations', installations);
+
+  return { componentRef, overlayRef };
+};
+
+interface ViewModel {
+  applications: InstallableApplication[];
+  showInstalled: boolean;
+}
+
+const initialState: ViewModel = {
+  applications: [],
+  showInstalled: false,
+};
+
+@Directive({
+  selector: '[pgApplicationsInventory]',
+  standalone: true,
+  exportAs: 'modal',
+})
+export class ApplicationsInventoryDirective implements OnDestroy {
+  private readonly _overlay = inject(Overlay);
+  private _overlayRef: Option<OverlayRef> = null;
+  private _isOpen = false;
+  private _installApplicationSubscription: Option<Subscription> = null;
+
+  private readonly _installApplication =
+    new Subject<InstallApplicationPayload>();
+
+  @Input() pgInstallations: {
+    id: string;
+    data: ApplicationCheckpoint;
+  }[] = [];
+
+  @Output() pgInstallApplication = this._installApplication.asObservable();
+
+  @HostListener('click') onClick() {
+    this.open();
+  }
+
+  ngOnDestroy() {
+    this.close();
+  }
+
+  open() {
+    if (isNull(this._overlayRef) && !this._isOpen) {
+      this._isOpen = true;
+      const { overlayRef, componentRef } = openApplicationsInventory(
+        this._overlay,
+        this.pgInstallations
+      );
+
+      this._overlayRef = overlayRef;
+
+      this._installApplicationSubscription =
+        componentRef.instance.installApplication$.subscribe(
+          this._installApplication
+        );
+    }
+  }
+
+  close() {
+    if (
+      isNotNull(this._overlayRef) &&
+      this._isOpen &&
+      this._installApplicationSubscription
+    ) {
+      this._isOpen = false;
+      this._overlayRef.dispose();
+      this._overlayRef = null;
+      this._installApplicationSubscription.unsubscribe();
+    }
+  }
+
+  toggle() {
+    if (this._isOpen) {
+      this.close();
+    } else {
+      this.open();
+    }
+  }
+}
 
 @Component({
-  selector: 'pg-applications-inventory',
+  selector: 'pg-installable-applications-inventory',
   template: `
     <pg-inventory
       class="mt-10 min-w-[300px] min-h-[520px] max-h-[520px]"
-      pgDirection="left"
-      [pgTotal]="(total$ | ngrxPush) ?? 0"
-      [pgPage]="(page$ | ngrxPush) ?? 1"
-      [pgPageSize]="pageSize"
-      (pgSetPage)="onSetPage($event)"
+      pgDirection="right"
     >
       <h2 pgInventoryTitle class="bp-font-game-title text-3xl">Applications</h2>
 
       <div
         pgInventoryBody
-        *ngrxLet="applications$; let applications"
         id="applications-section"
-        cdkDropList
-        [cdkDropListConnectedTo]="[
-          'slot-0',
-          'slot-1',
-          'slot-2',
-          'slot-3',
-          'slot-4',
-          'slot-5',
-          'slot-6',
-          'slot-7',
-          'slot-8',
-          'slot-9'
-        ]"
-        [cdkDropListData]="applications"
-        cdkDropListSortingDisabled
-        class="flex flex-wrap gap-4 justify-center"
+        *ngrxLet="applications$; let applications"
       >
-        <div
-          *ngFor="let application of applications; trackBy: trackBy"
-          pgApplicationTooltip
-          [pgApplication]="application"
-          class="relative"
-        >
-          <ng-container *ngIf="(isDragging$ | ngrxPush) === application.id">
+        <div class="text-white flex justify-center gap-4">
+          <button
+            (click)="onHideInstallable()"
+            [ngClass]="{ underline: (showInstalled$ | ngrxPush) }"
+          >
+            Browse
+          </button>
+          <button
+            (click)="onShowInstalled()"
+            [ngClass]="{ underline: (showInstalled$ | ngrxPush) === false }"
+          >
+            Installed
+          </button>
+        </div>
+
+        <div class="flex flex-wrap gap-4 justify-center">
+          <ng-container *ngIf="(showInstalled$ | ngrxPush) === false">
             <div
-              class="w-full h-full absolute z-20 bg-black bg-opacity-50"
-            ></div>
-            <div class="bg-gray-600 p-0.5 w-11 h-11">
+              *ngFor="let application of applications; trackBy: trackBy"
+              class="relative"
+            >
+              <button
+                class="bg-gray-600 p-0.5 w-11 h-11"
+                pgInstallApplicationModal
+                [pgInstallableApplication]="application"
+                (pgInstallApplication)="
+                  onInstallApplication(application, $event.checkpoint)
+                "
+              >
+                <img
+                  class="w-full h-full object-cover"
+                  [src]="application.data.thumbnailUrl"
+                  pgDefaultImage="assets/generic/application.png"
+                />
+              </button>
+            </div>
+          </ng-container>
+
+          <ng-container *ngIf="(showInstalled$ | ngrxPush) ?? false">
+            <div
+              *ngFor="let installation of installations; trackBy: trackBy"
+              class="bg-gray-600 p-0.5 w-11 h-11"
+            >
               <img
                 class="w-full h-full object-cover"
-                [src]="application.thumbnailUrl"
+                [src]="installation.data.graph.data.thumbnailUrl"
                 pgDefaultImage="assets/generic/application.png"
               />
             </div>
           </ng-container>
-
-          <div
-            cdkDrag
-            [cdkDragData]="{ id: application.id, kind: 'application' }"
-            (click)="onSelectApplication(application.id)"
-            (dblclick)="onActivateApplication(application.id)"
-            (cdkDragStarted)="onDragStart($event)"
-            (cdkDragEnded)="onDragEnd()"
-          >
-            <div class="bg-gray-600 p-0.5 w-11 h-11">
-              <img
-                class="w-full h-full object-cover"
-                [src]="application.thumbnailUrl"
-                pgDefaultImage="assets/generic/application.png"
-              />
-            </div>
-
-            <div *cdkDragPreview class="bg-gray-500 p-1 w-12 h-12 rounded-md">
-              <img
-                class="w-full h-full object-cover"
-                [src]="application.thumbnailUrl"
-                pgDefaultImage="assets/generic/application.png"
-              />
-            </div>
-
-            <div *cdkDragPlaceholder></div>
-          </div>
         </div>
       </div>
     </pg-inventory>
   `,
   standalone: true,
   imports: [
-    DragDropModule,
     CommonModule,
-    OverlayModule,
     PushModule,
     LetModule,
     RouterModule,
     DefaultImageDirective,
     InventoryComponent,
-    ApplicationTooltipDirective,
+    ApplicationsInventoryDirective,
+    InstallApplicationModalDirective,
   ],
 })
-export class ApplicationsInventoryComponent {
-  private readonly _boardStore = inject(BoardStore);
+export class ApplicationsInventoryComponent
+  extends ComponentStore<ViewModel>
+  implements OnInit
+{
+  private readonly _applicationApiService = inject(ApplicationApiService);
+  private readonly _installApplication =
+    new Subject<InstallApplicationPayload>();
 
-  private readonly _isDragging = new BehaviorSubject<Option<string>>(null);
-  private readonly _page = new BehaviorSubject(1);
+  @Input() installations: { id: string; data: ApplicationCheckpoint }[] = [];
 
-  readonly isDragging$ = this._isDragging.asObservable();
-  readonly workspaceId$ = this._boardStore.workspaceId$;
-  readonly currentApplicationId$ = this._boardStore.currentApplicationId$;
-  readonly total$ = this._boardStore.applications$.pipe(
-    map((applications) => applications?.length ?? 0)
-  );
-  readonly pageSize = 24;
-  readonly page$ = this._page.asObservable();
-  readonly applications$ = combineLatest([
-    this._boardStore.applications$,
-    this.page$,
-  ]).pipe(
-    map(([applications, page]) => {
-      if (isNull(applications)) {
-        return null;
+  readonly installApplication$ = this._installApplication.asObservable();
+  readonly applications$ = this.select(({ applications }) => applications);
+  readonly showInstalled$ = this.select(({ showInstalled }) => showInstalled);
+
+  private readonly _loadApplications = this.effect<Option<string>>(
+    switchMap((workspaceId) => {
+      if (isNull(workspaceId)) {
+        return [];
       }
 
-      return applications.slice(
-        page === 1 ? 0 : (page - 1) * this.pageSize,
-        page * this.pageSize
-      );
+      return this._applicationApiService
+        .getWorkspaceApplications(workspaceId)
+        .pipe(
+          switchMap((applications) =>
+            defer(() =>
+              from(
+                Promise.all(
+                  applications.map((application) =>
+                    this._applicationApiService
+                      .getApplicationLastCheckpoint(workspaceId, application.id)
+                      .then((checkpoints) => ({
+                        ...application,
+                        checkpoints,
+                      }))
+                  )
+                )
+              )
+            ).pipe(
+              tapResponse(
+                (applications) => this.patchState({ applications }),
+                (error) => this._handleError(error)
+              )
+            )
+          )
+        );
     })
   );
 
-  onSetPage(page: number) {
-    this._page.next(page);
+  constructor() {
+    super(initialState);
   }
 
-  onActivateApplication(applicationId: string) {
-    this._boardStore.setActive({ id: applicationId, kind: 'application' });
+  ngOnInit() {
+    this._loadApplications(environment.installableAppsWorkspace);
   }
 
-  onSelectApplication(applicationId: string) {
-    this._boardStore.setSelected({ id: applicationId, kind: 'application' });
-  }
-
-  onDragStart(event: CdkDragStart) {
-    this._isDragging.next(event.source.data.id);
-  }
-
-  onDragEnd() {
-    this._isDragging.next(null);
+  private _handleError(error: unknown) {
+    console.error(error);
   }
 
   trackBy(index: number): number {
     return index;
+  }
+
+  onInstallApplication(
+    application: InstallableApplication,
+    checkpointId: string
+  ) {
+    const checkpoint =
+      application.checkpoints.find(
+        (checkpoint) => checkpoint.id === checkpointId
+      ) ?? null;
+
+    if (isNotNull(checkpoint)) {
+      this._installApplication.next({ id: generateId(), data: checkpoint });
+    }
+  }
+
+  onShowInstalled() {
+    this.patchState({ showInstalled: true });
+  }
+
+  onHideInstallable() {
+    this.patchState({ showInstalled: false });
   }
 }
