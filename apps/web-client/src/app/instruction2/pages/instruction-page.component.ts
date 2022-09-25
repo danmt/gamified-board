@@ -76,7 +76,9 @@ import {
   AddSignerNodeDto,
   AddSysvarNodeDto,
   ApplicationDockComponent,
+  CollectionsInventoryDirective,
   InstructionDockComponent,
+  LeftDockComponent,
   RightDockComponent,
   SignerDockComponent,
   SysvarDockComponent,
@@ -197,7 +199,7 @@ const initialState: ViewModel = {
 
       <pg-right-dock
         class="fixed bottom-0 right-0"
-        *ngIf="instruction$ | ngrxPush as instruction"
+        *ngIf="instruction !== null"
         (pgToggleApplicationsInventoryModal)="applicationsInventory.toggle()"
         (pgToggleSysvarsInventoryModal)="sysvarsInventory.toggle()"
       >
@@ -238,6 +240,17 @@ const initialState: ViewModel = {
           "
         ></ng-container>
       </pg-right-dock>
+
+      <pg-left-dock
+        class="fixed bottom-0 left-0"
+        *ngIf="instruction$ | ngrxPush as instruction"
+        (pgToggleCollectionsInventoryModal)="collectionsInventory.toggle()"
+      >
+        <ng-container
+          pgCollectionsInventory
+          #collectionsInventory="modal"
+        ></ng-container>
+      </pg-left-dock>
 
       <ng-container *ngrxLet="active$; let active">
         <pg-active-signer
@@ -304,11 +317,13 @@ const initialState: ViewModel = {
     BackgroundImageMoveDirective,
     ApplicationsInventoryDirective,
     SysvarsInventoryDirective,
+    CollectionsInventoryDirective,
     InstructionDockComponent,
     SignerDockComponent,
     SysvarDockComponent,
     ApplicationDockComponent,
     RightDockComponent,
+    LeftDockComponent,
     ActiveSignerComponent,
     ActiveApplicationComponent,
     ActiveSysvarComponent,
