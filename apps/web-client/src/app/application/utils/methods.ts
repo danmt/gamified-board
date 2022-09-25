@@ -28,9 +28,7 @@ export const applicationNodeLabelFunction = (node: ApplicationNode) => {
           </div>
           <div style="font-family: 'Courier New', Courier, monospace">
             <h2 class="text-xl mt-2 text-white">${node.data.name}</h2>
-            <p class="italic text-gray-400">${
-              'type' in node.data && node.data.type
-            }</p>
+            <p class="italic text-gray-400">${node.data.type}</p>
           </div>
         </div>
       `;
