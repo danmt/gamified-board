@@ -49,10 +49,17 @@ import {
   BackgroundImageMoveDirective,
   BackgroundImageZoomDirective,
 } from '../../shared/directives';
-import { generateId, isNotNull, isNull, Option } from '../../shared/utils';
+import {
+  generateId,
+  GetActiveTypes,
+  isNotNull,
+  isNull,
+  Option,
+} from '../../shared/utils';
 import { UpdateApplicationSubmit, UpdateWorkspaceSubmit } from '../components';
 import {
   ActiveApplicationComponent,
+  ActiveApplicationData,
   AddApplicationNodeDto,
   ApplicationDockComponent,
   WorkspaceDockComponent,
@@ -67,14 +74,18 @@ import {
   WorkspaceNodesData,
 } from '../utils';
 
+type ActiveType = GetActiveTypes<{
+  application: ActiveApplicationData;
+}>;
+
 interface ViewModel {
-  isCreatingApplication: boolean;
+  active: Option<ActiveType>;
   workspaceId: Option<string>;
   selected: Option<WorkspaceNode>;
 }
 
 const initialState: ViewModel = {
-  isCreatingApplication: false,
+  active: null,
   workspaceId: null,
   selected: null,
 };
@@ -92,50 +103,61 @@ const initialState: ViewModel = {
       [pgPanValue]="(panDrag$ | ngrxPush) ?? { x: '0', y: '0' }"
     ></div>
 
-    <ng-container *ngrxLet="selected$; let selected">
-      <pg-workspace-dock
-        *ngIf="selected === null"
-        class="fixed bottom-0 -translate-x-1/2 left-1/2"
-        [pgWorkspace]="(workspace$ | ngrxPush) ?? null"
-        (pgApplicationActivate)="onApplicationActivate()"
-        (pgUpdateWorkspace)="onUpdateGraph($event.changes)"
-        (pgUpdateWorkspaceThumbnail)="
-          onUpdateGraphThumbnail($event.fileId, $event.fileUrl)
-        "
-        (pgDeleteWorkspace)="onDeleteGraph($event)"
-      ></pg-workspace-dock>
+    <ng-container *ngrxLet="workspace$; let workspace">
+      <ng-container *ngrxLet="selected$; let selected">
+        <pg-workspace-dock
+          *ngIf="workspace !== null && selected === null"
+          class="fixed bottom-0 -translate-x-1/2 left-1/2"
+          [pgWorkspace]="workspace"
+          (pgApplicationActivate)="
+            setActive({
+              kind: 'application',
+              data: {
+                thumbnailUrl: 'assets/generic/application.png'
+              }
+            })
+          "
+          (pgUpdateWorkspace)="onUpdateGraph($event.changes)"
+          (pgUpdateWorkspaceThumbnail)="
+            onUpdateGraphThumbnail($event.fileId, $event.fileUrl)
+          "
+          (pgDeleteWorkspace)="onDeleteGraph($event)"
+        ></pg-workspace-dock>
 
-      <pg-application-dock
-        *ngIf="selected !== null"
-        class="fixed bottom-0 -translate-x-1/2 left-1/2"
-        [pgApplication]="(selected$ | ngrxPush) ?? null"
-        (pgApplicationUnselected)="onApplicationUnselected()"
-        (pgUpdateApplication)="onUpdateNode($event.id, $event.changes)"
-        (pgUpdateApplicationThumbnail)="
-          onUpdateNodeThumbnail($event.id, $event.fileId, $event.fileUrl)
-        "
-        (pgDeleteApplication)="onRemoveNode($event)"
-        (pgSaveCheckpoint)="
-          onSaveCheckpoint(
-            selected.data.workspaceId,
-            $event.id,
-            $event.checkpoint.name
-          )
-        "
-      ></pg-application-dock>
+        <pg-application-dock
+          *ngIf="selected !== null && selected.kind === 'application'"
+          class="fixed bottom-0 -translate-x-1/2 left-1/2"
+          [pgApplication]="selected"
+          (pgApplicationUnselected)="onApplicationUnselected()"
+          (pgUpdateApplication)="onUpdateNode($event.id, $event.changes)"
+          (pgUpdateApplicationThumbnail)="
+            onUpdateNodeThumbnail($event.id, $event.fileId, $event.fileUrl)
+          "
+          (pgDeleteApplication)="onRemoveNode($event)"
+          (pgSaveCheckpoint)="
+            onSaveCheckpoint(
+              selected.data.workspaceId,
+              $event.id,
+              $event.checkpoint.name
+            )
+          "
+        ></pg-application-dock>
+      </ng-container>
+
+      <ng-container *ngrxLet="active$; let active">
+        <pg-active-application
+          *ngIf="
+            workspace !== null &&
+            active !== null &&
+            active.kind === 'application'
+          "
+          [pgActive]="active.data"
+          [pgClickEvent]="(drawerClick$ | ngrxPush) ?? null"
+          (pgAddNode)="onAddApplicationNode(workspace.id, $event)"
+          (pgDeactivate)="setActive(null)"
+        ></pg-active-application>
+      </ng-container>
     </ng-container>
-
-    <pg-active-application
-      *ngIf="workspace$ | ngrxPush as workspace"
-      [pgActive]="
-        (isCreatingApplication$ | ngrxPush)
-          ? { thumbnailUrl: 'assets/generic/application.png' }
-          : null
-      "
-      [pgClickEvent]="(drawerClick$ | ngrxPush) ?? null"
-      (pgAddNode)="onAddApplicationNode(workspace.id, $event)"
-      (pgDeactivate)="onApplicationDeactivate()"
-    ></pg-active-application>
   `,
   standalone: true,
   imports: [
@@ -168,9 +190,7 @@ export class WorkspacePageComponent
     >
   );
 
-  readonly isCreatingApplication$ = this.select(
-    ({ isCreatingApplication }) => isCreatingApplication
-  );
+  readonly active$ = this.select(({ active }) => active);
   readonly selected$ = this.select(({ selected }) => selected);
   readonly workspaceId$ = this._activatedRoute.paramMap.pipe(
     map((paramMap) => paramMap.get('workspaceId'))
@@ -216,6 +236,11 @@ export class WorkspacePageComponent
       selected: null,
     };
   });
+
+  readonly setActive = this.updater<Option<ActiveType>>((state, active) => ({
+    ...state,
+    active,
+  }));
 
   private readonly _handleViewNode = this.effect<
     ViewNodeEvent<WorkspaceNodeKinds>
@@ -621,14 +646,6 @@ export class WorkspacePageComponent
         }))
       );
     }
-  }
-
-  onApplicationActivate() {
-    this.patchState({ isCreatingApplication: true });
-  }
-
-  onApplicationDeactivate() {
-    this.patchState({ isCreatingApplication: false });
   }
 
   onApplicationUnselected() {

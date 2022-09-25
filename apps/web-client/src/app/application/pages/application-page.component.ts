@@ -60,11 +60,14 @@ import {
   BackgroundImageMoveDirective,
   BackgroundImageZoomDirective,
 } from '../../shared/directives';
-import { isNotNull, isNull, Option } from '../../shared/utils';
+import { GetActiveTypes, isNotNull, isNull, Option } from '../../shared/utils';
 import {
   ActiveCollectionComponent,
+  ActiveCollectionData,
   ActiveFieldComponent,
+  ActiveFieldData,
   ActiveInstructionComponent,
+  ActiveInstructionData,
   AddCollectionNodeDto,
   AddFieldNodeDto,
   AddInstructionNodeDto,
@@ -96,19 +99,21 @@ import {
   applicationNodeLabelFunction,
 } from '../utils/methods';
 
+type ActiveType = GetActiveTypes<{
+  collection: ActiveCollectionData;
+  field: ActiveFieldData;
+  instruction: ActiveInstructionData;
+}>;
+
 interface ViewModel {
-  isCreatingField: boolean;
-  isCreatingCollection: boolean;
-  isCreatingInstruction: boolean;
+  active: Option<ActiveType>;
   applicationId: Option<string>;
   selected: Option<ApplicationNode>;
   installations: { id: string; data: ApplicationCheckpoint }[];
 }
 
 const initialState: ViewModel = {
-  isCreatingField: false,
-  isCreatingCollection: false,
-  isCreatingInstruction: false,
+  active: null,
   applicationId: null,
   selected: null,
   installations: [],
@@ -127,140 +132,161 @@ const initialState: ViewModel = {
       [pgPanValue]="(panDrag$ | ngrxPush) ?? { x: '0', y: '0' }"
     ></div>
 
-    <ng-container *ngIf="(selected$ | ngrxPush) === null">
-      <pg-application-dock
-        *ngIf="application$ | ngrxPush as application"
-        class="fixed bottom-0 -translate-x-1/2 left-1/2"
-        [pgApplication]="application"
-        (pgActivateCollection)="onActivateCollection()"
-        (pgActivateInstruction)="onActivateInstruction()"
-        (pgUpdateApplication)="onUpdateGraph($event.changes)"
-        (pgUpdateApplicationThumbnail)="
-          onUpdateGraphThumbnail($event.fileId, $event.fileUrl)
+    <ng-container *ngrxLet="application$; let application">
+      <ng-container *ngrxLet="selected$; let selected">
+        <pg-application-dock
+          *ngIf="application !== null && selected === null"
+          class="fixed bottom-0 -translate-x-1/2 left-1/2"
+          [pgApplication]="application"
+          (pgActivateCollection)="
+            setActive({
+              kind: 'collection',
+              data: {
+                thumbnailUrl: 'assets/generic/collection.png'
+              }
+            })
+          "
+          (pgActivateInstruction)="
+            setActive({
+              kind: 'instruction',
+              data: {
+                thumbnailUrl: 'assets/generic/instruction.png'
+              }
+            })
+          "
+          (pgUpdateApplication)="onUpdateGraph($event.changes)"
+          (pgUpdateApplicationThumbnail)="
+            onUpdateGraphThumbnail($event.fileId, $event.fileUrl)
+          "
+          (pgDeleteApplication)="
+            onDeleteGraph(application.data.workspaceId, $event, 'application')
+          "
+        ></pg-application-dock>
+
+        <pg-collection-dock
+          *ngIf="selected !== null && selected.kind === 'collection'"
+          class="fixed bottom-0 -translate-x-1/2 left-1/2"
+          [pgCollection]="selected"
+          (pgCollectionUnselected)="onUnselect()"
+          (pgUpdateCollection)="
+            onUpdateNode($event.id, 'collection', $event.changes)
+          "
+          (pgUpdateCollectionThumbnail)="
+            onUpdateNodeThumbnail($event.id, $event.fileId, $event.fileUrl)
+          "
+          (pgDeleteCollection)="onRemoveNode($event)"
+        ></pg-collection-dock>
+
+        <pg-instruction-dock
+          *ngIf="selected !== null && selected.kind === 'instruction'"
+          class="fixed bottom-0 -translate-x-1/2 left-1/2"
+          [pgInstruction]="selected"
+          (pgInstructionUnselected)="onUnselect()"
+          (pgUpdateInstruction)="
+            onUpdateNode($event.id, 'instruction', $event.changes)
+          "
+          (pgUpdateInstructionThumbnail)="
+            onUpdateNodeThumbnail($event.id, $event.fileId, $event.fileUrl)
+          "
+          (pgDeleteInstruction)="onRemoveNode($event)"
+        ></pg-instruction-dock>
+
+        <pg-field-dock
+          *ngIf="selected !== null && selected.kind === 'field'"
+          class="fixed bottom-0 -translate-x-1/2 left-1/2"
+          [pgField]="selected"
+          (pgFieldUnselected)="onUnselect()"
+          (pgUpdateField)="onUpdateNode($event.id, 'field', $event.changes)"
+          (pgUpdateFieldThumbnail)="
+            onUpdateNodeThumbnail($event.id, $event.fileId, $event.fileUrl)
+          "
+          (pgDeleteField)="onRemoveNode($event)"
+        ></pg-field-dock>
+      </ng-container>
+
+      <pg-right-dock
+        class="fixed bottom-0 right-0"
+        *ngIf="application !== null"
+        (pgActivateField)="
+          setActive({
+            kind: 'field',
+            data: {
+              thumbnailUrl: 'assets/generic/field.png'
+            }
+          })
         "
-        (pgDeleteApplication)="
-          onDeleteGraph(application.data.workspaceId, $event, 'application')
-        "
-      ></pg-application-dock>
+        (pgToggleApplicationsInventoryModal)="applicationsInventory.toggle()"
+      >
+        <ng-container
+          pgApplicationsInventory
+          #applicationsInventory="modal"
+          [pgInstallations]="(installations$ | ngrxPush) ?? []"
+          (pgInstallApplication)="
+            onInstallApplication(
+              application.data.workspaceId,
+              application.id,
+              $event
+            )
+          "
+        ></ng-container>
+      </pg-right-dock>
+
+      <pg-left-dock
+        *ngrxLet="drawMode$; let drawMode"
+        class="fixed bottom-0 left-0"
+        (pgToggleDrawMode)="onSetDrawMode(!drawMode)"
+      ></pg-left-dock>
+
+      <ng-container *ngrxLet="active$; let active">
+        <pg-active-collection
+          *ngIf="
+            application !== null &&
+            active !== null &&
+            active.kind === 'collection'
+          "
+          [pgActive]="active.data"
+          [pgClickEvent]="(drawerClick$ | ngrxPush) ?? null"
+          (pgAddNode)="
+            onAddCollectionNode(
+              application.data.workspaceId,
+              application.id,
+              $event
+            )
+          "
+          (pgDeactivate)="setActive(null)"
+        ></pg-active-collection>
+
+        <pg-active-instruction
+          *ngIf="
+            application !== null &&
+            active !== null &&
+            active.kind === 'instruction'
+          "
+          [pgActive]="active.data"
+          [pgClickEvent]="(drawerClick$ | ngrxPush) ?? null"
+          (pgAddNode)="
+            onAddInstructionNode(
+              application.data.workspaceId,
+              application.id,
+              $event
+            )
+          "
+          (pgDeactivate)="setActive(null)"
+        ></pg-active-instruction>
+
+        <pg-active-field
+          *ngIf="
+            application !== null && active !== null && active.kind === 'field'
+          "
+          [pgActive]="active.data"
+          [pgClickEvent]="(drawerClick$ | ngrxPush) ?? null"
+          (pgAddNode)="
+            onAddFieldNode(application.data.workspaceId, application.id, $event)
+          "
+          (pgDeactivate)="setActive(null)"
+        ></pg-active-field>
+      </ng-container>
     </ng-container>
-
-    <ng-container *ngIf="selected$ | ngrxPush as selected">
-      <pg-collection-dock
-        *ngIf="selected.kind === 'collection'"
-        class="fixed bottom-0 -translate-x-1/2 left-1/2"
-        [pgCollection]="selected"
-        (pgCollectionUnselected)="onUnselect()"
-        (pgUpdateCollection)="
-          onUpdateNode($event.id, 'collection', $event.changes)
-        "
-        (pgUpdateCollectionThumbnail)="
-          onUpdateNodeThumbnail($event.id, $event.fileId, $event.fileUrl)
-        "
-        (pgDeleteCollection)="onRemoveNode($event)"
-      ></pg-collection-dock>
-
-      <pg-instruction-dock
-        *ngIf="selected.kind === 'instruction'"
-        class="fixed bottom-0 -translate-x-1/2 left-1/2"
-        [pgInstruction]="selected"
-        (pgInstructionUnselected)="onUnselect()"
-        (pgUpdateInstruction)="
-          onUpdateNode($event.id, 'instruction', $event.changes)
-        "
-        (pgUpdateInstructionThumbnail)="
-          onUpdateNodeThumbnail($event.id, $event.fileId, $event.fileUrl)
-        "
-        (pgDeleteInstruction)="onRemoveNode($event)"
-      ></pg-instruction-dock>
-
-      <pg-field-dock
-        *ngIf="selected.kind === 'field'"
-        class="fixed bottom-0 -translate-x-1/2 left-1/2"
-        [pgField]="selected"
-        (pgFieldUnselected)="onUnselect()"
-        (pgUpdateField)="onUpdateNode($event.id, 'field', $event.changes)"
-        (pgUpdateFieldThumbnail)="
-          onUpdateNodeThumbnail($event.id, $event.fileId, $event.fileUrl)
-        "
-        (pgDeleteField)="onRemoveNode($event)"
-      ></pg-field-dock>
-    </ng-container>
-
-    <pg-right-dock
-      class="fixed bottom-0 right-0"
-      *ngIf="application$ | ngrxPush as application"
-      (pgActivateField)="onActivateField()"
-      (pgToggleApplicationsInventoryModal)="applicationsInventory.toggle()"
-    >
-      <ng-container
-        pgApplicationsInventory
-        #applicationsInventory="modal"
-        [pgInstallations]="(installations$ | ngrxPush) ?? []"
-        (pgInstallApplication)="
-          onInstallApplication(
-            application.data.workspaceId,
-            application.id,
-            $event
-          )
-        "
-      ></ng-container>
-    </pg-right-dock>
-
-    <pg-left-dock
-      *ngrxLet="drawMode$; let drawMode"
-      class="fixed bottom-0 left-0"
-      (pgToggleDrawMode)="onSetDrawMode(!drawMode)"
-    ></pg-left-dock>
-
-    <pg-active-collection
-      *ngIf="application$ | ngrxPush as application"
-      [pgActive]="
-        (isCreatingCollection$ | ngrxPush)
-          ? { thumbnailUrl: 'assets/generic/collection.png' }
-          : null
-      "
-      [pgClickEvent]="(drawerClick$ | ngrxPush) ?? null"
-      (pgAddNode)="
-        onAddCollectionNode(
-          application.data.workspaceId,
-          application.id,
-          $event
-        )
-      "
-      (pgDeactivate)="onDeactivateCollection()"
-    ></pg-active-collection>
-
-    <pg-active-instruction
-      *ngIf="application$ | ngrxPush as application"
-      [pgActive]="
-        (isCreatingInstruction$ | ngrxPush)
-          ? { thumbnailUrl: 'assets/generic/instruction.png' }
-          : null
-      "
-      [pgClickEvent]="(drawerClick$ | ngrxPush) ?? null"
-      (pgAddNode)="
-        onAddInstructionNode(
-          application.data.workspaceId,
-          application.id,
-          $event
-        )
-      "
-      (pgDeactivate)="onDeactivateInstruction()"
-    ></pg-active-instruction>
-
-    <pg-active-field
-      *ngIf="application$ | ngrxPush as application"
-      [pgActive]="
-        (isCreatingField$ | ngrxPush)
-          ? { thumbnailUrl: 'assets/generic/field.png' }
-          : null
-      "
-      [pgClickEvent]="(drawerClick$ | ngrxPush) ?? null"
-      (pgAddNode)="
-        onAddFieldNode(application.data.workspaceId, application.id, $event)
-      "
-      (pgDeactivate)="onDeactivateField()"
-    ></pg-active-field>
   `,
   standalone: true,
   imports: [
@@ -302,15 +328,7 @@ export class ApplicationPageComponent
     >
   );
 
-  readonly isCreatingField$ = this.select(
-    ({ isCreatingField }) => isCreatingField
-  );
-  readonly isCreatingCollection$ = this.select(
-    ({ isCreatingCollection }) => isCreatingCollection
-  );
-  readonly isCreatingInstruction$ = this.select(
-    ({ isCreatingInstruction }) => isCreatingInstruction
-  );
+  readonly active$ = this.select(({ active }) => active);
   readonly selected$ = this.select(({ selected }) => selected);
   readonly installations$ = this.select(({ installations }) => installations);
   readonly workspaceId$ = this._activatedRoute.paramMap.pipe(
@@ -368,6 +386,11 @@ export class ApplicationPageComponent
   >((state, event) => ({
     ...state,
     selected: event.payload,
+  }));
+
+  readonly setActive = this.updater<Option<ActiveType>>((state, active) => ({
+    ...state,
+    active,
   }));
 
   private readonly _handleViewNode = this.effect<
@@ -952,42 +975,6 @@ export class ApplicationPageComponent
         )
       );
     }
-  }
-
-  onActivateField() {
-    this.patchState({
-      isCreatingField: true,
-      isCreatingCollection: false,
-      isCreatingInstruction: false,
-    });
-  }
-
-  onDeactivateField() {
-    this.patchState({ isCreatingField: false });
-  }
-
-  onActivateCollection() {
-    this.patchState({
-      isCreatingCollection: true,
-      isCreatingInstruction: false,
-      isCreatingField: false,
-    });
-  }
-
-  onDeactivateCollection() {
-    this.patchState({ isCreatingCollection: false });
-  }
-
-  onActivateInstruction() {
-    this.patchState({
-      isCreatingInstruction: true,
-      isCreatingCollection: false,
-      isCreatingField: false,
-    });
-  }
-
-  onDeactivateInstruction() {
-    this.patchState({ isCreatingInstruction: false });
   }
 
   onInstallApplication(

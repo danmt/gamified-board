@@ -54,14 +54,14 @@ export interface AddFieldNodeDto {
   };
 }
 
-interface Active {
+export interface ActiveFieldData {
   thumbnailUrl: string;
 }
 
 interface ViewModel {
   canAdd: boolean;
   isAdding: boolean;
-  active: Option<Active>;
+  active: Option<ActiveFieldData>;
 }
 
 const initialState: ViewModel = {
@@ -105,7 +105,7 @@ export class ActiveFieldComponent
   readonly canAdd$ = this.select(({ canAdd }) => canAdd);
   readonly isAdding$ = this.select(({ isAdding }) => isAdding);
 
-  @Input() set pgActive(active: Option<Active>) {
+  @Input() set pgActive(active: Option<ActiveFieldData>) {
     this.patchState({ active });
   }
   @Input() set pgClickEvent(event: Option<ClickEvent>) {

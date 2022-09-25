@@ -52,14 +52,14 @@ export interface AddApplicationNodeDto {
   };
 }
 
-interface Active {
+export interface ActiveApplicationData {
   thumbnailUrl: string;
 }
 
 interface ViewModel {
   canAdd: boolean;
   isAdding: boolean;
-  active: Option<Active>;
+  active: Option<ActiveApplicationData>;
 }
 
 const initialState: ViewModel = {
@@ -103,7 +103,7 @@ export class ActiveApplicationComponent
   readonly canAdd$ = this.select(({ canAdd }) => canAdd);
   readonly isAdding$ = this.select(({ isAdding }) => isAdding);
 
-  @Input() set pgActive(active: Option<Active>) {
+  @Input() set pgActive(active: Option<ActiveApplicationData>) {
     this.patchState({ active });
   }
   @Input() set pgClickEvent(event: Option<ClickEvent>) {

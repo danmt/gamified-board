@@ -52,14 +52,14 @@ export interface AddCollectionNodeDto {
   };
 }
 
-interface Active {
+export interface ActiveCollectionData {
   thumbnailUrl: string;
 }
 
 interface ViewModel {
   canAdd: boolean;
   isAdding: boolean;
-  active: Option<Active>;
+  active: Option<ActiveCollectionData>;
 }
 
 const initialState: ViewModel = {
@@ -103,7 +103,7 @@ export class ActiveCollectionComponent
   readonly canAdd$ = this.select(({ canAdd }) => canAdd);
   readonly isAdding$ = this.select(({ isAdding }) => isAdding);
 
-  @Input() set pgActive(active: Option<Active>) {
+  @Input() set pgActive(active: Option<ActiveCollectionData>) {
     this.patchState({ active });
   }
   @Input() set pgClickEvent(event: Option<ClickEvent>) {

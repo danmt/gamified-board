@@ -52,14 +52,14 @@ export interface AddInstructionNodeDto {
   };
 }
 
-interface Active {
+export interface ActiveInstructionData {
   thumbnailUrl: string;
 }
 
 interface ViewModel {
   canAdd: boolean;
   isAdding: boolean;
-  active: Option<Active>;
+  active: Option<ActiveInstructionData>;
 }
 
 const initialState: ViewModel = {
@@ -103,7 +103,7 @@ export class ActiveInstructionComponent
   readonly canAdd$ = this.select(({ canAdd }) => canAdd);
   readonly isAdding$ = this.select(({ isAdding }) => isAdding);
 
-  @Input() set pgActive(active: Option<Active>) {
+  @Input() set pgActive(active: Option<ActiveInstructionData>) {
     this.patchState({ active });
   }
   @Input() set pgClickEvent(event: Option<ClickEvent>) {
