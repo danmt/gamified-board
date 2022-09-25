@@ -70,8 +70,10 @@ export class InstructionGraphApiService extends GraphApiService<InstructionGraph
 
         return {
           id: edge.id,
-          source: edgeData['data']['source'],
-          target: edgeData['data']['target'],
+          data: {
+            source: edgeData['data']['source'],
+            target: edgeData['data']['target'],
+          },
         };
       }),
       lastEventId: graphData['lastEventId'],

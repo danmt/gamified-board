@@ -1,4 +1,5 @@
 import {
+  Edge,
   GetNodeTypes,
   GetPartialNodeDataTypes,
   Graph,
@@ -92,15 +93,8 @@ export interface ApplicationCheckpoint {
     id: string;
     data: ApplicationGraphData;
   };
-  nodes: {
-    id: string;
-    data: ApplicationNodeData;
-    kind: ApplicationNodeKinds;
-  };
-  edges: {
-    id: string;
-    data: { source: string; target: string };
-  };
+  nodes: ApplicationNode[];
+  edges: Edge[];
 }
 
 export interface InstallableApplication {
@@ -113,3 +107,5 @@ export interface Installation {
   id: string;
   data: ApplicationCheckpoint;
 }
+
+export type Collection = CollectionNode & { fields: FieldNode[] };

@@ -7,8 +7,10 @@ export interface DefaultNodeDataType {
 
 export interface Edge {
   id: string;
-  source: string;
-  target: string;
+  data: {
+    source: string;
+    target: string;
+  };
 }
 
 export interface DefaultGraphDataType {

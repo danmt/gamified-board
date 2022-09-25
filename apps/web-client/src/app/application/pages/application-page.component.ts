@@ -10,11 +10,7 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { LetModule, PushModule } from '@ngrx/component';
-import {
-  ComponentStore,
-  provideComponentStore,
-  tapResponse,
-} from '@ngrx/component-store';
+import { ComponentStore, provideComponentStore } from '@ngrx/component-store';
 import {
   concatMap,
   defer,
@@ -84,20 +80,18 @@ import {
   ApplicationGraphApiService,
   InstallApplicationDto,
 } from '../services';
+import { InstallationsStore } from '../stores';
 import {
-  ApplicationCheckpoint,
+  applicationCanConnectFunction,
   ApplicationGraphData,
   ApplicationGraphKind,
   ApplicationNode,
   ApplicationNodeData,
   ApplicationNodeKinds,
+  applicationNodeLabelFunction,
   ApplicationNodesData,
   PartialApplicationNode,
 } from '../utils';
-import {
-  applicationCanConnectFunction,
-  applicationNodeLabelFunction,
-} from '../utils/methods';
 
 type ActiveType = GetActiveTypes<{
   collection: ActiveCollectionData;
@@ -109,14 +103,12 @@ interface ViewModel {
   active: Option<ActiveType>;
   applicationId: Option<string>;
   selected: Option<ApplicationNode>;
-  installations: { id: string; data: ApplicationCheckpoint }[];
 }
 
 const initialState: ViewModel = {
   active: null,
   applicationId: null,
   selected: null,
-  installations: [],
 };
 
 @Component({
@@ -306,7 +298,10 @@ const initialState: ViewModel = {
     BackgroundImageZoomDirective,
     BackgroundImageMoveDirective,
   ],
-  providers: [provideComponentStore(DrawerStore)],
+  providers: [
+    provideComponentStore(DrawerStore),
+    provideComponentStore(InstallationsStore),
+  ],
 })
 export class ApplicationPageComponent
   extends ComponentStore<ViewModel>
@@ -318,6 +313,7 @@ export class ApplicationPageComponent
     ApplicationGraphApiService
   );
   private readonly _activatedRoute = inject(ActivatedRoute);
+  private readonly _installationsStore = inject(InstallationsStore);
   private readonly _applicationDrawerStore = inject(
     DrawerStore<
       ApplicationNodeKinds,
@@ -330,7 +326,6 @@ export class ApplicationPageComponent
 
   readonly active$ = this.select(({ active }) => active);
   readonly selected$ = this.select(({ selected }) => selected);
-  readonly installations$ = this.select(({ installations }) => installations);
   readonly workspaceId$ = this._activatedRoute.paramMap.pipe(
     map((paramMap) => paramMap.get('workspaceId'))
   );
@@ -344,6 +339,7 @@ export class ApplicationPageComponent
   readonly zoomSize$ = this._applicationDrawerStore.zoomSize$;
   readonly panDrag$ = this._applicationDrawerStore.panDrag$;
   readonly drawMode$ = this._applicationDrawerStore.drawMode$;
+  readonly installations$ = this._installationsStore.installations$;
 
   @HostBinding('class') class = 'block relative min-h-screen min-w-screen';
   @ViewChild('drawerElement')
@@ -881,31 +877,6 @@ export class ApplicationPageComponent
     })
   );
 
-  private readonly _loadInstallations = this.effect<{
-    workspaceId: Option<string>;
-    applicationId: Option<string>;
-  }>(
-    concatMap(({ workspaceId, applicationId }) => {
-      if (isNull(workspaceId) || isNull(applicationId)) {
-        return EMPTY;
-      }
-
-      return defer(() =>
-        from(
-          this._applicationApiService.getApplicationInstallations(
-            workspaceId,
-            applicationId
-          )
-        ).pipe(
-          tapResponse(
-            (installations) => this.patchState({ installations }),
-            (error) => console.error(error)
-          )
-        )
-      );
-    })
-  );
-
   constructor() {
     super(initialState);
   }
@@ -947,16 +918,8 @@ export class ApplicationPageComponent
     this._handleDeleteEdgeSuccess(
       this._applicationDrawerStore.event$.pipe(filter(isDeleteEdgeSuccessEvent))
     );
-    this._loadInstallations(
-      this.select(
-        this.workspaceId$,
-        this.applicationId$,
-        (workspaceId, applicationId) => ({
-          workspaceId,
-          applicationId,
-        })
-      )
-    );
+    this._installationsStore.setWorkspaceId(this.workspaceId$);
+    this._installationsStore.setApplicationId(this.applicationId$);
   }
 
   async ngAfterViewInit() {

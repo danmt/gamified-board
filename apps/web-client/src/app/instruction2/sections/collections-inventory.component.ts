@@ -6,22 +6,24 @@ import {
   Directive,
   HostListener,
   inject,
+  Input,
   OnDestroy,
   Output,
+  ViewContainerRef,
 } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { LetModule, PushModule } from '@ngrx/component';
 import { Subject, Subscription } from 'rxjs';
+import { Collection } from '../../application/utils';
 import { InventoryComponent } from '../../shared/components';
 import { DefaultImageDirective } from '../../shared/directives';
 import { isNotNull, isNull, Option } from '../../shared/utils';
 
-interface Collection {
-  name: string;
-  thumbnailUrl: string;
-}
-
-export const openCollectionsInventory = (overlay: Overlay) => {
+export const openCollectionsInventory = (
+  overlay: Overlay,
+  viewContainerRef: ViewContainerRef,
+  collections: Collection[]
+) => {
   const overlayRef = overlay.create({
     positionStrategy: overlay
       .position()
@@ -31,8 +33,9 @@ export const openCollectionsInventory = (overlay: Overlay) => {
     scrollStrategy: overlay.scrollStrategies.close(),
   });
   const componentRef = overlayRef.attach(
-    new ComponentPortal(CollectionsInventoryComponent)
+    new ComponentPortal(CollectionsInventoryComponent, viewContainerRef)
   );
+  componentRef.setInput('pgCollections', collections);
 
   return { componentRef, overlayRef };
 };
@@ -44,12 +47,14 @@ export const openCollectionsInventory = (overlay: Overlay) => {
 })
 export class CollectionsInventoryDirective implements OnDestroy {
   private readonly _overlay = inject(Overlay);
+  private readonly _viewContainerRef = inject(ViewContainerRef);
   private _overlayRef: Option<OverlayRef> = null;
   private _isOpen = false;
   private _tapCollectionSubscription: Option<Subscription> = null;
 
   private readonly _tapCollection = new Subject<Collection>();
 
+  @Input() pgCollections: Collection[] = [];
   @Output() pgTapCollection = this._tapCollection.asObservable();
 
   @HostListener('click') onClick() {
@@ -64,7 +69,9 @@ export class CollectionsInventoryDirective implements OnDestroy {
     if (isNull(this._overlayRef) && !this._isOpen) {
       this._isOpen = true;
       const { overlayRef, componentRef } = openCollectionsInventory(
-        this._overlay
+        this._overlay,
+        this._viewContainerRef,
+        this.pgCollections
       );
 
       this._overlayRef = overlayRef;
@@ -108,13 +115,13 @@ export class CollectionsInventoryDirective implements OnDestroy {
       <div pgInventoryBody>
         <div class="flex flex-wrap gap-4 justify-center">
           <button
-            *ngFor="let collection of collections; trackBy: trackBy"
+            *ngFor="let collection of pgCollections; trackBy: trackBy"
             class="bg-gray-600 p-0.5 w-11 h-11"
             (click)="onTapCollection(collection)"
           >
             <img
               class="w-full h-full object-cover"
-              [src]="collection.thumbnailUrl"
+              [src]="collection.data.thumbnailUrl"
               pgDefaultImage="assets/generic/collection.png"
             />
           </button>
@@ -137,7 +144,7 @@ export class CollectionsInventoryComponent {
 
   readonly tapCollection$ = this._tapCollection.asObservable();
 
-  readonly collections: Collection[] = [];
+  @Input() pgCollections: Collection[] = [];
 
   trackBy(index: number): number {
     return index;

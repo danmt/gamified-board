@@ -81,10 +81,7 @@ export class ApplicationsInventoryDirective implements OnDestroy {
     new Subject<InstallApplicationPayload>();
   private readonly _tapInstallation = new Subject<Installation>();
 
-  @Input() pgInstallations: {
-    id: string;
-    data: ApplicationCheckpoint;
-  }[] = [];
+  @Input() pgInstallations: Installation[] = [];
 
   @Output() pgInstallApplication = this._installApplication.asObservable();
   @Output() pgTapInstallation = this._tapInstallation.asObservable();

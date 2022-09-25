@@ -1,5 +1,10 @@
 import { NodeSingular } from 'cytoscape';
-import { ApplicationNode } from './types';
+import {
+  ApplicationNode,
+  CollectionNode,
+  FieldNode,
+  InstructionNode,
+} from './types';
 
 export const applicationNodeLabelFunction = (node: ApplicationNode) => {
   switch (node.kind) {
@@ -75,4 +80,20 @@ export const applicationCanConnectFunction = (
   }
 
   return false;
+};
+
+export const isCollectionNode = (
+  node: ApplicationNode
+): node is CollectionNode => {
+  return node.kind === 'collection';
+};
+
+export const isInstructionNode = (
+  node: ApplicationNode
+): node is InstructionNode => {
+  return node.kind === 'instruction';
+};
+
+export const isFieldNode = (node: ApplicationNode): node is FieldNode => {
+  return node.kind === 'field';
 };

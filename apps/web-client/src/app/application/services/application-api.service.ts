@@ -45,10 +45,7 @@ export class ApplicationApiService {
   private readonly _eventApiService = inject(EventApiService);
 
   getApplication(applicationId: string): Observable<ApplicationDto> {
-    const applicationRef = doc(
-      this._firestore,
-      `applications/${applicationId}`
-    );
+    const applicationRef = doc(this._firestore, `graphs/${applicationId}`);
 
     return docData(applicationRef).pipe(
       map((application) => ({

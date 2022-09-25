@@ -71,7 +71,11 @@ export class Drawer<
         data: node,
       })),
       graph.edges.map((edge) => ({
-        data: edge,
+        data: {
+          id: edge.id,
+          source: edge.data.source,
+          target: edge.data.target,
+        },
       })),
       groups.map((group) => ({
         data: { id: group, kind: 'group' },

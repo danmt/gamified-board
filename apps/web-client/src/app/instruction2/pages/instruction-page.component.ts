@@ -10,11 +10,7 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { LetModule, PushModule } from '@ngrx/component';
-import {
-  ComponentStore,
-  provideComponentStore,
-  tapResponse,
-} from '@ngrx/component-store';
+import { ComponentStore, provideComponentStore } from '@ngrx/component-store';
 import {
   concatMap,
   defer,
@@ -33,6 +29,7 @@ import {
   ApplicationApiService,
   InstallApplicationDto,
 } from '../../application/services';
+import { CollectionsStore, InstallationsStore } from '../../application/stores';
 import { ApplicationCheckpoint } from '../../application/utils';
 import { UpdateCollectionSubmit } from '../../collection/components';
 import { DrawerStore } from '../../drawer/stores';
@@ -86,18 +83,16 @@ import {
 } from '../sections';
 import { InstructionGraphApiService } from '../services';
 import {
+  instructionCanConnectFunction,
   InstructionGraphData,
   InstructionGraphKind,
   InstructionNode,
   InstructionNodeData,
   InstructionNodeKinds,
+  instructionNodeLabelFunction,
   InstructionNodesData,
   PartialInstructionNode,
 } from '../utils';
-import {
-  instructionCanConnectFunction,
-  instructionNodeLabelFunction,
-} from '../utils/methods';
 
 type ActiveType = GetActiveTypes<{
   signer: ActiveSignerData;
@@ -249,6 +244,7 @@ const initialState: ViewModel = {
         <ng-container
           pgCollectionsInventory
           #collectionsInventory="modal"
+          [pgCollections]="(collections$ | ngrxPush) ?? []"
         ></ng-container>
       </pg-left-dock>
 
@@ -328,7 +324,11 @@ const initialState: ViewModel = {
     ActiveApplicationComponent,
     ActiveSysvarComponent,
   ],
-  providers: [provideComponentStore(DrawerStore)],
+  providers: [
+    provideComponentStore(DrawerStore),
+    provideComponentStore(InstallationsStore),
+    provideComponentStore(CollectionsStore),
+  ],
 })
 export class InstructionPageComponent
   extends ComponentStore<ViewModel>
@@ -345,6 +345,8 @@ export class InstructionPageComponent
       InstructionGraphData
     >
   );
+  private readonly _installationsStore = inject(InstallationsStore);
+  private readonly _collectionsStore = inject(CollectionsStore);
   private readonly _applicationApiService = inject(ApplicationApiService);
   private readonly _instructionGraphApiService = inject(
     InstructionGraphApiService
@@ -361,7 +363,8 @@ export class InstructionPageComponent
   );
   readonly selected$ = this.select(({ selected }) => selected);
   readonly active$ = this.select(({ active }) => active);
-  readonly installations$ = this.select(({ installations }) => installations);
+  readonly installations$ = this._installationsStore.installations$;
+
   readonly instruction$ = this._instructionDrawerStore.graph$;
   readonly drawerClick$ = this._instructionDrawerStore.event$.pipe(
     filter(isClickEvent)
@@ -369,6 +372,17 @@ export class InstructionPageComponent
   readonly zoomSize$ = this._instructionDrawerStore.zoomSize$;
   readonly panDrag$ = this._instructionDrawerStore.panDrag$;
   readonly drawMode$ = this._instructionDrawerStore.drawMode$;
+  readonly collections$ = this.select(
+    this._collectionsStore.collections$,
+    this._installationsStore.collections$,
+    (collections, installedCollections) => {
+      if (isNull(collections) || isNull(installedCollections)) {
+        return [];
+      }
+
+      return collections.concat(installedCollections);
+    }
+  );
 
   @HostBinding('class') class = 'block relative min-h-screen min-w-screen';
   @ViewChild('drawerElement')
@@ -1038,31 +1052,6 @@ export class InstructionPageComponent
     )
   );
 
-  private readonly _loadInstallations = this.effect<{
-    workspaceId: Option<string>;
-    applicationId: Option<string>;
-  }>(
-    concatMap(({ workspaceId, applicationId }) => {
-      if (isNull(workspaceId) || isNull(applicationId)) {
-        return EMPTY;
-      }
-
-      return defer(() =>
-        from(
-          this._applicationApiService.getApplicationInstallations(
-            workspaceId,
-            applicationId
-          )
-        ).pipe(
-          tapResponse(
-            (installations) => this.patchState({ installations }),
-            (error) => console.error(error)
-          )
-        )
-      );
-    })
-  );
-
   constructor() {
     super(initialState);
   }
@@ -1101,16 +1090,10 @@ export class InstructionPageComponent
     this._handleDeleteEdgeSuccess(
       this._instructionDrawerStore.event$.pipe(filter(isDeleteEdgeSuccessEvent))
     );
-    this._loadInstallations(
-      this.select(
-        this.workspaceId$,
-        this.applicationId$,
-        (workspaceId, applicationId) => ({
-          workspaceId,
-          applicationId,
-        })
-      )
-    );
+    this._installationsStore.setWorkspaceId(this.workspaceId$);
+    this._installationsStore.setApplicationId(this.applicationId$);
+    this._collectionsStore.setWorkspaceId(this.workspaceId$);
+    this._collectionsStore.setApplicationId(this.applicationId$);
   }
 
   async ngAfterViewInit() {
