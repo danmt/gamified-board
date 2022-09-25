@@ -3,6 +3,7 @@ export * from './active-collection.component';
 export * from './active-signer.component';
 export * from './active-sysvar.component';
 export * from './application-dock.component';
+export * from './collection-dock.component';
 export * from './collections-inventory.component';
 export * from './instruction-dock.component';
 export * from './left-dock.component';

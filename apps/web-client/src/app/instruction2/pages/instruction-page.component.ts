@@ -75,6 +75,7 @@ import {
   AddSignerNodeDto,
   AddSysvarNodeDto,
   ApplicationDockComponent,
+  CollectionDockComponent,
   CollectionsInventoryDirective,
   InstructionDockComponent,
   LeftDockComponent,
@@ -191,6 +192,20 @@ const initialState: ViewModel = {
           "
           (pgDeleteSysvar)="onRemoveNode($event)"
         ></pg-sysvar-dock>
+
+        <pg-collection-dock
+          *ngIf="selected !== null && selected.kind === 'collection'"
+          class="fixed bottom-0 -translate-x-1/2 left-1/2"
+          [pgCollection]="selected"
+          (pgCollectionUnselected)="onUnselect()"
+          (pgUpdateCollection)="
+            onUpdateNode($event.id, 'collection', $event.changes)
+          "
+          (pgUpdateCollectionThumbnail)="
+            onUpdateNodeThumbnail($event.id, $event.fileId, $event.fileUrl)
+          "
+          (pgDeleteCollection)="onRemoveNode($event)"
+        ></pg-collection-dock>
       </ng-container>
 
       <pg-right-dock
@@ -347,6 +362,7 @@ const initialState: ViewModel = {
     InstructionDockComponent,
     SignerDockComponent,
     SysvarDockComponent,
+    CollectionDockComponent,
     ApplicationDockComponent,
     RightDockComponent,
     LeftDockComponent,
