@@ -21,7 +21,11 @@ import { DefaultImageDirective } from '../../shared/directives';
 import { generateId, isNotNull, isNull, Option } from '../../shared/utils';
 import { InstallApplicationModalDirective } from '../components';
 import { ApplicationApiService } from '../services';
-import { ApplicationCheckpoint, InstallableApplication } from '../utils';
+import {
+  ApplicationCheckpoint,
+  InstallableApplication,
+  Installation,
+} from '../utils';
 
 export interface InstallApplicationPayload {
   id: string;
@@ -46,7 +50,7 @@ export const openApplicationsInventory = (
   const componentRef = overlayRef.attach(
     new ComponentPortal(ApplicationsInventoryComponent)
   );
-  componentRef.setInput('installations', installations);
+  componentRef.setInput('pgInstallations', installations);
 
   return { componentRef, overlayRef };
 };
@@ -71,9 +75,11 @@ export class ApplicationsInventoryDirective implements OnDestroy {
   private _overlayRef: Option<OverlayRef> = null;
   private _isOpen = false;
   private _installApplicationSubscription: Option<Subscription> = null;
+  private _tapInstallationSubscription: Option<Subscription> = null;
 
   private readonly _installApplication =
     new Subject<InstallApplicationPayload>();
+  private readonly _tapInstallation = new Subject<Installation>();
 
   @Input() pgInstallations: {
     id: string;
@@ -81,6 +87,7 @@ export class ApplicationsInventoryDirective implements OnDestroy {
   }[] = [];
 
   @Output() pgInstallApplication = this._installApplication.asObservable();
+  @Output() pgTapInstallation = this._tapInstallation.asObservable();
 
   @HostListener('click') onClick() {
     this.open();
@@ -104,6 +111,8 @@ export class ApplicationsInventoryDirective implements OnDestroy {
         componentRef.instance.installApplication$.subscribe(
           this._installApplication
         );
+      this._tapInstallationSubscription =
+        componentRef.instance.tapInstallation$.subscribe(this._tapInstallation);
     }
   }
 
@@ -111,12 +120,14 @@ export class ApplicationsInventoryDirective implements OnDestroy {
     if (
       isNotNull(this._overlayRef) &&
       this._isOpen &&
-      this._installApplicationSubscription
+      this._installApplicationSubscription &&
+      this._tapInstallationSubscription
     ) {
       this._isOpen = false;
       this._overlayRef.dispose();
       this._overlayRef = null;
       this._installApplicationSubscription.unsubscribe();
+      this._tapInstallationSubscription.unsubscribe();
     }
   }
 
@@ -182,16 +193,17 @@ export class ApplicationsInventoryDirective implements OnDestroy {
           </ng-container>
 
           <ng-container *ngIf="(showInstalled$ | ngrxPush) ?? false">
-            <div
-              *ngFor="let installation of installations; trackBy: trackBy"
+            <button
+              *ngFor="let installation of pgInstallations; trackBy: trackBy"
               class="bg-gray-600 p-0.5 w-11 h-11"
+              (click)="onTapInstallation(installation)"
             >
               <img
                 class="w-full h-full object-cover"
                 [src]="installation.data.graph.data.thumbnailUrl"
                 pgDefaultImage="assets/generic/application.png"
               />
-            </div>
+            </button>
           </ng-container>
         </div>
       </div>
@@ -216,10 +228,12 @@ export class ApplicationsInventoryComponent
   private readonly _applicationApiService = inject(ApplicationApiService);
   private readonly _installApplication =
     new Subject<InstallApplicationPayload>();
+  private readonly _tapInstallation = new Subject<Installation>();
 
-  @Input() installations: { id: string; data: ApplicationCheckpoint }[] = [];
+  @Input() pgInstallations: Installation[] = [];
 
   readonly installApplication$ = this._installApplication.asObservable();
+  readonly tapInstallation$ = this._tapInstallation.asObservable();
   readonly applications$ = this.select(({ applications }) => applications);
   readonly showInstalled$ = this.select(({ showInstalled }) => showInstalled);
 
@@ -293,5 +307,9 @@ export class ApplicationsInventoryComponent
 
   onHideInstallable() {
     this.patchState({ showInstalled: false });
+  }
+
+  onTapInstallation(installation: Installation) {
+    this._tapInstallation.next(installation);
   }
 }

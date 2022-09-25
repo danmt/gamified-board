@@ -9,8 +9,12 @@ import {
   ViewChild,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { PushModule } from '@ngrx/component';
-import { ComponentStore, provideComponentStore } from '@ngrx/component-store';
+import { LetModule, PushModule } from '@ngrx/component';
+import {
+  ComponentStore,
+  provideComponentStore,
+  tapResponse,
+} from '@ngrx/component-store';
 import {
   concatMap,
   defer,
@@ -24,6 +28,12 @@ import {
   withLatestFrom,
 } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { ApplicationsInventoryDirective } from '../../application/sections';
+import {
+  ApplicationApiService,
+  InstallApplicationDto,
+} from '../../application/services';
+import { ApplicationCheckpoint } from '../../application/utils';
 import { UpdateCollectionSubmit } from '../../collection/components';
 import { DrawerStore } from '../../drawer/stores';
 import {
@@ -54,11 +64,16 @@ import {
   BackgroundImageMoveDirective,
   BackgroundImageZoomDirective,
 } from '../../shared/directives';
-import { isNotNull, isNull, Option } from '../../shared/utils';
+import { GetActiveTypes, isNotNull, isNull, Option } from '../../shared/utils';
 import {
+  ActiveApplicationComponent,
+  ActiveApplicationData,
   ActiveSignerComponent,
+  ActiveSignerData,
+  AddApplicationNodeDto,
   AddSignerNodeDto,
   InstructionDockComponent,
+  RightDockComponent,
   SignerDockComponent,
 } from '../sections';
 import { InstructionGraphApiService } from '../services';
@@ -76,16 +91,23 @@ import {
   instructionNodeLabelFunction,
 } from '../utils/methods';
 
+type ActiveType = GetActiveTypes<{
+  signer: ActiveSignerData;
+  application: ActiveApplicationData;
+}>;
+
 interface ViewModel {
   instructionId: Option<string>;
   selected: Option<InstructionNode>;
-  isCreatingSigner: boolean;
+  installations: { id: string; data: ApplicationCheckpoint }[];
+  active: Option<ActiveType>;
 }
 
 const initialState: ViewModel = {
   instructionId: null,
   selected: null,
-  isCreatingSigner: false,
+  active: null,
+  installations: [],
 };
 
 @Component({
@@ -101,69 +123,126 @@ const initialState: ViewModel = {
       [pgPanValue]="(panDrag$ | ngrxPush) ?? { x: '0', y: '0' }"
     ></div>
 
-    <ng-container *ngIf="(selected$ | ngrxPush) === null">
-      <pg-instruction-dock
+    <ng-container *ngrxLet="instruction$; let instruction">
+      <ng-container *ngrxLet="selected$; let selected">
+        <pg-instruction-dock
+          *ngIf="instruction !== null && selected === null"
+          class="fixed bottom-0 -translate-x-1/2 left-1/2"
+          [pgInstruction]="instruction"
+          (pgActivateSigner)="
+            setActive({
+              kind: 'signer',
+              data: { thumbnailUrl: 'assets/generic/signer.png' }
+            })
+          "
+          (pgUpdateInstruction)="onUpdateGraph($event.changes)"
+          (pgUpdateInstructionThumbnail)="
+            onUpdateGraphThumbnail($event.fileId, $event.fileUrl)
+          "
+          (pgDeleteInstruction)="
+            onDeleteGraph(
+              instruction.data.workspaceId,
+              instruction.data.applicationId,
+              $event,
+              'instruction'
+            )
+          "
+        ></pg-instruction-dock>
+
+        <pg-signer-dock
+          *ngIf="selected !== null && selected.kind === 'signer'"
+          class="fixed bottom-0 -translate-x-1/2 left-1/2"
+          [pgSigner]="selected"
+          (pgSignerUnselected)="onUnselect()"
+          (pgUpdateSigner)="onUpdateNode($event.id, 'signer', $event.changes)"
+          (pgUpdateSignerThumbnail)="
+            onUpdateNodeThumbnail($event.id, $event.fileId, $event.fileUrl)
+          "
+          (pgDeleteSigner)="onRemoveNode($event)"
+        ></pg-signer-dock>
+      </ng-container>
+
+      <pg-right-dock
+        class="fixed bottom-0 right-0"
         *ngIf="instruction$ | ngrxPush as instruction"
-        class="fixed bottom-0 -translate-x-1/2 left-1/2"
-        [pgInstruction]="instruction"
-        (pgActivateSigner)="onActivateSigner()"
-        (pgUpdateInstruction)="onUpdateGraph($event.changes)"
-        (pgUpdateInstructionThumbnail)="
-          onUpdateGraphThumbnail($event.fileId, $event.fileUrl)
-        "
-        (pgDeleteInstruction)="
-          onDeleteGraph(
-            instruction.data.workspaceId,
-            instruction.data.applicationId,
-            $event,
-            'instruction'
-          )
-        "
-      ></pg-instruction-dock>
-    </ng-container>
+        (pgToggleApplicationsInventoryModal)="applicationsInventory.toggle()"
+      >
+        <ng-container
+          pgApplicationsInventory
+          #applicationsInventory="modal"
+          [pgInstallations]="(installations$ | ngrxPush) ?? []"
+          (pgInstallApplication)="
+            onInstallApplication(
+              instruction.data.workspaceId,
+              instruction.data.applicationId,
+              $event
+            )
+          "
+          (pgTapInstallation)="
+            setActive({
+              kind: 'application',
+              data: {
+                id: $event.id,
+                name: $event.data.graph.data.name,
+                thumbnailUrl: $event.data.graph.data.thumbnailUrl
+              }
+            })
+          "
+        ></ng-container>
+      </pg-right-dock>
 
-    <ng-container *ngIf="selected$ | ngrxPush as selected">
-      <pg-signer-dock
-        *ngIf="selected.kind === 'signer'"
-        class="fixed bottom-0 -translate-x-1/2 left-1/2"
-        [pgSigner]="selected"
-        (pgSignerUnselected)="onUnselect()"
-        (pgUpdateSigner)="onUpdateNode($event.id, 'signer', $event.changes)"
-        (pgUpdateSignerThumbnail)="
-          onUpdateNodeThumbnail($event.id, $event.fileId, $event.fileUrl)
-        "
-        (pgDeleteSigner)="onRemoveNode($event)"
-      ></pg-signer-dock>
-    </ng-container>
+      <ng-container *ngrxLet="active$; let active">
+        <pg-active-signer
+          *ngIf="
+            instruction !== null && active !== null && active.kind === 'signer'
+          "
+          [pgActive]="active.data"
+          [pgClickEvent]="(drawerClick$ | ngrxPush) ?? null"
+          (pgAddNode)="
+            onAddSignerNode(
+              instruction.data.workspaceId,
+              instruction.data.applicationId,
+              instruction.id,
+              $event
+            )
+          "
+          (pgDeactivate)="setActive(null)"
+        ></pg-active-signer>
 
-    <pg-active-signer
-      *ngIf="instruction$ | ngrxPush as instruction"
-      [pgActive]="
-        (isCreatingSigner$ | ngrxPush)
-          ? { thumbnailUrl: 'assets/generic/signer.png' }
-          : null
-      "
-      [pgClickEvent]="(drawerClick$ | ngrxPush) ?? null"
-      (pgAddNode)="
-        onAddSignerNode(
-          instruction.data.workspaceId,
-          instruction.data.applicationId,
-          instruction.id,
-          $event
-        )
-      "
-      (pgDeactivate)="onDeactivateSigner()"
-    ></pg-active-signer>
+        <pg-active-application
+          *ngIf="
+            instruction !== null &&
+            active !== null &&
+            active.kind === 'application'
+          "
+          [pgActive]="active.data"
+          [pgClickEvent]="(drawerClick$ | ngrxPush) ?? null"
+          (pgAddNode)="
+            onAddApplicationNode(
+              instruction.data.workspaceId,
+              instruction.data.applicationId,
+              instruction.id,
+              $event
+            )
+          "
+          (pgDeactivate)="setActive(null)"
+        ></pg-active-application>
+      </ng-container>
+    </ng-container>
   `,
   standalone: true,
   imports: [
     CommonModule,
     PushModule,
+    LetModule,
     BackgroundImageZoomDirective,
     BackgroundImageMoveDirective,
+    ApplicationsInventoryDirective,
     InstructionDockComponent,
     SignerDockComponent,
+    RightDockComponent,
     ActiveSignerComponent,
+    ActiveApplicationComponent,
   ],
   providers: [provideComponentStore(DrawerStore)],
 })
@@ -182,6 +261,7 @@ export class InstructionPageComponent
       InstructionGraphData
     >
   );
+  private readonly _applicationApiService = inject(ApplicationApiService);
   private readonly _instructionGraphApiService = inject(
     InstructionGraphApiService
   );
@@ -196,9 +276,8 @@ export class InstructionPageComponent
     map((paramMap) => paramMap.get('instructionId'))
   );
   readonly selected$ = this.select(({ selected }) => selected);
-  readonly isCreatingSigner$ = this.select(
-    ({ isCreatingSigner }) => isCreatingSigner
-  );
+  readonly active$ = this.select(({ active }) => active);
+  readonly installations$ = this.select(({ installations }) => installations);
   readonly instruction$ = this._instructionDrawerStore.graph$;
   readonly drawerClick$ = this._instructionDrawerStore.event$.pipe(
     filter(isClickEvent)
@@ -248,6 +327,11 @@ export class InstructionPageComponent
   >((state, event) => ({
     ...state,
     selected: event.payload,
+  }));
+
+  readonly setActive = this.updater<Option<ActiveType>>((state, active) => ({
+    ...state,
+    active,
   }));
 
   private readonly _handleUpdateGraphSuccess = this.effect<
@@ -870,6 +954,31 @@ export class InstructionPageComponent
     )
   );
 
+  private readonly _loadInstallations = this.effect<{
+    workspaceId: Option<string>;
+    applicationId: Option<string>;
+  }>(
+    concatMap(({ workspaceId, applicationId }) => {
+      if (isNull(workspaceId) || isNull(applicationId)) {
+        return EMPTY;
+      }
+
+      return defer(() =>
+        from(
+          this._applicationApiService.getApplicationInstallations(
+            workspaceId,
+            applicationId
+          )
+        ).pipe(
+          tapResponse(
+            (installations) => this.patchState({ installations }),
+            (error) => console.error(error)
+          )
+        )
+      );
+    })
+  );
+
   constructor() {
     super(initialState);
   }
@@ -908,6 +1017,16 @@ export class InstructionPageComponent
     this._handleDeleteEdgeSuccess(
       this._instructionDrawerStore.event$.pipe(filter(isDeleteEdgeSuccessEvent))
     );
+    this._loadInstallations(
+      this.select(
+        this.workspaceId$,
+        this.applicationId$,
+        (workspaceId, applicationId) => ({
+          workspaceId,
+          applicationId,
+        })
+      )
+    );
   }
 
   async ngAfterViewInit() {
@@ -932,16 +1051,6 @@ export class InstructionPageComponent
 
   onUnselect() {
     this.patchState({ selected: null });
-  }
-
-  onActivateSigner() {
-    this.patchState({
-      isCreatingSigner: true,
-    });
-  }
-
-  onDeactivateSigner() {
-    this.patchState({ isCreatingSigner: false });
   }
 
   onSetDrawMode(drawMode: boolean) {
@@ -992,6 +1101,26 @@ export class InstructionPageComponent
     );
   }
 
+  onAddApplicationNode(
+    workspaceId: string,
+    applicationId: string,
+    instructionId: string,
+    { payload, options }: AddApplicationNodeDto
+  ) {
+    this._instructionDrawerStore.addNode(
+      {
+        ...payload,
+        data: {
+          ...payload.data,
+          workspaceId,
+          applicationId,
+          instructionId,
+        },
+      },
+      options.position
+    );
+  }
+
   onUpdateNode(
     nodeId: string,
     kind: InstructionNodeKinds,
@@ -1009,5 +1138,20 @@ export class InstructionPageComponent
 
   onRemoveNode(nodeId: string) {
     this._instructionDrawerStore.removeNode(nodeId);
+  }
+
+  onInstallApplication(
+    workspaceId: string,
+    applicationId: string,
+    payload: InstallApplicationDto
+  ) {
+    this._applicationApiService
+      .installApplication(
+        environment.clientId,
+        workspaceId,
+        applicationId,
+        payload
+      )
+      .subscribe();
   }
 }

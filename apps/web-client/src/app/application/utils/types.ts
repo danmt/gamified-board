@@ -108,3 +108,8 @@ export interface InstallableApplication {
   data: ApplicationNodeData;
   checkpoints: ApplicationCheckpoint[];
 }
+
+export interface Installation {
+  id: string;
+  data: ApplicationCheckpoint;
+}

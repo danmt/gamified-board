@@ -34,15 +34,18 @@ import {
   isNull,
   Option,
 } from '../../shared/utils';
-import { openEditSignerModal } from '../components';
+import { openEditApplicationModal } from '../components';
 
-export interface AddSignerNodeDto {
+export interface AddApplicationNodeDto {
   payload: Entity<{
-    kind: 'signer';
+    kind: 'application';
     data: {
       name: string;
       thumbnailUrl: string;
-      isMutable: boolean;
+      ref: {
+        id: string;
+        name: string;
+      };
     };
   }>;
   options: {
@@ -53,14 +56,16 @@ export interface AddSignerNodeDto {
   };
 }
 
-export interface ActiveSignerData {
+export interface ActiveApplicationData {
+  id: string;
+  name: string;
   thumbnailUrl: string;
 }
 
 interface ViewModel {
   canAdd: boolean;
   isAdding: boolean;
-  active: Option<ActiveSignerData>;
+  active: Option<ActiveApplicationData>;
 }
 
 const initialState: ViewModel = {
@@ -70,7 +75,7 @@ const initialState: ViewModel = {
 };
 
 @Component({
-  selector: 'pg-active-signer',
+  selector: 'pg-active-application',
   template: `
     <pg-active
       *ngIf="active$ | ngrxPush as active"
@@ -92,7 +97,7 @@ const initialState: ViewModel = {
     KeyListenerDirective,
   ],
 })
-export class ActiveSignerComponent
+export class ActiveApplicationComponent
   extends ComponentStore<ViewModel>
   implements OnInit
 {
@@ -104,7 +109,7 @@ export class ActiveSignerComponent
   readonly canAdd$ = this.select(({ canAdd }) => canAdd);
   readonly isAdding$ = this.select(({ isAdding }) => isAdding);
 
-  @Input() set pgActive(active: Option<ActiveSignerData>) {
+  @Input() set pgActive(active: Option<ActiveApplicationData>) {
     this.patchState({ active });
   }
   @Input() set pgClickEvent(event: Option<ClickEvent>) {
@@ -112,7 +117,7 @@ export class ActiveSignerComponent
       this._handleDrawerClick(event);
     }
   }
-  @Output() pgAddNode = new EventEmitter<AddSignerNodeDto>();
+  @Output() pgAddNode = new EventEmitter<AddApplicationNodeDto>();
   @Output() pgDeactivate = new EventEmitter();
 
   private readonly _handleDrawerClick = this.effect<ClickEvent>(
@@ -126,22 +131,25 @@ export class ActiveSignerComponent
 
           this.patchState({ isAdding: true });
 
-          return openEditSignerModal(this._dialog, {
-            signer: null,
+          return openEditApplicationModal(this._dialog, {
+            application: null,
           }).closed.pipe(
-            tap((signer) => {
+            tap((application) => {
               this.patchState({ isAdding: false });
 
-              if (signer) {
+              if (application) {
                 this.pgDeactivate.emit();
                 this.pgAddNode.emit({
                   payload: {
                     id: generateId(),
-                    kind: 'signer',
+                    kind: 'application',
                     data: {
-                      name: signer.name,
-                      isMutable: signer.isMutable,
+                      name: application.name,
                       thumbnailUrl: active.thumbnailUrl,
+                      ref: {
+                        id: active.id,
+                        name: active.name,
+                      },
                     },
                   },
                   options: {
