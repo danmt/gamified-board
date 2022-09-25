@@ -17,15 +17,31 @@ import { KeyListenerDirective } from '../../shared/directives';
         <span
           class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
           style="font-size: 0.5rem; line-height: 0.5rem"
-          pgKeyListener="Period"
+          pgKeyListener="Comma"
           (pgKeyDown)="onToggleApplicationsInventoryModal()"
         >
-          .
+          ,
         </span>
 
         <pg-square-button
           pgThumbnailUrl="assets/generic/application.png"
           (click)="onToggleApplicationsInventoryModal()"
+        ></pg-square-button>
+      </div>
+
+      <div class="bg-gray-800 relative w-[2.89rem] h-[2.89rem]">
+        <span
+          class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
+          style="font-size: 0.5rem; line-height: 0.5rem"
+          pgKeyListener="Period"
+          (pgKeyDown)="onToggleSysvarsInventoryModal()"
+        >
+          .
+        </span>
+
+        <pg-square-button
+          pgThumbnailUrl="assets/generic/sysvar.png"
+          (click)="onToggleSysvarsInventoryModal()"
         ></pg-square-button>
       </div>
     </pg-corner-dock>
@@ -40,8 +56,13 @@ import { KeyListenerDirective } from '../../shared/directives';
 })
 export class RightDockComponent {
   @Output() pgToggleApplicationsInventoryModal = new EventEmitter();
+  @Output() pgToggleSysvarsInventoryModal = new EventEmitter();
 
   onToggleApplicationsInventoryModal() {
     this.pgToggleApplicationsInventoryModal.emit();
+  }
+
+  onToggleSysvarsInventoryModal() {
+    this.pgToggleSysvarsInventoryModal.emit();
   }
 }

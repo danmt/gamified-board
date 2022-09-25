@@ -56,20 +56,35 @@ export interface ApplicationNodeData {
   };
 }
 
+export interface SysvarNodeData {
+  name: string;
+  thumbnailUrl: string;
+  workspaceId: string;
+  applicationId: string;
+  instructionId: string;
+  ref: {
+    name: string;
+  };
+}
+
 export type InstructionNodeData =
   | ApplicationNodeData
   | DocumentNodeData
-  | SignerNodeData;
+  | SignerNodeData
+  | SysvarNodeData;
 
 export type InstructionNodesData = {
   application: ApplicationNodeData;
   signer: SignerNodeData;
   document: DocumentNodeData;
+  sysvar: SysvarNodeData;
 };
 
 export type ApplicationNode = Node<'application', ApplicationNodeData>;
 export type SignerNode = Node<'signer', SignerNodeData>;
 export type DocumentNode = Node<'document', DocumentNodeData>;
+export type SysvarNode = Node<'sysvar', SysvarNodeData>;
+
 export type InstructionNode = GetNodeTypes<
   InstructionNodeKinds,
   InstructionNodeData,
@@ -80,7 +95,11 @@ export type PartialInstructionNode = GetPartialNodeDataTypes<
   InstructionNodeData,
   InstructionNodesData
 >;
-export type InstructionNodeKinds = 'application' | 'signer' | 'document';
+export type InstructionNodeKinds =
+  | 'application'
+  | 'signer'
+  | 'document'
+  | 'sysvar';
 export type InstructionGraphKind = 'instruction';
 
 export type InstructionGraph = Graph<

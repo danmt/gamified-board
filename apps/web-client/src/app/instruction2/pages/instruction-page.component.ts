@@ -70,12 +70,17 @@ import {
   ActiveApplicationData,
   ActiveSignerComponent,
   ActiveSignerData,
+  ActiveSysvarComponent,
+  ActiveSysvarData,
   AddApplicationNodeDto,
   AddSignerNodeDto,
+  AddSysvarNodeDto,
   ApplicationDockComponent,
   InstructionDockComponent,
   RightDockComponent,
   SignerDockComponent,
+  SysvarDockComponent,
+  SysvarsInventoryDirective,
 } from '../sections';
 import { InstructionGraphApiService } from '../services';
 import {
@@ -95,6 +100,7 @@ import {
 type ActiveType = GetActiveTypes<{
   signer: ActiveSignerData;
   application: ActiveApplicationData;
+  sysvar: ActiveSysvarData;
 }>;
 
 interface ViewModel {
@@ -175,12 +181,25 @@ const initialState: ViewModel = {
           "
           (pgDeleteApplication)="onRemoveNode($event)"
         ></pg-application-dock>
+
+        <pg-sysvar-dock
+          *ngIf="selected !== null && selected.kind === 'sysvar'"
+          class="fixed bottom-0 -translate-x-1/2 left-1/2"
+          [pgSysvar]="selected"
+          (pgSysvarUnselected)="onUnselect()"
+          (pgUpdateSysvar)="onUpdateNode($event.id, 'sysvar', $event.changes)"
+          (pgUpdateSysvarThumbnail)="
+            onUpdateNodeThumbnail($event.id, $event.fileId, $event.fileUrl)
+          "
+          (pgDeleteSysvar)="onRemoveNode($event)"
+        ></pg-sysvar-dock>
       </ng-container>
 
       <pg-right-dock
         class="fixed bottom-0 right-0"
         *ngIf="instruction$ | ngrxPush as instruction"
         (pgToggleApplicationsInventoryModal)="applicationsInventory.toggle()"
+        (pgToggleSysvarsInventoryModal)="sysvarsInventory.toggle()"
       >
         <ng-container
           pgApplicationsInventory
@@ -200,6 +219,20 @@ const initialState: ViewModel = {
                 id: $event.id,
                 name: $event.data.graph.data.name,
                 thumbnailUrl: $event.data.graph.data.thumbnailUrl
+              }
+            })
+          "
+        ></ng-container>
+
+        <ng-container
+          pgSysvarsInventory
+          #sysvarsInventory="modal"
+          (pgTapSysvar)="
+            setActive({
+              kind: 'sysvar',
+              data: {
+                name: $event.name,
+                thumbnailUrl: $event.thumbnailUrl
               }
             })
           "
@@ -242,6 +275,23 @@ const initialState: ViewModel = {
           "
           (pgDeactivate)="setActive(null)"
         ></pg-active-application>
+
+        <pg-active-sysvar
+          *ngIf="
+            instruction !== null && active !== null && active.kind === 'sysvar'
+          "
+          [pgActive]="active.data"
+          [pgClickEvent]="(drawerClick$ | ngrxPush) ?? null"
+          (pgAddNode)="
+            onAddSysvarNode(
+              instruction.data.workspaceId,
+              instruction.data.applicationId,
+              instruction.id,
+              $event
+            )
+          "
+          (pgDeactivate)="setActive(null)"
+        ></pg-active-sysvar>
       </ng-container>
     </ng-container>
   `,
@@ -253,12 +303,15 @@ const initialState: ViewModel = {
     BackgroundImageZoomDirective,
     BackgroundImageMoveDirective,
     ApplicationsInventoryDirective,
+    SysvarsInventoryDirective,
     InstructionDockComponent,
     SignerDockComponent,
+    SysvarDockComponent,
     ApplicationDockComponent,
     RightDockComponent,
     ActiveSignerComponent,
     ActiveApplicationComponent,
+    ActiveSysvarComponent,
   ],
   providers: [provideComponentStore(DrawerStore)],
 })
@@ -1122,6 +1175,26 @@ export class InstructionPageComponent
     applicationId: string,
     instructionId: string,
     { payload, options }: AddApplicationNodeDto
+  ) {
+    this._instructionDrawerStore.addNode(
+      {
+        ...payload,
+        data: {
+          ...payload.data,
+          workspaceId,
+          applicationId,
+          instructionId,
+        },
+      },
+      options.position
+    );
+  }
+
+  onAddSysvarNode(
+    workspaceId: string,
+    applicationId: string,
+    instructionId: string,
+    { payload, options }: AddSysvarNodeDto
   ) {
     this._instructionDrawerStore.addNode(
       {
