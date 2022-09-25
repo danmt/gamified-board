@@ -72,6 +72,7 @@ import {
   ActiveSignerData,
   AddApplicationNodeDto,
   AddSignerNodeDto,
+  ApplicationDockComponent,
   InstructionDockComponent,
   RightDockComponent,
   SignerDockComponent,
@@ -160,6 +161,20 @@ const initialState: ViewModel = {
           "
           (pgDeleteSigner)="onRemoveNode($event)"
         ></pg-signer-dock>
+
+        <pg-application-dock
+          *ngIf="selected !== null && selected.kind === 'application'"
+          class="fixed bottom-0 -translate-x-1/2 left-1/2"
+          [pgApplication]="selected"
+          (pgApplicationUnselected)="onUnselect()"
+          (pgUpdateApplication)="
+            onUpdateNode($event.id, 'application', $event.changes)
+          "
+          (pgUpdateApplicationThumbnail)="
+            onUpdateNodeThumbnail($event.id, $event.fileId, $event.fileUrl)
+          "
+          (pgDeleteApplication)="onRemoveNode($event)"
+        ></pg-application-dock>
       </ng-container>
 
       <pg-right-dock
@@ -240,6 +255,7 @@ const initialState: ViewModel = {
     ApplicationsInventoryDirective,
     InstructionDockComponent,
     SignerDockComponent,
+    ApplicationDockComponent,
     RightDockComponent,
     ActiveSignerComponent,
     ActiveApplicationComponent,

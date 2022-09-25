@@ -24,7 +24,7 @@ import { KeyListenerDirective } from '../../shared/directives';
         </span>
 
         <pg-square-button
-          pgThumbnailUrl="assets/generic/instruction.png"
+          pgThumbnailUrl="assets/generic/application.png"
           (click)="onToggleApplicationsInventoryModal()"
         ></pg-square-button>
       </div>
