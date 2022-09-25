@@ -1,4 +1,5 @@
 export * from './active-application.component';
+export * from './active-collection.component';
 export * from './active-signer.component';
 export * from './active-sysvar.component';
 export * from './application-dock.component';

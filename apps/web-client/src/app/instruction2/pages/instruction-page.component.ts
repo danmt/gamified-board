@@ -30,7 +30,6 @@ import {
   InstallApplicationDto,
 } from '../../application/services';
 import { CollectionsStore, InstallationsStore } from '../../application/stores';
-import { ApplicationCheckpoint } from '../../application/utils';
 import { UpdateCollectionSubmit } from '../../collection/components';
 import { DrawerStore } from '../../drawer/stores';
 import {
@@ -65,11 +64,14 @@ import { GetActiveTypes, isNotNull, isNull, Option } from '../../shared/utils';
 import {
   ActiveApplicationComponent,
   ActiveApplicationData,
+  ActiveCollectionComponent,
+  ActiveCollectionData,
   ActiveSignerComponent,
   ActiveSignerData,
   ActiveSysvarComponent,
   ActiveSysvarData,
   AddApplicationNodeDto,
+  AddCollectionNodeDto,
   AddSignerNodeDto,
   AddSysvarNodeDto,
   ApplicationDockComponent,
@@ -98,12 +100,12 @@ type ActiveType = GetActiveTypes<{
   signer: ActiveSignerData;
   application: ActiveApplicationData;
   sysvar: ActiveSysvarData;
+  collection: ActiveCollectionData;
 }>;
 
 interface ViewModel {
   instructionId: Option<string>;
   selected: Option<InstructionNode>;
-  installations: { id: string; data: ApplicationCheckpoint }[];
   active: Option<ActiveType>;
 }
 
@@ -111,7 +113,6 @@ const initialState: ViewModel = {
   instructionId: null,
   selected: null,
   active: null,
-  installations: [],
 };
 
 @Component({
@@ -245,6 +246,16 @@ const initialState: ViewModel = {
           pgCollectionsInventory
           #collectionsInventory="modal"
           [pgCollections]="(collections$ | ngrxPush) ?? []"
+          (pgTapCollection)="
+            setActive({
+              kind: 'collection',
+              data: {
+                id: $event.id,
+                name: $event.data.name,
+                thumbnailUrl: $event.data.thumbnailUrl
+              }
+            })
+          "
         ></ng-container>
       </pg-left-dock>
 
@@ -301,6 +312,25 @@ const initialState: ViewModel = {
           "
           (pgDeactivate)="setActive(null)"
         ></pg-active-sysvar>
+
+        <pg-active-collection
+          *ngIf="
+            instruction !== null &&
+            active !== null &&
+            active.kind === 'collection'
+          "
+          [pgActive]="active.data"
+          [pgClickEvent]="(drawerClick$ | ngrxPush) ?? null"
+          (pgAddNode)="
+            onAddCollectionNode(
+              instruction.data.workspaceId,
+              instruction.data.applicationId,
+              instruction.id,
+              $event
+            )
+          "
+          (pgDeactivate)="setActive(null)"
+        ></pg-active-collection>
       </ng-container>
     </ng-container>
   `,
@@ -323,6 +353,7 @@ const initialState: ViewModel = {
     ActiveSignerComponent,
     ActiveApplicationComponent,
     ActiveSysvarComponent,
+    ActiveCollectionComponent,
   ],
   providers: [
     provideComponentStore(DrawerStore),
@@ -1193,6 +1224,26 @@ export class InstructionPageComponent
     applicationId: string,
     instructionId: string,
     { payload, options }: AddSysvarNodeDto
+  ) {
+    this._instructionDrawerStore.addNode(
+      {
+        ...payload,
+        data: {
+          ...payload.data,
+          workspaceId,
+          applicationId,
+          instructionId,
+        },
+      },
+      options.position
+    );
+  }
+
+  onAddCollectionNode(
+    workspaceId: string,
+    applicationId: string,
+    instructionId: string,
+    { payload, options }: AddCollectionNodeDto
   ) {
     this._instructionDrawerStore.addNode(
       {

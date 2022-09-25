@@ -25,7 +25,7 @@ export const instructionNodeLabelFunction = (node: InstructionNode) => {
       `;
     }
 
-    case 'document': {
+    case 'collection': {
       return `
         <div class="w-[280px] h-[85px] flex gap-2 items-center px-8 bg-[length:280px_85px] bg-[url('assets/images/node.png')] z-50">
           <div 
@@ -34,7 +34,11 @@ export const instructionNodeLabelFunction = (node: InstructionNode) => {
           </div>
           <div style="font-family: 'Courier New', Courier, monospace">
             <h2 class="text-xl mt-2 text-white">${node.data.name}</h2>
-            <p class="italic text-gray-400">${node.kind}</p>
+            <p class="text-gray-400">
+              ${node.kind} 
+              
+              <span class="text-xs italic uppercase">${node.data.method}</span>
+            </p>
           </div>
         </div>
       `;
