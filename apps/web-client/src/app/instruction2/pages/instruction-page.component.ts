@@ -85,6 +85,7 @@ import {
   SysvarsInventoryDirective,
 } from '../sections';
 import { InstructionGraphApiService } from '../services';
+import { InstructionCollectionsStore } from '../stores';
 import {
   instructionCanConnectFunction,
   InstructionGraphData,
@@ -197,6 +198,9 @@ const initialState: ViewModel = {
           *ngIf="selected !== null && selected.kind === 'collection'"
           class="fixed bottom-0 -translate-x-1/2 left-1/2"
           [pgCollection]="selected"
+          [pgInstructionCollections]="
+            (instructionCollections$ | ngrxPush) ?? []
+          "
           (pgCollectionUnselected)="onUnselect()"
           (pgUpdateCollection)="
             onUpdateNode($event.id, 'collection', $event.changes)
@@ -335,6 +339,9 @@ const initialState: ViewModel = {
             active.kind === 'collection'
           "
           [pgActive]="active.data"
+          [pgInstructionCollections]="
+            (instructionCollections$ | ngrxPush) ?? []
+          "
           [pgClickEvent]="(drawerClick$ | ngrxPush) ?? null"
           (pgAddNode)="
             onAddCollectionNode(
@@ -375,6 +382,7 @@ const initialState: ViewModel = {
     provideComponentStore(DrawerStore),
     provideComponentStore(InstallationsStore),
     provideComponentStore(CollectionsStore),
+    provideComponentStore(InstructionCollectionsStore),
   ],
 })
 export class InstructionPageComponent
@@ -394,6 +402,9 @@ export class InstructionPageComponent
   );
   private readonly _installationsStore = inject(InstallationsStore);
   private readonly _collectionsStore = inject(CollectionsStore);
+  private readonly _instructionCollectionsStore = inject(
+    InstructionCollectionsStore
+  );
   private readonly _applicationApiService = inject(ApplicationApiService);
   private readonly _instructionGraphApiService = inject(
     InstructionGraphApiService
@@ -430,6 +441,8 @@ export class InstructionPageComponent
       return collections.concat(installedCollections);
     }
   );
+  readonly instructionCollections$ =
+    this._instructionCollectionsStore.collections$;
 
   @HostBinding('class') class = 'block relative min-h-screen min-w-screen';
   @ViewChild('drawerElement')
@@ -1091,6 +1104,7 @@ export class InstructionPageComponent
                   applicationId,
                   instructionId,
                 });
+                this._instructionCollectionsStore.setGraph(graph);
               }
             })
           )

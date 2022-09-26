@@ -114,6 +114,7 @@ const initialState: ViewModel = {
                 pgUpdateCollectionModal
                 #updateCollectionModal="modal"
                 [pgCollection]="collection"
+                [pgInstructionCollections]="pgInstructionCollections"
                 (pgOpenModal)="setIsUpdating(true)"
                 (pgCloseModal)="setIsUpdating(false)"
                 (pgUpdateCollection)="onUpdateCollection(collection.id, $event)"
@@ -227,6 +228,10 @@ export class CollectionDockComponent extends ComponentStore<ViewModel> {
   @Input() set pgCollection(collection: Option<CollectionNode>) {
     this.patchState({ collection });
   }
+  @Input() pgInstructionCollections: {
+    id: string;
+    data: { name: string; ref: { name: string } };
+  }[] = [];
   @Output() pgCollectionUnselected = new EventEmitter();
   @Output() pgUpdateCollection = new EventEmitter<{
     id: string;

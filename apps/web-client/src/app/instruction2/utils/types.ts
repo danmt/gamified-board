@@ -4,7 +4,7 @@ import {
   Graph,
   Node,
 } from '../../drawer/utils';
-import { Entity } from '../../shared/utils';
+import { Entity, Option } from '../../shared/utils';
 
 export type InstructionDto = Entity<{
   name: string;
@@ -33,6 +33,9 @@ export interface CollectionNodeData {
     id: string;
     name: string;
   };
+  payer: Option<string>;
+  space: Option<number>;
+  receiver: Option<string>;
 }
 
 export interface SignerNodeData {
@@ -109,3 +112,9 @@ export type InstructionGraph = Graph<
   InstructionGraphKind,
   InstructionGraphData
 >;
+
+export const isCollectionNode = (
+  node: InstructionNode
+): node is CollectionNode => {
+  return node.kind === 'collection';
+};

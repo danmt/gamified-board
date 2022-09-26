@@ -16,6 +16,8 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
+import { PushModule } from '@ngrx/component';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { ModalComponent } from '../../shared/components';
 import {
   KeyListenerDirective,
@@ -25,21 +27,36 @@ import { Entity, isNull, Option } from '../../shared/utils';
 import { CollectionMethodType } from '../utils';
 
 export type Collection = Entity<{
-  data: { name: string; method: CollectionMethodType };
+  data: {
+    name: string;
+    method: CollectionMethodType;
+    payer: Option<string>;
+    space: Option<number>;
+    receiver: Option<string>;
+  };
 }>;
 
 export interface EditCollectionData {
   collection: Option<Collection>;
+  instructionCollections$: Observable<
+    { id: string; data: { name: string; ref: { name: string } } }[]
+  >;
 }
 
 export type CreateCollectionSubmit = {
   name: string;
   method: CollectionMethodType;
+  payer: Option<string>;
+  space: Option<number>;
+  receiver: Option<string>;
 };
 
 export type UpdateCollectionSubmit = {
   name: string;
   method: CollectionMethodType;
+  payer: Option<string>;
+  space: Option<number>;
+  receiver: Option<string>;
 };
 
 export const openEditCollectionModal = (
@@ -62,6 +79,18 @@ export const openEditCollectionModal = (
 export class CreateCollectionModalDirective {
   private readonly _dialog = inject(Dialog);
 
+  private readonly _instructionCollections = new BehaviorSubject<
+    { id: string; data: { name: string; ref: { name: string } } }[]
+  >([]);
+  dialogRef: Option<
+    DialogRef<CreateCollectionSubmit, EditCollectionModalComponent>
+  > = null;
+
+  @Input() set pgInstructionCollections(
+    value: { id: string; data: { name: string; ref: { name: string } } }[]
+  ) {
+    this._instructionCollections.next(value);
+  }
   @Output() pgCreateCollection = new EventEmitter<CreateCollectionSubmit>();
   @Output() pgOpenModal = new EventEmitter();
   @Output() pgCloseModal = new EventEmitter();
@@ -73,15 +102,20 @@ export class CreateCollectionModalDirective {
   open() {
     this.pgOpenModal.emit();
 
-    openEditCollectionModal(this._dialog, {
+    this.dialogRef = openEditCollectionModal(this._dialog, {
       collection: null,
-    }).closed.subscribe((collectionData) => {
+      instructionCollections$: this._instructionCollections.asObservable(),
+    });
+
+    this.dialogRef.closed.subscribe((collectionData) => {
       this.pgCloseModal.emit();
 
       if (collectionData !== undefined) {
         this.pgCreateCollection.emit(collectionData);
       }
     });
+
+    return this.dialogRef;
   }
 }
 
@@ -92,8 +126,19 @@ export class CreateCollectionModalDirective {
 })
 export class UpdateCollectionModalDirective {
   private readonly _dialog = inject(Dialog);
+  private readonly _instructionCollections = new BehaviorSubject<
+    { id: string; data: { name: string; ref: { name: string } } }[]
+  >([]);
+  dialogRef: Option<
+    DialogRef<UpdateCollectionSubmit, EditCollectionModalComponent>
+  > = null;
 
   @Input() pgCollection: Option<Collection> = null;
+  @Input() set pgInstructionCollections(
+    value: { id: string; data: { name: string; ref: { name: string } } }[]
+  ) {
+    this._instructionCollections.next(value);
+  }
 
   @Output() pgUpdateCollection = new EventEmitter<UpdateCollectionSubmit>();
   @Output() pgOpenModal = new EventEmitter();
@@ -110,15 +155,20 @@ export class UpdateCollectionModalDirective {
 
     this.pgOpenModal.emit();
 
-    openEditCollectionModal(this._dialog, {
+    this.dialogRef = openEditCollectionModal(this._dialog, {
       collection: this.pgCollection,
-    }).closed.subscribe((collectionData) => {
+      instructionCollections$: this._instructionCollections.asObservable(),
+    });
+
+    this.dialogRef.closed.subscribe((collectionData) => {
       this.pgCloseModal.emit();
 
       if (collectionData !== undefined) {
         this.pgUpdateCollection.emit(collectionData);
       }
     });
+
+    return this.dialogRef;
   }
 }
 
@@ -178,6 +228,81 @@ export class UpdateCollectionModalDirective {
           </select>
         </div>
 
+        <div class="mb-4" *ngIf="methodControl.value === 'CREATE'">
+          <label
+            class="block bp-font-game text-xl"
+            for="collection-payer-input"
+          >
+            Collection Payer
+          </label>
+
+          <select
+            class="block bg-transparent"
+            formControlName="payer"
+            id="collection-payer-input"
+          >
+            <option class="text-black" value="" selected="selected" disabled>
+              Payer
+            </option>
+            <option
+              class="text-black uppercase"
+              *ngFor="
+                let instructionCollection of instructionCollections$ | ngrxPush
+              "
+              [ngValue]="instructionCollection.id"
+            >
+              {{ instructionCollection.data.name }} ({{
+                instructionCollection.data.ref.name
+              }})
+            </option>
+          </select>
+        </div>
+
+        <div class="mb-4" *ngIf="methodControl.value === 'CREATE'">
+          <label
+            class="block bp-font-game text-xl"
+            for="collection-space-input"
+          >
+            Collection Space
+          </label>
+          <input
+            class="bp-input-futuristic p-4 outline-0"
+            id="collection-space-input"
+            type="number"
+            formControlName="space"
+          />
+        </div>
+
+        <div class="mb-4" *ngIf="methodControl.value === 'DELETE'">
+          <label
+            class="block bp-font-game text-xl"
+            for="collection-receiver-input"
+          >
+            Collection Receiver
+          </label>
+
+          <select
+            class="block bg-transparent"
+            formControlName="receiver"
+            id="collection-receiver-input"
+          >
+            <option class="text-black" value="" selected="selected" disabled>
+              Receiver
+            </option>
+            <option
+              class="text-black uppercase"
+              *ngFor="
+                let instructionCollection of instructionCollections$ | ngrxPush
+              "
+              [ngValue]="instructionCollection.id"
+            >
+              {{ instructionCollection.data.name }} ({{
+                instructionCollection.data.ref.name
+              }})
+            </option>
+          </select>
+        </div>
+
         <div class="flex justify-center items-center mt-10 mb-14">
           <button
             type="submit"
@@ -193,6 +318,7 @@ export class UpdateCollectionModalDirective {
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    PushModule,
     DragDropModule,
     StopKeydownPropagationDirective,
     KeyListenerDirective,
@@ -211,6 +337,7 @@ export class EditCollectionModalComponent {
   private readonly _data = inject<EditCollectionData>(DIALOG_DATA);
 
   readonly collection = this._data.collection;
+  readonly instructionCollections$ = this._data.instructionCollections$;
   readonly form = this._formBuilder.group({
     name: this._formBuilder.control<string>(this.collection?.data.name ?? '', {
       validators: [Validators.required],
@@ -223,6 +350,15 @@ export class EditCollectionModalComponent {
         nonNullable: true,
       }
     ),
+    payer: this._formBuilder.control<Option<string>>(
+      this.collection?.data.payer ?? null
+    ),
+    space: this._formBuilder.control<Option<number>>(
+      this.collection?.data.space ?? null
+    ),
+    receiver: this._formBuilder.control<Option<string>>(
+      this.collection?.data.receiver ?? null
+    ),
   });
 
   get nameControl() {
@@ -233,14 +369,32 @@ export class EditCollectionModalComponent {
     return this.form.get('method') as FormControl<CollectionMethodType>;
   }
 
+  get payerControl() {
+    return this.form.get('payer') as FormControl<Option<string>>;
+  }
+
+  get spaceControl() {
+    return this.form.get('space') as FormControl<Option<number>>;
+  }
+
+  get receiverControl() {
+    return this.form.get('receiver') as FormControl<Option<string>>;
+  }
+
   onSubmit() {
     if (this.form.valid) {
       const name = this.nameControl.value;
       const method = this.methodControl.value;
+      const payer = this.payerControl.value;
+      const space = this.spaceControl.value;
+      const receiver = this.receiverControl.value;
 
       this._dialogRef.close({
         name,
         method,
+        payer: method === 'CREATE' ? payer : null,
+        space: method === 'CREATE' ? space : null,
+        receiver: method === 'DELETE' ? receiver : null,
       });
     }
   }
