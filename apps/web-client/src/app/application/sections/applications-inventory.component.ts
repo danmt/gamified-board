@@ -1,4 +1,4 @@
-import { Overlay, OverlayRef } from '@angular/cdk/overlay';
+import { Overlay, OverlayModule, OverlayRef } from '@angular/cdk/overlay';
 import { ComponentPortal } from '@angular/cdk/portal';
 import { CommonModule } from '@angular/common';
 import {
@@ -17,7 +17,8 @@ import { ComponentStore, tapResponse } from '@ngrx/component-store';
 import { defer, from, Subject, Subscription, switchMap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { InventoryComponent } from '../../shared/components';
-import { DefaultImageDirective } from '../../shared/directives';
+import { TooltipComponent } from '../../shared/components/tooltip.component';
+import { DefaultImageDirective, HoverDirective } from '../../shared/directives';
 import { generateId, isNotNull, isNull, Option } from '../../shared/utils';
 import { InstallApplicationModalDirective } from '../components';
 import { ApplicationApiService } from '../services';
@@ -179,6 +180,10 @@ export class ApplicationsInventoryDirective implements OnDestroy {
                 (pgInstallApplication)="
                   onInstallApplication(application, $event.checkpoint)
                 "
+                cdkOverlayOrigin
+                #trigger="cdkOverlayOrigin"
+                pgHover
+                #collectionButton="hovered"
               >
                 <img
                   class="w-full h-full object-cover"
@@ -186,21 +191,98 @@ export class ApplicationsInventoryDirective implements OnDestroy {
                   pgDefaultImage="assets/generic/application.png"
                 />
               </button>
+
+              <ng-template
+                cdkConnectedOverlay
+                [cdkConnectedOverlayOrigin]="trigger"
+                [cdkConnectedOverlayOpen]="
+                  (collectionButton.isHovered$ | ngrxPush) ?? false
+                "
+                [cdkConnectedOverlayPositions]="[
+                  {
+                    originX: 'start',
+                    originY: 'center',
+                    overlayX: 'end',
+                    overlayY: 'center',
+                    offsetX: -16
+                  }
+                ]"
+              >
+                <pg-tooltip
+                  class="relative"
+                  style="min-width: 250px; max-width: 350px"
+                  pgPosition="left"
+                >
+                  <div class="flex gap-2 items-start" pgTooltipHeader>
+                    <img
+                      [src]="application.data.thumbnailUrl"
+                      pgDefaultImage="assets/generic/application.png"
+                      class="w-12 h-10 object-cover"
+                    />
+
+                    <h3 class="uppercase text-xl">
+                      {{ application.data.name }}
+                    </h3>
+                  </div>
+                </pg-tooltip>
+              </ng-template>
             </div>
           </ng-container>
 
           <ng-container *ngIf="(showInstalled$ | ngrxPush) ?? false">
-            <button
+            <ng-container
               *ngFor="let installation of pgInstallations; trackBy: trackBy"
-              class="bg-gray-600 p-0.5 w-11 h-11"
-              (click)="onTapInstallation(installation)"
             >
-              <img
-                class="w-full h-full object-cover"
-                [src]="installation.data.graph.data.thumbnailUrl"
-                pgDefaultImage="assets/generic/application.png"
-              />
-            </button>
+              <button
+                class="bg-gray-600 p-0.5 w-11 h-11"
+                (click)="onTapInstallation(installation)"
+                cdkOverlayOrigin
+                #trigger="cdkOverlayOrigin"
+                pgHover
+                #collectionButton="hovered"
+              >
+                <img
+                  class="w-full h-full object-cover"
+                  [src]="installation.data.graph.data.thumbnailUrl"
+                  pgDefaultImage="assets/generic/application.png"
+                />
+              </button>
+
+              <ng-template
+                cdkConnectedOverlay
+                [cdkConnectedOverlayOrigin]="trigger"
+                [cdkConnectedOverlayOpen]="
+                  (collectionButton.isHovered$ | ngrxPush) ?? false
+                "
+                [cdkConnectedOverlayPositions]="[
+                  {
+                    originX: 'start',
+                    originY: 'center',
+                    overlayX: 'end',
+                    overlayY: 'center',
+                    offsetX: -16
+                  }
+                ]"
+              >
+                <pg-tooltip
+                  class="relative"
+                  style="min-width: 250px; max-width: 350px"
+                  pgPosition="left"
+                >
+                  <div class="flex gap-2 items-start" pgTooltipHeader>
+                    <img
+                      [src]="installation.data.graph.data.thumbnailUrl"
+                      pgDefaultImage="assets/generic/application.png"
+                      class="w-12 h-10 object-cover"
+                    />
+
+                    <h3 class="uppercase text-xl">
+                      {{ installation.data.graph.data.name }}
+                    </h3>
+                  </div>
+                </pg-tooltip>
+              </ng-template>
+            </ng-container>
           </ng-container>
         </div>
       </div>
@@ -211,8 +293,11 @@ export class ApplicationsInventoryDirective implements OnDestroy {
     CommonModule,
     PushModule,
     LetModule,
+    OverlayModule,
     RouterModule,
     DefaultImageDirective,
+    TooltipComponent,
+    HoverDirective,
     InventoryComponent,
     ApplicationsInventoryDirective,
     InstallApplicationModalDirective,

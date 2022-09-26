@@ -1,4 +1,4 @@
-import { Overlay, OverlayRef } from '@angular/cdk/overlay';
+import { Overlay, OverlayModule, OverlayRef } from '@angular/cdk/overlay';
 import { ComponentPortal } from '@angular/cdk/portal';
 import { CommonModule } from '@angular/common';
 import {
@@ -16,7 +16,8 @@ import { LetModule, PushModule } from '@ngrx/component';
 import { Subject, Subscription } from 'rxjs';
 import { Collection } from '../../application/utils';
 import { InventoryComponent } from '../../shared/components';
-import { DefaultImageDirective } from '../../shared/directives';
+import { TooltipComponent } from '../../shared/components/tooltip.component';
+import { DefaultImageDirective, HoverDirective } from '../../shared/directives';
 import { isNotNull, isNull, Option } from '../../shared/utils';
 
 export const openCollectionsInventory = (
@@ -114,17 +115,75 @@ export class CollectionsInventoryDirective implements OnDestroy {
 
       <div pgInventoryBody>
         <div class="flex flex-wrap gap-4 justify-center">
-          <button
+          <ng-container
             *ngFor="let collection of pgCollections; trackBy: trackBy"
-            class="bg-gray-600 p-0.5 w-11 h-11"
-            (click)="onTapCollection(collection)"
           >
-            <img
-              class="w-full h-full object-cover"
-              [src]="collection.data.thumbnailUrl"
-              pgDefaultImage="assets/generic/collection.png"
-            />
-          </button>
+            <button
+              class="bg-gray-600 p-0.5 w-11 h-11"
+              (click)="onTapCollection(collection)"
+              cdkOverlayOrigin
+              #trigger="cdkOverlayOrigin"
+              pgHover
+              #collectionButton="hovered"
+            >
+              <img
+                class="w-full h-full object-cover"
+                [src]="collection.data.thumbnailUrl"
+                pgDefaultImage="assets/generic/collection.png"
+              />
+            </button>
+
+            <ng-template
+              cdkConnectedOverlay
+              [cdkConnectedOverlayOrigin]="trigger"
+              [cdkConnectedOverlayOpen]="
+                (collectionButton.isHovered$ | ngrxPush) ?? false
+              "
+              [cdkConnectedOverlayPositions]="[
+                {
+                  originX: 'end',
+                  originY: 'center',
+                  overlayX: 'start',
+                  overlayY: 'center',
+                  offsetX: 16
+                }
+              ]"
+            >
+              <pg-tooltip
+                class="relative"
+                style="min-width: 250px; max-width: 350px"
+                pgPosition="right"
+              >
+                <div class="flex gap-2 items-start" pgTooltipHeader>
+                  <img
+                    [src]="collection.data.thumbnailUrl"
+                    pgDefaultImage="assets/generic/collection.png"
+                    class="w-12 h-10 object-cover"
+                  />
+
+                  <h3 class="uppercase text-xl">
+                    {{ collection.data.name }}
+                  </h3>
+                </div>
+
+                <ng-container pgTooltipContent>
+                  <div class="p-2">
+                    <p class="uppercase">Attributes</p>
+
+                    <section class="flex gap-2 flex-wrap">
+                      <article
+                        *ngFor="let field of collection.fields"
+                        class="border border-slate-900 p-1"
+                      >
+                        <p class="text-sm font-bold">{{ field.data.name }}</p>
+                        <p class="text-xs">{{ field.data.type }}</p>
+                      </article>
+                    </section>
+                  </div>
+                </ng-container>
+              </pg-tooltip>
+            </ng-template>
+          </ng-container>
         </div>
       </div>
     </pg-inventory>
@@ -136,7 +195,10 @@ export class CollectionsInventoryDirective implements OnDestroy {
     LetModule,
     RouterModule,
     DefaultImageDirective,
+    HoverDirective,
     InventoryComponent,
+    TooltipComponent,
+    OverlayModule,
   ],
 })
 export class CollectionsInventoryComponent {

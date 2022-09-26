@@ -1,4 +1,4 @@
-import { Overlay, OverlayRef } from '@angular/cdk/overlay';
+import { Overlay, OverlayModule, OverlayRef } from '@angular/cdk/overlay';
 import { ComponentPortal } from '@angular/cdk/portal';
 import { CommonModule } from '@angular/common';
 import {
@@ -13,7 +13,8 @@ import { RouterModule } from '@angular/router';
 import { LetModule, PushModule } from '@ngrx/component';
 import { Subject, Subscription } from 'rxjs';
 import { InventoryComponent } from '../../shared/components';
-import { DefaultImageDirective } from '../../shared/directives';
+import { TooltipComponent } from '../../shared/components/tooltip.component';
+import { DefaultImageDirective, HoverDirective } from '../../shared/directives';
 import { isNotNull, isNull, Option } from '../../shared/utils';
 
 interface Sysvar {
@@ -104,12 +105,15 @@ export class SysvarsInventoryDirective implements OnDestroy {
     >
       <h2 pgInventoryTitle class="bp-font-game-title text-3xl">Sysvars</h2>
 
-      <div pgInventoryBody>
-        <div class="flex flex-wrap gap-4 justify-center">
+      <div pgInventoryBody class="flex flex-wrap gap-4 justify-center">
+        <ng-container *ngFor="let sysvar of sysvars; trackBy: trackBy">
           <button
-            *ngFor="let sysvar of sysvars; trackBy: trackBy"
             class="bg-gray-600 p-0.5 w-11 h-11"
             (click)="onTapSysvar(sysvar)"
+            cdkOverlayOrigin
+            #trigger="cdkOverlayOrigin"
+            pgHover
+            #collectionButton="hovered"
           >
             <img
               class="w-full h-full object-cover"
@@ -117,7 +121,42 @@ export class SysvarsInventoryDirective implements OnDestroy {
               pgDefaultImage="assets/generic/sysvar.png"
             />
           </button>
-        </div>
+
+          <ng-template
+            cdkConnectedOverlay
+            [cdkConnectedOverlayOrigin]="trigger"
+            [cdkConnectedOverlayOpen]="
+              (collectionButton.isHovered$ | ngrxPush) ?? false
+            "
+            [cdkConnectedOverlayPositions]="[
+              {
+                originX: 'start',
+                originY: 'center',
+                overlayX: 'end',
+                overlayY: 'center',
+                offsetX: -16
+              }
+            ]"
+          >
+            <pg-tooltip
+              class="relative"
+              style="min-width: 250px; max-width: 350px"
+              pgPosition="left"
+            >
+              <div class="flex gap-2 items-start" pgTooltipHeader>
+                <img
+                  [src]="sysvar.thumbnailUrl"
+                  pgDefaultImage="assets/generic/sysvar.png"
+                  class="w-12 h-10 object-cover"
+                />
+
+                <h3 class="uppercase text-xl">
+                  {{ sysvar.name }}
+                </h3>
+              </div>
+            </pg-tooltip>
+          </ng-template>
+        </ng-container>
       </div>
     </pg-inventory>
   `,
@@ -126,9 +165,12 @@ export class SysvarsInventoryDirective implements OnDestroy {
     CommonModule,
     PushModule,
     LetModule,
+    OverlayModule,
+    HoverDirective,
     RouterModule,
     DefaultImageDirective,
     InventoryComponent,
+    TooltipComponent,
   ],
 })
 export class SysvarsInventoryComponent {
