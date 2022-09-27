@@ -1,7 +1,7 @@
 import * as cytoscape from 'cytoscape';
 import { MenuInstance } from 'cytoscape-cxtmenu';
-import { DagreLayoutOptions } from 'cytoscape-dagre';
 import { EdgeHandlesInstance } from 'cytoscape-edgehandles';
+import { FcoseLayoutOptions } from 'cytoscape-fcose';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { Option } from '../../shared/utils';
 import { createGraph, createNode, defaultNodeLabelFunction } from './methods';
@@ -393,14 +393,9 @@ export class Drawer<
   setupLayout(rankDir: 'TB' | 'LR' = 'TB') {
     this._rankDir = rankDir;
     this._layout = this._cy.makeLayout({
-      name: 'dagre',
-      directed: true,
-      padding: 10,
-      rankDir,
-      spacingFactor: 1.5,
-      fit: true,
-      nodeDimensionsIncludeLabels: true,
-    } as DagreLayoutOptions);
+      name: 'fcose',
+      animate: false,
+    } as FcoseLayoutOptions);
     this._layout.run();
   }
 
