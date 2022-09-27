@@ -1,13 +1,12 @@
-import { Dialog } from '@angular/cdk/dialog';
 import { CommonModule } from '@angular/common';
 import {
   Component,
   EventEmitter,
   HostListener,
-  inject,
   Input,
   OnInit,
   Output,
+  ViewChild,
 } from '@angular/core';
 import { PushModule } from '@ngrx/component';
 import { ComponentStore } from '@ngrx/component-store';
@@ -34,7 +33,7 @@ import {
   isNull,
   Option,
 } from '../../shared/utils';
-import { openEditApplicationModal } from '../components';
+import { CreateApplicationModalDirective } from '../components';
 
 export interface AddApplicationNodeDto {
   payload: Entity<{
@@ -86,7 +85,9 @@ const initialState: ViewModel = {
       [ngClass]="{ hidden: (isAdding$ | ngrxPush) }"
       pgKeyListener="Escape"
       (pgKeyDown)="onEscapePressed()"
-    ></pg-active>
+      pgCreateApplicationModal
+    >
+    </pg-active>
   `,
   standalone: true,
   imports: [
@@ -95,14 +96,13 @@ const initialState: ViewModel = {
     FollowCursorDirective,
     ActiveComponent,
     KeyListenerDirective,
+    CreateApplicationModalDirective,
   ],
 })
 export class ActiveApplicationComponent
   extends ComponentStore<ViewModel>
   implements OnInit
 {
-  private readonly _dialog = inject(Dialog);
-
   private readonly _mouseMove = new Subject<MouseEvent>();
 
   readonly active$ = this.select(({ active }) => active);
@@ -119,24 +119,20 @@ export class ActiveApplicationComponent
   }
   @Output() pgAddNode = new EventEmitter<AddApplicationNodeDto>();
   @Output() pgDeactivate = new EventEmitter();
+  @ViewChild(CreateApplicationModalDirective)
+  createApplicationModal: Option<CreateApplicationModalDirective> = null;
 
   private readonly _handleDrawerClick = this.effect<ClickEvent>(
     exhaustMap((event) => {
-      return of(event).pipe(
+      return of(null).pipe(
         withLatestFrom(this.active$),
         concatMap(([, active]) => {
-          if (isNull(active)) {
+          if (isNull(active) || isNull(this.createApplicationModal)) {
             return EMPTY;
           }
 
-          this.patchState({ isAdding: true });
-
-          return openEditApplicationModal(this._dialog, {
-            application: null,
-          }).closed.pipe(
+          return this.createApplicationModal.open().closed.pipe(
             tap((application) => {
-              this.patchState({ isAdding: false });
-
               if (application) {
                 this.pgDeactivate.emit();
                 this.pgAddNode.emit({

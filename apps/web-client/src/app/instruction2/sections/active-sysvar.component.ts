@@ -1,13 +1,12 @@
-import { Dialog } from '@angular/cdk/dialog';
 import { CommonModule } from '@angular/common';
 import {
   Component,
   EventEmitter,
   HostListener,
-  inject,
   Input,
   OnInit,
   Output,
+  ViewChild,
 } from '@angular/core';
 import { PushModule } from '@ngrx/component';
 import { ComponentStore } from '@ngrx/component-store';
@@ -34,7 +33,7 @@ import {
   isNull,
   Option,
 } from '../../shared/utils';
-import { openEditSysvarModal } from '../components';
+import { CreateSysvarModalDirective } from '../components';
 
 export interface AddSysvarNodeDto {
   payload: Entity<{
@@ -84,7 +83,9 @@ const initialState: ViewModel = {
       [ngClass]="{ hidden: (isAdding$ | ngrxPush) }"
       pgKeyListener="Escape"
       (pgKeyDown)="onEscapePressed()"
-    ></pg-active>
+      pgCreateSysvarModal
+    >
+    </pg-active>
   `,
   standalone: true,
   imports: [
@@ -93,14 +94,13 @@ const initialState: ViewModel = {
     FollowCursorDirective,
     ActiveComponent,
     KeyListenerDirective,
+    CreateSysvarModalDirective,
   ],
 })
 export class ActiveSysvarComponent
   extends ComponentStore<ViewModel>
   implements OnInit
 {
-  private readonly _dialog = inject(Dialog);
-
   private readonly _mouseMove = new Subject<MouseEvent>();
 
   readonly active$ = this.select(({ active }) => active);
@@ -117,24 +117,20 @@ export class ActiveSysvarComponent
   }
   @Output() pgAddNode = new EventEmitter<AddSysvarNodeDto>();
   @Output() pgDeactivate = new EventEmitter();
+  @ViewChild(CreateSysvarModalDirective)
+  createSysvarModal: Option<CreateSysvarModalDirective> = null;
 
   private readonly _handleDrawerClick = this.effect<ClickEvent>(
     exhaustMap((event) => {
-      return of(event).pipe(
+      return of(null).pipe(
         withLatestFrom(this.active$),
         concatMap(([, active]) => {
-          if (isNull(active)) {
+          if (isNull(active) || isNull(this.createSysvarModal)) {
             return EMPTY;
           }
 
-          this.patchState({ isAdding: true });
-
-          return openEditSysvarModal(this._dialog, {
-            sysvar: null,
-          }).closed.pipe(
+          return this.createSysvarModal.open().closed.pipe(
             tap((sysvar) => {
-              this.patchState({ isAdding: false });
-
               if (sysvar) {
                 this.pgDeactivate.emit();
                 this.pgAddNode.emit({

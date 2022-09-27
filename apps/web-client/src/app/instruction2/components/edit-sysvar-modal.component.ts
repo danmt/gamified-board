@@ -1,5 +1,4 @@
 import { Dialog, DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
-import { DragDropModule } from '@angular/cdk/drag-drop';
 import { CommonModule } from '@angular/common';
 import {
   Component,
@@ -56,6 +55,9 @@ export const openEditSysvarModal = (dialog: Dialog, data: EditSysvarData) =>
 export class CreateSysvarModalDirective {
   private readonly _dialog = inject(Dialog);
 
+  dialogRef: Option<DialogRef<CreateSysvarSubmit, EditSysvarModalComponent>> =
+    null;
+
   @Output() pgCreateSysvar = new EventEmitter<CreateSysvarSubmit>();
   @Output() pgOpenModal = new EventEmitter();
   @Output() pgCloseModal = new EventEmitter();
@@ -67,15 +69,19 @@ export class CreateSysvarModalDirective {
   open() {
     this.pgOpenModal.emit();
 
-    openEditSysvarModal(this._dialog, {
+    this.dialogRef = openEditSysvarModal(this._dialog, {
       sysvar: null,
-    }).closed.subscribe((sysvarData) => {
+    });
+
+    this.dialogRef.closed.subscribe((sysvarData) => {
       this.pgCloseModal.emit();
 
       if (sysvarData !== undefined) {
         this.pgCreateSysvar.emit(sysvarData);
       }
     });
+
+    return this.dialogRef;
   }
 }
 
@@ -87,8 +93,10 @@ export class CreateSysvarModalDirective {
 export class UpdateSysvarModalDirective {
   private readonly _dialog = inject(Dialog);
 
-  @Input() pgSysvar: Option<Sysvar> = null;
+  dialogRef: Option<DialogRef<UpdateSysvarSubmit, EditSysvarModalComponent>> =
+    null;
 
+  @Input() pgSysvar: Option<Sysvar> = null;
   @Output() pgUpdateSysvar = new EventEmitter<UpdateSysvarSubmit>();
   @Output() pgOpenModal = new EventEmitter();
   @Output() pgCloseModal = new EventEmitter();
@@ -104,15 +112,19 @@ export class UpdateSysvarModalDirective {
 
     this.pgOpenModal.emit();
 
-    openEditSysvarModal(this._dialog, {
+    this.dialogRef = openEditSysvarModal(this._dialog, {
       sysvar: this.pgSysvar,
-    }).closed.subscribe((sysvarData) => {
+    });
+
+    this.dialogRef.closed.subscribe((sysvarData) => {
       this.pgCloseModal.emit();
 
       if (sysvarData !== undefined) {
         this.pgUpdateSysvar.emit(sysvarData);
       }
     });
+
+    return this.dialogRef;
   }
 }
 
@@ -164,7 +176,6 @@ export class UpdateSysvarModalDirective {
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    DragDropModule,
     StopKeydownPropagationDirective,
     KeyListenerDirective,
     ModalComponent,

@@ -1,5 +1,4 @@
 import { Dialog, DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
-import { DragDropModule } from '@angular/cdk/drag-drop';
 import { CommonModule } from '@angular/common';
 import {
   Component,
@@ -58,6 +57,9 @@ export const openEditSignerModal = (dialog: Dialog, data: EditSignerData) =>
 export class CreateSignerModalDirective {
   private readonly _dialog = inject(Dialog);
 
+  dialogRef: Option<DialogRef<CreateSignerSubmit, EditSignerModalComponent>> =
+    null;
+
   @Output() pgCreateSigner = new EventEmitter<CreateSignerSubmit>();
   @Output() pgOpenModal = new EventEmitter();
   @Output() pgCloseModal = new EventEmitter();
@@ -69,15 +71,19 @@ export class CreateSignerModalDirective {
   open() {
     this.pgOpenModal.emit();
 
-    openEditSignerModal(this._dialog, {
+    this.dialogRef = openEditSignerModal(this._dialog, {
       signer: null,
-    }).closed.subscribe((signerData) => {
+    });
+
+    this.dialogRef.closed.subscribe((signerData) => {
       this.pgCloseModal.emit();
 
       if (signerData !== undefined) {
         this.pgCreateSigner.emit(signerData);
       }
     });
+
+    return this.dialogRef;
   }
 }
 
@@ -89,8 +95,10 @@ export class CreateSignerModalDirective {
 export class UpdateSignerModalDirective {
   private readonly _dialog = inject(Dialog);
 
-  @Input() pgSigner: Option<Signer> = null;
+  dialogRef: Option<DialogRef<UpdateSignerSubmit, EditSignerModalComponent>> =
+    null;
 
+  @Input() pgSigner: Option<Signer> = null;
   @Output() pgUpdateSigner = new EventEmitter<UpdateSignerSubmit>();
   @Output() pgOpenModal = new EventEmitter();
   @Output() pgCloseModal = new EventEmitter();
@@ -106,15 +114,19 @@ export class UpdateSignerModalDirective {
 
     this.pgOpenModal.emit();
 
-    openEditSignerModal(this._dialog, {
+    this.dialogRef = openEditSignerModal(this._dialog, {
       signer: this.pgSigner,
-    }).closed.subscribe((signerData) => {
+    });
+
+    this.dialogRef.closed.subscribe((signerData) => {
       this.pgCloseModal.emit();
 
       if (signerData !== undefined) {
         this.pgUpdateSigner.emit(signerData);
       }
     });
+
+    return this.dialogRef;
   }
 }
 
@@ -173,7 +185,6 @@ export class UpdateSignerModalDirective {
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    DragDropModule,
     StopKeydownPropagationDirective,
     KeyListenerDirective,
     ModalComponent,

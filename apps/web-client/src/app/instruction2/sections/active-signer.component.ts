@@ -1,13 +1,12 @@
-import { Dialog } from '@angular/cdk/dialog';
 import { CommonModule } from '@angular/common';
 import {
   Component,
   EventEmitter,
   HostListener,
-  inject,
   Input,
   OnInit,
   Output,
+  ViewChild,
 } from '@angular/core';
 import { PushModule } from '@ngrx/component';
 import { ComponentStore } from '@ngrx/component-store';
@@ -34,7 +33,7 @@ import {
   isNull,
   Option,
 } from '../../shared/utils';
-import { openEditSignerModal } from '../components';
+import { CreateSignerModalDirective } from '../components';
 
 export interface AddSignerNodeDto {
   payload: Entity<{
@@ -81,7 +80,9 @@ const initialState: ViewModel = {
       [ngClass]="{ hidden: (isAdding$ | ngrxPush) }"
       pgKeyListener="Escape"
       (pgKeyDown)="onEscapePressed()"
-    ></pg-active>
+      pgCreateSignerModal
+    >
+    </pg-active>
   `,
   standalone: true,
   imports: [
@@ -90,14 +91,13 @@ const initialState: ViewModel = {
     FollowCursorDirective,
     ActiveComponent,
     KeyListenerDirective,
+    CreateSignerModalDirective,
   ],
 })
 export class ActiveSignerComponent
   extends ComponentStore<ViewModel>
   implements OnInit
 {
-  private readonly _dialog = inject(Dialog);
-
   private readonly _mouseMove = new Subject<MouseEvent>();
 
   readonly active$ = this.select(({ active }) => active);
@@ -114,24 +114,20 @@ export class ActiveSignerComponent
   }
   @Output() pgAddNode = new EventEmitter<AddSignerNodeDto>();
   @Output() pgDeactivate = new EventEmitter();
+  @ViewChild(CreateSignerModalDirective)
+  createSignerModal: Option<CreateSignerModalDirective> = null;
 
   private readonly _handleDrawerClick = this.effect<ClickEvent>(
     exhaustMap((event) => {
-      return of(event).pipe(
+      return of(null).pipe(
         withLatestFrom(this.active$),
         concatMap(([, active]) => {
-          if (isNull(active)) {
+          if (isNull(active) || isNull(this.createSignerModal)) {
             return EMPTY;
           }
 
-          this.patchState({ isAdding: true });
-
-          return openEditSignerModal(this._dialog, {
-            signer: null,
-          }).closed.pipe(
+          return this.createSignerModal.open().closed.pipe(
             tap((signer) => {
-              this.patchState({ isAdding: false });
-
               if (signer) {
                 this.pgDeactivate.emit();
                 this.pgAddNode.emit({
