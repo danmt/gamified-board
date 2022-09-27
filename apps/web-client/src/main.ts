@@ -67,11 +67,6 @@ bootstrapApplication(AppComponent, {
                 ),
             },
             {
-              path: 'board/:workspaceId/:applicationId',
-              loadComponent: () =>
-                import('./app/board/pages').then((m) => m.BoardPageComponent),
-            },
-            {
               path: 'workspaces/:workspaceId',
               loadComponent: () =>
                 import('./app/workspace/pages').then(
@@ -88,7 +83,7 @@ bootstrapApplication(AppComponent, {
             {
               path: 'workspaces/:workspaceId/applications/:applicationId/instructions/:instructionId',
               loadComponent: () =>
-                import('./app/instruction2/pages').then(
+                import('./app/instruction/pages').then(
                   (m) => m.InstructionPageComponent
                 ),
             },

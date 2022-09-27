@@ -1,20 +1,147 @@
-import { InstructionApplicationDto } from '../../instruction-application/utils';
-import { InstructionArgumentDto } from '../../instruction-argument/utils';
-import { InstructionDocumentDto } from '../../instruction-document/utils';
-import { InstructionSignerDto } from '../../instruction-signer/utils';
-import { InstructionSysvarDto } from '../../instruction-sysvar/utils';
-import { InstructionTaskDto } from '../../instruction-task/utils';
-import { Entity } from '../../shared/utils';
+import { FieldType } from '../../application/utils';
+import {
+  GetNodeTypes,
+  GetPartialNodeDataTypes,
+  Graph,
+  Node,
+} from '../../drawer/utils';
+import { Entity, GetTypeUnion, Option } from '../../shared/utils';
 
 export type InstructionDto = Entity<{
   name: string;
-  thumbnailUrl: string;
-  applicationId: string;
   workspaceId: string;
-  documents: InstructionDocumentDto[];
-  applications: InstructionApplicationDto[];
-  tasks: InstructionTaskDto[];
-  arguments: InstructionArgumentDto[];
-  sysvars: InstructionSysvarDto[];
-  signers: InstructionSignerDto[];
+  applicationId: string;
+  thumbnailUrl: string;
+}>;
+
+export interface InstructionGraphData {
+  name: string;
+  thumbnailUrl: string;
+  workspaceId: string;
+  applicationId: string;
+}
+
+export type CollectionMethodType = 'CREATE' | 'UPDATE' | 'READ' | 'DELETE';
+
+export interface CollectionNodeData {
+  name: string;
+  thumbnailUrl: string;
+  workspaceId: string;
+  applicationId: string;
+  instructionId: string;
+  method: CollectionMethodType;
+  ref: {
+    id: string;
+    name: string;
+  };
+  payer: Option<string>;
+  space: Option<number>;
+  receiver: Option<string>;
+  seeds: SeedType[];
+}
+
+export interface SignerNodeData {
+  name: string;
+  thumbnailUrl: string;
+  workspaceId: string;
+  applicationId: string;
+  instructionId: string;
+  isMutable: boolean;
+}
+
+export interface ApplicationNodeData {
+  name: string;
+  thumbnailUrl: string;
+  workspaceId: string;
+  applicationId: string;
+  instructionId: string;
+  ref: {
+    id: string;
+    name: string;
+  };
+}
+
+export interface SysvarNodeData {
+  name: string;
+  thumbnailUrl: string;
+  workspaceId: string;
+  applicationId: string;
+  instructionId: string;
+  ref: {
+    name: string;
+  };
+}
+
+export type InstructionNodeData =
+  | ApplicationNodeData
+  | CollectionNodeData
+  | SignerNodeData
+  | SysvarNodeData;
+
+export type InstructionNodesData = {
+  application: ApplicationNodeData;
+  signer: SignerNodeData;
+  collection: CollectionNodeData;
+  sysvar: SysvarNodeData;
+};
+
+export type ApplicationNode = Node<'application', ApplicationNodeData>;
+export type SignerNode = Node<'signer', SignerNodeData>;
+export type CollectionNode = Node<'collection', CollectionNodeData>;
+export type SysvarNode = Node<'sysvar', SysvarNodeData>;
+
+export type InstructionNode = GetNodeTypes<
+  InstructionNodeKinds,
+  InstructionNodeData,
+  InstructionNodesData
+>;
+export type PartialInstructionNode = GetPartialNodeDataTypes<
+  InstructionNodeKinds,
+  InstructionNodeData,
+  InstructionNodesData
+>;
+export type InstructionNodeKinds =
+  | 'application'
+  | 'signer'
+  | 'collection'
+  | 'sysvar';
+export type InstructionGraphKind = 'instruction';
+
+export type InstructionGraph = Graph<
+  InstructionNodeKinds,
+  InstructionNodeData,
+  InstructionNodesData,
+  InstructionGraphKind,
+  InstructionGraphData
+>;
+
+export const isCollectionNode = (
+  node: InstructionNode
+): node is CollectionNode => {
+  return node.kind === 'collection';
+};
+
+export interface ArgumentSeedData {
+  id: string;
+  name: string;
+}
+
+export interface AttributeSeedData {
+  id: string;
+  name: string;
+  collection: {
+    id: string;
+    name: string;
+  };
+}
+
+export interface ValueSeedData {
+  type: FieldType;
+  value: string;
+}
+
+export type SeedType = GetTypeUnion<{
+  argument: ArgumentSeedData;
+  attribute: AttributeSeedData;
+  value: ValueSeedData;
 }>;

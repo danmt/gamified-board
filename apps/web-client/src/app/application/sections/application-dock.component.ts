@@ -9,7 +9,6 @@ import {
 } from '@angular/core';
 import { LetModule, PushModule } from '@ngrx/component';
 import { ComponentStore } from '@ngrx/component-store';
-import { CreateCollectionModalDirective } from '../../collection/components';
 import {
   ConfirmModalDirective,
   SecondaryDockComponent,
@@ -23,6 +22,7 @@ import {
 import { SlotHotkeyPipe } from '../../shared/pipes';
 import { Option } from '../../shared/utils';
 import {
+  CreateCollectionModalDirective,
   UpdateApplicationModalDirective,
   UpdateApplicationSubmit,
 } from '../components';

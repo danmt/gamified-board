@@ -1,5 +1,4 @@
 import { Dialog, DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
-import { DragDropModule } from '@angular/cdk/drag-drop';
 import { CommonModule } from '@angular/common';
 import {
   Component,
@@ -18,10 +17,10 @@ import {
 } from '@angular/forms';
 import { ModalComponent } from '../../shared/components';
 import {
-  KeyboardListenerDirective,
+  KeyListenerDirective,
   StopKeydownPropagationDirective,
 } from '../../shared/directives';
-import { Entity, generateId, isNull, Option } from '../../shared/utils';
+import { Entity, isNull, Option } from '../../shared/utils';
 
 export type Instruction = Entity<{
   data: { name: string };
@@ -59,6 +58,10 @@ export const openEditInstructionModal = (
 export class CreateInstructionModalDirective {
   private readonly _dialog = inject(Dialog);
 
+  dialogRef: Option<
+    DialogRef<CreateInstructionSubmit, EditInstructionModalComponent>
+  > = null;
+
   @Output() pgCreateInstruction = new EventEmitter<CreateInstructionSubmit>();
   @Output() pgOpenModal = new EventEmitter();
   @Output() pgCloseModal = new EventEmitter();
@@ -70,15 +73,19 @@ export class CreateInstructionModalDirective {
   open() {
     this.pgOpenModal.emit();
 
-    openEditInstructionModal(this._dialog, {
+    this.dialogRef = openEditInstructionModal(this._dialog, {
       instruction: null,
-    }).closed.subscribe((instructionData) => {
+    });
+
+    this.dialogRef.closed.subscribe((instructionData) => {
       this.pgCloseModal.emit();
 
       if (instructionData !== undefined) {
         this.pgCreateInstruction.emit(instructionData);
       }
     });
+
+    return this.dialogRef;
   }
 }
 
@@ -90,8 +97,11 @@ export class CreateInstructionModalDirective {
 export class UpdateInstructionModalDirective {
   private readonly _dialog = inject(Dialog);
 
-  @Input() pgInstruction: Option<Instruction> = null;
+  dialogRef: Option<
+    DialogRef<UpdateInstructionSubmit, EditInstructionModalComponent>
+  > = null;
 
+  @Input() pgInstruction: Option<Instruction> = null;
   @Output() pgUpdateInstruction = new EventEmitter<UpdateInstructionSubmit>();
   @Output() pgOpenModal = new EventEmitter();
   @Output() pgCloseModal = new EventEmitter();
@@ -107,15 +117,19 @@ export class UpdateInstructionModalDirective {
 
     this.pgOpenModal.emit();
 
-    openEditInstructionModal(this._dialog, {
+    this.dialogRef = openEditInstructionModal(this._dialog, {
       instruction: this.pgInstruction,
-    }).closed.subscribe((instructionData) => {
+    });
+
+    this.dialogRef.closed.subscribe((instructionData) => {
       this.pgCloseModal.emit();
 
       if (instructionData !== undefined) {
         this.pgUpdateInstruction.emit(instructionData);
       }
     });
+
+    return this.dialogRef;
   }
 }
 
@@ -125,8 +139,8 @@ export class UpdateInstructionModalDirective {
     <pg-modal
       class="text-white min-w-[400px] min-h-[300px]"
       pgStopKeydownPropagation
-      pgKeyboardListener
-      (keydown)="onKeyDown($event)"
+      pgKeyListener="Escape"
+      (pgKeyDown)="onClose()"
       (pgCloseModal)="onClose()"
     >
       <div class="flex justify-between w-full">
@@ -170,9 +184,8 @@ export class UpdateInstructionModalDirective {
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    DragDropModule,
     StopKeydownPropagationDirective,
-    KeyboardListenerDirective,
+    KeyListenerDirective,
     ModalComponent,
   ],
 })
@@ -209,17 +222,7 @@ export class EditInstructionModalComponent {
     }
   }
 
-  onKeyDown(event: KeyboardEvent) {
-    if (event.code === 'Escape') {
-      this._dialogRef.close();
-    }
-  }
-
   onClose() {
     this._dialogRef.close();
-  }
-
-  onGenerateId() {
-    return generateId();
   }
 }

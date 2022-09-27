@@ -56,12 +56,12 @@ import {
   UpdateNodeSuccessEvent,
   UpdateNodeThumbnailSuccessEvent,
 } from '../../drawer/utils';
-import { UpdateInstructionSubmit } from '../../instruction/components';
 import {
   BackgroundImageMoveDirective,
   BackgroundImageZoomDirective,
 } from '../../shared/directives';
 import { GetActiveTypes, isNotNull, isNull, Option } from '../../shared/utils';
+import { UpdateInstructionSubmit } from '../components';
 import {
   ActiveApplicationComponent,
   ActiveApplicationData,
