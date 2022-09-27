@@ -18,7 +18,10 @@ import { defer, from, Subject, Subscription, switchMap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { InventoryComponent } from '../../shared/components';
 import { TooltipComponent } from '../../shared/components/tooltip.component';
-import { DefaultImageDirective, HoverDirective } from '../../shared/directives';
+import {
+  DefaultImageDirective,
+  HoveredDirective,
+} from '../../shared/directives';
 import { generateId, isNotNull, isNull, Option } from '../../shared/utils';
 import { InstallProgramModalDirective } from '../components';
 import { ProgramApiService } from '../services';
@@ -175,7 +178,7 @@ export class ProgramsInventoryDirective implements OnDestroy {
                 "
                 cdkOverlayOrigin
                 #trigger="cdkOverlayOrigin"
-                pgHover
+                pgHovered
                 #accountButton="hovered"
               >
                 <img
@@ -231,7 +234,7 @@ export class ProgramsInventoryDirective implements OnDestroy {
                 (click)="onTapInstallation(installation)"
                 cdkOverlayOrigin
                 #trigger="cdkOverlayOrigin"
-                pgHover
+                pgHovered
                 #accountButton="hovered"
               >
                 <img
@@ -290,7 +293,7 @@ export class ProgramsInventoryDirective implements OnDestroy {
     RouterModule,
     DefaultImageDirective,
     TooltipComponent,
-    HoverDirective,
+    HoveredDirective,
     InventoryComponent,
     ProgramsInventoryDirective,
     InstallProgramModalDirective,

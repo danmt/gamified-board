@@ -1,8 +1,8 @@
 import { Directive, HostListener } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 
-@Directive({ selector: '[pgHover]', standalone: true, exportAs: 'hovered' })
-export class HoverDirective {
+@Directive({ selector: '[pgHovered]', standalone: true, exportAs: 'hovered' })
+export class HoveredDirective {
   private readonly _isHovered = new BehaviorSubject(false);
 
   readonly isHovered$ = this._isHovered.asObservable();

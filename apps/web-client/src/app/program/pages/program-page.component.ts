@@ -6,7 +6,7 @@ import {
   HostBinding,
   inject,
   OnInit,
-  ViewChild
+  ViewChild,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { LetModule, PushModule } from '@ngrx/component';
@@ -21,7 +21,7 @@ import {
   of,
   switchMap,
   tap,
-  withLatestFrom
+  withLatestFrom,
 } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { DrawerStore } from '../../drawer/stores';
@@ -48,13 +48,13 @@ import {
   UpdateGraphThumbnailSuccessEvent,
   UpdateNodeSuccessEvent,
   UpdateNodeThumbnailSuccessEvent,
-  ViewNodeEvent
+  ViewNodeEvent,
 } from '../../drawer/utils';
 import {
   BackgroundImageMoveDirective,
-  BackgroundImageZoomDirective
+  BackgroundImageZoomDirective,
 } from '../../shared/directives';
-import { GetActiveTypes, isNotNull, isNull, Option } from '../../shared/utils';
+import { GetTypeUnion, isNotNull, isNull, Option } from '../../shared/utils';
 import { UpdateProgramSubmit } from '../components';
 import {
   AccountDockComponent,
@@ -72,12 +72,12 @@ import {
   LeftDockComponent,
   ProgramDockComponent,
   ProgramsInventoryDirective,
-  RightDockComponent
+  RightDockComponent,
 } from '../sections';
 import {
   InstallProgramDto,
   ProgramApiService,
-  ProgramGraphApiService
+  ProgramGraphApiService,
 } from '../services';
 import { InstallationsStore } from '../stores';
 import {
@@ -89,10 +89,10 @@ import {
   ProgramNodeData,
   ProgramNodeKinds,
   programNodeLabelFunction,
-  ProgramNodesData
+  ProgramNodesData,
 } from '../utils';
 
-type ActiveType = GetActiveTypes<{
+type ActiveType = GetTypeUnion<{
   account: ActiveAccountData;
   field: ActiveFieldData;
   instruction: ActiveInstructionData;

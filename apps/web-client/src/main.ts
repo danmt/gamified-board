@@ -24,12 +24,6 @@ import * as cytoscapeDagre from 'cytoscape-dagre';
 import * as cytoscapeEdgehandles from 'cytoscape-edgehandles';
 import * as cytoscapeNodeHtmlLabel from 'cytoscape-node-html-label';
 import { AppComponent } from './app/app.component';
-import {
-  AssociatedTokenPlugin,
-  PluginModule,
-  SystemPlugin,
-  TokenPlugin,
-} from './app/plugins';
 import { environment } from './environments/environment';
 
 if (environment.production) {
@@ -45,11 +39,6 @@ bootstrapApplication(AppComponent, {
   providers: [
     importProvidersFrom(
       BrowserAnimationsModule,
-      PluginModule.forRoot([
-        new SystemPlugin(),
-        new TokenPlugin(),
-        new AssociatedTokenPlugin(),
-      ]),
       RouterModule.forRoot([
         {
           path: '',

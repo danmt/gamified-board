@@ -34,7 +34,7 @@ import {
 import { ModalComponent } from '../../shared/components';
 import {
   FocusedDirective,
-  HoverDirective,
+  HoveredDirective,
   KeyListenerDirective,
   StopKeydownPropagationDirective,
 } from '../../shared/directives';
@@ -254,7 +254,7 @@ export class AutocompleteDirective {
                   }
                 ]"
                 (overlayOutsideClick)="autocomplete.close()"
-                pgHover
+                pgHovered
                 #options="hovered"
               >
                 <ul class="bg-white p-2">
@@ -356,7 +356,7 @@ export class AutocompleteDirective {
     KeyListenerDirective,
     ModalComponent,
     FocusedDirective,
-    HoverDirective,
+    HoveredDirective,
     AutocompleteDirective,
   ],
 })

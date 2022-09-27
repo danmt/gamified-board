@@ -51,7 +51,7 @@ import {
 } from '../../shared/directives';
 import {
   generateId,
-  GetActiveTypes,
+  GetTypeUnion,
   isNotNull,
   isNull,
   Option,
@@ -75,7 +75,7 @@ import {
   WorkspaceNodesData,
 } from '../utils';
 
-type ActiveType = GetActiveTypes<{
+type ActiveType = GetTypeUnion<{
   program: ActiveProgramData;
 }>;
 

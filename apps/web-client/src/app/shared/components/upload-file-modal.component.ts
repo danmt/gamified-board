@@ -27,7 +27,7 @@ import {
 import { LetModule, PushModule } from '@ngrx/component';
 import { BehaviorSubject, concatMap, EMPTY } from 'rxjs';
 import {
-  KeyboardListenerDirective,
+  KeyListenerDirective,
   StopKeydownPropagationDirective,
 } from '../directives';
 import { generateId, Option } from '../utils';
@@ -101,8 +101,8 @@ export class UploadFileModalDirective {
     <pg-modal
       class="text-white"
       pgStopKeydownPropagation
-      pgKeyboardListener
-      (keydown)="onKeyDown($event)"
+      pgKeyListener="Escape"
+      (pgKeyDown)="onClose()"
       (pgCloseModal)="onClose()"
     >
       <h1 class="mb-6 bp-font-game-title text-3xl">Upload Thumbnail</h1>
@@ -142,7 +142,7 @@ export class UploadFileModalDirective {
   imports: [
     CommonModule,
     ModalComponent,
-    KeyboardListenerDirective,
+    KeyListenerDirective,
     StopKeydownPropagationDirective,
     ReactiveFormsModule,
   ],
@@ -170,12 +170,6 @@ export class UploadFileModalComponent {
 
   get fileSourceControl() {
     return this.form.get('fileSource') as FormControl<File>;
-  }
-
-  onKeyDown(event: KeyboardEvent) {
-    if (event.code === 'Escape') {
-      this._dialogRef.close();
-    }
   }
 
   onFileChange(event: Event) {
@@ -259,7 +253,7 @@ export const openUploadFileProgressModal = (
     CommonModule,
     PushModule,
     LetModule,
-    KeyboardListenerDirective,
+    KeyListenerDirective,
     StopKeydownPropagationDirective,
   ],
 })

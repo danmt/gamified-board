@@ -17,7 +17,10 @@ import { Subject, Subscription } from 'rxjs';
 import { Account } from '../../program/utils';
 import { InventoryComponent } from '../../shared/components';
 import { TooltipComponent } from '../../shared/components/tooltip.component';
-import { DefaultImageDirective, HoverDirective } from '../../shared/directives';
+import {
+  DefaultImageDirective,
+  HoveredDirective,
+} from '../../shared/directives';
 import { isNotNull, isNull, Option } from '../../shared/utils';
 
 export const openAccountsInventory = (
@@ -121,7 +124,7 @@ export class AccountsInventoryDirective implements OnDestroy {
               (click)="onTapAccount(account)"
               cdkOverlayOrigin
               #trigger="cdkOverlayOrigin"
-              pgHover
+              pgHovered
               #accountButton="hovered"
             >
               <img
@@ -193,7 +196,7 @@ export class AccountsInventoryDirective implements OnDestroy {
     LetModule,
     RouterModule,
     DefaultImageDirective,
-    HoverDirective,
+    HoveredDirective,
     InventoryComponent,
     TooltipComponent,
     OverlayModule,

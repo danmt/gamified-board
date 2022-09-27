@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import { isNull, Option } from '../../shared/utils';
 import {
-  KeyboardListenerDirective,
+  KeyListenerDirective,
   StopKeydownPropagationDirective,
 } from '../directives';
 import { ModalComponent } from './modal.component';
@@ -77,8 +77,8 @@ export class ConfirmModalDirective {
     <pg-modal
       class="text-white "
       pgStopKeydownPropagation
-      pgKeyboardListener
-      (keydown)="onKeyDown($event)"
+      pgKeyListener="Escape"
+      (pgKeyDown)="onClose()"
       (pgCloseModal)="onClose()"
     >
       <h1 class=" bp-font-game-title text-3xl">
@@ -104,7 +104,7 @@ export class ConfirmModalDirective {
   standalone: true,
   imports: [
     StopKeydownPropagationDirective,
-    KeyboardListenerDirective,
+    KeyListenerDirective,
     ModalComponent,
   ],
 })
@@ -114,12 +114,6 @@ export class ConfirmModalComponent {
   private readonly _data = inject<ConfirmData>(DIALOG_DATA);
 
   readonly message = this._data.message;
-
-  onKeyDown(event: KeyboardEvent) {
-    if (event.code === 'Escape') {
-      this._dialogRef.close();
-    }
-  }
 
   onConfirm() {
     this._dialogRef.close(true);

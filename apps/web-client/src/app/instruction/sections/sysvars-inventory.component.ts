@@ -14,7 +14,10 @@ import { LetModule, PushModule } from '@ngrx/component';
 import { Subject, Subscription } from 'rxjs';
 import { InventoryComponent } from '../../shared/components';
 import { TooltipComponent } from '../../shared/components/tooltip.component';
-import { DefaultImageDirective, HoverDirective } from '../../shared/directives';
+import {
+  DefaultImageDirective,
+  HoveredDirective,
+} from '../../shared/directives';
 import { isNotNull, isNull, Option } from '../../shared/utils';
 
 interface Sysvar {
@@ -112,7 +115,7 @@ export class SysvarsInventoryDirective implements OnDestroy {
             (click)="onTapSysvar(sysvar)"
             cdkOverlayOrigin
             #trigger="cdkOverlayOrigin"
-            pgHover
+            pgHovered
             #accountButton="hovered"
           >
             <img
@@ -166,7 +169,7 @@ export class SysvarsInventoryDirective implements OnDestroy {
     PushModule,
     LetModule,
     OverlayModule,
-    HoverDirective,
+    HoveredDirective,
     RouterModule,
     DefaultImageDirective,
     InventoryComponent,

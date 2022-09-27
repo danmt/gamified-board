@@ -60,7 +60,7 @@ import {
   BackgroundImageMoveDirective,
   BackgroundImageZoomDirective,
 } from '../../shared/directives';
-import { GetActiveTypes, isNotNull, isNull, Option } from '../../shared/utils';
+import { GetTypeUnion, isNotNull, isNull, Option } from '../../shared/utils';
 import { UpdateInstructionSubmit } from '../components';
 import {
   AccountDockComponent,
@@ -101,7 +101,7 @@ import {
   SeedType,
 } from '../utils';
 
-type ActiveType = GetActiveTypes<{
+type ActiveType = GetTypeUnion<{
   signer: ActiveSignerData;
   program: ActiveProgramData;
   sysvar: ActiveSysvarData;
