@@ -127,9 +127,12 @@ export class ActiveFieldComponent
             return EMPTY;
           }
 
+          this.patchState({ isAdding: true });
+
           return this.createFieldModal.open().closed.pipe(
             tap((field) => {
               if (field) {
+                this.patchState({ isAdding: false });
                 this.pgDeactivate.emit();
                 this.pgAddNode.emit({
                   payload: {

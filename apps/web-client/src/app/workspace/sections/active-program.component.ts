@@ -125,9 +125,12 @@ export class ActiveProgramComponent
             return EMPTY;
           }
 
+          this.patchState({ isAdding: true });
+
           return this.createProgramModal.open().closed.pipe(
             tap((program) => {
               if (program) {
+                this.patchState({ isAdding: false });
                 this.pgDeactivate.emit();
                 this.pgAddNode.emit({
                   payload: {

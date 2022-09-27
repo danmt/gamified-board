@@ -125,9 +125,12 @@ export class ActiveAccountComponent
             return EMPTY;
           }
 
+          this.patchState({ isAdding: true });
+
           return this.createAccountModal.open().closed.pipe(
             tap((account) => {
               if (account) {
+                this.patchState({ isAdding: false });
                 this.pgDeactivate.emit();
                 this.pgAddNode.emit({
                   payload: {

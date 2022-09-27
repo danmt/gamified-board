@@ -129,9 +129,12 @@ export class ActiveSysvarComponent
             return EMPTY;
           }
 
+          this.patchState({ isAdding: true });
+
           return this.createSysvarModal.open().closed.pipe(
             tap((sysvar) => {
               if (sysvar) {
+                this.patchState({ isAdding: false });
                 this.pgDeactivate.emit();
                 this.pgAddNode.emit({
                   payload: {

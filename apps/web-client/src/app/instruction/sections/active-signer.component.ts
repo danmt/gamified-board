@@ -126,9 +126,12 @@ export class ActiveSignerComponent
             return EMPTY;
           }
 
+          this.patchState({ isAdding: true });
+
           return this.createSignerModal.open().closed.pipe(
             tap((signer) => {
               if (signer) {
+                this.patchState({ isAdding: false });
                 this.pgDeactivate.emit();
                 this.pgAddNode.emit({
                   payload: {

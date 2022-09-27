@@ -125,9 +125,12 @@ export class ActiveInstructionComponent
             return EMPTY;
           }
 
+          this.patchState({ isAdding: true });
+
           return this.createInstructionModal.open().closed.pipe(
             tap((instruction) => {
               if (instruction) {
+                this.patchState({ isAdding: false });
                 this.pgDeactivate.emit();
                 this.pgAddNode.emit({
                   payload: {
