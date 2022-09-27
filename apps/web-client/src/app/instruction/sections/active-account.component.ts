@@ -86,7 +86,7 @@ const initialState: ViewModel = {
       *ngIf="active$ | ngrxPush as active"
       [pgActive]="active"
       [pgCanAdd]="(canAdd$ | ngrxPush) ?? false"
-      class="fixed z-10 pointer-events-none"
+      class="fixed z-50 pointer-events-none"
       pgFollowCursor
       [ngClass]="{ hidden: (isAdding$ | ngrxPush) }"
       pgKeyListener="Escape"
