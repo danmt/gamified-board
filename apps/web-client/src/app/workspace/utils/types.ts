@@ -1,4 +1,9 @@
-import { Graph, Node } from '../../drawer/utils';
+import {
+  GetNodeTypes,
+  GetPartialNodeDataTypes,
+  Graph,
+  Node,
+} from '../../drawer/utils';
 import { Entity } from '../../shared/utils';
 
 export type WorkspaceDto = Entity<{
@@ -32,7 +37,16 @@ export type WorkspaceNodesData = {
 
 export type ApplicationNode = Node<'application', WorkspaceNodeData>;
 
-export type WorkspaceNode = ApplicationNode;
+export type PartialWorkspaceNode = GetPartialNodeDataTypes<
+  WorkspaceNodeKinds,
+  WorkspaceNodeData,
+  WorkspaceNodesData
+>;
+export type WorkspaceNode = GetNodeTypes<
+  WorkspaceNodeKinds,
+  WorkspaceNodeData,
+  WorkspaceNodesData
+>;
 
 export type WorkspaceGraphKind = 'workspace';
 

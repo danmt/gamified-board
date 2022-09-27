@@ -9,6 +9,7 @@ import {
   Drawer,
   Edge,
   GetNodeTypes,
+  GetPartialNodeDataTypes,
   isGraphScrolledEvent,
   isPanDraggedEvent,
 } from '../utils';
@@ -180,13 +181,12 @@ export class DrawerStore<
   }
 
   async updateNode(
-    nodeId: string,
-    payload: { changes: Partial<NodeDataType>; kind: NodeKinds }
+    payload: GetPartialNodeDataTypes<NodeKinds, NodeDataType, NodesDataMap>
   ) {
     const drawer = await firstValueFrom(this.drawer$);
 
     if (drawer !== null) {
-      drawer.updateNode(nodeId, payload);
+      drawer.updateNode(payload);
     }
   }
 

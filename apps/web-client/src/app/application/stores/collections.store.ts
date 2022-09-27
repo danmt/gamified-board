@@ -17,13 +17,13 @@ import { isNull, Option } from '../../shared/utils';
 interface ViewModel {
   workspaceId: Option<string>;
   applicationId: Option<string>;
-  collections: Option<(CollectionNode & { fields: FieldNode[] })[]>;
+  collections: (CollectionNode & { fields: FieldNode[] })[];
 }
 
 const initialState: ViewModel = {
   workspaceId: null,
   applicationId: null,
-  collections: null,
+  collections: [],
 };
 
 @Injectable()

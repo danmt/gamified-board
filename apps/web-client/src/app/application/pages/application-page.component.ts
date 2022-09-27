@@ -25,7 +25,6 @@ import {
 } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { UpdateApplicationSubmit } from '../../application/components';
-import { UpdateCollectionSubmit } from '../../collection/components';
 import { DrawerStore } from '../../drawer/stores';
 import {
   AddEdgeSuccessEvent,
@@ -161,7 +160,11 @@ const initialState: ViewModel = {
           [pgCollection]="selected"
           (pgCollectionUnselected)="onUnselect()"
           (pgUpdateCollection)="
-            onUpdateNode($event.id, 'collection', $event.changes)
+            onUpdateNode({
+              id: $event.id,
+              kind: 'collection',
+              data: $event.changes
+            })
           "
           (pgUpdateCollectionThumbnail)="
             onUpdateNodeThumbnail($event.id, $event.fileId, $event.fileUrl)
@@ -175,7 +178,11 @@ const initialState: ViewModel = {
           [pgInstruction]="selected"
           (pgInstructionUnselected)="onUnselect()"
           (pgUpdateInstruction)="
-            onUpdateNode($event.id, 'instruction', $event.changes)
+            onUpdateNode({
+              id: $event.id,
+              kind: 'instruction',
+              data: $event.changes
+            })
           "
           (pgUpdateInstructionThumbnail)="
             onUpdateNodeThumbnail($event.id, $event.fileId, $event.fileUrl)
@@ -188,7 +195,9 @@ const initialState: ViewModel = {
           class="fixed bottom-0 -translate-x-1/2 left-1/2"
           [pgField]="selected"
           (pgFieldUnselected)="onUnselect()"
-          (pgUpdateField)="onUpdateNode($event.id, 'field', $event.changes)"
+          (pgUpdateField)="
+            onUpdateNode({ id: $event.id, kind: 'field', data: $event.changes })
+          "
           (pgUpdateFieldThumbnail)="
             onUpdateNodeThumbnail($event.id, $event.fileId, $event.fileUrl)
           "
@@ -1040,15 +1049,8 @@ export class ApplicationPageComponent
     this._applicationDrawerStore.updateGraphThumbnail(fileId, fileUrl);
   }
 
-  onUpdateNode(
-    nodeId: string,
-    kind: ApplicationNodeKinds,
-    changes: UpdateCollectionSubmit
-  ) {
-    this._applicationDrawerStore.updateNode(nodeId, {
-      changes,
-      kind,
-    });
+  onUpdateNode(payload: PartialApplicationNode) {
+    this._applicationDrawerStore.updateNode(payload);
   }
 
   onUpdateNodeThumbnail(nodeId: string, fileId: string, fileUrl: string) {

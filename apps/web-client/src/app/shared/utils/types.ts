@@ -8,3 +8,10 @@ export type GetActiveTypes<Nodes extends { [key: string]: unknown }> = {
     data: Nodes[TNode];
   };
 }[keyof Nodes & string];
+
+export type GetTypeUnion<Nodes extends { [key: string]: unknown }> = {
+  [TNode in keyof Nodes]: {
+    kind: TNode;
+    data: Nodes[TNode];
+  };
+}[keyof Nodes & string];

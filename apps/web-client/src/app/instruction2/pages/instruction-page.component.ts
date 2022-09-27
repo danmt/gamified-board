@@ -27,10 +27,11 @@ import { environment } from '../../../environments/environment';
 import { ApplicationsInventoryDirective } from '../../application/sections';
 import {
   ApplicationApiService,
+  ApplicationGraphApiService,
   InstallApplicationDto,
 } from '../../application/services';
 import { CollectionsStore, InstallationsStore } from '../../application/stores';
-import { UpdateCollectionSubmit } from '../../collection/components';
+import { FIELD_TYPES } from '../../application/utils';
 import { DrawerStore } from '../../drawer/stores';
 import {
   AddEdgeSuccessEvent,
@@ -85,8 +86,12 @@ import {
   SysvarsInventoryDirective,
 } from '../sections';
 import { InstructionGraphApiService } from '../services';
-import { InstructionCollectionsStore } from '../stores';
 import {
+  InstructionArgumentsStore,
+  InstructionCollectionsStore,
+} from '../stores';
+import {
+  AttributeSeedData,
   instructionCanConnectFunction,
   InstructionGraphData,
   InstructionGraphKind,
@@ -96,6 +101,7 @@ import {
   instructionNodeLabelFunction,
   InstructionNodesData,
   PartialInstructionNode,
+  SeedType,
 } from '../utils';
 
 type ActiveType = GetActiveTypes<{
@@ -161,7 +167,13 @@ const initialState: ViewModel = {
           class="fixed bottom-0 -translate-x-1/2 left-1/2"
           [pgSigner]="selected"
           (pgSignerUnselected)="onUnselect()"
-          (pgUpdateSigner)="onUpdateNode($event.id, 'signer', $event.changes)"
+          (pgUpdateSigner)="
+            onUpdateNode({
+              id: $event.id,
+              kind: 'signer',
+              data: $event.changes
+            })
+          "
           (pgUpdateSignerThumbnail)="
             onUpdateNodeThumbnail($event.id, $event.fileId, $event.fileUrl)
           "
@@ -174,7 +186,11 @@ const initialState: ViewModel = {
           [pgApplication]="selected"
           (pgApplicationUnselected)="onUnselect()"
           (pgUpdateApplication)="
-            onUpdateNode($event.id, 'application', $event.changes)
+            onUpdateNode({
+              id: $event.id,
+              kind: 'application',
+              data: $event.changes
+            })
           "
           (pgUpdateApplicationThumbnail)="
             onUpdateNodeThumbnail($event.id, $event.fileId, $event.fileUrl)
@@ -187,7 +203,13 @@ const initialState: ViewModel = {
           class="fixed bottom-0 -translate-x-1/2 left-1/2"
           [pgSysvar]="selected"
           (pgSysvarUnselected)="onUnselect()"
-          (pgUpdateSysvar)="onUpdateNode($event.id, 'sysvar', $event.changes)"
+          (pgUpdateSysvar)="
+            onUpdateNode({
+              id: $event.id,
+              kind: 'sysvar',
+              data: $event.changes
+            })
+          "
           (pgUpdateSysvarThumbnail)="
             onUpdateNodeThumbnail($event.id, $event.fileId, $event.fileUrl)
           "
@@ -198,17 +220,29 @@ const initialState: ViewModel = {
           *ngIf="selected !== null && selected.kind === 'collection'"
           class="fixed bottom-0 -translate-x-1/2 left-1/2"
           [pgCollection]="selected"
+          [pgSeedOptions]="(seedOptions$ | ngrxPush) ?? []"
           [pgInstructionCollections]="
             (instructionCollections$ | ngrxPush) ?? []
           "
           (pgCollectionUnselected)="onUnselect()"
           (pgUpdateCollection)="
-            onUpdateNode($event.id, 'collection', $event.changes)
+            onUpdateNode({
+              id: $event.id,
+              kind: 'collection',
+              data: $event.changes
+            })
           "
           (pgUpdateCollectionThumbnail)="
             onUpdateNodeThumbnail($event.id, $event.fileId, $event.fileUrl)
           "
           (pgDeleteCollection)="onRemoveNode($event)"
+          (pgUpdateCollectionSeeds)="
+            onUpdateNode({
+              id: $event.id,
+              kind: 'collection',
+              data: { seeds: $event.seeds }
+            })
+          "
         ></pg-collection-dock>
       </ng-container>
 
@@ -383,6 +417,7 @@ const initialState: ViewModel = {
     provideComponentStore(InstallationsStore),
     provideComponentStore(CollectionsStore),
     provideComponentStore(InstructionCollectionsStore),
+    provideComponentStore(InstructionArgumentsStore),
   ],
 })
 export class InstructionPageComponent
@@ -405,7 +440,13 @@ export class InstructionPageComponent
   private readonly _instructionCollectionsStore = inject(
     InstructionCollectionsStore
   );
+  private readonly _instructionArgumentsStore = inject(
+    InstructionArgumentsStore
+  );
   private readonly _applicationApiService = inject(ApplicationApiService);
+  private readonly _applicationGraphApiService = inject(
+    ApplicationGraphApiService
+  );
   private readonly _instructionGraphApiService = inject(
     InstructionGraphApiService
   );
@@ -443,6 +484,62 @@ export class InstructionPageComponent
   );
   readonly instructionCollections$ =
     this._instructionCollectionsStore.collections$;
+  readonly seedOptions$ = this.select(
+    this._instructionCollectionsStore.collections$,
+    this.collections$,
+    this._instructionArgumentsStore.instructionArguments$,
+    (instructionCollections, collections, instructionArguments) => {
+      const attributeSeedOptions: SeedType[] = instructionCollections
+        .reduce<AttributeSeedData[]>((attributes, instructionCollection) => {
+          const collection =
+            collections.find(
+              ({ id }) => id === instructionCollection.data.ref.id
+            ) ?? null;
+
+          if (isNull(collection)) {
+            return attributes;
+          }
+
+          return attributes.concat(
+            collection.fields.map((field) => ({
+              id: field.id,
+              name: field.data.name,
+              collection: {
+                id: instructionCollection.id,
+                name: instructionCollection.data.name,
+                ref: collection.id,
+              },
+            }))
+          );
+        }, [])
+        .map((attributeSeedData) => ({
+          kind: 'attribute',
+          data: attributeSeedData,
+        }));
+
+      const argumentSeedOptions: SeedType[] = instructionArguments.map(
+        (instructionArgument) => ({
+          kind: 'argument',
+          data: {
+            id: instructionArgument.id,
+            name: instructionArgument.data.name,
+          },
+        })
+      );
+
+      const valueSeedOptions: SeedType[] = FIELD_TYPES.map((fieldType) => ({
+        kind: 'value',
+        data: {
+          value: '',
+          type: fieldType,
+        },
+      }));
+
+      return attributeSeedOptions
+        .concat(argumentSeedOptions)
+        .concat(valueSeedOptions);
+    }
+  );
 
   @HostBinding('class') class = 'block relative min-h-screen min-w-screen';
   @ViewChild('drawerElement')
@@ -1113,6 +1210,32 @@ export class InstructionPageComponent
     )
   );
 
+  private readonly _loadApplicationGraph = this.effect<{
+    workspaceId: Option<string>;
+    applicationId: Option<string>;
+  }>(
+    concatMap(({ workspaceId, applicationId }) => {
+      if (isNull(workspaceId) || isNull(applicationId)) {
+        return EMPTY;
+      }
+
+      return defer(() =>
+        from(
+          this._applicationGraphApiService.getGraph(workspaceId, applicationId)
+        ).pipe(
+          tap((graph) => {
+            if (graph) {
+              this._instructionArgumentsStore.setGraph(graph);
+              this._instructionArgumentsStore.setInstructionId(
+                this.instructionId$
+              );
+            }
+          })
+        )
+      );
+    })
+  );
+
   constructor() {
     super(initialState);
   }
@@ -1171,6 +1294,16 @@ export class InstructionPageComponent
             applicationId,
             instructionId,
             drawerElement,
+          })
+        )
+      );
+      this._loadApplicationGraph(
+        this.select(
+          this.workspaceId$,
+          this.applicationId$,
+          (workspaceId, applicationId) => ({
+            workspaceId,
+            applicationId,
           })
         )
       );
@@ -1289,15 +1422,8 @@ export class InstructionPageComponent
     );
   }
 
-  onUpdateNode(
-    nodeId: string,
-    kind: InstructionNodeKinds,
-    changes: UpdateCollectionSubmit
-  ) {
-    this._instructionDrawerStore.updateNode(nodeId, {
-      changes,
-      kind,
-    });
+  onUpdateNode(payload: PartialInstructionNode) {
+    this._instructionDrawerStore.updateNode(payload);
   }
 
   onUpdateNodeThumbnail(nodeId: string, fileId: string, fileUrl: string) {

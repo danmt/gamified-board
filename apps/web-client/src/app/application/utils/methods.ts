@@ -3,6 +3,7 @@ import {
   ApplicationNode,
   CollectionNode,
   FieldNode,
+  FieldType,
   InstructionNode,
 } from './types';
 
@@ -97,3 +98,27 @@ export const isInstructionNode = (
 export const isFieldNode = (node: ApplicationNode): node is FieldNode => {
   return node.kind === 'field';
 };
+
+export const isFieldType = (field: string): field is FieldType => {
+  return (
+    field === 'u8' ||
+    field === 'u16' ||
+    field === 'u32' ||
+    field === 'u64' ||
+    field === 'bool' ||
+    field === 'string' ||
+    field === 'pubkey' ||
+    field === 'struct'
+  );
+};
+
+export const FIELD_TYPES: FieldType[] = [
+  'u8',
+  'u16',
+  'u32',
+  'u64',
+  'bool',
+  'string',
+  'pubkey',
+  'struct',
+];

@@ -56,7 +56,7 @@ import {
   isNull,
   Option,
 } from '../../shared/utils';
-import { UpdateApplicationSubmit, UpdateWorkspaceSubmit } from '../components';
+import { UpdateWorkspaceSubmit } from '../components';
 import {
   ActiveApplicationComponent,
   ActiveApplicationData,
@@ -66,6 +66,7 @@ import {
 } from '../sections';
 import { WorkspaceApiService, WorkspaceGraphApiService } from '../services';
 import {
+  PartialWorkspaceNode,
   WorkspaceGraphData,
   WorkspaceGraphKind,
   WorkspaceNode,
@@ -129,7 +130,13 @@ const initialState: ViewModel = {
           class="fixed bottom-0 -translate-x-1/2 left-1/2"
           [pgApplication]="selected"
           (pgApplicationUnselected)="onApplicationUnselected()"
-          (pgUpdateApplication)="onUpdateNode($event.id, $event.changes)"
+          (pgUpdateApplication)="
+            onUpdateNode({
+              id: $event.id,
+              kind: 'application',
+              data: $event.changes
+            })
+          "
           (pgUpdateApplicationThumbnail)="
             onUpdateNodeThumbnail($event.id, $event.fileId, $event.fileUrl)
           "
@@ -685,11 +692,8 @@ export class WorkspacePageComponent
     this._workspaceDrawerStore.updateGraphThumbnail(fileId, fileUrl);
   }
 
-  onUpdateNode(nodeId: string, changes: UpdateApplicationSubmit) {
-    this._workspaceDrawerStore.updateNode(nodeId, {
-      kind: 'application',
-      changes,
-    });
+  onUpdateNode(payload: PartialWorkspaceNode) {
+    this._workspaceDrawerStore.updateNode(payload);
   }
 
   onUpdateNodeThumbnail(nodeId: string, fileId: string, fileUrl: string) {

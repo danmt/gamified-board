@@ -23,9 +23,10 @@ import { SlotHotkeyPipe } from '../../shared/pipes';
 import { Option } from '../../shared/utils';
 import {
   UpdateCollectionModalDirective,
+  UpdateCollectionSeedsModalDirective,
   UpdateCollectionSubmit,
 } from '../components';
-import { CollectionNode } from '../utils';
+import { CollectionNode, SeedType } from '../utils';
 
 interface HotKey {
   slot: number;
@@ -38,7 +39,7 @@ interface ViewModel {
   isUpdating: boolean;
   isUpdatingThumbnail: boolean;
   isDeleting: boolean;
-  hotkeys: [HotKey, HotKey, HotKey, HotKey];
+  hotkeys: [HotKey, HotKey, HotKey, HotKey, HotKey];
 }
 
 const initialState: ViewModel = {
@@ -66,6 +67,11 @@ const initialState: ViewModel = {
       slot: 3,
       code: 'KeyR',
       key: 'r',
+    },
+    {
+      slot: 4,
+      code: 'KeyT',
+      key: 't',
     },
   ],
 };
@@ -158,6 +164,34 @@ const initialState: ViewModel = {
                   class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
                   style="font-size: 0.5rem; line-height: 0.5rem"
                   [pgKeyListener]="hotkeys[2].code"
+                  (pgKeyDown)="updateCollectionSeedsModal.open()"
+                >
+                  {{ hotkey }}
+                </span>
+              </ng-container>
+
+              <pg-square-button
+                pgThumbnailUrl="assets/generic/collection.png"
+                [pgIsActive]="false"
+                pgUpdateCollectionSeedsModal
+                #updateCollectionSeedsModal="modal"
+                [pgCollectionSeeds]="collection.data.seeds"
+                [pgOptions]="pgSeedOptions"
+                (pgOpenModal)="setIsUpdating(true)"
+                (pgCloseModal)="setIsUpdating(false)"
+                (pgUpdateCollectionSeeds)="
+                  onUpdateCollectionSeeds(collection.id, $event.seeds)
+                "
+              ></pg-square-button>
+            </div>
+
+            <div class="bg-gray-800 relative w-[2.89rem] h-[2.89rem]">
+              <ng-container *ngrxLet="hotkeys$; let hotkeys">
+                <span
+                  *ngIf="3 | pgSlotHotkey: hotkeys as hotkey"
+                  class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
+                  style="font-size: 0.5rem; line-height: 0.5rem"
+                  [pgKeyListener]="hotkeys[3].code"
                   (pgKeyDown)="deleteCollectionModal.open()"
                 >
                   {{ hotkey }}
@@ -179,10 +213,10 @@ const initialState: ViewModel = {
             <div class="bg-gray-800 relative w-[2.89rem] h-[2.89rem]">
               <ng-container *ngrxLet="hotkeys$; let hotkeys">
                 <span
-                  *ngIf="3 | pgSlotHotkey: hotkeys as hotkey"
+                  *ngIf="4 | pgSlotHotkey: hotkeys as hotkey"
                   class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
                   style="font-size: 0.5rem; line-height: 0.5rem"
-                  [pgKeyListener]="hotkeys[3].code"
+                  [pgKeyListener]="hotkeys[4].code"
                   (pgKeyDown)="onUnselectCollection()"
                 >
                   {{ hotkey }}
@@ -212,6 +246,7 @@ const initialState: ViewModel = {
     DefaultImageDirective,
     UploadFileModalDirective,
     UpdateCollectionModalDirective,
+    UpdateCollectionSeedsModalDirective,
     SecondaryDockComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -232,6 +267,7 @@ export class CollectionDockComponent extends ComponentStore<ViewModel> {
     id: string;
     data: { name: string; ref: { name: string } };
   }[] = [];
+  @Input() pgSeedOptions: SeedType[] = [];
   @Output() pgCollectionUnselected = new EventEmitter();
   @Output() pgUpdateCollection = new EventEmitter<{
     id: string;
@@ -243,6 +279,10 @@ export class CollectionDockComponent extends ComponentStore<ViewModel> {
     fileUrl: string;
   }>();
   @Output() pgDeleteCollection = new EventEmitter<string>();
+  @Output() pgUpdateCollectionSeeds = new EventEmitter<{
+    id: string;
+    seeds: SeedType[];
+  }>();
 
   readonly setIsUpdating = this.updater<boolean>((state, isUpdating) => ({
     ...state,
@@ -281,6 +321,10 @@ export class CollectionDockComponent extends ComponentStore<ViewModel> {
       fileId,
       fileUrl,
     });
+  }
+
+  onUpdateCollectionSeeds(collectionId: string, seeds: SeedType[]) {
+    this.pgUpdateCollectionSeeds.emit({ id: collectionId, seeds });
   }
 
   onDeleteCollection(collectionId: string) {

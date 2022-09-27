@@ -1,10 +1,11 @@
+import { FieldType } from '../../application/utils';
 import {
   GetNodeTypes,
   GetPartialNodeDataTypes,
   Graph,
   Node,
 } from '../../drawer/utils';
-import { Entity, Option } from '../../shared/utils';
+import { Entity, GetTypeUnion, Option } from '../../shared/utils';
 
 export type InstructionDto = Entity<{
   name: string;
@@ -36,6 +37,7 @@ export interface CollectionNodeData {
   payer: Option<string>;
   space: Option<number>;
   receiver: Option<string>;
+  seeds: SeedType[];
 }
 
 export interface SignerNodeData {
@@ -118,3 +120,28 @@ export const isCollectionNode = (
 ): node is CollectionNode => {
   return node.kind === 'collection';
 };
+
+export interface ArgumentSeedData {
+  id: string;
+  name: string;
+}
+
+export interface AttributeSeedData {
+  id: string;
+  name: string;
+  collection: {
+    id: string;
+    name: string;
+  };
+}
+
+export interface ValueSeedData {
+  type: FieldType;
+  value: string;
+}
+
+export type SeedType = GetTypeUnion<{
+  argument: ArgumentSeedData;
+  attribute: AttributeSeedData;
+  value: ValueSeedData;
+}>;

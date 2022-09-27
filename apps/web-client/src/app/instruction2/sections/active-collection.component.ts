@@ -34,7 +34,7 @@ import {
   Option,
 } from '../../shared/utils';
 import { CreateCollectionModalDirective } from '../components';
-import { CollectionMethodType } from '../utils';
+import { CollectionMethodType, SeedType } from '../utils';
 
 export interface AddCollectionNodeDto {
   payload: Entity<{
@@ -50,6 +50,7 @@ export interface AddCollectionNodeDto {
       payer: Option<string>;
       space: Option<number>;
       receiver: Option<string>;
+      seeds: SeedType[];
     };
   }>;
   options: {
@@ -160,6 +161,7 @@ export class ActiveCollectionComponent
                       payer: collection.payer,
                       space: collection.space,
                       receiver: collection.receiver,
+                      seeds: [],
                     },
                   },
                   options: {

@@ -449,24 +449,17 @@ export class Drawer<
   }
 
   updateNode(
-    nodeId: string,
-    payload: { changes: Partial<NodeDataType>; kind: NodeKinds }
+    payload: GetPartialNodeDataTypes<NodeKinds, NodeDataType, NodesDataMap>
   ) {
-    const node = this._cy.getElementById(nodeId);
+    const node = this._cy.getElementById(payload.id);
 
     const nodeData = node.data();
     node.data({
       ...nodeData,
-      data: { ...nodeData.data, ...payload.changes },
+      data: { ...nodeData.data, ...payload.data },
     });
 
-    this._cy.emit('local.node-updated', [
-      {
-        id: nodeId,
-        data: payload.changes,
-        kind: payload.kind,
-      },
-    ]);
+    this._cy.emit('local.node-updated', [payload]);
   }
 
   updateNodeThumbnail(nodeId: string, fileId: string, fileUrl: string) {

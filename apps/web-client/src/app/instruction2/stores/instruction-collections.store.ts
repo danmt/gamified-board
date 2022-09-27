@@ -8,6 +8,7 @@ import { InstructionGraph, isCollectionNode } from '../utils';
 interface CollectionData {
   name: string;
   ref: {
+    id: string;
     name: string;
   };
 }
@@ -111,6 +112,7 @@ export class InstructionCollectionsStore
                     data: {
                       name: event['payload'].name,
                       ref: {
+                        id: event['payload'].ref.id,
                         name: event['payload'].ref.name,
                       },
                     },
