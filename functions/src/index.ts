@@ -818,31 +818,29 @@ export const saveCheckpoint = functions.pubsub
       ? JSON.parse(Buffer.from(message.data, 'base64').toString())
       : null;
 
-    const { id, name, applicationId, workspaceId } = messageBody.data.payload;
+    const { id, name, programId, workspaceId } = messageBody.data.payload;
 
-    const [application, applicationNodes, applicationEdges] = await Promise.all(
-      [
-        firestore.doc(`graphs/${workspaceId}/nodes/${applicationId}`).get(),
-        firestore
-          .collection(`graphs/${workspaceId}/nodes/${applicationId}/nodes`)
-          .get(),
-        firestore
-          .collection(`graphs/${workspaceId}/nodes/${applicationId}/edges`)
-          .get(),
-      ]
-    );
+    const [program, programNodes, programEdges] = await Promise.all([
+      firestore.doc(`graphs/${workspaceId}/nodes/${programId}`).get(),
+      firestore
+        .collection(`graphs/${workspaceId}/nodes/${programId}/nodes`)
+        .get(),
+      firestore
+        .collection(`graphs/${workspaceId}/nodes/${programId}/edges`)
+        .get(),
+    ]);
 
-    const applicationCheckpointRef = firestore.doc(
-      `graphs/${workspaceId}/nodes/${applicationId}/checkpoints/${id}`
+    const programCheckpointRef = firestore.doc(
+      `graphs/${workspaceId}/nodes/${programId}/checkpoints/${id}`
     );
-    await applicationCheckpointRef.set({
+    await programCheckpointRef.set({
       name,
-      graph: application.data(),
-      nodes: applicationNodes.docs.map((node) => ({
+      graph: program.data(),
+      nodes: programNodes.docs.map((node) => ({
         id: node.id,
         ...node.data(),
       })),
-      edges: applicationEdges.docs.map((edge) => ({
+      edges: programEdges.docs.map((edge) => ({
         id: edge.id,
         ...edge.data(),
       })),
@@ -852,14 +850,14 @@ export const saveCheckpoint = functions.pubsub
     return true;
   });
 
-export const installApplication = functions.pubsub
+export const installProgram = functions.pubsub
   .topic('events')
   .onPublish(async (message, context) => {
     if (
       process.env.FUNCTIONS_EMULATOR &&
-      message.attributes.type !== 'installApplication'
+      message.attributes.type !== 'installProgram'
     ) {
-      functions.logger.warn('installApplication', 'Event ignored');
+      functions.logger.warn('installProgram', 'Event ignored');
       return false;
     }
 
@@ -867,10 +865,10 @@ export const installApplication = functions.pubsub
       ? JSON.parse(Buffer.from(message.data, 'base64').toString())
       : null;
 
-    const { id, data, applicationId, workspaceId } = messageBody.data.payload;
+    const { id, data, programId, workspaceId } = messageBody.data.payload;
 
     const installationRef = firestore.doc(
-      `graphs/${workspaceId}/nodes/${applicationId}/installations/${id}`
+      `graphs/${workspaceId}/nodes/${programId}/installations/${id}`
     );
     await installationRef.set({
       data,

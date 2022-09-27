@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
 import { ComponentStore } from '@ngrx/component-store';
-import { ApplicationGraph, isFieldNode } from '../../application/utils';
+import { isFieldNode, ProgramGraph } from '../../program/utils';
 import { isNull, Option } from '../../shared/utils';
 
 interface ViewModel {
-  graph: Option<ApplicationGraph>;
+  graph: Option<ProgramGraph>;
   instructionId: Option<string>;
 }
 
@@ -38,12 +38,10 @@ export class InstructionArgumentsStore extends ComponentStore<ViewModel> {
     })
   );
 
-  readonly setGraph = this.updater<Option<ApplicationGraph>>(
-    (state, graph) => ({
-      ...state,
-      graph,
-    })
-  );
+  readonly setGraph = this.updater<Option<ProgramGraph>>((state, graph) => ({
+    ...state,
+    graph,
+  }));
 
   constructor() {
     super(initialState);

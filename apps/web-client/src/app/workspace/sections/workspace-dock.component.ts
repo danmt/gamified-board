@@ -22,7 +22,7 @@ import {
 import { SlotHotkeyPipe } from '../../shared/pipes';
 import { Option } from '../../shared/utils';
 import {
-  CreateApplicationModalDirective,
+  CreateProgramModalDirective,
   UpdateWorkspaceModalDirective,
   UpdateWorkspaceSubmit,
 } from '../components';
@@ -179,15 +179,15 @@ const initialState: ViewModel = {
                   class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
                   style="font-size: 0.5rem; line-height: 0.5rem"
                   [pgKeyListener]="hotkeys[3].code"
-                  (pgKeyDown)="onActivateApplication()"
+                  (pgKeyDown)="onActivateProgram()"
                 >
                   {{ hotkey }}
                 </span>
               </ng-container>
 
               <pg-square-button
-                pgThumbnailUrl="assets/generic/application.png"
-                (click)="onActivateApplication()"
+                pgThumbnailUrl="assets/generic/program.png"
+                (click)="onActivateProgram()"
               ></pg-square-button>
             </div>
           </div>
@@ -208,7 +208,7 @@ const initialState: ViewModel = {
     DefaultImageDirective,
     UploadFileModalDirective,
     UpdateWorkspaceModalDirective,
-    CreateApplicationModalDirective,
+    CreateProgramModalDirective,
     SecondaryDockComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -226,7 +226,7 @@ export class WorkspaceDockComponent extends ComponentStore<ViewModel> {
   @Input() set pgWorkspace(workspace: Option<WorkspaceGraph>) {
     this.patchState({ workspace });
   }
-  @Output() pgApplicationActivate = new EventEmitter();
+  @Output() pgProgramActivate = new EventEmitter();
   @Output() pgUpdateWorkspace = new EventEmitter<{
     id: string;
     changes: UpdateWorkspaceSubmit;
@@ -283,7 +283,7 @@ export class WorkspaceDockComponent extends ComponentStore<ViewModel> {
     this.pgDeleteWorkspace.emit(workspaceId);
   }
 
-  onActivateApplication() {
-    this.pgApplicationActivate.emit();
+  onActivateProgram() {
+    this.pgProgramActivate.emit();
   }
 }

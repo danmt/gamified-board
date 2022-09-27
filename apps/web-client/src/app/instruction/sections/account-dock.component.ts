@@ -22,11 +22,11 @@ import {
 import { SlotHotkeyPipe } from '../../shared/pipes';
 import { Option } from '../../shared/utils';
 import {
-  CreateAccountModalDirective,
-  UpdateInstructionModalDirective,
-  UpdateInstructionSubmit,
+  UpdateAccountModalDirective,
+  UpdateAccountSeedsModalDirective,
+  UpdateAccountSubmit,
 } from '../components';
-import { InstructionGraph } from '../utils';
+import { AccountNode, SeedType } from '../utils';
 
 interface HotKey {
   slot: number;
@@ -35,17 +35,15 @@ interface HotKey {
 }
 
 interface ViewModel {
-  instruction: Option<InstructionGraph>;
-  isCreating: boolean;
+  account: Option<AccountNode>;
   isUpdating: boolean;
   isUpdatingThumbnail: boolean;
   isDeleting: boolean;
-  hotkeys: [HotKey, HotKey, HotKey, HotKey];
+  hotkeys: [HotKey, HotKey, HotKey, HotKey, HotKey];
 }
 
 const initialState: ViewModel = {
-  instruction: null,
-  isCreating: false,
+  account: null,
   isUpdating: false,
   isUpdatingThumbnail: false,
   isDeleting: false,
@@ -70,26 +68,33 @@ const initialState: ViewModel = {
       code: 'KeyR',
       key: 'r',
     },
+    {
+      slot: 4,
+      code: 'KeyT',
+      key: 't',
+    },
   ],
 };
 
 @Component({
-  selector: 'pg-instruction-dock',
+  selector: 'pg-account-dock',
   template: `
     <pg-secondary-dock
-      *ngIf="instruction$ | ngrxPush as instruction"
+      *ngIf="account$ | ngrxPush as account"
       class="text-white block bp-font-game"
+      pgKeyListener="Escape"
+      (pgKeyDown)="onUnselectAccount()"
     >
       <div class="flex gap-4 justify-center items-start">
         <img
-          [src]="instruction.data.thumbnailUrl"
-          pgDefaultImageUrl="assets/generic/instruction.png"
+          [src]="account.data.thumbnailUrl"
+          pgDefaultImageUrl="assets/generic/account.png"
           class="w-[100px] h-[106px] overflow-hidden rounded-xl"
         />
 
         <div>
           <h2 class="text-xl">Name</h2>
-          <p class="text-base">{{ instruction.data.name }}</p>
+          <p class="text-base">{{ account.data.name }}</p>
         </div>
 
         <div class="ml-10">
@@ -103,23 +108,22 @@ const initialState: ViewModel = {
                   class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
                   style="font-size: 0.5rem; line-height: 0.5rem"
                   [pgKeyListener]="hotkeys[0].code"
-                  (pgKeyDown)="updateInstructionModal.open()"
+                  (pgKeyDown)="updateAccountModal.open()"
                 >
                   {{ hotkey }}
                 </span>
               </ng-container>
 
               <pg-square-button
-                pgThumbnailUrl="assets/generic/instruction.png"
+                pgThumbnailUrl="assets/generic/account.png"
                 [pgIsActive]="false"
-                #updateInstructionModal="modal"
-                pgUpdateInstructionModal
-                [pgInstruction]="instruction"
+                pgUpdateAccountModal
+                #updateAccountModal="modal"
+                [pgAccount]="account"
+                [pgInstructionAccounts]="pgInstructionAccounts"
                 (pgOpenModal)="setIsUpdating(true)"
                 (pgCloseModal)="setIsUpdating(false)"
-                (pgUpdateInstruction)="
-                  onUpdateInstruction(instruction.id, $event)
-                "
+                (pgUpdateAccount)="onUpdateAccount(account.id, $event)"
               ></pg-square-button>
             </div>
 
@@ -130,23 +134,19 @@ const initialState: ViewModel = {
                   class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
                   style="font-size: 0.5rem; line-height: 0.5rem"
                   [pgKeyListener]="hotkeys[1].code"
-                  (pgKeyDown)="uploadInstructionThumbnailModal.open()"
+                  (pgKeyDown)="updateAccountThumbnailModal.open()"
                 >
                   {{ hotkey }}
                 </span>
               </ng-container>
 
               <pg-square-button
-                pgThumbnailUrl="assets/generic/instruction.png"
+                pgThumbnailUrl="assets/generic/account.png"
                 [pgIsActive]="(isUpdatingThumbnail$ | ngrxPush) ?? false"
                 pgUploadFileModal
-                #uploadInstructionThumbnailModal="modal"
+                #updateAccountThumbnailModal="modal"
                 (pgSubmit)="
-                  onUploadThumbnail(
-                    instruction.id,
-                    $event.fileId,
-                    $event.fileUrl
-                  )
+                  onUploadThumbnail(account.id, $event.fileId, $event.fileUrl)
                 "
                 (pgOpenModal)="setIsUpdatingThumbnail(true)"
                 (pgCloseModal)="setIsUpdatingThumbnail(false)"
@@ -160,21 +160,24 @@ const initialState: ViewModel = {
                   class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
                   style="font-size: 0.5rem; line-height: 0.5rem"
                   [pgKeyListener]="hotkeys[2].code"
-                  (pgKeyDown)="deleteInstructionModal.open()"
+                  (pgKeyDown)="updateAccountSeedsModal.open()"
                 >
                   {{ hotkey }}
                 </span>
               </ng-container>
 
               <pg-square-button
-                [pgIsActive]="(isDeleting$ | ngrxPush) ?? false"
-                pgThumbnailUrl="assets/generic/instruction.png"
-                (pgConfirm)="onDeleteInstruction(instruction.id)"
-                pgConfirmModal
-                #deleteInstructionModal="modal"
-                pgMessage="Are you sure? This action cannot be reverted."
-                (pgOpenModal)="setIsDeleting(true)"
-                (pgCloseModal)="setIsDeleting(false)"
+                pgThumbnailUrl="assets/generic/account.png"
+                [pgIsActive]="false"
+                pgUpdateAccountSeedsModal
+                #updateAccountSeedsModal="modal"
+                [pgAccountSeeds]="account.data.seeds"
+                [pgOptions]="pgSeedOptions"
+                (pgOpenModal)="setIsUpdating(true)"
+                (pgCloseModal)="setIsUpdating(false)"
+                (pgUpdateAccountSeeds)="
+                  onUpdateAccountSeeds(account.id, $event.seeds)
+                "
               ></pg-square-button>
             </div>
 
@@ -185,15 +188,40 @@ const initialState: ViewModel = {
                   class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
                   style="font-size: 0.5rem; line-height: 0.5rem"
                   [pgKeyListener]="hotkeys[3].code"
-                  (pgKeyDown)="onActivateSigner()"
+                  (pgKeyDown)="deleteAccountModal.open()"
                 >
                   {{ hotkey }}
                 </span>
               </ng-container>
 
               <pg-square-button
-                pgThumbnailUrl="assets/generic/signer.png"
-                (click)="onActivateSigner()"
+                [pgIsActive]="(isDeleting$ | ngrxPush) ?? false"
+                pgThumbnailUrl="assets/generic/account.png"
+                (pgConfirm)="onDeleteAccount(account.id)"
+                pgConfirmModal
+                #deleteAccountModal="modal"
+                pgMessage="Are you sure? This action cannot be reverted."
+                (pgOpenModal)="setIsDeleting(true)"
+                (pgCloseModal)="setIsDeleting(false)"
+              ></pg-square-button>
+            </div>
+
+            <div class="bg-gray-800 relative w-[2.89rem] h-[2.89rem]">
+              <ng-container *ngrxLet="hotkeys$; let hotkeys">
+                <span
+                  *ngIf="4 | pgSlotHotkey: hotkeys as hotkey"
+                  class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
+                  style="font-size: 0.5rem; line-height: 0.5rem"
+                  [pgKeyListener]="hotkeys[4].code"
+                  (pgKeyDown)="onUnselectAccount()"
+                >
+                  {{ hotkey }}
+                </span>
+              </ng-container>
+
+              <pg-square-button
+                pgThumbnailUrl="assets/generic/account.png"
+                (click)="onUnselectAccount()"
               ></pg-square-button>
             </div>
           </div>
@@ -213,41 +241,44 @@ const initialState: ViewModel = {
     ConfirmModalDirective,
     DefaultImageDirective,
     UploadFileModalDirective,
-    UpdateInstructionModalDirective,
-    CreateAccountModalDirective,
+    UpdateAccountModalDirective,
+    UpdateAccountSeedsModalDirective,
     SecondaryDockComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class InstructionDockComponent extends ComponentStore<ViewModel> {
-  readonly isCreating$ = this.select(({ isCreating }) => isCreating);
+export class AccountDockComponent extends ComponentStore<ViewModel> {
   readonly isUpdating$ = this.select(({ isUpdating }) => isUpdating);
   readonly isUpdatingThumbnail$ = this.select(
     ({ isUpdatingThumbnail }) => isUpdatingThumbnail
   );
   readonly isDeleting$ = this.select(({ isDeleting }) => isDeleting);
   readonly hotkeys$ = this.select(({ hotkeys }) => hotkeys);
-  readonly instruction$ = this.select(({ instruction }) => instruction);
+  readonly account$ = this.select(({ account }) => account);
 
-  @Input() set pgInstruction(instruction: Option<InstructionGraph>) {
-    this.patchState({ instruction });
+  @Input() set pgAccount(account: Option<AccountNode>) {
+    this.patchState({ account });
   }
-  @Output() pgActivateSigner = new EventEmitter();
-  @Output() pgUpdateInstruction = new EventEmitter<{
+  @Input() pgInstructionAccounts: {
     id: string;
-    changes: UpdateInstructionSubmit;
+    data: { name: string; ref: { name: string } };
+  }[] = [];
+  @Input() pgSeedOptions: SeedType[] = [];
+  @Output() pgAccountUnselected = new EventEmitter();
+  @Output() pgUpdateAccount = new EventEmitter<{
+    id: string;
+    changes: UpdateAccountSubmit;
   }>();
-  @Output() pgUpdateInstructionThumbnail = new EventEmitter<{
+  @Output() pgUpdateAccountThumbnail = new EventEmitter<{
     id: string;
     fileId: string;
     fileUrl: string;
   }>();
-  @Output() pgDeleteInstruction = new EventEmitter<string>();
-
-  readonly setIsCreating = this.updater<boolean>((state, isCreating) => ({
-    ...state,
-    isCreating,
-  }));
+  @Output() pgDeleteAccount = new EventEmitter<string>();
+  @Output() pgUpdateAccountSeeds = new EventEmitter<{
+    id: string;
+    seeds: SeedType[];
+  }>();
 
   readonly setIsUpdating = this.updater<boolean>((state, isUpdating) => ({
     ...state,
@@ -270,29 +301,30 @@ export class InstructionDockComponent extends ComponentStore<ViewModel> {
     super(initialState);
   }
 
-  onUpdateInstruction(
-    instructionId: string,
-    instructionData: UpdateInstructionSubmit
-  ) {
-    this.pgUpdateInstruction.emit({
-      id: instructionId,
-      changes: instructionData,
+  onUpdateAccount(accountId: string, accountData: UpdateAccountSubmit) {
+    this.pgUpdateAccount.emit({
+      id: accountId,
+      changes: accountData,
     });
   }
 
-  onUploadThumbnail(instructionId: string, fileId: string, fileUrl: string) {
-    this.pgUpdateInstructionThumbnail.emit({
-      id: instructionId,
+  onUploadThumbnail(accountId: string, fileId: string, fileUrl: string) {
+    this.pgUpdateAccountThumbnail.emit({
+      id: accountId,
       fileId,
       fileUrl,
     });
   }
 
-  onDeleteInstruction(instructionId: string) {
-    this.pgDeleteInstruction.emit(instructionId);
+  onUpdateAccountSeeds(accountId: string, seeds: SeedType[]) {
+    this.pgUpdateAccountSeeds.emit({ id: accountId, seeds });
   }
 
-  onActivateSigner() {
-    this.pgActivateSigner.emit();
+  onDeleteAccount(accountId: string) {
+    this.pgDeleteAccount.emit(accountId);
+  }
+
+  onUnselectAccount() {
+    this.pgAccountUnselected.emit();
   }
 }

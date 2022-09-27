@@ -21,21 +21,21 @@ export interface WorkspaceGraphData {
   userId: string;
 }
 
-export interface ApplicationNodeData {
+export interface ProgramNodeData {
   name: string;
   thumbnailUrl: string;
   workspaceId: string;
 }
 
-export type WorkspaceNodeData = ApplicationNodeData;
+export type WorkspaceNodeData = ProgramNodeData;
 
-export type WorkspaceNodeKinds = 'application';
+export type WorkspaceNodeKinds = 'program';
 
 export type WorkspaceNodesData = {
-  application: ApplicationNodeData;
+  program: ProgramNodeData;
 };
 
-export type ApplicationNode = Node<'application', WorkspaceNodeData>;
+export type ProgramNode = Node<'program', WorkspaceNodeData>;
 
 export type PartialWorkspaceNode = GetPartialNodeDataTypes<
   WorkspaceNodeKinds,

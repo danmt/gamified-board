@@ -12,9 +12,9 @@ import { LetModule, PushModule } from '@ngrx/component';
 import { provideComponentStore } from '@ngrx/component-store';
 import { environment } from '../../../environments/environment';
 import {
-  CreateApplicationModalDirective,
-  UpdateApplicationModalDirective,
-} from '../../application/components';
+  CreateProgramModalDirective,
+  UpdateProgramModalDirective,
+} from '../../program/components';
 import { generateId } from '../../shared/utils';
 import {
   CreateWorkspaceModalDirective,
@@ -64,8 +64,8 @@ import { LobbyStore } from '../stores';
     PushModule,
     CreateWorkspaceModalDirective,
     UpdateWorkspaceModalDirective,
-    CreateApplicationModalDirective,
-    UpdateApplicationModalDirective,
+    CreateProgramModalDirective,
+    UpdateProgramModalDirective,
   ],
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,

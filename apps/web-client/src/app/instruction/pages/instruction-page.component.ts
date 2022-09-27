@@ -24,14 +24,6 @@ import {
   withLatestFrom,
 } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { ApplicationsInventoryDirective } from '../../application/sections';
-import {
-  ApplicationApiService,
-  ApplicationGraphApiService,
-  InstallApplicationDto,
-} from '../../application/services';
-import { CollectionsStore, InstallationsStore } from '../../application/stores';
-import { FIELD_TYPES } from '../../application/utils';
 import { DrawerStore } from '../../drawer/stores';
 import {
   AddEdgeSuccessEvent,
@@ -56,6 +48,14 @@ import {
   UpdateNodeSuccessEvent,
   UpdateNodeThumbnailSuccessEvent,
 } from '../../drawer/utils';
+import { ProgramsInventoryDirective } from '../../program/sections';
+import {
+  InstallProgramDto,
+  ProgramApiService,
+  ProgramGraphApiService,
+} from '../../program/services';
+import { AccountsStore, InstallationsStore } from '../../program/stores';
+import { FIELD_TYPES } from '../../program/utils';
 import {
   BackgroundImageMoveDirective,
   BackgroundImageZoomDirective,
@@ -63,33 +63,30 @@ import {
 import { GetActiveTypes, isNotNull, isNull, Option } from '../../shared/utils';
 import { UpdateInstructionSubmit } from '../components';
 import {
-  ActiveApplicationComponent,
-  ActiveApplicationData,
-  ActiveCollectionComponent,
-  ActiveCollectionData,
+  AccountDockComponent,
+  AccountsInventoryDirective,
+  ActiveAccountComponent,
+  ActiveAccountData,
+  ActiveProgramComponent,
+  ActiveProgramData,
   ActiveSignerComponent,
   ActiveSignerData,
   ActiveSysvarComponent,
   ActiveSysvarData,
-  AddApplicationNodeDto,
-  AddCollectionNodeDto,
+  AddAccountNodeDto,
+  AddProgramNodeDto,
   AddSignerNodeDto,
   AddSysvarNodeDto,
-  ApplicationDockComponent,
-  CollectionDockComponent,
-  CollectionsInventoryDirective,
   InstructionDockComponent,
   LeftDockComponent,
+  ProgramDockComponent,
   RightDockComponent,
   SignerDockComponent,
   SysvarDockComponent,
   SysvarsInventoryDirective,
 } from '../sections';
 import { InstructionGraphApiService } from '../services';
-import {
-  InstructionArgumentsStore,
-  InstructionCollectionsStore,
-} from '../stores';
+import { InstructionAccountsStore, InstructionArgumentsStore } from '../stores';
 import {
   AttributeSeedData,
   instructionCanConnectFunction,
@@ -106,9 +103,9 @@ import {
 
 type ActiveType = GetActiveTypes<{
   signer: ActiveSignerData;
-  application: ActiveApplicationData;
+  program: ActiveProgramData;
   sysvar: ActiveSysvarData;
-  collection: ActiveCollectionData;
+  account: ActiveAccountData;
 }>;
 
 interface ViewModel {
@@ -155,7 +152,7 @@ const initialState: ViewModel = {
           (pgDeleteInstruction)="
             onDeleteGraph(
               instruction.data.workspaceId,
-              instruction.data.applicationId,
+              instruction.data.programId,
               $event,
               'instruction'
             )
@@ -180,23 +177,23 @@ const initialState: ViewModel = {
           (pgDeleteSigner)="onRemoveNode($event)"
         ></pg-signer-dock>
 
-        <pg-application-dock
-          *ngIf="selected !== null && selected.kind === 'application'"
+        <pg-program-dock
+          *ngIf="selected !== null && selected.kind === 'program'"
           class="fixed bottom-0 -translate-x-1/2 left-1/2"
-          [pgApplication]="selected"
-          (pgApplicationUnselected)="onUnselect()"
-          (pgUpdateApplication)="
+          [pgProgram]="selected"
+          (pgProgramUnselected)="onUnselect()"
+          (pgUpdateProgram)="
             onUpdateNode({
               id: $event.id,
-              kind: 'application',
+              kind: 'program',
               data: $event.changes
             })
           "
-          (pgUpdateApplicationThumbnail)="
+          (pgUpdateProgramThumbnail)="
             onUpdateNodeThumbnail($event.id, $event.fileId, $event.fileUrl)
           "
-          (pgDeleteApplication)="onRemoveNode($event)"
-        ></pg-application-dock>
+          (pgDeleteProgram)="onRemoveNode($event)"
+        ></pg-program-dock>
 
         <pg-sysvar-dock
           *ngIf="selected !== null && selected.kind === 'sysvar'"
@@ -216,56 +213,54 @@ const initialState: ViewModel = {
           (pgDeleteSysvar)="onRemoveNode($event)"
         ></pg-sysvar-dock>
 
-        <pg-collection-dock
-          *ngIf="selected !== null && selected.kind === 'collection'"
+        <pg-account-dock
+          *ngIf="selected !== null && selected.kind === 'account'"
           class="fixed bottom-0 -translate-x-1/2 left-1/2"
-          [pgCollection]="selected"
+          [pgAccount]="selected"
           [pgSeedOptions]="(seedOptions$ | ngrxPush) ?? []"
-          [pgInstructionCollections]="
-            (instructionCollections$ | ngrxPush) ?? []
-          "
-          (pgCollectionUnselected)="onUnselect()"
-          (pgUpdateCollection)="
+          [pgInstructionAccounts]="(instructionAccounts$ | ngrxPush) ?? []"
+          (pgAccountUnselected)="onUnselect()"
+          (pgUpdateAccount)="
             onUpdateNode({
               id: $event.id,
-              kind: 'collection',
+              kind: 'account',
               data: $event.changes
             })
           "
-          (pgUpdateCollectionThumbnail)="
+          (pgUpdateAccountThumbnail)="
             onUpdateNodeThumbnail($event.id, $event.fileId, $event.fileUrl)
           "
-          (pgDeleteCollection)="onRemoveNode($event)"
-          (pgUpdateCollectionSeeds)="
+          (pgDeleteAccount)="onRemoveNode($event)"
+          (pgUpdateAccountSeeds)="
             onUpdateNode({
               id: $event.id,
-              kind: 'collection',
+              kind: 'account',
               data: { seeds: $event.seeds }
             })
           "
-        ></pg-collection-dock>
+        ></pg-account-dock>
       </ng-container>
 
       <pg-right-dock
         class="fixed bottom-0 right-0"
         *ngIf="instruction !== null"
-        (pgToggleApplicationsInventoryModal)="applicationsInventory.toggle()"
+        (pgToggleProgramsInventoryModal)="programsInventory.toggle()"
         (pgToggleSysvarsInventoryModal)="sysvarsInventory.toggle()"
       >
         <ng-container
-          pgApplicationsInventory
-          #applicationsInventory="modal"
+          pgProgramsInventory
+          #programsInventory="modal"
           [pgInstallations]="(installations$ | ngrxPush) ?? []"
-          (pgInstallApplication)="
-            onInstallApplication(
+          (pgInstallProgram)="
+            onInstallProgram(
               instruction.data.workspaceId,
-              instruction.data.applicationId,
+              instruction.data.programId,
               $event
             )
           "
           (pgTapInstallation)="
             setActive({
-              kind: 'application',
+              kind: 'program',
               data: {
                 id: $event.id,
                 name: $event.data.graph.data.name,
@@ -293,15 +288,15 @@ const initialState: ViewModel = {
       <pg-left-dock
         class="fixed bottom-0 left-0"
         *ngIf="instruction$ | ngrxPush as instruction"
-        (pgToggleCollectionsInventoryModal)="collectionsInventory.toggle()"
+        (pgToggleAccountsInventoryModal)="accountsInventory.toggle()"
       >
         <ng-container
-          pgCollectionsInventory
-          #collectionsInventory="modal"
-          [pgCollections]="(collections$ | ngrxPush) ?? []"
-          (pgTapCollection)="
+          pgAccountsInventory
+          #accountsInventory="modal"
+          [pgAccounts]="(accounts$ | ngrxPush) ?? []"
+          (pgTapAccount)="
             setActive({
-              kind: 'collection',
+              kind: 'account',
               data: {
                 id: $event.id,
                 name: $event.data.name,
@@ -322,7 +317,7 @@ const initialState: ViewModel = {
           (pgAddNode)="
             onAddSignerNode(
               instruction.data.workspaceId,
-              instruction.data.applicationId,
+              instruction.data.programId,
               instruction.id,
               $event
             )
@@ -330,24 +325,22 @@ const initialState: ViewModel = {
           (pgDeactivate)="setActive(null)"
         ></pg-active-signer>
 
-        <pg-active-application
+        <pg-active-program
           *ngIf="
-            instruction !== null &&
-            active !== null &&
-            active.kind === 'application'
+            instruction !== null && active !== null && active.kind === 'program'
           "
           [pgActive]="active.data"
           [pgClickEvent]="(drawerClick$ | ngrxPush) ?? null"
           (pgAddNode)="
-            onAddApplicationNode(
+            onAddProgramNode(
               instruction.data.workspaceId,
-              instruction.data.applicationId,
+              instruction.data.programId,
               instruction.id,
               $event
             )
           "
           (pgDeactivate)="setActive(null)"
-        ></pg-active-application>
+        ></pg-active-program>
 
         <pg-active-sysvar
           *ngIf="
@@ -358,7 +351,7 @@ const initialState: ViewModel = {
           (pgAddNode)="
             onAddSysvarNode(
               instruction.data.workspaceId,
-              instruction.data.applicationId,
+              instruction.data.programId,
               instruction.id,
               $event
             )
@@ -366,27 +359,23 @@ const initialState: ViewModel = {
           (pgDeactivate)="setActive(null)"
         ></pg-active-sysvar>
 
-        <pg-active-collection
+        <pg-active-account
           *ngIf="
-            instruction !== null &&
-            active !== null &&
-            active.kind === 'collection'
+            instruction !== null && active !== null && active.kind === 'account'
           "
           [pgActive]="active.data"
-          [pgInstructionCollections]="
-            (instructionCollections$ | ngrxPush) ?? []
-          "
+          [pgInstructionAccounts]="(instructionAccounts$ | ngrxPush) ?? []"
           [pgClickEvent]="(drawerClick$ | ngrxPush) ?? null"
           (pgAddNode)="
-            onAddCollectionNode(
+            onAddAccountNode(
               instruction.data.workspaceId,
-              instruction.data.applicationId,
+              instruction.data.programId,
               instruction.id,
               $event
             )
           "
           (pgDeactivate)="setActive(null)"
-        ></pg-active-collection>
+        ></pg-active-account>
       </ng-container>
     </ng-container>
   `,
@@ -397,26 +386,26 @@ const initialState: ViewModel = {
     LetModule,
     BackgroundImageZoomDirective,
     BackgroundImageMoveDirective,
-    ApplicationsInventoryDirective,
+    ProgramsInventoryDirective,
     SysvarsInventoryDirective,
-    CollectionsInventoryDirective,
+    AccountsInventoryDirective,
     InstructionDockComponent,
     SignerDockComponent,
     SysvarDockComponent,
-    CollectionDockComponent,
-    ApplicationDockComponent,
+    AccountDockComponent,
+    ProgramDockComponent,
     RightDockComponent,
     LeftDockComponent,
     ActiveSignerComponent,
-    ActiveApplicationComponent,
+    ActiveProgramComponent,
     ActiveSysvarComponent,
-    ActiveCollectionComponent,
+    ActiveAccountComponent,
   ],
   providers: [
     provideComponentStore(DrawerStore),
     provideComponentStore(InstallationsStore),
-    provideComponentStore(CollectionsStore),
-    provideComponentStore(InstructionCollectionsStore),
+    provideComponentStore(AccountsStore),
+    provideComponentStore(InstructionAccountsStore),
     provideComponentStore(InstructionArgumentsStore),
   ],
 })
@@ -436,17 +425,13 @@ export class InstructionPageComponent
     >
   );
   private readonly _installationsStore = inject(InstallationsStore);
-  private readonly _collectionsStore = inject(CollectionsStore);
-  private readonly _instructionCollectionsStore = inject(
-    InstructionCollectionsStore
-  );
+  private readonly _accountsStore = inject(AccountsStore);
+  private readonly _instructionAccountsStore = inject(InstructionAccountsStore);
   private readonly _instructionArgumentsStore = inject(
     InstructionArgumentsStore
   );
-  private readonly _applicationApiService = inject(ApplicationApiService);
-  private readonly _applicationGraphApiService = inject(
-    ApplicationGraphApiService
-  );
+  private readonly _programApiService = inject(ProgramApiService);
+  private readonly _programGraphApiService = inject(ProgramGraphApiService);
   private readonly _instructionGraphApiService = inject(
     InstructionGraphApiService
   );
@@ -454,8 +439,8 @@ export class InstructionPageComponent
   readonly workspaceId$ = this._activatedRoute.paramMap.pipe(
     map((paramMap) => paramMap.get('workspaceId'))
   );
-  readonly applicationId$ = this._activatedRoute.paramMap.pipe(
-    map((paramMap) => paramMap.get('applicationId'))
+  readonly programId$ = this._activatedRoute.paramMap.pipe(
+    map((paramMap) => paramMap.get('programId'))
   );
   readonly instructionId$ = this._activatedRoute.paramMap.pipe(
     map((paramMap) => paramMap.get('instructionId'))
@@ -471,43 +456,41 @@ export class InstructionPageComponent
   readonly zoomSize$ = this._instructionDrawerStore.zoomSize$;
   readonly panDrag$ = this._instructionDrawerStore.panDrag$;
   readonly drawMode$ = this._instructionDrawerStore.drawMode$;
-  readonly collections$ = this.select(
-    this._collectionsStore.collections$,
-    this._installationsStore.collections$,
-    (collections, installedCollections) => {
-      if (isNull(collections) || isNull(installedCollections)) {
+  readonly accounts$ = this.select(
+    this._accountsStore.accounts$,
+    this._installationsStore.accounts$,
+    (accounts, installedAccounts) => {
+      if (isNull(accounts) || isNull(installedAccounts)) {
         return [];
       }
 
-      return collections.concat(installedCollections);
+      return accounts.concat(installedAccounts);
     }
   );
-  readonly instructionCollections$ =
-    this._instructionCollectionsStore.collections$;
+  readonly instructionAccounts$ = this._instructionAccountsStore.accounts$;
   readonly seedOptions$ = this.select(
-    this._instructionCollectionsStore.collections$,
-    this.collections$,
+    this._instructionAccountsStore.accounts$,
+    this.accounts$,
     this._instructionArgumentsStore.instructionArguments$,
-    (instructionCollections, collections, instructionArguments) => {
-      const attributeSeedOptions: SeedType[] = instructionCollections
-        .reduce<AttributeSeedData[]>((attributes, instructionCollection) => {
-          const collection =
-            collections.find(
-              ({ id }) => id === instructionCollection.data.ref.id
-            ) ?? null;
+    (instructionAccounts, accounts, instructionArguments) => {
+      const attributeSeedOptions: SeedType[] = instructionAccounts
+        .reduce<AttributeSeedData[]>((attributes, instructionAccount) => {
+          const account =
+            accounts.find(({ id }) => id === instructionAccount.data.ref.id) ??
+            null;
 
-          if (isNull(collection)) {
+          if (isNull(account)) {
             return attributes;
           }
 
           return attributes.concat(
-            collection.fields.map((field) => ({
+            account.fields.map((field) => ({
               id: field.id,
               name: field.data.name,
-              collection: {
-                id: instructionCollection.id,
-                name: instructionCollection.data.name,
-                ref: collection.id,
+              account: {
+                id: instructionAccount.id,
+                name: instructionAccount.data.name,
+                ref: account.id,
               },
             }))
           );
@@ -594,15 +577,11 @@ export class InstructionPageComponent
   >(
     concatMap((event) =>
       of(null).pipe(
-        withLatestFrom(
-          this.workspaceId$,
-          this.applicationId$,
-          this.instructionId$
-        ),
-        concatMap(([, workspaceId, applicationId, instructionId]) => {
+        withLatestFrom(this.workspaceId$, this.programId$, this.instructionId$),
+        concatMap(([, workspaceId, programId, instructionId]) => {
           if (
             isNull(workspaceId) ||
-            isNull(applicationId) ||
+            isNull(programId) ||
             isNull(instructionId)
           ) {
             return EMPTY;
@@ -613,10 +592,10 @@ export class InstructionPageComponent
             instructionId,
             {
               changes: event.payload.changes,
-              referenceIds: [applicationId, instructionId],
+              referenceIds: [programId, instructionId],
               kind: event.payload.kind,
-              graphId: applicationId,
-              parentIds: [workspaceId, applicationId],
+              graphId: programId,
+              parentIds: [workspaceId, programId],
             }
           );
         })
@@ -629,15 +608,11 @@ export class InstructionPageComponent
   >(
     concatMap((event) =>
       of(null).pipe(
-        withLatestFrom(
-          this.workspaceId$,
-          this.applicationId$,
-          this.instructionId$
-        ),
-        concatMap(([, workspaceId, applicationId, instructionId]) => {
+        withLatestFrom(this.workspaceId$, this.programId$, this.instructionId$),
+        concatMap(([, workspaceId, programId, instructionId]) => {
           if (
             isNull(workspaceId) ||
-            isNull(applicationId) ||
+            isNull(programId) ||
             isNull(instructionId)
           ) {
             return EMPTY;
@@ -650,9 +625,9 @@ export class InstructionPageComponent
               fileId: event.payload.fileId,
               fileUrl: event.payload.fileUrl,
               kind: event.payload.kind,
-              referenceIds: [applicationId, instructionId],
-              graphId: applicationId,
-              parentIds: [workspaceId, applicationId],
+              referenceIds: [programId, instructionId],
+              graphId: programId,
+              parentIds: [workspaceId, programId],
             }
           );
         })
@@ -669,15 +644,11 @@ export class InstructionPageComponent
   >(
     concatMap((event) =>
       of(null).pipe(
-        withLatestFrom(
-          this.workspaceId$,
-          this.applicationId$,
-          this.instructionId$
-        ),
-        concatMap(([, workspaceId, applicationId, instructionId]) => {
+        withLatestFrom(this.workspaceId$, this.programId$, this.instructionId$),
+        concatMap(([, workspaceId, programId, instructionId]) => {
           if (
             isNull(instructionId) ||
-            isNull(applicationId) ||
+            isNull(programId) ||
             isNull(workspaceId)
           ) {
             return EMPTY;
@@ -688,7 +659,7 @@ export class InstructionPageComponent
             {
               ...event.payload.data,
               id: event.payload.id,
-              parentIds: [workspaceId, applicationId, instructionId],
+              parentIds: [workspaceId, programId, instructionId],
               kind: event.payload.kind,
               graphId: instructionId,
               referenceIds: [instructionId, event.payload.id],
@@ -708,15 +679,11 @@ export class InstructionPageComponent
   >(
     concatMap((event) =>
       of(null).pipe(
-        withLatestFrom(
-          this.workspaceId$,
-          this.applicationId$,
-          this.instructionId$
-        ),
-        concatMap(([, workspaceId, applicationId, instructionId]) => {
+        withLatestFrom(this.workspaceId$, this.programId$, this.instructionId$),
+        concatMap(([, workspaceId, programId, instructionId]) => {
           if (
             isNull(workspaceId) ||
-            isNull(applicationId) ||
+            isNull(programId) ||
             isNull(instructionId)
           ) {
             return EMPTY;
@@ -730,7 +697,7 @@ export class InstructionPageComponent
             {
               changes: event.payload.data,
               graphId: instructionId,
-              parentIds: [workspaceId, applicationId, instructionId],
+              parentIds: [workspaceId, programId, instructionId],
               referenceIds: [instructionId, event.payload.id],
               kind: event.payload.kind,
             }
@@ -745,15 +712,11 @@ export class InstructionPageComponent
   >(
     concatMap((event) =>
       of(null).pipe(
-        withLatestFrom(
-          this.workspaceId$,
-          this.applicationId$,
-          this.instructionId$
-        ),
-        concatMap(([, workspaceId, applicationId, instructionId]) => {
+        withLatestFrom(this.workspaceId$, this.programId$, this.instructionId$),
+        concatMap(([, workspaceId, programId, instructionId]) => {
           if (
             isNull(workspaceId) ||
-            isNull(applicationId) ||
+            isNull(programId) ||
             isNull(instructionId)
           ) {
             return EMPTY;
@@ -774,7 +737,7 @@ export class InstructionPageComponent
               fileId: event.payload.fileId,
               fileUrl: event.payload.fileUrl,
               graphId: instructionId,
-              parentIds: [workspaceId, applicationId, instructionId],
+              parentIds: [workspaceId, programId, instructionId],
               referenceIds: [instructionId, event.payload.id],
               kind: event.payload.kind,
             }
@@ -789,15 +752,11 @@ export class InstructionPageComponent
   >(
     concatMap((event) =>
       of(null).pipe(
-        withLatestFrom(
-          this.workspaceId$,
-          this.applicationId$,
-          this.instructionId$
-        ),
-        concatMap(([, workspaceId, applicationId, instructionId]) => {
+        withLatestFrom(this.workspaceId$, this.programId$, this.instructionId$),
+        concatMap(([, workspaceId, programId, instructionId]) => {
           if (
             isNull(workspaceId) ||
-            isNull(applicationId) ||
+            isNull(programId) ||
             isNull(instructionId)
           ) {
             return EMPTY;
@@ -811,7 +770,7 @@ export class InstructionPageComponent
             {
               graphId: instructionId,
               kind: event.payload.kind,
-              parentIds: [workspaceId, applicationId, instructionId],
+              parentIds: [workspaceId, programId, instructionId],
               referenceIds: [instructionId, event.payload.id],
             }
           );
@@ -823,16 +782,12 @@ export class InstructionPageComponent
   private readonly _handleAddEdgeSuccess = this.effect<AddEdgeSuccessEvent>(
     concatMap((event) =>
       of(null).pipe(
-        withLatestFrom(
-          this.workspaceId$,
-          this.applicationId$,
-          this.instructionId$
-        ),
-        concatMap(([, workspaceId, applicationId, instructionId]) => {
+        withLatestFrom(this.workspaceId$, this.programId$, this.instructionId$),
+        concatMap(([, workspaceId, programId, instructionId]) => {
           if (
             isNull(instructionId) ||
             isNull(workspaceId) ||
-            isNull(applicationId)
+            isNull(programId)
           ) {
             return EMPTY;
           }
@@ -843,7 +798,7 @@ export class InstructionPageComponent
               id: event.payload.id,
               source: event.payload.source,
               target: event.payload.target,
-              parentIds: [workspaceId, applicationId, instructionId],
+              parentIds: [workspaceId, programId, instructionId],
               graphId: instructionId,
               referenceIds: [instructionId, event.payload.id],
             }
@@ -859,14 +814,14 @@ export class InstructionPageComponent
         of(null).pipe(
           withLatestFrom(
             this.workspaceId$,
-            this.applicationId$,
+            this.programId$,
             this.instructionId$
           ),
-          concatMap(([, workspaceId, applicationId, instructionId]) => {
+          concatMap(([, workspaceId, programId, instructionId]) => {
             if (
               isNull(instructionId) ||
               isNull(workspaceId) ||
-              isNull(applicationId)
+              isNull(programId)
             ) {
               return EMPTY;
             }
@@ -875,7 +830,7 @@ export class InstructionPageComponent
               environment.clientId,
               event.payload,
               {
-                parentIds: [workspaceId, applicationId, instructionId],
+                parentIds: [workspaceId, programId, instructionId],
                 graphId: instructionId,
                 referenceIds: [instructionId, event.payload],
               }
@@ -887,20 +842,16 @@ export class InstructionPageComponent
 
   private readonly _handleServerGraphUpdate = this.effect<{
     workspaceId: Option<string>;
-    applicationId: Option<string>;
+    programId: Option<string>;
     instructionId: Option<string>;
   }>(
-    switchMap(({ workspaceId, applicationId, instructionId }) => {
-      if (
-        isNull(workspaceId) ||
-        isNull(applicationId) ||
-        isNull(instructionId)
-      ) {
+    switchMap(({ workspaceId, programId, instructionId }) => {
+      if (isNull(workspaceId) || isNull(programId) || isNull(instructionId)) {
         return EMPTY;
       }
 
       return this._instructionGraphApiService
-        .listen(workspaceId, applicationId, instructionId, [
+        .listen(workspaceId, programId, instructionId, [
           'updateGraphSuccess',
           'updateGraphThumbnailSuccess',
         ])
@@ -917,22 +868,16 @@ export class InstructionPageComponent
 
   private readonly _handleServerGraphDelete = this.effect<{
     workspaceId: Option<string>;
-    applicationId: Option<string>;
+    programId: Option<string>;
     instructionId: Option<string>;
   }>(
-    switchMap(({ workspaceId, applicationId, instructionId }) => {
-      if (
-        isNull(workspaceId) ||
-        isNull(applicationId) ||
-        isNull(instructionId)
-      ) {
+    switchMap(({ workspaceId, programId, instructionId }) => {
+      if (isNull(workspaceId) || isNull(programId) || isNull(instructionId)) {
         return EMPTY;
       }
 
       return this._instructionGraphApiService
-        .listen(workspaceId, applicationId, instructionId, [
-          'deleteNodeSuccess',
-        ])
+        .listen(workspaceId, programId, instructionId, ['deleteNodeSuccess'])
         .pipe(
           filter((event) => event['clientId'] !== environment.clientId),
           tap((event) => {
@@ -940,8 +885,8 @@ export class InstructionPageComponent
               this._router.navigate([
                 '/workspaces',
                 workspaceId,
-                'applications',
-                applicationId,
+                'programs',
+                programId,
               ]);
             }
           })
@@ -951,22 +896,16 @@ export class InstructionPageComponent
 
   private readonly _handleServerNodeCreate = this.effect<{
     workspaceId: Option<string>;
-    applicationId: Option<string>;
+    programId: Option<string>;
     instructionId: Option<string>;
   }>(
-    switchMap(({ workspaceId, applicationId, instructionId }) => {
-      if (
-        isNull(workspaceId) ||
-        isNull(applicationId) ||
-        isNull(instructionId)
-      ) {
+    switchMap(({ workspaceId, programId, instructionId }) => {
+      if (isNull(workspaceId) || isNull(programId) || isNull(instructionId)) {
         return EMPTY;
       }
 
       return this._instructionGraphApiService
-        .listen(workspaceId, applicationId, instructionId, [
-          'createNodeSuccess',
-        ])
+        .listen(workspaceId, programId, instructionId, ['createNodeSuccess'])
         .pipe(
           filter((event) => event['clientId'] !== environment.clientId),
           tap((event) => {
@@ -983,20 +922,16 @@ export class InstructionPageComponent
 
   private readonly _handleServerNodeUpdate = this.effect<{
     workspaceId: Option<string>;
-    applicationId: Option<string>;
+    programId: Option<string>;
     instructionId: Option<string>;
   }>(
-    switchMap(({ workspaceId, applicationId, instructionId }) => {
-      if (
-        isNull(workspaceId) ||
-        isNull(applicationId) ||
-        isNull(instructionId)
-      ) {
+    switchMap(({ workspaceId, programId, instructionId }) => {
+      if (isNull(workspaceId) || isNull(programId) || isNull(instructionId)) {
         return EMPTY;
       }
 
       return this._instructionGraphApiService
-        .listen(workspaceId, applicationId, instructionId, [
+        .listen(workspaceId, programId, instructionId, [
           'updateNodeSuccess',
           'updateNodeThumbnailSuccess',
         ])
@@ -1027,30 +962,24 @@ export class InstructionPageComponent
 
   private readonly _handleServerNodeDelete = this.effect<{
     workspaceId: Option<string>;
-    applicationId: Option<string>;
+    programId: Option<string>;
     instructionId: Option<string>;
   }>(
-    switchMap(({ workspaceId, applicationId, instructionId }) => {
-      if (
-        isNull(workspaceId) ||
-        isNull(applicationId) ||
-        isNull(instructionId)
-      ) {
+    switchMap(({ workspaceId, programId, instructionId }) => {
+      if (isNull(workspaceId) || isNull(programId) || isNull(instructionId)) {
         return EMPTY;
       }
 
       return this._instructionGraphApiService
-        .listen(workspaceId, applicationId, instructionId, [
-          'deleteNodeSuccess',
-        ])
+        .listen(workspaceId, programId, instructionId, ['deleteNodeSuccess'])
         .pipe(
           tap((event) => {
             if (event['payload'].id === instructionId) {
               this._router.navigate([
                 '/workspaces',
                 workspaceId,
-                'applications',
-                applicationId,
+                'programs',
+                programId,
               ]);
             }
 
@@ -1068,22 +997,16 @@ export class InstructionPageComponent
 
   private readonly _handleServerEdgeCreate = this.effect<{
     workspaceId: Option<string>;
-    applicationId: Option<string>;
+    programId: Option<string>;
     instructionId: Option<string>;
   }>(
-    switchMap(({ workspaceId, applicationId, instructionId }) => {
-      if (
-        isNull(workspaceId) ||
-        isNull(applicationId) ||
-        isNull(instructionId)
-      ) {
+    switchMap(({ workspaceId, programId, instructionId }) => {
+      if (isNull(workspaceId) || isNull(programId) || isNull(instructionId)) {
         return EMPTY;
       }
 
       return this._instructionGraphApiService
-        .listen(workspaceId, applicationId, instructionId, [
-          'createEdgeSuccess',
-        ])
+        .listen(workspaceId, programId, instructionId, ['createEdgeSuccess'])
         .pipe(
           filter((event) => event['clientId'] !== environment.clientId),
           tap((event) =>
@@ -1095,22 +1018,16 @@ export class InstructionPageComponent
 
   private readonly _handleServerEdgeDelete = this.effect<{
     workspaceId: Option<string>;
-    applicationId: Option<string>;
+    programId: Option<string>;
     instructionId: Option<string>;
   }>(
-    switchMap(({ workspaceId, applicationId, instructionId }) => {
-      if (
-        isNull(workspaceId) ||
-        isNull(applicationId) ||
-        isNull(instructionId)
-      ) {
+    switchMap(({ workspaceId, programId, instructionId }) => {
+      if (isNull(workspaceId) || isNull(programId) || isNull(instructionId)) {
         return EMPTY;
       }
 
       return this._instructionGraphApiService
-        .listen(workspaceId, applicationId, instructionId, [
-          'deleteEdgeSuccess',
-        ])
+        .listen(workspaceId, programId, instructionId, ['deleteEdgeSuccess'])
         .pipe(
           tap((event) => {
             if (event['payload'].id === instructionId) {
@@ -1131,97 +1048,91 @@ export class InstructionPageComponent
 
   private readonly _loadDrawer = this.effect<{
     workspaceId: Option<string>;
-    applicationId: Option<string>;
+    programId: Option<string>;
     instructionId: Option<string>;
     drawerElement: HTMLElement;
   }>(
-    concatMap(
-      ({ workspaceId, applicationId, instructionId, drawerElement }) => {
-        if (
-          isNull(workspaceId) ||
-          isNull(applicationId) ||
-          isNull(instructionId)
-        ) {
-          return EMPTY;
-        }
-
-        return defer(() =>
-          from(
-            this._instructionGraphApiService.getGraph(
-              workspaceId,
-              applicationId,
-              instructionId
-            )
-          ).pipe(
-            tap((graph) => {
-              if (graph) {
-                const drawer = new Drawer(
-                  graph,
-                  graph.nodes,
-                  [],
-                  drawerElement,
-                  instructionCanConnectFunction,
-                  instructionNodeLabelFunction
-                );
-                drawer.initialize();
-                this._instructionDrawerStore.setDrawer(drawer);
-
-                this._handleServerGraphUpdate({
-                  workspaceId,
-                  applicationId,
-                  instructionId,
-                });
-                this._handleServerGraphDelete({
-                  workspaceId,
-                  applicationId,
-                  instructionId,
-                });
-                this._handleServerNodeCreate({
-                  workspaceId,
-                  applicationId,
-                  instructionId,
-                });
-                this._handleServerNodeUpdate({
-                  workspaceId,
-                  applicationId,
-                  instructionId,
-                });
-                this._handleServerNodeDelete({
-                  workspaceId,
-                  applicationId,
-                  instructionId,
-                });
-                this._handleServerEdgeCreate({
-                  workspaceId,
-                  applicationId,
-                  instructionId,
-                });
-                this._handleServerEdgeDelete({
-                  workspaceId,
-                  applicationId,
-                  instructionId,
-                });
-                this._instructionCollectionsStore.setGraph(graph);
-              }
-            })
-          )
-        );
-      }
-    )
-  );
-
-  private readonly _loadApplicationGraph = this.effect<{
-    workspaceId: Option<string>;
-    applicationId: Option<string>;
-  }>(
-    concatMap(({ workspaceId, applicationId }) => {
-      if (isNull(workspaceId) || isNull(applicationId)) {
+    concatMap(({ workspaceId, programId, instructionId, drawerElement }) => {
+      if (isNull(workspaceId) || isNull(programId) || isNull(instructionId)) {
         return EMPTY;
       }
 
       return defer(() =>
         from(
-          this._applicationGraphApiService.getGraph(workspaceId, applicationId)
+          this._instructionGraphApiService.getGraph(
+            workspaceId,
+            programId,
+            instructionId
+          )
+        ).pipe(
+          tap((graph) => {
+            if (graph) {
+              const drawer = new Drawer(
+                graph,
+                graph.nodes,
+                [],
+                drawerElement,
+                instructionCanConnectFunction,
+                instructionNodeLabelFunction
+              );
+              drawer.initialize();
+              this._instructionDrawerStore.setDrawer(drawer);
+
+              this._handleServerGraphUpdate({
+                workspaceId,
+                programId,
+                instructionId,
+              });
+              this._handleServerGraphDelete({
+                workspaceId,
+                programId,
+                instructionId,
+              });
+              this._handleServerNodeCreate({
+                workspaceId,
+                programId,
+                instructionId,
+              });
+              this._handleServerNodeUpdate({
+                workspaceId,
+                programId,
+                instructionId,
+              });
+              this._handleServerNodeDelete({
+                workspaceId,
+                programId,
+                instructionId,
+              });
+              this._handleServerEdgeCreate({
+                workspaceId,
+                programId,
+                instructionId,
+              });
+              this._handleServerEdgeDelete({
+                workspaceId,
+                programId,
+                instructionId,
+              });
+              this._instructionAccountsStore.setGraph(graph);
+            }
+          })
+        )
+      );
+    })
+  );
+
+  private readonly _loadProgramGraph = this.effect<{
+    workspaceId: Option<string>;
+    programId: Option<string>;
+  }>(
+    concatMap(({ workspaceId, programId }) => {
+      if (isNull(workspaceId) || isNull(programId)) {
+        return EMPTY;
+      }
+
+      return defer(() =>
+        from(
+          this._programGraphApiService.getGraph(workspaceId, programId)
         ).pipe(
           tap((graph) => {
             if (graph) {
@@ -1275,9 +1186,9 @@ export class InstructionPageComponent
       this._instructionDrawerStore.event$.pipe(filter(isDeleteEdgeSuccessEvent))
     );
     this._installationsStore.setWorkspaceId(this.workspaceId$);
-    this._installationsStore.setApplicationId(this.applicationId$);
-    this._collectionsStore.setWorkspaceId(this.workspaceId$);
-    this._collectionsStore.setApplicationId(this.applicationId$);
+    this._installationsStore.setProgramId(this.programId$);
+    this._accountsStore.setWorkspaceId(this.workspaceId$);
+    this._accountsStore.setProgramId(this.programId$);
   }
 
   async ngAfterViewInit() {
@@ -1287,23 +1198,23 @@ export class InstructionPageComponent
       this._loadDrawer(
         this.select(
           this.workspaceId$,
-          this.applicationId$,
+          this.programId$,
           this.instructionId$,
-          (workspaceId, applicationId, instructionId) => ({
+          (workspaceId, programId, instructionId) => ({
             workspaceId,
-            applicationId,
+            programId,
             instructionId,
             drawerElement,
           })
         )
       );
-      this._loadApplicationGraph(
+      this._loadProgramGraph(
         this.select(
           this.workspaceId$,
-          this.applicationId$,
-          (workspaceId, applicationId) => ({
+          this.programId$,
+          (workspaceId, programId) => ({
             workspaceId,
-            applicationId,
+            programId,
           })
         )
       );
@@ -1324,7 +1235,7 @@ export class InstructionPageComponent
 
   onDeleteGraph(
     workspaceId: string,
-    applicationId: string,
+    programId: string,
     graphId: string,
     kind: InstructionGraphKind
   ) {
@@ -1332,8 +1243,8 @@ export class InstructionPageComponent
       .deleteNode(environment.clientId, graphId, {
         graphId,
         kind,
-        parentIds: [workspaceId, applicationId],
-        referenceIds: [applicationId, graphId],
+        parentIds: [workspaceId, programId],
+        referenceIds: [programId, graphId],
       })
       .subscribe();
   }
@@ -1344,7 +1255,7 @@ export class InstructionPageComponent
 
   onAddSignerNode(
     workspaceId: string,
-    applicationId: string,
+    programId: string,
     instructionId: string,
     { payload, options }: AddSignerNodeDto
   ) {
@@ -1354,7 +1265,7 @@ export class InstructionPageComponent
         data: {
           ...payload.data,
           workspaceId,
-          applicationId,
+          programId,
           instructionId,
         },
       },
@@ -1362,11 +1273,11 @@ export class InstructionPageComponent
     );
   }
 
-  onAddApplicationNode(
+  onAddProgramNode(
     workspaceId: string,
-    applicationId: string,
+    programId: string,
     instructionId: string,
-    { payload, options }: AddApplicationNodeDto
+    { payload, options }: AddProgramNodeDto
   ) {
     this._instructionDrawerStore.addNode(
       {
@@ -1374,7 +1285,7 @@ export class InstructionPageComponent
         data: {
           ...payload.data,
           workspaceId,
-          applicationId,
+          programId,
           instructionId,
         },
       },
@@ -1384,7 +1295,7 @@ export class InstructionPageComponent
 
   onAddSysvarNode(
     workspaceId: string,
-    applicationId: string,
+    programId: string,
     instructionId: string,
     { payload, options }: AddSysvarNodeDto
   ) {
@@ -1394,7 +1305,7 @@ export class InstructionPageComponent
         data: {
           ...payload.data,
           workspaceId,
-          applicationId,
+          programId,
           instructionId,
         },
       },
@@ -1402,11 +1313,11 @@ export class InstructionPageComponent
     );
   }
 
-  onAddCollectionNode(
+  onAddAccountNode(
     workspaceId: string,
-    applicationId: string,
+    programId: string,
     instructionId: string,
-    { payload, options }: AddCollectionNodeDto
+    { payload, options }: AddAccountNodeDto
   ) {
     this._instructionDrawerStore.addNode(
       {
@@ -1414,7 +1325,7 @@ export class InstructionPageComponent
         data: {
           ...payload.data,
           workspaceId,
-          applicationId,
+          programId,
           instructionId,
         },
       },
@@ -1434,18 +1345,13 @@ export class InstructionPageComponent
     this._instructionDrawerStore.removeNode(nodeId);
   }
 
-  onInstallApplication(
+  onInstallProgram(
     workspaceId: string,
-    applicationId: string,
-    payload: InstallApplicationDto
+    programId: string,
+    payload: InstallProgramDto
   ) {
-    this._applicationApiService
-      .installApplication(
-        environment.clientId,
-        workspaceId,
-        applicationId,
-        payload
-      )
+    this._programApiService
+      .installProgram(environment.clientId, workspaceId, programId, payload)
       .subscribe();
   }
 }

@@ -74,14 +74,14 @@ bootstrapApplication(AppComponent, {
                 ),
             },
             {
-              path: 'workspaces/:workspaceId/applications/:applicationId',
+              path: 'workspaces/:workspaceId/programs/:programId',
               loadComponent: () =>
-                import('./app/application/pages').then(
-                  (m) => m.ApplicationPageComponent
+                import('./app/program/pages').then(
+                  (m) => m.ProgramPageComponent
                 ),
             },
             {
-              path: 'workspaces/:workspaceId/applications/:applicationId/instructions/:instructionId',
+              path: 'workspaces/:workspaceId/programs/:programId/instructions/:instructionId',
               loadComponent: () =>
                 import('./app/instruction/pages').then(
                   (m) => m.InstructionPageComponent

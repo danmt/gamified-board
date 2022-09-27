@@ -1,16 +1,16 @@
-import { FieldType } from '../../application/utils';
 import {
   GetNodeTypes,
   GetPartialNodeDataTypes,
   Graph,
   Node,
 } from '../../drawer/utils';
+import { FieldType } from '../../program/utils';
 import { Entity, GetTypeUnion, Option } from '../../shared/utils';
 
 export type InstructionDto = Entity<{
   name: string;
   workspaceId: string;
-  applicationId: string;
+  programId: string;
   thumbnailUrl: string;
 }>;
 
@@ -18,18 +18,18 @@ export interface InstructionGraphData {
   name: string;
   thumbnailUrl: string;
   workspaceId: string;
-  applicationId: string;
+  programId: string;
 }
 
-export type CollectionMethodType = 'CREATE' | 'UPDATE' | 'READ' | 'DELETE';
+export type AccountMethodType = 'CREATE' | 'UPDATE' | 'READ' | 'DELETE';
 
-export interface CollectionNodeData {
+export interface AccountNodeData {
   name: string;
   thumbnailUrl: string;
   workspaceId: string;
-  applicationId: string;
+  programId: string;
   instructionId: string;
-  method: CollectionMethodType;
+  method: AccountMethodType;
   ref: {
     id: string;
     name: string;
@@ -44,16 +44,16 @@ export interface SignerNodeData {
   name: string;
   thumbnailUrl: string;
   workspaceId: string;
-  applicationId: string;
+  programId: string;
   instructionId: string;
   isMutable: boolean;
 }
 
-export interface ApplicationNodeData {
+export interface ProgramNodeData {
   name: string;
   thumbnailUrl: string;
   workspaceId: string;
-  applicationId: string;
+  programId: string;
   instructionId: string;
   ref: {
     id: string;
@@ -65,7 +65,7 @@ export interface SysvarNodeData {
   name: string;
   thumbnailUrl: string;
   workspaceId: string;
-  applicationId: string;
+  programId: string;
   instructionId: string;
   ref: {
     name: string;
@@ -73,21 +73,21 @@ export interface SysvarNodeData {
 }
 
 export type InstructionNodeData =
-  | ApplicationNodeData
-  | CollectionNodeData
+  | ProgramNodeData
+  | AccountNodeData
   | SignerNodeData
   | SysvarNodeData;
 
 export type InstructionNodesData = {
-  application: ApplicationNodeData;
+  program: ProgramNodeData;
   signer: SignerNodeData;
-  collection: CollectionNodeData;
+  account: AccountNodeData;
   sysvar: SysvarNodeData;
 };
 
-export type ApplicationNode = Node<'application', ApplicationNodeData>;
+export type ProgramNode = Node<'program', ProgramNodeData>;
 export type SignerNode = Node<'signer', SignerNodeData>;
-export type CollectionNode = Node<'collection', CollectionNodeData>;
+export type AccountNode = Node<'account', AccountNodeData>;
 export type SysvarNode = Node<'sysvar', SysvarNodeData>;
 
 export type InstructionNode = GetNodeTypes<
@@ -100,11 +100,7 @@ export type PartialInstructionNode = GetPartialNodeDataTypes<
   InstructionNodeData,
   InstructionNodesData
 >;
-export type InstructionNodeKinds =
-  | 'application'
-  | 'signer'
-  | 'collection'
-  | 'sysvar';
+export type InstructionNodeKinds = 'program' | 'signer' | 'account' | 'sysvar';
 export type InstructionGraphKind = 'instruction';
 
 export type InstructionGraph = Graph<
@@ -115,10 +111,8 @@ export type InstructionGraph = Graph<
   InstructionGraphData
 >;
 
-export const isCollectionNode = (
-  node: InstructionNode
-): node is CollectionNode => {
-  return node.kind === 'collection';
+export const isAccountNode = (node: InstructionNode): node is AccountNode => {
+  return node.kind === 'account';
 };
 
 export interface ArgumentSeedData {
@@ -129,7 +123,7 @@ export interface ArgumentSeedData {
 export interface AttributeSeedData {
   id: string;
   name: string;
-  collection: {
+  account: {
     id: string;
     name: string;
   };

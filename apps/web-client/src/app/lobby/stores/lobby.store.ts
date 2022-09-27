@@ -45,7 +45,7 @@ export class LobbyStore
             this.patchState({
               workspaces: workspaces.map((workspace) => ({
                 ...workspace,
-                applications: [],
+                programs: [],
               })),
             }),
           (error) => this._handleError(error)

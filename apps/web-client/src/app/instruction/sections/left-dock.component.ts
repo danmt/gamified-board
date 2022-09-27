@@ -18,14 +18,14 @@ import { KeyListenerDirective } from '../../shared/directives';
           class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
           style="font-size: 0.5rem; line-height: 0.5rem"
           pgKeyListener="KeyZ"
-          (pgKeyDown)="onToggleCollectionsInventoryModal()"
+          (pgKeyDown)="onToggleAccountsInventoryModal()"
         >
           z
         </span>
 
         <pg-square-button
-          pgThumbnailUrl="assets/generic/collection.png"
-          (click)="onToggleCollectionsInventoryModal()"
+          pgThumbnailUrl="assets/generic/account.png"
+          (click)="onToggleAccountsInventoryModal()"
         ></pg-square-button>
       </div>
     </pg-corner-dock>
@@ -39,9 +39,9 @@ import { KeyListenerDirective } from '../../shared/directives';
   ],
 })
 export class LeftDockComponent {
-  @Output() pgToggleCollectionsInventoryModal = new EventEmitter();
+  @Output() pgToggleAccountsInventoryModal = new EventEmitter();
 
-  onToggleCollectionsInventoryModal() {
-    this.pgToggleCollectionsInventoryModal.emit();
+  onToggleAccountsInventoryModal() {
+    this.pgToggleAccountsInventoryModal.emit();
   }
 }

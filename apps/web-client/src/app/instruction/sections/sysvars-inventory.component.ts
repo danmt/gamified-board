@@ -113,7 +113,7 @@ export class SysvarsInventoryDirective implements OnDestroy {
             cdkOverlayOrigin
             #trigger="cdkOverlayOrigin"
             pgHover
-            #collectionButton="hovered"
+            #accountButton="hovered"
           >
             <img
               class="w-full h-full object-cover"
@@ -126,7 +126,7 @@ export class SysvarsInventoryDirective implements OnDestroy {
             cdkConnectedOverlay
             [cdkConnectedOverlayOrigin]="trigger"
             [cdkConnectedOverlayOpen]="
-              (collectionButton.isHovered$ | ngrxPush) ?? false
+              (accountButton.isHovered$ | ngrxPush) ?? false
             "
             [cdkConnectedOverlayPositions]="[
               {

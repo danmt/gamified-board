@@ -14,10 +14,10 @@ import {
 import { concatMap, defer, filter, from, map } from 'rxjs';
 import { GraphApiService } from '../../drawer/services';
 import { fromSnapshot, Option } from '../../shared/utils';
-import { InstructionGraph, InstructionGraphData } from '../utils';
+import { ProgramGraph, ProgramGraphData } from '../utils';
 
 @Injectable({ providedIn: 'root' })
-export class InstructionGraphApiService extends GraphApiService<InstructionGraphData> {
+export class ProgramGraphApiService extends GraphApiService<ProgramGraphData> {
   private readonly _firestore = inject(Firestore);
 
   constructor() {
@@ -26,12 +26,11 @@ export class InstructionGraphApiService extends GraphApiService<InstructionGraph
 
   async getGraph(
     workspaceId: string,
-    programId: string,
-    instructionId: string
-  ): Promise<Option<InstructionGraph>> {
+    programId: string
+  ): Promise<Option<ProgramGraph>> {
     const graphRef = doc(
       this._firestore,
-      `graphs/${workspaceId}/nodes/${programId}/nodes/${instructionId}`
+      `graphs/${workspaceId}/nodes/${programId}`
     );
 
     const graph = await getDoc(graphRef);
@@ -44,14 +43,14 @@ export class InstructionGraphApiService extends GraphApiService<InstructionGraph
     const nodesSnapshot = await getDocs(
       collection(
         this._firestore,
-        `graphs/${workspaceId}/nodes/${programId}/nodes/${instructionId}/nodes`
+        `graphs/${workspaceId}/nodes/${programId}/nodes`
       )
     );
 
     const edgesSnapshot = await getDocs(
       collection(
         this._firestore,
-        `graphs/${workspaceId}/nodes/${programId}/edges/${instructionId}/nodes`
+        `graphs/${workspaceId}/nodes/${programId}/edges`
       )
     );
 
@@ -82,20 +81,10 @@ export class InstructionGraphApiService extends GraphApiService<InstructionGraph
     };
   }
 
-  listen(
-    workspaceId: string,
-    programId: string,
-    instructionId: string,
-    types: string[]
-  ) {
+  listen(workspaceId: string, programId: string, types: string[]) {
     return defer(() =>
       from(
-        getDoc(
-          doc(
-            this._firestore,
-            `graphs/${workspaceId}/nodes/${programId}/nodes/${instructionId}`
-          )
-        )
+        getDoc(doc(this._firestore, `graphs/${workspaceId}/nodes/${programId}`))
       ).pipe(
         concatMap((graph) =>
           defer(() =>
@@ -112,7 +101,7 @@ export class InstructionGraphApiService extends GraphApiService<InstructionGraph
         fromSnapshot(
           query(
             collection(this._firestore, 'events'),
-            where('referenceIds', 'array-contains', instructionId),
+            where('referenceIds', 'array-contains', programId),
             where('type', 'in', types),
             orderBy('createdAt', 'asc'),
             startAfter(lastEvent),

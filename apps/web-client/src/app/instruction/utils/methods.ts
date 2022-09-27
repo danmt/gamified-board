@@ -25,7 +25,7 @@ export const instructionNodeLabelFunction = (node: InstructionNode) => {
       `;
     }
 
-    case 'collection': {
+    case 'account': {
       return `
         <div class="w-[280px] h-[85px] flex gap-2 items-center px-8 bg-[length:280px_85px] bg-[url('assets/images/node.png')] z-50">
           <div 
@@ -59,7 +59,7 @@ export const instructionNodeLabelFunction = (node: InstructionNode) => {
       `;
     }
 
-    case 'application': {
+    case 'program': {
       return `
         <div class="w-[280px] h-[85px] flex gap-2 items-center px-8 bg-[length:280px_85px] bg-[url('assets/images/node.png')] z-50">
           <div 

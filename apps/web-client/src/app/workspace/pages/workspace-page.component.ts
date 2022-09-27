@@ -58,10 +58,10 @@ import {
 } from '../../shared/utils';
 import { UpdateWorkspaceSubmit } from '../components';
 import {
-  ActiveApplicationComponent,
-  ActiveApplicationData,
-  AddApplicationNodeDto,
-  ApplicationDockComponent,
+  ActiveProgramComponent,
+  ActiveProgramData,
+  AddProgramNodeDto,
+  ProgramDockComponent,
   WorkspaceDockComponent,
 } from '../sections';
 import { WorkspaceApiService, WorkspaceGraphApiService } from '../services';
@@ -76,7 +76,7 @@ import {
 } from '../utils';
 
 type ActiveType = GetActiveTypes<{
-  application: ActiveApplicationData;
+  program: ActiveProgramData;
 }>;
 
 interface ViewModel {
@@ -110,11 +110,11 @@ const initialState: ViewModel = {
           *ngIf="workspace !== null && selected === null"
           class="fixed bottom-0 -translate-x-1/2 left-1/2"
           [pgWorkspace]="workspace"
-          (pgApplicationActivate)="
+          (pgProgramActivate)="
             setActive({
-              kind: 'application',
+              kind: 'program',
               data: {
-                thumbnailUrl: 'assets/generic/application.png'
+                thumbnailUrl: 'assets/generic/program.png'
               }
             })
           "
@@ -125,22 +125,22 @@ const initialState: ViewModel = {
           (pgDeleteWorkspace)="onDeleteGraph($event)"
         ></pg-workspace-dock>
 
-        <pg-application-dock
-          *ngIf="selected !== null && selected.kind === 'application'"
+        <pg-program-dock
+          *ngIf="selected !== null && selected.kind === 'program'"
           class="fixed bottom-0 -translate-x-1/2 left-1/2"
-          [pgApplication]="selected"
-          (pgApplicationUnselected)="onApplicationUnselected()"
-          (pgUpdateApplication)="
+          [pgProgram]="selected"
+          (pgProgramUnselected)="onProgramUnselected()"
+          (pgUpdateProgram)="
             onUpdateNode({
               id: $event.id,
-              kind: 'application',
+              kind: 'program',
               data: $event.changes
             })
           "
-          (pgUpdateApplicationThumbnail)="
+          (pgUpdateProgramThumbnail)="
             onUpdateNodeThumbnail($event.id, $event.fileId, $event.fileUrl)
           "
-          (pgDeleteApplication)="onRemoveNode($event)"
+          (pgDeleteProgram)="onRemoveNode($event)"
           (pgSaveCheckpoint)="
             onSaveCheckpoint(
               selected.data.workspaceId,
@@ -148,21 +148,19 @@ const initialState: ViewModel = {
               $event.checkpoint.name
             )
           "
-        ></pg-application-dock>
+        ></pg-program-dock>
       </ng-container>
 
       <ng-container *ngrxLet="active$; let active">
-        <pg-active-application
+        <pg-active-program
           *ngIf="
-            workspace !== null &&
-            active !== null &&
-            active.kind === 'application'
+            workspace !== null && active !== null && active.kind === 'program'
           "
           [pgActive]="active.data"
           [pgClickEvent]="(drawerClick$ | ngrxPush) ?? null"
-          (pgAddNode)="onAddApplicationNode(workspace.id, $event)"
+          (pgAddNode)="onAddProgramNode(workspace.id, $event)"
           (pgDeactivate)="setActive(null)"
-        ></pg-active-application>
+        ></pg-active-program>
       </ng-container>
     </ng-container>
   `,
@@ -172,8 +170,8 @@ const initialState: ViewModel = {
     LetModule,
     PushModule,
     WorkspaceDockComponent,
-    ApplicationDockComponent,
-    ActiveApplicationComponent,
+    ProgramDockComponent,
+    ActiveProgramComponent,
     BackgroundImageZoomDirective,
     BackgroundImageMoveDirective,
   ],
@@ -260,7 +258,7 @@ export class WorkspacePageComponent
             this._router.navigate([
               '/workspaces',
               workspaceId,
-              'applications',
+              'programs',
               event.payload.id,
             ]);
           }
@@ -655,13 +653,13 @@ export class WorkspacePageComponent
     }
   }
 
-  onApplicationUnselected() {
+  onProgramUnselected() {
     this.patchState({ selected: null });
   }
 
-  onAddApplicationNode(
+  onAddProgramNode(
     workspaceId: string,
-    { payload, options }: AddApplicationNodeDto
+    { payload, options }: AddProgramNodeDto
   ) {
     this._workspaceDrawerStore.addNode(
       {
@@ -706,7 +704,7 @@ export class WorkspacePageComponent
 
   onSaveCheckpoint(
     workspaceId: string,
-    applicationId: string,
+    programId: string,
     checkpointName: string
   ) {
     this._workspaceApiService
@@ -714,7 +712,7 @@ export class WorkspacePageComponent
         environment.clientId,
         generateId(),
         workspaceId,
-        applicationId,
+        programId,
         checkpointName
       )
       .subscribe();

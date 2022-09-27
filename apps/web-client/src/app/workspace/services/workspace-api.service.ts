@@ -69,7 +69,7 @@ export class WorkspaceApiService {
     clientId: string,
     checkPointId: string,
     workspaceId: string,
-    applicationId: string,
+    programId: string,
     checkpointName: string
   ) {
     return this._eventApiService.emit(clientId, {
@@ -77,7 +77,7 @@ export class WorkspaceApiService {
       payload: {
         id: checkPointId,
         name: checkpointName,
-        applicationId,
+        programId,
         workspaceId,
       },
     });
