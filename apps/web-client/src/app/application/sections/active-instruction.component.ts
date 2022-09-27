@@ -1,13 +1,12 @@
-import { Dialog } from '@angular/cdk/dialog';
 import { CommonModule } from '@angular/common';
 import {
   Component,
   EventEmitter,
   HostListener,
-  inject,
   Input,
   OnInit,
   Output,
+  ViewChild,
 } from '@angular/core';
 import { PushModule } from '@ngrx/component';
 import { ComponentStore } from '@ngrx/component-store';
@@ -34,7 +33,7 @@ import {
   isNull,
   Option,
 } from '../../shared/utils';
-import { openEditInstructionModal } from '../components';
+import { CreateInstructionModalDirective } from '../components';
 
 export interface AddInstructionNodeDto {
   payload: Entity<{
@@ -80,7 +79,9 @@ const initialState: ViewModel = {
       [ngClass]="{ hidden: (isAdding$ | ngrxPush) }"
       pgKeyListener="Escape"
       (pgKeyDown)="onEscapePressed()"
-    ></pg-active>
+      pgCreateInstructionModal
+    >
+    </pg-active>
   `,
   standalone: true,
   imports: [
@@ -89,14 +90,13 @@ const initialState: ViewModel = {
     FollowCursorDirective,
     ActiveComponent,
     KeyListenerDirective,
+    CreateInstructionModalDirective,
   ],
 })
 export class ActiveInstructionComponent
   extends ComponentStore<ViewModel>
   implements OnInit
 {
-  private readonly _dialog = inject(Dialog);
-
   private readonly _mouseMove = new Subject<MouseEvent>();
 
   readonly active$ = this.select(({ active }) => active);
@@ -113,24 +113,20 @@ export class ActiveInstructionComponent
   }
   @Output() pgAddNode = new EventEmitter<AddInstructionNodeDto>();
   @Output() pgDeactivate = new EventEmitter();
+  @ViewChild(CreateInstructionModalDirective)
+  createInstructionModal: Option<CreateInstructionModalDirective> = null;
 
   private readonly _handleDrawerClick = this.effect<ClickEvent>(
     exhaustMap((event) => {
-      return of(event).pipe(
+      return of(null).pipe(
         withLatestFrom(this.active$),
         concatMap(([, active]) => {
-          if (isNull(active)) {
+          if (isNull(active) || isNull(this.createInstructionModal)) {
             return EMPTY;
           }
 
-          this.patchState({ isAdding: true });
-
-          return openEditInstructionModal(this._dialog, {
-            instruction: null,
-          }).closed.pipe(
+          return this.createInstructionModal.open().closed.pipe(
             tap((instruction) => {
-              this.patchState({ isAdding: false });
-
               if (instruction) {
                 this.pgDeactivate.emit();
                 this.pgAddNode.emit({

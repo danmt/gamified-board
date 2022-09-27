@@ -1,5 +1,4 @@
 import { Dialog, DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
-import { DragDropModule } from '@angular/cdk/drag-drop';
 import { CommonModule } from '@angular/common';
 import {
   Component,
@@ -31,11 +30,11 @@ export interface EditCollectionData {
   collection: Option<Collection>;
 }
 
-export type UpdateCollectionSubmit = {
+export type CreateCollectionSubmit = {
   name: string;
 };
 
-export type CreateCollectionSubmit = {
+export type UpdateCollectionSubmit = {
   name: string;
 };
 
@@ -59,6 +58,10 @@ export const openEditCollectionModal = (
 export class CreateCollectionModalDirective {
   private readonly _dialog = inject(Dialog);
 
+  dialogRef: Option<
+    DialogRef<CreateCollectionSubmit, EditCollectionModalComponent>
+  > = null;
+
   @Output() pgCreateCollection = new EventEmitter<CreateCollectionSubmit>();
   @Output() pgOpenModal = new EventEmitter();
   @Output() pgCloseModal = new EventEmitter();
@@ -70,15 +73,19 @@ export class CreateCollectionModalDirective {
   open() {
     this.pgOpenModal.emit();
 
-    openEditCollectionModal(this._dialog, {
+    this.dialogRef = openEditCollectionModal(this._dialog, {
       collection: null,
-    }).closed.subscribe((collectionData) => {
+    });
+
+    this.dialogRef.closed.subscribe((collectionData) => {
       this.pgCloseModal.emit();
 
       if (collectionData !== undefined) {
         this.pgCreateCollection.emit(collectionData);
       }
     });
+
+    return this.dialogRef;
   }
 }
 
@@ -90,8 +97,11 @@ export class CreateCollectionModalDirective {
 export class UpdateCollectionModalDirective {
   private readonly _dialog = inject(Dialog);
 
-  @Input() pgCollection: Option<Collection> = null;
+  dialogRef: Option<
+    DialogRef<UpdateCollectionSubmit, EditCollectionModalComponent>
+  > = null;
 
+  @Input() pgCollection: Option<Collection> = null;
   @Output() pgUpdateCollection = new EventEmitter<UpdateCollectionSubmit>();
   @Output() pgOpenModal = new EventEmitter();
   @Output() pgCloseModal = new EventEmitter();
@@ -107,15 +117,19 @@ export class UpdateCollectionModalDirective {
 
     this.pgOpenModal.emit();
 
-    openEditCollectionModal(this._dialog, {
+    this.dialogRef = openEditCollectionModal(this._dialog, {
       collection: this.pgCollection,
-    }).closed.subscribe((collectionData) => {
+    });
+
+    this.dialogRef.closed.subscribe((collectionData) => {
       this.pgCloseModal.emit();
 
       if (collectionData !== undefined) {
         this.pgUpdateCollection.emit(collectionData);
       }
     });
+
+    return this.dialogRef;
   }
 }
 
@@ -123,14 +137,14 @@ export class UpdateCollectionModalDirective {
   selector: 'pg-edit-collection-modal',
   template: `
     <pg-modal
-      class=" text-white min-w-[400px] min-h-[300px]"
+      class="text-white min-w-[400px] min-h-[300px]"
       pgStopKeydownPropagation
       pgKeyListener="Escape"
       (pgKeyDown)="onClose()"
       (pgCloseModal)="onClose()"
     >
       <div class="flex justify-between w-full">
-        <h1 class="text-3xl mb-4 bp-font-game-title uppercase">
+        <h1 class="text-center text-3xl mb-4 bp-font-game-title uppercase">
           {{ collection === null ? 'Create' : 'Update' }} collection
         </h1>
       </div>
@@ -152,7 +166,7 @@ export class UpdateCollectionModalDirective {
           />
         </div>
 
-        <div class="flex justify-center items-center mt-10 mb-10">
+        <div class="flex justify-center items-center mt-10 mb-14">
           <button
             type="submit"
             class="bp-button-futuristic text-black bp-font-game uppercase"
@@ -167,7 +181,6 @@ export class UpdateCollectionModalDirective {
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    DragDropModule,
     StopKeydownPropagationDirective,
     KeyListenerDirective,
     ModalComponent,

@@ -1,5 +1,4 @@
 import { Dialog, DialogRef, DIALOG_DATA } from '@angular/cdk/dialog';
-import { DragDropModule } from '@angular/cdk/drag-drop';
 import { CommonModule } from '@angular/common';
 import {
   Component,
@@ -59,6 +58,9 @@ export const openEditFieldModal = (dialog: Dialog, data: EditFieldData) =>
 export class CreateFieldModalDirective {
   private readonly _dialog = inject(Dialog);
 
+  dialogRef: Option<DialogRef<CreateFieldSubmit, EditFieldModalComponent>> =
+    null;
+
   @Output() pgCreateField = new EventEmitter<CreateFieldSubmit>();
   @Output() pgOpenModal = new EventEmitter();
   @Output() pgCloseModal = new EventEmitter();
@@ -70,15 +72,19 @@ export class CreateFieldModalDirective {
   open() {
     this.pgOpenModal.emit();
 
-    openEditFieldModal(this._dialog, {
+    this.dialogRef = openEditFieldModal(this._dialog, {
       field: null,
-    }).closed.subscribe((fieldData) => {
+    });
+
+    this.dialogRef.closed.subscribe((fieldData) => {
       this.pgCloseModal.emit();
 
       if (fieldData !== undefined) {
         this.pgCreateField.emit(fieldData);
       }
     });
+
+    return this.dialogRef;
   }
 }
 
@@ -90,8 +96,10 @@ export class CreateFieldModalDirective {
 export class UpdateFieldModalDirective {
   private readonly _dialog = inject(Dialog);
 
-  @Input() pgField: Option<Field> = null;
+  dialogRef: Option<DialogRef<UpdateFieldSubmit, EditFieldModalComponent>> =
+    null;
 
+  @Input() pgField: Option<Field> = null;
   @Output() pgUpdateField = new EventEmitter<UpdateFieldSubmit>();
   @Output() pgOpenModal = new EventEmitter();
   @Output() pgCloseModal = new EventEmitter();
@@ -107,15 +115,19 @@ export class UpdateFieldModalDirective {
 
     this.pgOpenModal.emit();
 
-    openEditFieldModal(this._dialog, {
+    this.dialogRef = openEditFieldModal(this._dialog, {
       field: this.pgField,
-    }).closed.subscribe((fieldData) => {
+    });
+
+    this.dialogRef.closed.subscribe((fieldData) => {
       this.pgCloseModal.emit();
 
       if (fieldData !== undefined) {
         this.pgUpdateField.emit(fieldData);
       }
     });
+
+    return this.dialogRef;
   }
 }
 
@@ -191,7 +203,6 @@ export class UpdateFieldModalDirective {
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    DragDropModule,
     StopKeydownPropagationDirective,
     KeyListenerDirective,
     ModalComponent,

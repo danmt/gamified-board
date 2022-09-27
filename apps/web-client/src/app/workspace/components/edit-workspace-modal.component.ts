@@ -23,9 +23,7 @@ import {
 import { Entity, isNull, Option } from '../../shared/utils';
 
 export type Workspace = Entity<{
-  data: {
-    name: string;
-  };
+  data: { name: string };
 }>;
 
 export interface EditWorkspaceData {
@@ -55,26 +53,39 @@ export const openEditWorkspaceModal = (
 @Directive({
   selector: '[pgCreateWorkspaceModal]',
   standalone: true,
+  exportAs: 'modal',
 })
 export class CreateWorkspaceModalDirective {
   private readonly _dialog = inject(Dialog);
+
+  dialogRef: Option<
+    DialogRef<CreateWorkspaceSubmit, EditWorkspaceModalComponent>
+  > = null;
 
   @Output() pgCreateWorkspace = new EventEmitter<CreateWorkspaceSubmit>();
   @Output() pgOpenModal = new EventEmitter();
   @Output() pgCloseModal = new EventEmitter();
 
   @HostListener('click', []) onClick() {
+    this.open();
+  }
+
+  open() {
     this.pgOpenModal.emit();
 
-    openEditWorkspaceModal(this._dialog, {
+    this.dialogRef = openEditWorkspaceModal(this._dialog, {
       workspace: null,
-    }).closed.subscribe((workspaceData) => {
+    });
+
+    this.dialogRef.closed.subscribe((workspaceData) => {
       this.pgCloseModal.emit();
 
       if (workspaceData !== undefined) {
         this.pgCreateWorkspace.emit(workspaceData);
       }
     });
+
+    return this.dialogRef;
   }
 }
 
@@ -86,8 +97,11 @@ export class CreateWorkspaceModalDirective {
 export class UpdateWorkspaceModalDirective {
   private readonly _dialog = inject(Dialog);
 
-  @Input() pgWorkspace: Option<Workspace> = null;
+  dialogRef: Option<
+    DialogRef<UpdateWorkspaceSubmit, EditWorkspaceModalComponent>
+  > = null;
 
+  @Input() pgWorkspace: Option<Workspace> = null;
   @Output() pgUpdateWorkspace = new EventEmitter<UpdateWorkspaceSubmit>();
   @Output() pgOpenModal = new EventEmitter();
   @Output() pgCloseModal = new EventEmitter();
@@ -103,15 +117,19 @@ export class UpdateWorkspaceModalDirective {
 
     this.pgOpenModal.emit();
 
-    openEditWorkspaceModal(this._dialog, {
+    this.dialogRef = openEditWorkspaceModal(this._dialog, {
       workspace: this.pgWorkspace,
-    }).closed.subscribe((workspaceData) => {
+    });
+
+    this.dialogRef.closed.subscribe((workspaceData) => {
       this.pgCloseModal.emit();
 
       if (workspaceData !== undefined) {
         this.pgUpdateWorkspace.emit(workspaceData);
       }
     });
+
+    return this.dialogRef;
   }
 }
 
@@ -119,21 +137,25 @@ export class UpdateWorkspaceModalDirective {
   selector: 'pg-edit-workspace-modal',
   template: `
     <pg-modal
-      class="px-6 pt-8 pb-4 text-white min-w-[400px] min-h-[300px]"
+      class="text-white min-w-[400px] min-h-[300px]"
       pgStopKeydownPropagation
-      (pgCloseModal)="onClose()"
       pgKeyListener="Escape"
       (pgKeyDown)="onClose()"
+      (pgCloseModal)="onClose()"
     >
       <div class="flex justify-between w-full">
-        <h1 class="text-center text-3xl mb-4 bp-font-game uppercase">
+        <h1 class="text-center text-3xl mb-4 bp-font-game-title uppercase">
           {{ workspace === null ? 'Create' : 'Update' }} workspace
         </h1>
       </div>
 
-      <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <form
+        [formGroup]="form"
+        (ngSubmit)="onSubmit()"
+        class="overflow-y-auto max-h-[515px]"
+      >
         <div class="mb-4">
-          <label class="block" for="workspace-name-input">
+          <label class="block bp-font-game text-xl" for="workspace-name-input">
             Workspace name
           </label>
           <input

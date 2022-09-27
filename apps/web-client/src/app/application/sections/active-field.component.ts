@@ -1,13 +1,12 @@
-import { Dialog } from '@angular/cdk/dialog';
 import { CommonModule } from '@angular/common';
 import {
   Component,
   EventEmitter,
   HostListener,
-  inject,
   Input,
   OnInit,
   Output,
+  ViewChild,
 } from '@angular/core';
 import { PushModule } from '@ngrx/component';
 import { ComponentStore } from '@ngrx/component-store';
@@ -34,7 +33,7 @@ import {
   isNull,
   Option,
 } from '../../shared/utils';
-import { openEditFieldModal } from '../components';
+import { CreateFieldModalDirective } from '../components';
 import { FieldType } from '../utils';
 
 export interface AddFieldNodeDto {
@@ -82,7 +81,9 @@ const initialState: ViewModel = {
       [ngClass]="{ hidden: (isAdding$ | ngrxPush) }"
       pgKeyListener="Escape"
       (pgKeyDown)="onEscapePressed()"
-    ></pg-active>
+      pgCreateFieldModal
+    >
+    </pg-active>
   `,
   standalone: true,
   imports: [
@@ -91,14 +92,13 @@ const initialState: ViewModel = {
     FollowCursorDirective,
     ActiveComponent,
     KeyListenerDirective,
+    CreateFieldModalDirective,
   ],
 })
 export class ActiveFieldComponent
   extends ComponentStore<ViewModel>
   implements OnInit
 {
-  private readonly _dialog = inject(Dialog);
-
   private readonly _mouseMove = new Subject<MouseEvent>();
 
   readonly active$ = this.select(({ active }) => active);
@@ -115,24 +115,20 @@ export class ActiveFieldComponent
   }
   @Output() pgAddNode = new EventEmitter<AddFieldNodeDto>();
   @Output() pgDeactivate = new EventEmitter();
+  @ViewChild(CreateFieldModalDirective)
+  createFieldModal: Option<CreateFieldModalDirective> = null;
 
   private readonly _handleDrawerClick = this.effect<ClickEvent>(
     exhaustMap((event) => {
-      return of(event).pipe(
+      return of(null).pipe(
         withLatestFrom(this.active$),
         concatMap(([, active]) => {
-          if (isNull(active)) {
+          if (isNull(active) || isNull(this.createFieldModal)) {
             return EMPTY;
           }
 
-          this.patchState({ isAdding: true });
-
-          return openEditFieldModal(this._dialog, {
-            field: null,
-          }).closed.pipe(
+          return this.createFieldModal.open().closed.pipe(
             tap((field) => {
-              this.patchState({ isAdding: false });
-
               if (field) {
                 this.pgDeactivate.emit();
                 this.pgAddNode.emit({
