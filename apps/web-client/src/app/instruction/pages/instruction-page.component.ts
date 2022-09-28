@@ -1253,8 +1253,7 @@ export class InstructionPageComponent
             if (graph) {
               const drawer = new Drawer(
                 graph,
-                graph.nodes,
-                ['task', 'account', 'signer', 'program'],
+                [],
                 drawerElement,
                 instructionCanConnectFunction,
                 instructionNodeLabelFunction

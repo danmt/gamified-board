@@ -833,7 +833,6 @@ export class ProgramPageComponent
             if (graph) {
               const drawer = new Drawer(
                 graph,
-                graph.nodes,
                 [],
                 drawerElement,
                 programCanConnectFunction,

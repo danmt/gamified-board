@@ -29,25 +29,22 @@ export interface ProgramNodeData {
 
 export type WorkspaceNodeData = ProgramNodeData;
 
-export type WorkspaceNodeKinds = 'program';
-
 export type WorkspaceNodesData = {
   program: ProgramNodeData;
 };
 
-export type ProgramNode = Node<'program', WorkspaceNodeData>;
-
-export type PartialWorkspaceNode = GetPartialNodeDataTypes<
-  WorkspaceNodeKinds,
-  WorkspaceNodeData,
-  WorkspaceNodesData
->;
+export type ProgramNode = Node<'program', ProgramNodeData>;
 export type WorkspaceNode = GetNodeTypes<
   WorkspaceNodeKinds,
   WorkspaceNodeData,
   WorkspaceNodesData
 >;
-
+export type PartialWorkspaceNode = GetPartialNodeDataTypes<
+  WorkspaceNodeKinds,
+  WorkspaceNodeData,
+  WorkspaceNodesData
+>;
+export type WorkspaceNodeKinds = 'program';
 export type WorkspaceGraphKind = 'workspace';
 
 export type WorkspaceGraph = Graph<

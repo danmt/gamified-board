@@ -54,7 +54,6 @@ export class Drawer<
       GraphKind,
       GraphDataType
     >,
-    _nodes: GetNodeTypes<NodeKinds, NodeDataType, NodesDataMap>[], // this field is only to help the type inference
     groups: string[],
     element: HTMLElement,
     private canConnectFn: (

@@ -67,11 +67,13 @@ import {
 import { WorkspaceApiService, WorkspaceGraphApiService } from '../services';
 import {
   PartialWorkspaceNode,
+  workspaceCanConnectFunction,
   WorkspaceGraphData,
   WorkspaceGraphKind,
   WorkspaceNode,
   WorkspaceNodeData,
   WorkspaceNodeKinds,
+  workspaceNodeLabelFunction,
   WorkspaceNodesData,
 } from '../utils';
 
@@ -581,7 +583,13 @@ export class WorkspacePageComponent
         from(this._workspaceGraphApiService.getGraph(workspaceId)).pipe(
           tap((graph) => {
             if (graph) {
-              const drawer = new Drawer(graph, graph.nodes, [], drawerElement);
+              const drawer = new Drawer(
+                graph,
+                [],
+                drawerElement,
+                workspaceCanConnectFunction,
+                workspaceNodeLabelFunction
+              );
 
               drawer.initialize();
               this._workspaceDrawerStore.setDrawer(drawer);
