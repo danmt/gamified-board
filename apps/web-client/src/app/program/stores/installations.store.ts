@@ -11,8 +11,10 @@ import {
   AccountNode,
   FieldNode,
   Installation,
+  InstructionNode,
   isAccountNode,
   isFieldNode,
+  isInstructionNode,
 } from '../utils';
 
 interface ViewModel {
@@ -57,6 +59,35 @@ export class InstallationsStore
                   )
                 ),
             })) ?? []
+          ),
+        []
+      ) ?? []
+    );
+  });
+
+  readonly instructions$ = this.select(this.installations$, (installations) => {
+    if (isNull(installations)) {
+      return [];
+    }
+
+    return (
+      installations.reduce<(InstructionNode & { fields: FieldNode[] })[]>(
+        (instructions, installation) =>
+          instructions.concat(
+            installation.data.nodes
+              .filter(isInstructionNode)
+              .map((instruction) => ({
+                ...instruction,
+                fields: installation.data.nodes
+                  .filter(isFieldNode)
+                  .filter((node) =>
+                    installation.data.edges.some(
+                      (edge) =>
+                        edge.data.source === instruction.id &&
+                        edge.data.target === node.id
+                    )
+                  ),
+              })) ?? []
           ),
         []
       ) ?? []

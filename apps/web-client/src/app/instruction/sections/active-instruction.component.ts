@@ -33,24 +33,18 @@ import {
   isNull,
   Option,
 } from '../../shared/utils';
-import { CreateAccountModalDirective } from '../components';
-import { AccountMethodType, AccountNode, SeedType, SignerNode } from '../utils';
+import { CreateTaskModalDirective } from '../components';
 
-export interface AddAccountNodeDto {
+export interface AddTaskNodeDto {
   payload: Entity<{
-    kind: 'account';
+    kind: 'task';
     data: {
       name: string;
       thumbnailUrl: string;
-      method: AccountMethodType;
       ref: {
         id: string;
         name: string;
       };
-      payer: Option<string>;
-      space: Option<number>;
-      receiver: Option<string>;
-      seeds: SeedType[];
     };
   }>;
   options: {
@@ -61,7 +55,7 @@ export interface AddAccountNodeDto {
   };
 }
 
-export interface ActiveAccountData {
+export interface ActiveInstructionData {
   id: string;
   name: string;
   thumbnailUrl: string;
@@ -70,7 +64,7 @@ export interface ActiveAccountData {
 interface ViewModel {
   canAdd: boolean;
   isAdding: boolean;
-  active: Option<ActiveAccountData>;
+  active: Option<ActiveInstructionData>;
 }
 
 const initialState: ViewModel = {
@@ -80,7 +74,7 @@ const initialState: ViewModel = {
 };
 
 @Component({
-  selector: 'pg-active-account',
+  selector: 'pg-active-instruction',
   template: `
     <pg-active
       *ngIf="active$ | ngrxPush as active"
@@ -91,8 +85,7 @@ const initialState: ViewModel = {
       [ngClass]="{ hidden: (isAdding$ | ngrxPush) }"
       pgKeyListener="Escape"
       (pgKeyDown)="onEscapePressed()"
-      pgCreateAccountModal
-      [pgOptions]="pgOptions"
+      pgCreateTaskModal
     >
     </pg-active>
   `,
@@ -103,10 +96,10 @@ const initialState: ViewModel = {
     FollowCursorDirective,
     ActiveComponent,
     KeyListenerDirective,
-    CreateAccountModalDirective,
+    CreateTaskModalDirective,
   ],
 })
-export class ActiveAccountComponent
+export class ActiveInstructionComponent
   extends ComponentStore<ViewModel>
   implements OnInit
 {
@@ -116,7 +109,7 @@ export class ActiveAccountComponent
   readonly canAdd$ = this.select(({ canAdd }) => canAdd);
   readonly isAdding$ = this.select(({ isAdding }) => isAdding);
 
-  @Input() set pgActive(active: Option<ActiveAccountData>) {
+  @Input() set pgActive(active: Option<ActiveInstructionData>) {
     this.patchState({ active });
   }
   @Input() set pgClickEvent(event: Option<ClickEvent>) {
@@ -124,44 +117,42 @@ export class ActiveAccountComponent
       this._handleDrawerClick(event);
     }
   }
-  @Input() pgOptions: (AccountNode | SignerNode)[] = [];
-  @Output() pgAddNode = new EventEmitter<AddAccountNodeDto>();
+  @Input() pgInstructionInstructions: {
+    id: string;
+    data: { name: string; ref: { name: string } };
+  }[] = [];
+  @Output() pgAddNode = new EventEmitter<AddTaskNodeDto>();
   @Output() pgDeactivate = new EventEmitter();
-  @ViewChild(CreateAccountModalDirective)
-  createAccountModal: Option<CreateAccountModalDirective> = null;
+  @ViewChild(CreateTaskModalDirective)
+  createTaskModal: Option<CreateTaskModalDirective> = null;
 
   private readonly _handleDrawerClick = this.effect<ClickEvent>(
     exhaustMap((event) => {
       return of(null).pipe(
         withLatestFrom(this.active$),
         concatMap(([, active]) => {
-          if (isNull(active) || isNull(this.createAccountModal)) {
+          if (isNull(active) || isNull(this.createTaskModal)) {
             return EMPTY;
           }
 
           this.patchState({ isAdding: true });
 
-          return this.createAccountModal.open().closed.pipe(
-            tap((account) => {
-              if (account) {
+          return this.createTaskModal.open().closed.pipe(
+            tap((instruction) => {
+              if (instruction) {
                 this.patchState({ isAdding: false });
                 this.pgDeactivate.emit();
                 this.pgAddNode.emit({
                   payload: {
                     id: generateId(),
-                    kind: 'account',
+                    kind: 'task',
                     data: {
-                      name: account.name,
-                      method: account.method,
+                      name: instruction.name,
                       thumbnailUrl: active.thumbnailUrl,
                       ref: {
                         id: active.id,
                         name: active.name,
                       },
-                      payer: account.payer,
-                      space: account.space,
-                      receiver: account.receiver,
-                      seeds: [],
                     },
                   },
                   options: {

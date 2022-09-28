@@ -24,7 +24,7 @@ import {
   StopKeydownPropagationDirective,
 } from '../../shared/directives';
 import { Entity, isNull, Option } from '../../shared/utils';
-import { AccountMethodType } from '../utils';
+import { AccountMethodType, AccountNode, SignerNode } from '../utils';
 
 export type Account = Entity<{
   data: {
@@ -38,9 +38,7 @@ export type Account = Entity<{
 
 export interface EditAccountData {
   account: Option<Account>;
-  instructionAccounts$: Observable<
-    { id: string; data: { name: string; ref: { name: string } } }[]
-  >;
+  options$: Observable<(AccountNode | SignerNode)[]>;
 }
 
 export type CreateAccountSubmit = {
@@ -76,16 +74,14 @@ export const openEditAccountModal = (dialog: Dialog, data: EditAccountData) =>
 export class CreateAccountModalDirective {
   private readonly _dialog = inject(Dialog);
 
-  private readonly _instructionAccounts = new BehaviorSubject<
-    { id: string; data: { name: string; ref: { name: string } } }[]
-  >([]);
+  private readonly _options = new BehaviorSubject<(AccountNode | SignerNode)[]>(
+    []
+  );
   dialogRef: Option<DialogRef<CreateAccountSubmit, EditAccountModalComponent>> =
     null;
 
-  @Input() set pgInstructionAccounts(
-    value: { id: string; data: { name: string; ref: { name: string } } }[]
-  ) {
-    this._instructionAccounts.next(value);
+  @Input() set pgOptions(options: (AccountNode | SignerNode)[]) {
+    this._options.next(options);
   }
   @Output() pgCreateAccount = new EventEmitter<CreateAccountSubmit>();
   @Output() pgOpenModal = new EventEmitter();
@@ -100,7 +96,7 @@ export class CreateAccountModalDirective {
 
     this.dialogRef = openEditAccountModal(this._dialog, {
       account: null,
-      instructionAccounts$: this._instructionAccounts.asObservable(),
+      options$: this._options.asObservable(),
     });
 
     this.dialogRef.closed.subscribe((accountData) => {
@@ -122,17 +118,15 @@ export class CreateAccountModalDirective {
 })
 export class UpdateAccountModalDirective {
   private readonly _dialog = inject(Dialog);
-  private readonly _instructionAccounts = new BehaviorSubject<
-    { id: string; data: { name: string; ref: { name: string } } }[]
-  >([]);
+  private readonly _options = new BehaviorSubject<(AccountNode | SignerNode)[]>(
+    []
+  );
   dialogRef: Option<DialogRef<UpdateAccountSubmit, EditAccountModalComponent>> =
     null;
 
   @Input() pgAccount: Option<Account> = null;
-  @Input() set pgInstructionAccounts(
-    value: { id: string; data: { name: string; ref: { name: string } } }[]
-  ) {
-    this._instructionAccounts.next(value);
+  @Input() set pgOptions(options: (AccountNode | SignerNode)[]) {
+    this._options.next(options);
   }
 
   @Output() pgUpdateAccount = new EventEmitter<UpdateAccountSubmit>();
@@ -152,7 +146,7 @@ export class UpdateAccountModalDirective {
 
     this.dialogRef = openEditAccountModal(this._dialog, {
       account: this.pgAccount,
-      instructionAccounts$: this._instructionAccounts.asObservable(),
+      options$: this._options.asObservable(),
     });
 
     this.dialogRef.closed.subscribe((accountData) => {
@@ -235,12 +229,16 @@ export class UpdateAccountModalDirective {
             </option>
             <option
               class="text-black uppercase"
-              *ngFor="let instructionAccount of instructionAccounts$ | ngrxPush"
-              [ngValue]="instructionAccount.id"
+              *ngFor="let option of options$ | ngrxPush"
+              [ngValue]="option.id"
             >
-              {{ instructionAccount.data.name }} ({{
-                instructionAccount.data.ref.name
-              }})
+              <ng-container *ngIf="option.kind === 'account'">
+                [ACCOUNT] {{ option.data.name }}: {{ option.data.ref.name }}
+              </ng-container>
+
+              <ng-container *ngIf="option.kind === 'signer'">
+                [SIGNER] {{ option.data.name }}
+              </ng-container>
             </option>
           </select>
         </div>
@@ -275,12 +273,16 @@ export class UpdateAccountModalDirective {
             </option>
             <option
               class="text-black uppercase"
-              *ngFor="let instructionAccount of instructionAccounts$ | ngrxPush"
-              [ngValue]="instructionAccount.id"
+              *ngFor="let option of options$ | ngrxPush"
+              [ngValue]="option.id"
             >
-              {{ instructionAccount.data.name }} ({{
-                instructionAccount.data.ref.name
-              }})
+              <ng-container *ngIf="option.kind === 'account'">
+                [ACCOUNT] {{ option.data.name }}: {{ option.data.ref.name }}
+              </ng-container>
+
+              <ng-container *ngIf="option.kind === 'signer'">
+                [SIGNER] {{ option.data.name }}
+              </ng-container>
             </option>
           </select>
         </div>
@@ -319,7 +321,7 @@ export class EditAccountModalComponent {
   private readonly _data = inject<EditAccountData>(DIALOG_DATA);
 
   readonly account = this._data.account;
-  readonly instructionAccounts$ = this._data.instructionAccounts$;
+  readonly options$ = this._data.options$;
   readonly form = this._formBuilder.group({
     name: this._formBuilder.control<string>(this.account?.data.name ?? '', {
       validators: [Validators.required],

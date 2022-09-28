@@ -4,24 +4,24 @@ import { EMPTY, switchMap, tap } from 'rxjs';
 import { isNull, Option } from '../../shared/utils';
 import { InstructionGraphApiService } from '../services';
 import {
-  AccountNode,
-  AccountNodeData,
   InstructionGraph,
-  isAccountNode,
+  isSignerNode,
+  SignerNode,
+  SignerNodeData,
 } from '../utils';
 
 interface ViewModel {
-  accounts: { [key: string]: AccountNode };
+  signers: { [key: string]: SignerNode };
   graph: Option<InstructionGraph>;
 }
 
 const initialState: ViewModel = {
-  accounts: {},
+  signers: {},
   graph: null,
 };
 
 @Injectable()
-export class InstructionAccountsStore
+export class InstructionSignersStore
   extends ComponentStore<ViewModel>
   implements OnStoreInit
 {
@@ -29,7 +29,7 @@ export class InstructionAccountsStore
     InstructionGraphApiService
   );
 
-  readonly accounts$ = this.select(({ accounts }) => Object.values(accounts));
+  readonly signers$ = this.select(({ signers }) => Object.values(signers));
   readonly graph$ = this.select(({ graph }) => graph);
 
   readonly setGraph = this.updater<Option<InstructionGraph>>(
@@ -39,48 +39,48 @@ export class InstructionAccountsStore
     })
   );
 
-  readonly setAccount = this.updater<AccountNode>((state, account) => ({
+  readonly setSigner = this.updater<SignerNode>((state, signer) => ({
     ...state,
-    accounts: {
-      ...state.accounts,
-      [account.id]: account,
+    signers: {
+      ...state.signers,
+      [signer.id]: signer,
     },
   }));
 
-  readonly updateAccount = this.updater<{
+  readonly updateSigner = this.updater<{
     id: string;
-    changes: Partial<AccountNodeData>;
+    changes: Partial<SignerNodeData>;
   }>((state, { id, changes }) => ({
     ...state,
-    accounts: {
-      ...state.accounts,
+    signers: {
+      ...state.signers,
       [id]: {
-        ...state.accounts[id],
+        ...state.signers[id],
         ...changes,
       },
     },
   }));
 
-  readonly removeAccount = this.updater<string>((state, accountId) => {
+  readonly removeSigner = this.updater<string>((state, signerId) => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { [accountId]: _, ...payload } = state.accounts;
+    const { [signerId]: _, ...payload } = state.signers;
     return {
       ...state,
-      accounts: payload,
+      signers: payload,
     };
   });
 
-  private readonly _loadAccounts = this.effect<Option<InstructionGraph>>(
+  private readonly _loadSigners = this.effect<Option<InstructionGraph>>(
     switchMap((graph) => {
       if (isNull(graph)) {
         return EMPTY;
       }
 
       this.patchState({
-        accounts: graph.nodes.filter(isAccountNode).reduce(
-          (accountsMap, account) => ({
-            ...accountsMap,
-            [account.id]: account,
+        signers: graph.nodes.filter(isSignerNode).reduce(
+          (signersMap, signer) => ({
+            ...signersMap,
+            [signer.id]: signer,
           }),
           {}
         ),
@@ -96,9 +96,9 @@ export class InstructionAccountsStore
           tap((event) => {
             switch (event['type']) {
               case 'createNodeSuccess': {
-                if (event['payload'].kind === 'account') {
+                if (event['payload'].kind === 'signer') {
                   const { id, kind, ...payload } = event['payload'];
-                  this.setAccount({
+                  this.setSigner({
                     id,
                     kind,
                     data: payload,
@@ -109,8 +109,8 @@ export class InstructionAccountsStore
               }
 
               case 'updateNodeSuccess': {
-                if (event['payload'].kind === 'account') {
-                  this.updateAccount({
+                if (event['payload'].kind === 'signer') {
+                  this.updateSigner({
                     id: event['payload'].id,
                     changes: {
                       name: event['payload'].changes.name,
@@ -122,8 +122,8 @@ export class InstructionAccountsStore
               }
 
               case 'deleteNodeSuccess': {
-                if (event['payload'].kind === 'account') {
-                  this.removeAccount(event['payload'].id);
+                if (event['payload'].kind === 'signer') {
+                  this.removeSigner(event['payload'].id);
                 }
 
                 break;
@@ -139,7 +139,7 @@ export class InstructionAccountsStore
   }
 
   ngrxOnStoreInit() {
-    this._loadAccounts(this.graph$);
+    this._loadSigners(this.graph$);
   }
 
   private _handleError(error: unknown) {

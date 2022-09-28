@@ -109,3 +109,5 @@ export interface Installation {
 }
 
 export type Account = AccountNode & { fields: FieldNode[] };
+
+export type Instruction = InstructionNode & { fields: FieldNode[] };

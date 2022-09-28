@@ -21,12 +21,8 @@ import {
 } from '../../shared/directives';
 import { SlotHotkeyPipe } from '../../shared/pipes';
 import { Option } from '../../shared/utils';
-import {
-  UpdateAccountModalDirective,
-  UpdateAccountSeedsModalDirective,
-  UpdateAccountSubmit,
-} from '../components';
-import { AccountNode, SeedType, SignerNode } from '../utils';
+import { UpdateTaskModalDirective, UpdateTaskSubmit } from '../components';
+import { SeedType, TaskNode } from '../utils';
 
 interface HotKey {
   slot: number;
@@ -35,15 +31,15 @@ interface HotKey {
 }
 
 interface ViewModel {
-  account: Option<AccountNode>;
+  task: Option<TaskNode>;
   isUpdating: boolean;
   isUpdatingThumbnail: boolean;
   isDeleting: boolean;
-  hotkeys: [HotKey, HotKey, HotKey, HotKey, HotKey];
+  hotkeys: [HotKey, HotKey, HotKey, HotKey];
 }
 
 const initialState: ViewModel = {
-  account: null,
+  task: null,
   isUpdating: false,
   isUpdatingThumbnail: false,
   isDeleting: false,
@@ -68,33 +64,28 @@ const initialState: ViewModel = {
       code: 'KeyR',
       key: 'r',
     },
-    {
-      slot: 4,
-      code: 'KeyT',
-      key: 't',
-    },
   ],
 };
 
 @Component({
-  selector: 'pg-account-dock',
+  selector: 'pg-task-dock',
   template: `
     <pg-secondary-dock
-      *ngIf="account$ | ngrxPush as account"
+      *ngIf="task$ | ngrxPush as task"
       class="text-white block bp-font-game"
       pgKeyListener="Escape"
-      (pgKeyDown)="onUnselectAccount()"
+      (pgKeyDown)="onUnselectTask()"
     >
       <div class="flex gap-4 justify-center items-start">
         <img
-          [src]="account.data.thumbnailUrl"
-          pgDefaultImageUrl="assets/generic/account.png"
+          [src]="task.data.thumbnailUrl"
+          pgDefaultImageUrl="assets/generic/task.png"
           class="w-[100px] h-[106px] overflow-hidden rounded-xl"
         />
 
         <div>
           <h2 class="text-xl">Name</h2>
-          <p class="text-base">{{ account.data.name }}</p>
+          <p class="text-base">{{ task.data.name }}</p>
         </div>
 
         <div class="ml-10">
@@ -108,22 +99,21 @@ const initialState: ViewModel = {
                   class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
                   style="font-size: 0.5rem; line-height: 0.5rem"
                   [pgKeyListener]="hotkeys[0].code"
-                  (pgKeyDown)="updateAccountModal.open()"
+                  (pgKeyDown)="updateTaskModal.open()"
                 >
                   {{ hotkey }}
                 </span>
               </ng-container>
 
               <pg-square-button
-                pgThumbnailUrl="assets/generic/account.png"
+                pgThumbnailUrl="assets/generic/task.png"
                 [pgIsActive]="false"
-                pgUpdateAccountModal
-                #updateAccountModal="modal"
-                [pgAccount]="account"
-                [pgOptions]="pgAccountOptions"
+                pgUpdateTaskModal
+                #updateTaskModal="modal"
+                [pgTask]="task"
                 (pgOpenModal)="setIsUpdating(true)"
                 (pgCloseModal)="setIsUpdating(false)"
-                (pgUpdateAccount)="onUpdateAccount(account.id, $event)"
+                (pgUpdateTask)="onUpdateTask(task.id, $event)"
               ></pg-square-button>
             </div>
 
@@ -134,19 +124,19 @@ const initialState: ViewModel = {
                   class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
                   style="font-size: 0.5rem; line-height: 0.5rem"
                   [pgKeyListener]="hotkeys[1].code"
-                  (pgKeyDown)="updateAccountThumbnailModal.open()"
+                  (pgKeyDown)="updateTaskThumbnailModal.open()"
                 >
                   {{ hotkey }}
                 </span>
               </ng-container>
 
               <pg-square-button
-                pgThumbnailUrl="assets/generic/account.png"
+                pgThumbnailUrl="assets/generic/task.png"
                 [pgIsActive]="(isUpdatingThumbnail$ | ngrxPush) ?? false"
                 pgUploadFileModal
-                #updateAccountThumbnailModal="modal"
+                #updateTaskThumbnailModal="modal"
                 (pgSubmit)="
-                  onUploadThumbnail(account.id, $event.fileId, $event.fileUrl)
+                  onUploadThumbnail(task.id, $event.fileId, $event.fileUrl)
                 "
                 (pgOpenModal)="setIsUpdatingThumbnail(true)"
                 (pgCloseModal)="setIsUpdatingThumbnail(false)"
@@ -160,24 +150,21 @@ const initialState: ViewModel = {
                   class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
                   style="font-size: 0.5rem; line-height: 0.5rem"
                   [pgKeyListener]="hotkeys[2].code"
-                  (pgKeyDown)="updateAccountSeedsModal.open()"
+                  (pgKeyDown)="deleteTaskModal.open()"
                 >
                   {{ hotkey }}
                 </span>
               </ng-container>
 
               <pg-square-button
-                pgThumbnailUrl="assets/generic/account.png"
-                [pgIsActive]="false"
-                pgUpdateAccountSeedsModal
-                #updateAccountSeedsModal="modal"
-                [pgAccountSeeds]="account.data.seeds"
-                [pgOptions]="pgSeedOptions"
-                (pgOpenModal)="setIsUpdating(true)"
-                (pgCloseModal)="setIsUpdating(false)"
-                (pgUpdateAccountSeeds)="
-                  onUpdateAccountSeeds(account.id, $event.seeds)
-                "
+                [pgIsActive]="(isDeleting$ | ngrxPush) ?? false"
+                pgThumbnailUrl="assets/generic/task.png"
+                (pgConfirm)="onDeleteTask(task.id)"
+                pgConfirmModal
+                #deleteTaskModal="modal"
+                pgMessage="Are you sure? This action cannot be reverted."
+                (pgOpenModal)="setIsDeleting(true)"
+                (pgCloseModal)="setIsDeleting(false)"
               ></pg-square-button>
             </div>
 
@@ -188,40 +175,15 @@ const initialState: ViewModel = {
                   class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
                   style="font-size: 0.5rem; line-height: 0.5rem"
                   [pgKeyListener]="hotkeys[3].code"
-                  (pgKeyDown)="deleteAccountModal.open()"
+                  (pgKeyDown)="onUnselectTask()"
                 >
                   {{ hotkey }}
                 </span>
               </ng-container>
 
               <pg-square-button
-                [pgIsActive]="(isDeleting$ | ngrxPush) ?? false"
-                pgThumbnailUrl="assets/generic/account.png"
-                (pgConfirm)="onDeleteAccount(account.id)"
-                pgConfirmModal
-                #deleteAccountModal="modal"
-                pgMessage="Are you sure? This action cannot be reverted."
-                (pgOpenModal)="setIsDeleting(true)"
-                (pgCloseModal)="setIsDeleting(false)"
-              ></pg-square-button>
-            </div>
-
-            <div class="bg-gray-800 relative w-[2.89rem] h-[2.89rem]">
-              <ng-container *ngrxLet="hotkeys$; let hotkeys">
-                <span
-                  *ngIf="4 | pgSlotHotkey: hotkeys as hotkey"
-                  class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
-                  style="font-size: 0.5rem; line-height: 0.5rem"
-                  [pgKeyListener]="hotkeys[4].code"
-                  (pgKeyDown)="onUnselectAccount()"
-                >
-                  {{ hotkey }}
-                </span>
-              </ng-container>
-
-              <pg-square-button
-                pgThumbnailUrl="assets/generic/account.png"
-                (click)="onUnselectAccount()"
+                pgThumbnailUrl="assets/generic/task.png"
+                (click)="onUnselectTask()"
               ></pg-square-button>
             </div>
           </div>
@@ -241,38 +203,40 @@ const initialState: ViewModel = {
     ConfirmModalDirective,
     DefaultImageDirective,
     UploadFileModalDirective,
-    UpdateAccountModalDirective,
-    UpdateAccountSeedsModalDirective,
+    UpdateTaskModalDirective,
     SecondaryDockComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AccountDockComponent extends ComponentStore<ViewModel> {
+export class TaskDockComponent extends ComponentStore<ViewModel> {
   readonly isUpdating$ = this.select(({ isUpdating }) => isUpdating);
   readonly isUpdatingThumbnail$ = this.select(
     ({ isUpdatingThumbnail }) => isUpdatingThumbnail
   );
   readonly isDeleting$ = this.select(({ isDeleting }) => isDeleting);
   readonly hotkeys$ = this.select(({ hotkeys }) => hotkeys);
-  readonly account$ = this.select(({ account }) => account);
+  readonly task$ = this.select(({ task }) => task);
 
-  @Input() set pgAccount(account: Option<AccountNode>) {
-    this.patchState({ account });
+  @Input() set pgTask(task: Option<TaskNode>) {
+    this.patchState({ task });
   }
-  @Input() pgAccountOptions: (AccountNode | SignerNode)[] = [];
-  @Input() pgSeedOptions: SeedType[] = [];
-  @Output() pgAccountUnselected = new EventEmitter();
-  @Output() pgUpdateAccount = new EventEmitter<{
+  @Input() pgTaskTasks: {
     id: string;
-    changes: UpdateAccountSubmit;
+    data: { name: string; ref: { name: string } };
+  }[] = [];
+  @Input() pgSeedOptions: SeedType[] = [];
+  @Output() pgTaskUnselected = new EventEmitter();
+  @Output() pgUpdateTask = new EventEmitter<{
+    id: string;
+    changes: UpdateTaskSubmit;
   }>();
-  @Output() pgUpdateAccountThumbnail = new EventEmitter<{
+  @Output() pgUpdateTaskThumbnail = new EventEmitter<{
     id: string;
     fileId: string;
     fileUrl: string;
   }>();
-  @Output() pgDeleteAccount = new EventEmitter<string>();
-  @Output() pgUpdateAccountSeeds = new EventEmitter<{
+  @Output() pgDeleteTask = new EventEmitter<string>();
+  @Output() pgUpdateTaskSeeds = new EventEmitter<{
     id: string;
     seeds: SeedType[];
   }>();
@@ -298,30 +262,30 @@ export class AccountDockComponent extends ComponentStore<ViewModel> {
     super(initialState);
   }
 
-  onUpdateAccount(accountId: string, accountData: UpdateAccountSubmit) {
-    this.pgUpdateAccount.emit({
-      id: accountId,
-      changes: accountData,
+  onUpdateTask(taskId: string, taskData: UpdateTaskSubmit) {
+    this.pgUpdateTask.emit({
+      id: taskId,
+      changes: taskData,
     });
   }
 
-  onUploadThumbnail(accountId: string, fileId: string, fileUrl: string) {
-    this.pgUpdateAccountThumbnail.emit({
-      id: accountId,
+  onUploadThumbnail(taskId: string, fileId: string, fileUrl: string) {
+    this.pgUpdateTaskThumbnail.emit({
+      id: taskId,
       fileId,
       fileUrl,
     });
   }
 
-  onUpdateAccountSeeds(accountId: string, seeds: SeedType[]) {
-    this.pgUpdateAccountSeeds.emit({ id: accountId, seeds });
+  onUpdateTaskSeeds(taskId: string, seeds: SeedType[]) {
+    this.pgUpdateTaskSeeds.emit({ id: taskId, seeds });
   }
 
-  onDeleteAccount(accountId: string) {
-    this.pgDeleteAccount.emit(accountId);
+  onDeleteTask(taskId: string) {
+    this.pgDeleteTask.emit(taskId);
   }
 
-  onUnselectAccount() {
-    this.pgAccountUnselected.emit();
+  onUnselectTask() {
+    this.pgTaskUnselected.emit();
   }
 }

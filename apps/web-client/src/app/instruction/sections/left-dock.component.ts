@@ -28,6 +28,22 @@ import { KeyListenerDirective } from '../../shared/directives';
           (click)="onToggleAccountsInventoryModal()"
         ></pg-square-button>
       </div>
+
+      <div class="bg-gray-800 relative w-[2.89rem] h-[2.89rem]">
+        <span
+          class="absolute left-0 top-0 px-1 py-0.5 text-white bg-black bg-opacity-60 z-10 uppercase"
+          style="font-size: 0.5rem; line-height: 0.5rem"
+          pgKeyListener="KeyX"
+          (pgKeyDown)="onToggleInstructionsInventoryModal()"
+        >
+          x
+        </span>
+
+        <pg-square-button
+          pgThumbnailUrl="assets/generic/instruction.png"
+          (click)="onToggleInstructionsInventoryModal()"
+        ></pg-square-button>
+      </div>
     </pg-corner-dock>
   `,
   standalone: true,
@@ -40,8 +56,13 @@ import { KeyListenerDirective } from '../../shared/directives';
 })
 export class LeftDockComponent {
   @Output() pgToggleAccountsInventoryModal = new EventEmitter();
+  @Output() pgToggleInstructionsInventoryModal = new EventEmitter();
 
   onToggleAccountsInventoryModal() {
     this.pgToggleAccountsInventoryModal.emit();
+  }
+
+  onToggleInstructionsInventoryModal() {
+    this.pgToggleInstructionsInventoryModal.emit();
   }
 }

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ComponentStore } from '@ngrx/component-store';
 import { Option } from '../../shared/utils';
-import { isAccountNode, isFieldNode, ProgramGraph } from '../utils';
+import { isFieldNode, isInstructionNode, ProgramGraph } from '../utils';
 
 interface ViewModel {
   graph: Option<ProgramGraph>;
@@ -12,17 +12,18 @@ const initialState: ViewModel = {
 };
 
 @Injectable()
-export class AccountsStore extends ComponentStore<ViewModel> {
-  readonly accounts$ = this.select(
+export class InstructionsStore extends ComponentStore<ViewModel> {
+  readonly instructions$ = this.select(
     ({ graph }) =>
-      graph?.nodes.filter(isAccountNode).map((account) => ({
-        ...account,
+      graph?.nodes.filter(isInstructionNode).map((instruction) => ({
+        ...instruction,
         fields: graph.nodes
           .filter(isFieldNode)
           .filter((node) =>
             graph.edges.some(
               (edge) =>
-                edge.data.source === account.id && edge.data.target === node.id
+                edge.data.source === instruction.id &&
+                edge.data.target === node.id
             )
           ),
       })) ?? []

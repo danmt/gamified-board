@@ -72,6 +72,18 @@ export interface SysvarNodeData {
   };
 }
 
+export interface TaskNodeData {
+  name: string;
+  thumbnailUrl: string;
+  workspaceId: string;
+  programId: string;
+  instructionId: string;
+  ref: {
+    id: string;
+    name: string;
+  };
+}
+
 export type InstructionNodeData =
   | ProgramNodeData
   | AccountNodeData
@@ -83,12 +95,14 @@ export type InstructionNodesData = {
   signer: SignerNodeData;
   account: AccountNodeData;
   sysvar: SysvarNodeData;
+  task: TaskNodeData;
 };
 
 export type ProgramNode = Node<'program', ProgramNodeData>;
 export type SignerNode = Node<'signer', SignerNodeData>;
 export type AccountNode = Node<'account', AccountNodeData>;
 export type SysvarNode = Node<'sysvar', SysvarNodeData>;
+export type TaskNode = Node<'task', TaskNodeData>;
 
 export type InstructionNode = GetNodeTypes<
   InstructionNodeKinds,
@@ -100,7 +114,12 @@ export type PartialInstructionNode = GetPartialNodeDataTypes<
   InstructionNodeData,
   InstructionNodesData
 >;
-export type InstructionNodeKinds = 'program' | 'signer' | 'account' | 'sysvar';
+export type InstructionNodeKinds =
+  | 'program'
+  | 'signer'
+  | 'account'
+  | 'sysvar'
+  | 'task';
 export type InstructionGraphKind = 'instruction';
 
 export type InstructionGraph = Graph<
@@ -113,6 +132,10 @@ export type InstructionGraph = Graph<
 
 export const isAccountNode = (node: InstructionNode): node is AccountNode => {
   return node.kind === 'account';
+};
+
+export const isSignerNode = (node: InstructionNode): node is SignerNode => {
+  return node.kind === 'signer';
 };
 
 export interface ArgumentSeedData {
@@ -139,3 +162,25 @@ export type SeedType = GetTypeUnion<{
   attribute: AttributeSeedData;
   value: ValueSeedData;
 }>;
+
+export interface AccountData {
+  name: string;
+  ref: {
+    id: string;
+    name: string;
+  };
+}
+
+export interface Account {
+  id: string;
+  data: AccountData;
+}
+
+export interface SignerData {
+  name: string;
+}
+
+export interface Signer {
+  id: string;
+  data: SignerData;
+}

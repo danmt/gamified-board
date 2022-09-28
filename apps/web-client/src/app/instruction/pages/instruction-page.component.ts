@@ -54,7 +54,11 @@ import {
   ProgramApiService,
   ProgramGraphApiService,
 } from '../../program/services';
-import { AccountsStore, InstallationsStore } from '../../program/stores';
+import {
+  AccountsStore,
+  InstallationsStore,
+  InstructionsStore,
+} from '../../program/stores';
 import { FIELD_TYPES } from '../../program/utils';
 import {
   BackgroundImageMoveDirective,
@@ -67,6 +71,8 @@ import {
   AccountsInventoryDirective,
   ActiveAccountComponent,
   ActiveAccountData,
+  ActiveInstructionComponent,
+  ActiveInstructionData,
   ActiveProgramComponent,
   ActiveProgramData,
   ActiveSignerComponent,
@@ -77,16 +83,23 @@ import {
   AddProgramNodeDto,
   AddSignerNodeDto,
   AddSysvarNodeDto,
+  AddTaskNodeDto,
   InstructionDockComponent,
+  InstructionsInventoryDirective,
   LeftDockComponent,
   ProgramDockComponent,
   RightDockComponent,
   SignerDockComponent,
   SysvarDockComponent,
   SysvarsInventoryDirective,
+  TaskDockComponent,
 } from '../sections';
 import { InstructionGraphApiService } from '../services';
-import { InstructionAccountsStore, InstructionArgumentsStore } from '../stores';
+import {
+  InstructionAccountsStore,
+  InstructionArgumentsStore,
+  InstructionSignersStore,
+} from '../stores';
 import {
   AttributeSeedData,
   instructionCanConnectFunction,
@@ -106,6 +119,7 @@ type ActiveType = GetTypeUnion<{
   program: ActiveProgramData;
   sysvar: ActiveSysvarData;
   account: ActiveAccountData;
+  instruction: ActiveInstructionData;
 }>;
 
 interface ViewModel {
@@ -218,7 +232,7 @@ const initialState: ViewModel = {
           class="fixed bottom-0 -translate-x-1/2 left-1/2"
           [pgAccount]="selected"
           [pgSeedOptions]="(seedOptions$ | ngrxPush) ?? []"
-          [pgInstructionAccounts]="(instructionAccounts$ | ngrxPush) ?? []"
+          [pgAccountOptions]="(accountOptions$ | ngrxPush) ?? []"
           (pgAccountUnselected)="onUnselect()"
           (pgUpdateAccount)="
             onUpdateNode({
@@ -239,6 +253,24 @@ const initialState: ViewModel = {
             })
           "
         ></pg-account-dock>
+
+        <pg-task-dock
+          *ngIf="selected !== null && selected.kind === 'task'"
+          class="fixed bottom-0 -translate-x-1/2 left-1/2"
+          [pgTask]="selected"
+          (pgTaskUnselected)="onUnselect()"
+          (pgUpdateTask)="
+            onUpdateNode({
+              id: $event.id,
+              kind: 'task',
+              data: $event.changes
+            })
+          "
+          (pgUpdateTaskThumbnail)="
+            onUpdateNodeThumbnail($event.id, $event.fileId, $event.fileUrl)
+          "
+          (pgDeleteTask)="onRemoveNode($event)"
+        ></pg-task-dock>
       </ng-container>
 
       <pg-right-dock
@@ -289,6 +321,7 @@ const initialState: ViewModel = {
         class="fixed bottom-0 left-0"
         *ngIf="instruction$ | ngrxPush as instruction"
         (pgToggleAccountsInventoryModal)="accountsInventory.toggle()"
+        (pgToggleInstructionsInventoryModal)="instructionsInventory.toggle()"
       >
         <ng-container
           pgAccountsInventory
@@ -297,6 +330,22 @@ const initialState: ViewModel = {
           (pgTapAccount)="
             setActive({
               kind: 'account',
+              data: {
+                id: $event.id,
+                name: $event.data.name,
+                thumbnailUrl: $event.data.thumbnailUrl
+              }
+            })
+          "
+        ></ng-container>
+
+        <ng-container
+          pgInstructionsInventory
+          #instructionsInventory="modal"
+          [pgInstructions]="(instructions$ | ngrxPush) ?? []"
+          (pgTapInstruction)="
+            setActive({
+              kind: 'instruction',
               data: {
                 id: $event.id,
                 name: $event.data.name,
@@ -364,7 +413,7 @@ const initialState: ViewModel = {
             instruction !== null && active !== null && active.kind === 'account'
           "
           [pgActive]="active.data"
-          [pgInstructionAccounts]="(instructionAccounts$ | ngrxPush) ?? []"
+          [pgOptions]="(accountOptions$ | ngrxPush) ?? []"
           [pgClickEvent]="(drawerClick$ | ngrxPush) ?? null"
           (pgAddNode)="
             onAddAccountNode(
@@ -376,6 +425,25 @@ const initialState: ViewModel = {
           "
           (pgDeactivate)="setActive(null)"
         ></pg-active-account>
+
+        <pg-active-instruction
+          *ngIf="
+            instruction !== null &&
+            active !== null &&
+            active.kind === 'instruction'
+          "
+          [pgActive]="active.data"
+          [pgClickEvent]="(drawerClick$ | ngrxPush) ?? null"
+          (pgAddNode)="
+            onAddTaskNode(
+              instruction.data.workspaceId,
+              instruction.data.programId,
+              instruction.id,
+              $event
+            )
+          "
+          (pgDeactivate)="setActive(null)"
+        ></pg-active-instruction>
       </ng-container>
     </ng-container>
   `,
@@ -389,23 +457,28 @@ const initialState: ViewModel = {
     ProgramsInventoryDirective,
     SysvarsInventoryDirective,
     AccountsInventoryDirective,
+    InstructionsInventoryDirective,
     InstructionDockComponent,
     SignerDockComponent,
     SysvarDockComponent,
     AccountDockComponent,
     ProgramDockComponent,
+    TaskDockComponent,
     RightDockComponent,
     LeftDockComponent,
     ActiveSignerComponent,
     ActiveProgramComponent,
     ActiveSysvarComponent,
     ActiveAccountComponent,
+    ActiveInstructionComponent,
   ],
   providers: [
     provideComponentStore(DrawerStore),
     provideComponentStore(InstallationsStore),
     provideComponentStore(AccountsStore),
+    provideComponentStore(InstructionsStore),
     provideComponentStore(InstructionAccountsStore),
+    provideComponentStore(InstructionSignersStore),
     provideComponentStore(InstructionArgumentsStore),
   ],
 })
@@ -426,6 +499,8 @@ export class InstructionPageComponent
   );
   private readonly _installationsStore = inject(InstallationsStore);
   private readonly _accountsStore = inject(AccountsStore);
+  private readonly _instructionsStore = inject(InstructionsStore);
+  private readonly _instructionSignersStore = inject(InstructionSignersStore);
   private readonly _instructionAccountsStore = inject(InstructionAccountsStore);
   private readonly _instructionArgumentsStore = inject(
     InstructionArgumentsStore
@@ -467,7 +542,22 @@ export class InstructionPageComponent
       return accounts.concat(installedAccounts);
     }
   );
-  readonly instructionAccounts$ = this._instructionAccountsStore.accounts$;
+  readonly instructions$ = this.select(
+    this._instructionsStore.instructions$,
+    this._installationsStore.instructions$,
+    (instructions, installedInstructions) => {
+      if (isNull(instructions) || isNull(installedInstructions)) {
+        return [];
+      }
+
+      return instructions.concat(installedInstructions);
+    }
+  );
+  readonly accountOptions$ = this.select(
+    this._instructionAccountsStore.accounts$,
+    this._instructionSignersStore.signers$,
+    (accounts, signers) => [...accounts, ...signers]
+  );
   readonly seedOptions$ = this.select(
     this._instructionAccountsStore.accounts$,
     this.accounts$,
@@ -1114,6 +1204,7 @@ export class InstructionPageComponent
                 instructionId,
               });
               this._instructionAccountsStore.setGraph(graph);
+              this._instructionSignersStore.setGraph(graph);
             }
           })
         )
@@ -1140,6 +1231,9 @@ export class InstructionPageComponent
               this._instructionArgumentsStore.setInstructionId(
                 this.instructionId$
               );
+
+              this._accountsStore.setGraph(graph);
+              this._instructionsStore.setGraph(graph);
             }
           })
         )
@@ -1187,8 +1281,6 @@ export class InstructionPageComponent
     );
     this._installationsStore.setWorkspaceId(this.workspaceId$);
     this._installationsStore.setProgramId(this.programId$);
-    this._accountsStore.setWorkspaceId(this.workspaceId$);
-    this._accountsStore.setProgramId(this.programId$);
   }
 
   async ngAfterViewInit() {
@@ -1318,6 +1410,26 @@ export class InstructionPageComponent
     programId: string,
     instructionId: string,
     { payload, options }: AddAccountNodeDto
+  ) {
+    this._instructionDrawerStore.addNode(
+      {
+        ...payload,
+        data: {
+          ...payload.data,
+          workspaceId,
+          programId,
+          instructionId,
+        },
+      },
+      options.position
+    );
+  }
+
+  onAddTaskNode(
+    workspaceId: string,
+    programId: string,
+    instructionId: string,
+    { payload, options }: AddTaskNodeDto
   ) {
     this._instructionDrawerStore.addNode(
       {
