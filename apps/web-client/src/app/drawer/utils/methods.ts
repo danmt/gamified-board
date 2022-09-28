@@ -11,6 +11,7 @@ import {
   DeleteNodeSuccessEvent,
   DrawerEvent,
   GetNodeTypes,
+  Graph,
   GraphScrolledEvent,
   InitEvent,
   OneTapEdgeEvent,
@@ -378,6 +379,25 @@ export const patchNode = <
     ...node,
     data: {
       ...node.data,
+      ...payload,
+    },
+  };
+};
+
+export const patchGraph = <
+  NodeKinds extends string,
+  NodeDataType extends DefaultNodeDataType,
+  NodesDataMap extends { [key in NodeKinds]: NodeDataType },
+  GraphKind extends string,
+  GraphDataType extends DefaultGraphDataType
+>(
+  graph: Graph<NodeKinds, NodeDataType, NodesDataMap, GraphKind, GraphDataType>,
+  payload: Partial<GraphDataType>
+): Graph<NodeKinds, NodeDataType, NodesDataMap, GraphKind, GraphDataType> => {
+  return {
+    ...graph,
+    data: {
+      ...graph.data,
       ...payload,
     },
   };

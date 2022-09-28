@@ -5,10 +5,15 @@ import {
   tapResponse,
 } from '@ngrx/component-store';
 import { concatMap, defer, EMPTY, from, switchMap } from 'rxjs';
-import { patchNode } from '../../drawer/utils';
+import { patchGraph, patchNode } from '../../drawer/utils';
 import { isNull, Option } from '../../shared/utils';
 import { ProgramGraphApiService } from '../services';
-import { PartialProgramNode, ProgramGraph } from '../utils';
+import {
+  PartialProgramNode,
+  ProgramGraph,
+  ProgramGraphData,
+  ProgramNode,
+} from '../utils';
 
 interface ViewModel {
   workspaceId: Option<string>;
@@ -43,6 +48,18 @@ export class ProgramGraphStore
     programId,
   }));
 
+  readonly createNode = this.updater<ProgramNode>((state, node) => {
+    return {
+      ...state,
+      graph: state.graph
+        ? {
+            ...state.graph,
+            nodes: [...state.graph.nodes, node],
+          }
+        : null,
+    };
+  });
+
   readonly updateNode = this.updater<PartialProgramNode>(
     (state, partialNode) => {
       return {
@@ -60,6 +77,34 @@ export class ProgramGraphStore
       };
     }
   );
+
+  readonly deleteNode = this.updater<string>((state, nodeId) => {
+    return {
+      ...state,
+      graph: state.graph
+        ? {
+            ...state.graph,
+            nodes: state.graph.nodes.filter((node) => node.id !== nodeId),
+          }
+        : null,
+    };
+  });
+
+  readonly updateGraph = this.updater<Partial<ProgramGraphData>>(
+    (state, changes) => {
+      return {
+        ...state,
+        graph: state.graph ? patchGraph(state.graph, changes) : null,
+      };
+    }
+  );
+
+  readonly deleteGraph = this.updater((state) => {
+    return {
+      ...state,
+      graph: null,
+    };
+  });
 
   private readonly _handleEvents = this.effect<{
     programId: Option<string>;
@@ -92,17 +137,45 @@ export class ProgramGraphStore
               .pipe(
                 tapResponse(
                   (event) => {
-                    console.log(event, {
-                      id: event['payload'].id,
-                      kind: event['payload'].kind,
-                      data: event['payload'].changes,
-                    });
+                    switch (event['type']) {
+                      case 'createNodeSuccess': {
+                        if (event['payload'].kind !== 'program') {
+                          const { id, kind, ...payload } = event['payload'];
 
-                    this.updateNode({
-                      id: event['payload'].id,
-                      kind: event['payload'].kind,
-                      data: event['payload'].changes,
-                    });
+                          this.createNode({
+                            id,
+                            kind,
+                            data: payload,
+                          });
+                        }
+
+                        break;
+                      }
+
+                      case 'updateNodeSuccess': {
+                        if (event['payload'].kind === 'program') {
+                          this.updateGraph(event['payload'].changes);
+                        } else {
+                          this.updateNode({
+                            id: event['payload'].id,
+                            kind: event['payload'].kind,
+                            data: event['payload'].changes,
+                          });
+                        }
+
+                        break;
+                      }
+
+                      case 'deleteNodeSuccess': {
+                        if (event['payload'].kind === 'program') {
+                          this.deleteGraph();
+                        } else {
+                          this.deleteNode(event['payload'].id);
+                        }
+
+                        break;
+                      }
+                    }
                   },
                   (error) => this._handleError(error)
                 )
