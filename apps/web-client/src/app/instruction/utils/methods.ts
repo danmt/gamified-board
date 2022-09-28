@@ -102,5 +102,13 @@ export const instructionCanConnectFunction = (
     return false;
   }
 
+  if (
+    sourceData.kind === 'task' &&
+    targetData.kind === 'task' &&
+    sourceData.id !== targetData.id
+  ) {
+    return true;
+  }
+
   return false;
 };

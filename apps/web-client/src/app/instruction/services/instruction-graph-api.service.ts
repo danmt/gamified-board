@@ -51,7 +51,7 @@ export class InstructionGraphApiService extends GraphApiService<InstructionGraph
     const edgesSnapshot = await getDocs(
       collection(
         this._firestore,
-        `graphs/${workspaceId}/nodes/${programId}/edges/${instructionId}/nodes`
+        `graphs/${workspaceId}/nodes/${programId}/nodes/${instructionId}/edges`
       )
     );
 

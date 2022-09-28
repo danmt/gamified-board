@@ -334,58 +334,61 @@ const initialState: ViewModel = {
         </ng-template>
       </pg-right-dock>
 
-      <pg-left-dock
-        class="fixed bottom-0 left-0"
-        *ngIf="instruction$ | ngrxPush as instruction"
-        (pgToggleAccountsInventoryModal)="accountsInventory.toggle()"
-        (pgToggleInstructionsInventoryModal)="instructionsInventory.toggle()"
-      >
-        <ng-template
-          pgGlobalOverlay
-          #accountsInventory="globalOverlay"
-          [pgPositionStrategy]="
-            overlay.position().global().centerVertically().left('0px')
-          "
+      <ng-container *ngIf="instruction$ | ngrxPush as instruction">
+        <pg-left-dock
+          class="fixed bottom-0 left-0"
+          *ngrxLet="drawMode$; let drawMode"
+          (pgToggleAccountsInventoryModal)="accountsInventory.toggle()"
+          (pgToggleInstructionsInventoryModal)="instructionsInventory.toggle()"
+          (pgToggleDrawMode)="onSetDrawMode(!drawMode)"
         >
-          <pg-accounts-inventory
-            [pgAccounts]="(accounts$ | ngrxPush) ?? []"
-            (pgTapAccount)="
-              setActive({
-                kind: 'account',
-                data: {
-                  id: $event.id,
-                  name: $event.data.name,
-                  thumbnailUrl: $event.data.thumbnailUrl
-                }
-              })
+          <ng-template
+            pgGlobalOverlay
+            #accountsInventory="globalOverlay"
+            [pgPositionStrategy]="
+              overlay.position().global().centerVertically().left('0px')
             "
           >
-          </pg-accounts-inventory>
-        </ng-template>
+            <pg-accounts-inventory
+              [pgAccounts]="(accounts$ | ngrxPush) ?? []"
+              (pgTapAccount)="
+                setActive({
+                  kind: 'account',
+                  data: {
+                    id: $event.id,
+                    name: $event.data.name,
+                    thumbnailUrl: $event.data.thumbnailUrl
+                  }
+                })
+              "
+            >
+            </pg-accounts-inventory>
+          </ng-template>
 
-        <ng-template
-          pgGlobalOverlay
-          #instructionsInventory="globalOverlay"
-          [pgPositionStrategy]="
-            overlay.position().global().centerVertically().left('0px')
-          "
-        >
-          <pg-instructions-inventory
-            [pgInstructions]="(instructions$ | ngrxPush) ?? []"
-            (pgTapInstruction)="
-              setActive({
-                kind: 'instruction',
-                data: {
-                  id: $event.id,
-                  name: $event.data.name,
-                  thumbnailUrl: $event.data.thumbnailUrl
-                }
-              })
+          <ng-template
+            pgGlobalOverlay
+            #instructionsInventory="globalOverlay"
+            [pgPositionStrategy]="
+              overlay.position().global().centerVertically().left('0px')
             "
           >
-          </pg-instructions-inventory>
-        </ng-template>
-      </pg-left-dock>
+            <pg-instructions-inventory
+              [pgInstructions]="(instructions$ | ngrxPush) ?? []"
+              (pgTapInstruction)="
+                setActive({
+                  kind: 'instruction',
+                  data: {
+                    id: $event.id,
+                    name: $event.data.name,
+                    thumbnailUrl: $event.data.thumbnailUrl
+                  }
+                })
+              "
+            >
+            </pg-instructions-inventory>
+          </ng-template>
+        </pg-left-dock>
+      </ng-container>
 
       <ng-container *ngrxLet="active$; let active">
         <pg-active-signer
@@ -1251,7 +1254,7 @@ export class InstructionPageComponent
               const drawer = new Drawer(
                 graph,
                 graph.nodes,
-                [],
+                ['task', 'account', 'signer', 'program'],
                 drawerElement,
                 instructionCanConnectFunction,
                 instructionNodeLabelFunction
