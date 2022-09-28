@@ -1,3 +1,4 @@
+import { Overlay, OverlayModule } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
 import {
   AfterViewInit,
@@ -48,27 +49,33 @@ import {
   UpdateNodeSuccessEvent,
   UpdateNodeThumbnailSuccessEvent,
 } from '../../drawer/utils';
-import { ProgramsInventoryDirective } from '../../program/sections';
+import { ProgramsInventoryComponent } from '../../program/sections';
 import {
   InstallProgramDto,
   ProgramApiService,
   ProgramGraphApiService,
 } from '../../program/services';
 import {
-  AccountsStore,
+  InstallableProgramsStore,
   InstallationsStore,
-  InstructionsStore,
+  ProgramGraphStore,
 } from '../../program/stores';
-import { FIELD_TYPES } from '../../program/utils';
+import {
+  FIELD_TYPES,
+  isAccountNode,
+  isFieldNode,
+  isInstructionNode,
+} from '../../program/utils';
 import {
   BackgroundImageMoveDirective,
   BackgroundImageZoomDirective,
+  GlobalOverlayDirective,
 } from '../../shared/directives';
 import { GetTypeUnion, isNotNull, isNull, Option } from '../../shared/utils';
 import { UpdateInstructionSubmit } from '../components';
 import {
   AccountDockComponent,
-  AccountsInventoryDirective,
+  AccountsInventoryComponent,
   ActiveAccountComponent,
   ActiveAccountData,
   ActiveInstructionComponent,
@@ -85,21 +92,17 @@ import {
   AddSysvarNodeDto,
   AddTaskNodeDto,
   InstructionDockComponent,
-  InstructionsInventoryDirective,
+  InstructionsInventoryComponent,
   LeftDockComponent,
   ProgramDockComponent,
   RightDockComponent,
   SignerDockComponent,
   SysvarDockComponent,
-  SysvarsInventoryDirective,
+  SysvarsInventoryComponent,
   TaskDockComponent,
 } from '../sections';
 import { InstructionGraphApiService } from '../services';
-import {
-  InstructionAccountsStore,
-  InstructionArgumentsStore,
-  InstructionSignersStore,
-} from '../stores';
+import { InstructionAccountsStore, InstructionSignersStore } from '../stores';
 import {
   AttributeSeedData,
   instructionCanConnectFunction,
@@ -279,42 +282,56 @@ const initialState: ViewModel = {
         (pgToggleProgramsInventoryModal)="programsInventory.toggle()"
         (pgToggleSysvarsInventoryModal)="sysvarsInventory.toggle()"
       >
-        <ng-container
-          pgProgramsInventory
-          #programsInventory="modal"
-          [pgInstallations]="(installations$ | ngrxPush) ?? []"
-          (pgInstallProgram)="
-            onInstallProgram(
-              instruction.data.workspaceId,
-              instruction.data.programId,
-              $event
-            )
+        <ng-template
+          pgGlobalOverlay
+          #programsInventory="globalOverlay"
+          [pgPositionStrategy]="
+            overlay.position().global().centerVertically().right('0px')
           "
-          (pgTapInstallation)="
-            setActive({
-              kind: 'program',
-              data: {
-                id: $event.id,
-                name: $event.data.graph.data.name,
-                thumbnailUrl: $event.data.graph.data.thumbnailUrl
-              }
-            })
-          "
-        ></ng-container>
+        >
+          <pg-programs-inventory
+            [pgInstallations]="(installations$ | ngrxPush) ?? []"
+            [pgInstallablePrograms]="(installablePrograms$ | ngrxPush) ?? []"
+            (pgInstallProgram)="
+              onInstallProgram(
+                instruction.data.workspaceId,
+                instruction.data.programId,
+                $event
+              )
+            "
+            (pgTapInstallation)="
+              setActive({
+                kind: 'program',
+                data: {
+                  id: $event.id,
+                  name: $event.data.graph.data.name,
+                  thumbnailUrl: $event.data.graph.data.thumbnailUrl
+                }
+              })
+            "
+          ></pg-programs-inventory>
+        </ng-template>
 
-        <ng-container
-          pgSysvarsInventory
-          #sysvarsInventory="modal"
-          (pgTapSysvar)="
-            setActive({
-              kind: 'sysvar',
-              data: {
-                name: $event.name,
-                thumbnailUrl: $event.thumbnailUrl
-              }
-            })
+        <ng-template
+          pgGlobalOverlay
+          #sysvarsInventory="globalOverlay"
+          [pgPositionStrategy]="
+            overlay.position().global().centerVertically().right('0px')
           "
-        ></ng-container>
+        >
+          <pg-sysvars-inventory
+            (pgTapSysvar)="
+              setActive({
+                kind: 'sysvar',
+                data: {
+                  name: $event.name,
+                  thumbnailUrl: $event.thumbnailUrl
+                }
+              })
+            "
+          >
+          </pg-sysvars-inventory>
+        </ng-template>
       </pg-right-dock>
 
       <pg-left-dock
@@ -323,37 +340,51 @@ const initialState: ViewModel = {
         (pgToggleAccountsInventoryModal)="accountsInventory.toggle()"
         (pgToggleInstructionsInventoryModal)="instructionsInventory.toggle()"
       >
-        <ng-container
-          pgAccountsInventory
-          #accountsInventory="modal"
-          [pgAccounts]="(accounts$ | ngrxPush) ?? []"
-          (pgTapAccount)="
-            setActive({
-              kind: 'account',
-              data: {
-                id: $event.id,
-                name: $event.data.name,
-                thumbnailUrl: $event.data.thumbnailUrl
-              }
-            })
+        <ng-template
+          pgGlobalOverlay
+          #accountsInventory="globalOverlay"
+          [pgPositionStrategy]="
+            overlay.position().global().centerVertically().left('0px')
           "
-        ></ng-container>
+        >
+          <pg-accounts-inventory
+            [pgAccounts]="(accounts$ | ngrxPush) ?? []"
+            (pgTapAccount)="
+              setActive({
+                kind: 'account',
+                data: {
+                  id: $event.id,
+                  name: $event.data.name,
+                  thumbnailUrl: $event.data.thumbnailUrl
+                }
+              })
+            "
+          >
+          </pg-accounts-inventory>
+        </ng-template>
 
-        <ng-container
-          pgInstructionsInventory
-          #instructionsInventory="modal"
-          [pgInstructions]="(instructions$ | ngrxPush) ?? []"
-          (pgTapInstruction)="
-            setActive({
-              kind: 'instruction',
-              data: {
-                id: $event.id,
-                name: $event.data.name,
-                thumbnailUrl: $event.data.thumbnailUrl
-              }
-            })
+        <ng-template
+          pgGlobalOverlay
+          #instructionsInventory="globalOverlay"
+          [pgPositionStrategy]="
+            overlay.position().global().centerVertically().left('0px')
           "
-        ></ng-container>
+        >
+          <pg-instructions-inventory
+            [pgInstructions]="(instructions$ | ngrxPush) ?? []"
+            (pgTapInstruction)="
+              setActive({
+                kind: 'instruction',
+                data: {
+                  id: $event.id,
+                  name: $event.data.name,
+                  thumbnailUrl: $event.data.thumbnailUrl
+                }
+              })
+            "
+          >
+          </pg-instructions-inventory>
+        </ng-template>
       </pg-left-dock>
 
       <ng-container *ngrxLet="active$; let active">
@@ -450,14 +481,16 @@ const initialState: ViewModel = {
   standalone: true,
   imports: [
     CommonModule,
+    OverlayModule,
     PushModule,
     LetModule,
     BackgroundImageZoomDirective,
     BackgroundImageMoveDirective,
-    ProgramsInventoryDirective,
-    SysvarsInventoryDirective,
-    AccountsInventoryDirective,
-    InstructionsInventoryDirective,
+    ProgramsInventoryComponent,
+    SysvarsInventoryComponent,
+    AccountsInventoryComponent,
+    InstructionsInventoryComponent,
+    GlobalOverlayDirective,
     InstructionDockComponent,
     SignerDockComponent,
     SysvarDockComponent,
@@ -475,11 +508,10 @@ const initialState: ViewModel = {
   providers: [
     provideComponentStore(DrawerStore),
     provideComponentStore(InstallationsStore),
-    provideComponentStore(AccountsStore),
-    provideComponentStore(InstructionsStore),
+    provideComponentStore(InstallableProgramsStore),
     provideComponentStore(InstructionAccountsStore),
     provideComponentStore(InstructionSignersStore),
-    provideComponentStore(InstructionArgumentsStore),
+    provideComponentStore(ProgramGraphStore),
   ],
 })
 export class InstructionPageComponent
@@ -497,19 +529,18 @@ export class InstructionPageComponent
       InstructionGraphData
     >
   );
+  private readonly _programGraphStore = inject(ProgramGraphStore);
   private readonly _installationsStore = inject(InstallationsStore);
-  private readonly _accountsStore = inject(AccountsStore);
-  private readonly _instructionsStore = inject(InstructionsStore);
+  private readonly _installableProgramsStore = inject(InstallableProgramsStore);
   private readonly _instructionSignersStore = inject(InstructionSignersStore);
   private readonly _instructionAccountsStore = inject(InstructionAccountsStore);
-  private readonly _instructionArgumentsStore = inject(
-    InstructionArgumentsStore
-  );
   private readonly _programApiService = inject(ProgramApiService);
   private readonly _programGraphApiService = inject(ProgramGraphApiService);
   private readonly _instructionGraphApiService = inject(
     InstructionGraphApiService
   );
+
+  public readonly overlay = inject(Overlay);
 
   readonly workspaceId$ = this._activatedRoute.paramMap.pipe(
     map((paramMap) => paramMap.get('workspaceId'))
@@ -523,7 +554,7 @@ export class InstructionPageComponent
   readonly selected$ = this.select(({ selected }) => selected);
   readonly active$ = this.select(({ active }) => active);
   readonly installations$ = this._installationsStore.installations$;
-
+  readonly installablePrograms$ = this._installableProgramsStore.programs$;
   readonly instruction$ = this._instructionDrawerStore.graph$;
   readonly drawerClick$ = this._instructionDrawerStore.event$.pipe(
     filter(isClickEvent)
@@ -531,8 +562,49 @@ export class InstructionPageComponent
   readonly zoomSize$ = this._instructionDrawerStore.zoomSize$;
   readonly panDrag$ = this._instructionDrawerStore.panDrag$;
   readonly drawMode$ = this._instructionDrawerStore.drawMode$;
+  readonly programAccounts$ = this.select(
+    this._programGraphStore.graph$,
+    (graph) => {
+      if (isNull(graph)) {
+        return [];
+      }
+
+      return graph.nodes.filter(isAccountNode).map((account) => ({
+        ...account,
+        fields: graph.nodes
+          .filter(isFieldNode)
+          .filter((node) =>
+            graph.edges.some(
+              (edge) =>
+                edge.data.source === account.id && edge.data.target === node.id
+            )
+          ),
+      }));
+    }
+  );
+  readonly programInstructions$ = this.select(
+    this._programGraphStore.graph$,
+    (graph) => {
+      if (isNull(graph)) {
+        return [];
+      }
+
+      return graph.nodes.filter(isInstructionNode).map((instruction) => ({
+        ...instruction,
+        fields: graph.nodes
+          .filter(isFieldNode)
+          .filter((node) =>
+            graph.edges.some(
+              (edge) =>
+                edge.data.source === instruction.id &&
+                edge.data.target === node.id
+            )
+          ),
+      }));
+    }
+  );
   readonly accounts$ = this.select(
-    this._accountsStore.accounts$,
+    this.programAccounts$,
     this._installationsStore.accounts$,
     (accounts, installedAccounts) => {
       if (isNull(accounts) || isNull(installedAccounts)) {
@@ -543,7 +615,7 @@ export class InstructionPageComponent
     }
   );
   readonly instructions$ = this.select(
-    this._instructionsStore.instructions$,
+    this.programInstructions$,
     this._installationsStore.instructions$,
     (instructions, installedInstructions) => {
       if (isNull(instructions) || isNull(installedInstructions)) {
@@ -558,10 +630,29 @@ export class InstructionPageComponent
     this._instructionSignersStore.signers$,
     (accounts, signers) => [...accounts, ...signers]
   );
+  readonly instructionArguments$ = this.select(
+    this._programGraphStore.graph$,
+    this.instructionId$,
+    (graph, instructionId) => {
+      if (isNull(graph) || isNull(instructionId)) {
+        return [];
+      }
+
+      return graph.nodes
+        .filter(isFieldNode)
+        .filter((fieldNode) =>
+          graph.edges.some(
+            (edge) =>
+              edge.data.source === instructionId &&
+              edge.data.target === fieldNode.id
+          )
+        );
+    }
+  );
   readonly seedOptions$ = this.select(
     this._instructionAccountsStore.accounts$,
     this.accounts$,
-    this._instructionArgumentsStore.instructionArguments$,
+    this.instructionArguments$,
     (instructionAccounts, accounts, instructionArguments) => {
       const attributeSeedOptions: SeedType[] = instructionAccounts
         .reduce<AttributeSeedData[]>((attributes, instructionAccount) => {
@@ -1212,35 +1303,6 @@ export class InstructionPageComponent
     })
   );
 
-  private readonly _loadProgramGraph = this.effect<{
-    workspaceId: Option<string>;
-    programId: Option<string>;
-  }>(
-    concatMap(({ workspaceId, programId }) => {
-      if (isNull(workspaceId) || isNull(programId)) {
-        return EMPTY;
-      }
-
-      return defer(() =>
-        from(
-          this._programGraphApiService.getGraph(workspaceId, programId)
-        ).pipe(
-          tap((graph) => {
-            if (graph) {
-              this._instructionArgumentsStore.setGraph(graph);
-              this._instructionArgumentsStore.setInstructionId(
-                this.instructionId$
-              );
-
-              this._accountsStore.setGraph(graph);
-              this._instructionsStore.setGraph(graph);
-            }
-          })
-        )
-      );
-    })
-  );
-
   constructor() {
     super(initialState);
   }
@@ -1281,6 +1343,8 @@ export class InstructionPageComponent
     );
     this._installationsStore.setWorkspaceId(this.workspaceId$);
     this._installationsStore.setProgramId(this.programId$);
+    this._programGraphStore.setWorkspaceId(this.workspaceId$);
+    this._programGraphStore.setProgramId(this.programId$);
   }
 
   async ngAfterViewInit() {
@@ -1297,16 +1361,6 @@ export class InstructionPageComponent
             programId,
             instructionId,
             drawerElement,
-          })
-        )
-      );
-      this._loadProgramGraph(
-        this.select(
-          this.workspaceId$,
-          this.programId$,
-          (workspaceId, programId) => ({
-            workspaceId,
-            programId,
           })
         )
       );

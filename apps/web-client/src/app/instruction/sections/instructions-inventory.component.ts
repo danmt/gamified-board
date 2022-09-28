@@ -1,19 +1,8 @@
-import { Overlay, OverlayModule, OverlayRef } from '@angular/cdk/overlay';
-import { ComponentPortal } from '@angular/cdk/portal';
+import { OverlayModule } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
-import {
-  Component,
-  Directive,
-  HostListener,
-  inject,
-  Input,
-  OnDestroy,
-  Output,
-  ViewContainerRef,
-} from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { LetModule, PushModule } from '@ngrx/component';
-import { Subject, Subscription } from 'rxjs';
 import { Instruction } from '../../program/utils';
 import { InventoryComponent } from '../../shared/components';
 import { TooltipComponent } from '../../shared/components/tooltip.component';
@@ -21,91 +10,6 @@ import {
   DefaultImageDirective,
   HoveredDirective,
 } from '../../shared/directives';
-import { isNotNull, isNull, Option } from '../../shared/utils';
-
-export const openInstructionsInventory = (
-  overlay: Overlay,
-  viewContainerRef: ViewContainerRef,
-  instructions: Instruction[]
-) => {
-  const overlayRef = overlay.create({
-    positionStrategy: overlay
-      .position()
-      .global()
-      .centerVertically()
-      .left('0px'),
-    scrollStrategy: overlay.scrollStrategies.close(),
-  });
-  const componentRef = overlayRef.attach(
-    new ComponentPortal(InstructionsInventoryComponent, viewContainerRef)
-  );
-  componentRef.setInput('pgInstructions', instructions);
-
-  return { componentRef, overlayRef };
-};
-
-@Directive({
-  selector: '[pgInstructionsInventory]',
-  standalone: true,
-  exportAs: 'modal',
-})
-export class InstructionsInventoryDirective implements OnDestroy {
-  private readonly _overlay = inject(Overlay);
-  private readonly _viewContainerRef = inject(ViewContainerRef);
-  private _overlayRef: Option<OverlayRef> = null;
-  private _isOpen = false;
-  private _tapInstructionSubscription: Option<Subscription> = null;
-
-  private readonly _tapInstruction = new Subject<Instruction>();
-
-  @Input() pgInstructions: Instruction[] = [];
-  @Output() pgTapInstruction = this._tapInstruction.asObservable();
-
-  @HostListener('click') onClick() {
-    this.open();
-  }
-
-  ngOnDestroy() {
-    this.close();
-  }
-
-  open() {
-    if (isNull(this._overlayRef) && !this._isOpen) {
-      this._isOpen = true;
-      const { overlayRef, componentRef } = openInstructionsInventory(
-        this._overlay,
-        this._viewContainerRef,
-        this.pgInstructions
-      );
-
-      this._overlayRef = overlayRef;
-
-      this._tapInstructionSubscription =
-        componentRef.instance.tapInstruction$.subscribe(this._tapInstruction);
-    }
-  }
-
-  close() {
-    if (
-      isNotNull(this._overlayRef) &&
-      this._isOpen &&
-      this._tapInstructionSubscription
-    ) {
-      this._isOpen = false;
-      this._overlayRef.dispose();
-      this._overlayRef = null;
-      this._tapInstructionSubscription.unsubscribe();
-    }
-  }
-
-  toggle() {
-    if (this._isOpen) {
-      this.close();
-    } else {
-      this.open();
-    }
-  }
-}
 
 @Component({
   selector: 'pg-instructions-inventory',
@@ -205,17 +109,14 @@ export class InstructionsInventoryDirective implements OnDestroy {
   ],
 })
 export class InstructionsInventoryComponent {
-  private readonly _tapInstruction = new Subject<Instruction>();
-
-  readonly tapInstruction$ = this._tapInstruction.asObservable();
-
   @Input() pgInstructions: Instruction[] = [];
+  @Output() pgTapInstruction = new EventEmitter<Instruction>();
 
   trackBy(index: number): number {
     return index;
   }
 
-  onTapInstruction(instruction: Instruction) {
-    this._tapInstruction.next(instruction);
+  onTapInstruction(account: Instruction) {
+    this.pgTapInstruction.emit(account);
   }
 }

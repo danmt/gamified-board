@@ -111,3 +111,8 @@ export interface Installation {
 export type Account = AccountNode & { fields: FieldNode[] };
 
 export type Instruction = InstructionNode & { fields: FieldNode[] };
+
+export interface InstallProgramPayload {
+  id: string;
+  data: ProgramCheckpoint;
+}

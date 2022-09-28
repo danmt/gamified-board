@@ -1,3 +1,4 @@
+import { Overlay } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
 import {
   AfterViewInit,
@@ -53,6 +54,7 @@ import {
 import {
   BackgroundImageMoveDirective,
   BackgroundImageZoomDirective,
+  GlobalOverlayDirective,
 } from '../../shared/directives';
 import { GetTypeUnion, isNotNull, isNull, Option } from '../../shared/utils';
 import { UpdateProgramSubmit } from '../components';
@@ -71,7 +73,7 @@ import {
   InstructionDockComponent,
   LeftDockComponent,
   ProgramDockComponent,
-  ProgramsInventoryDirective,
+  ProgramsInventoryComponent,
   RightDockComponent,
 } from '../sections';
 import {
@@ -79,7 +81,7 @@ import {
   ProgramApiService,
   ProgramGraphApiService,
 } from '../services';
-import { InstallationsStore } from '../stores';
+import { InstallableProgramsStore, InstallationsStore } from '../stores';
 import {
   PartialProgramNode,
   programCanConnectFunction,
@@ -218,14 +220,21 @@ const initialState: ViewModel = {
         "
         (pgToggleProgramsInventoryModal)="programsInventory.toggle()"
       >
-        <ng-container
-          pgProgramsInventory
-          #programsInventory="modal"
-          [pgInstallations]="(installations$ | ngrxPush) ?? []"
-          (pgInstallProgram)="
-            onInstallProgram(program.data.workspaceId, program.id, $event)
+        <ng-template
+          pgGlobalOverlay
+          #programsInventory="globalOverlay"
+          [pgPositionStrategy]="
+            overlay.position().global().centerVertically().right('0px')
           "
-        ></ng-container>
+        >
+          <pg-programs-inventory
+            [pgInstallations]="(installations$ | ngrxPush) ?? []"
+            [pgInstallablePrograms]="(installablePrograms$ | ngrxPush) ?? []"
+            (pgInstallProgram)="
+              onInstallProgram(program.data.workspaceId, program.id, $event)
+            "
+          ></pg-programs-inventory>
+        </ng-template>
       </pg-right-dock>
 
       <pg-left-dock
@@ -285,13 +294,15 @@ const initialState: ViewModel = {
     ActiveAccountComponent,
     ActiveInstructionComponent,
     ActiveFieldComponent,
-    ProgramsInventoryDirective,
+    ProgramsInventoryComponent,
+    GlobalOverlayDirective,
     BackgroundImageZoomDirective,
     BackgroundImageMoveDirective,
   ],
   providers: [
     provideComponentStore(DrawerStore),
     provideComponentStore(InstallationsStore),
+    provideComponentStore(InstallableProgramsStore),
   ],
 })
 export class ProgramPageComponent
@@ -303,6 +314,7 @@ export class ProgramPageComponent
   private readonly _programGraphApiService = inject(ProgramGraphApiService);
   private readonly _activatedRoute = inject(ActivatedRoute);
   private readonly _installationsStore = inject(InstallationsStore);
+  private readonly _installableProgramsStore = inject(InstallableProgramsStore);
   private readonly _programDrawerStore = inject(
     DrawerStore<
       ProgramNodeKinds,
@@ -312,6 +324,7 @@ export class ProgramPageComponent
       ProgramGraphData
     >
   );
+  public readonly overlay = inject(Overlay);
 
   readonly active$ = this.select(({ active }) => active);
   readonly selected$ = this.select(({ selected }) => selected);
@@ -329,6 +342,7 @@ export class ProgramPageComponent
   readonly panDrag$ = this._programDrawerStore.panDrag$;
   readonly drawMode$ = this._programDrawerStore.drawMode$;
   readonly installations$ = this._installationsStore.installations$;
+  readonly installablePrograms$ = this._installableProgramsStore.programs$;
 
   @HostBinding('class') class = 'block relative min-h-screen min-w-screen';
   @ViewChild('drawerElement')

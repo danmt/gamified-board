@@ -1,19 +1,8 @@
-import { Overlay, OverlayModule, OverlayRef } from '@angular/cdk/overlay';
-import { ComponentPortal } from '@angular/cdk/portal';
+import { OverlayModule } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
-import {
-  Component,
-  Directive,
-  HostListener,
-  inject,
-  Input,
-  OnDestroy,
-  Output,
-  ViewContainerRef,
-} from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { LetModule, PushModule } from '@ngrx/component';
-import { Subject, Subscription } from 'rxjs';
 import { Account } from '../../program/utils';
 import { InventoryComponent } from '../../shared/components';
 import { TooltipComponent } from '../../shared/components/tooltip.component';
@@ -21,94 +10,10 @@ import {
   DefaultImageDirective,
   HoveredDirective,
 } from '../../shared/directives';
-import { isNotNull, isNull, Option } from '../../shared/utils';
-
-export const openAccountsInventory = (
-  overlay: Overlay,
-  viewContainerRef: ViewContainerRef,
-  accounts: Account[]
-) => {
-  const overlayRef = overlay.create({
-    positionStrategy: overlay
-      .position()
-      .global()
-      .centerVertically()
-      .left('0px'),
-    scrollStrategy: overlay.scrollStrategies.close(),
-  });
-  const componentRef = overlayRef.attach(
-    new ComponentPortal(AccountsInventoryComponent, viewContainerRef)
-  );
-  componentRef.setInput('pgAccounts', accounts);
-
-  return { componentRef, overlayRef };
-};
-
-@Directive({
-  selector: '[pgAccountsInventory]',
-  standalone: true,
-  exportAs: 'modal',
-})
-export class AccountsInventoryDirective implements OnDestroy {
-  private readonly _overlay = inject(Overlay);
-  private readonly _viewContainerRef = inject(ViewContainerRef);
-  private _overlayRef: Option<OverlayRef> = null;
-  private _isOpen = false;
-  private _tapAccountSubscription: Option<Subscription> = null;
-
-  private readonly _tapAccount = new Subject<Account>();
-
-  @Input() pgAccounts: Account[] = [];
-  @Output() pgTapAccount = this._tapAccount.asObservable();
-
-  @HostListener('click') onClick() {
-    this.open();
-  }
-
-  ngOnDestroy() {
-    this.close();
-  }
-
-  open() {
-    if (isNull(this._overlayRef) && !this._isOpen) {
-      this._isOpen = true;
-      const { overlayRef, componentRef } = openAccountsInventory(
-        this._overlay,
-        this._viewContainerRef,
-        this.pgAccounts
-      );
-
-      this._overlayRef = overlayRef;
-
-      this._tapAccountSubscription =
-        componentRef.instance.tapAccount$.subscribe(this._tapAccount);
-    }
-  }
-
-  close() {
-    if (
-      isNotNull(this._overlayRef) &&
-      this._isOpen &&
-      this._tapAccountSubscription
-    ) {
-      this._isOpen = false;
-      this._overlayRef.dispose();
-      this._overlayRef = null;
-      this._tapAccountSubscription.unsubscribe();
-    }
-  }
-
-  toggle() {
-    if (this._isOpen) {
-      this.close();
-    } else {
-      this.open();
-    }
-  }
-}
 
 @Component({
   selector: 'pg-accounts-inventory',
+  exportAs: 'accountsInventory',
   template: `
     <pg-inventory
       class="mt-10 min-w-[300px] min-h-[520px] max-h-[520px]"
@@ -203,17 +108,14 @@ export class AccountsInventoryDirective implements OnDestroy {
   ],
 })
 export class AccountsInventoryComponent {
-  private readonly _tapAccount = new Subject<Account>();
-
-  readonly tapAccount$ = this._tapAccount.asObservable();
-
   @Input() pgAccounts: Account[] = [];
+  @Output() pgTapAccount = new EventEmitter<Account>();
 
   trackBy(index: number): number {
     return index;
   }
 
   onTapAccount(account: Account) {
-    this._tapAccount.next(account);
+    this.pgTapAccount.emit(account);
   }
 }

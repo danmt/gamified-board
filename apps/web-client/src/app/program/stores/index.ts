@@ -1,3 +1,3 @@
-export * from './accounts.store';
+export * from './installable-programs.store';
 export * from './installations.store';
-export * from './instructions.store';
+export * from './program-graph.store';
